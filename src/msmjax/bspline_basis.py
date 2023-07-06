@@ -46,49 +46,54 @@ def characteristic(knots: jnp.ndarray, eval_point: float) -> jnp.ndarray:
     ), 1.0, 0.0)
 
 
-# Both knots and order are passed since this function could be adapted for
-# evaluation of more than one basis element (return array instead of scalar)
-def evaluate_basis(
+def evaluate_basis_element(
     knots: jnp.ndarray,
-    order: int,
     eval_point: float,
 ) -> jnp.ndarray:
     """Evaluate the B-spline basis on the reference interval defined by knots
-    using the recursive definition by de Boor.
-    (See "A Practical Guide to Splines", C. de Boor, 1978 for more information)
+    using the recursive definition by de Boor. The order of the basis element
+    is given by len(knots) - 2. For more information:
+    "A Practical Guide to Splines", C. de Boor, Springer, 2001.
 
     Args:
         knots: Array containing the positions of the knots.
             Array has to be sorted monotonically increasing
-        order: The order of the spline
         eval_point: Point to evaluate the B-spline basis at
     Returns:
         B-spline basis evaluation for the given reference interval
     """
-    # "0th order" splines are characteristic functions
-    result = characteristic(knots, eval_point)
-    eval_minus_knots = eval_point - knots  # Constant for every iteration
-    for k in range(1, order + 1):
+    def de_boor_scan_step(
+        evals: jnp.ndarray,
+        current_order: jnp.ndarray,
+    ) -> tuple[jnp.ndarray, None]:
         prefactor_first = _divide_zero_safe(
             eval_minus_knots,
-            jnp.roll(knots, -k) - knots,
+            jnp.roll(knots, -current_order) - knots,
         )
-        knots_shifted_upmost = jnp.roll(knots, -(k + 1))
+        knots_shifted_upmost = jnp.roll(knots, -(current_order + 1))
         prefactor_second = _divide_zero_safe(
             knots_shifted_upmost - eval_point,
             knots_shifted_upmost - jnp.roll(knots, -1)
         )
-        result = (prefactor_first[:-1] * result +
-                  prefactor_second[:-1] * jnp.roll(result, -1))
+        return (
+            prefactor_first[:-1] * evals +
+            prefactor_second[:-1] * jnp.roll(evals, -1)
+        ), None
+
+    eval_minus_knots = eval_point - knots  # Constant for every iteration
+    # "0th order" splines are characteristics -> init, iterate upwards
+    result, _ = jax.lax.scan(
+        f=de_boor_scan_step,
+        init=characteristic(knots, eval_point),
+        xs=jnp.arange(1, knots.shape[0] - 1),
+    )
     return result[0]
 
 
-def create_bspline_basis(
+def create_bspline_basis_element(
     order: int,
 ) -> Callable[[float], jnp.ndarray]:
-    """
-    Create a function which evaluates the B-spline basis for the given order.
-    Returned function is compatible with jax.jit and automatic differentiation
+    """Wrapper to create a B-spline basis element of given order centered at 0
 
     Args:
         order: Order of the spline.
@@ -98,7 +103,7 @@ def create_bspline_basis(
         and returns the evaluation of the B-spline basis at that point
     """
     knots = jnp.arange(-(order + 1) / 2, (order + 3) / 2)
-    return partial(evaluate_basis, knots, order)
+    return partial(evaluate_basis_element, knots)
 
 
 if __name__ == "__main__":
@@ -111,13 +116,19 @@ if __name__ == "__main__":
     ORDER = 3
     PLOT = True
 
-    basis = create_bspline_basis(ORDER)
-    eval_points = jnp.linspace(-2.0, 2.0, num=51)
+    basis_knots = np.arange(-(ORDER + 1) / 2, (ORDER + 3) / 2)
+    basis = create_bspline_basis_element(ORDER)
+    eval_points = jnp.linspace(basis_knots[0], basis_knots[-1], num=51)
 
-    evaluations, gradients = jax.jit(jax.vmap(jax.value_and_grad(
+    evals_direct, grads_direct = jax.jit(
+        jax.vmap(
+            jax.value_and_grad(evaluate_basis_element, argnums=1),
+            in_axes=[None, 0],
+        )
+    )(basis_knots, eval_points)
+    evals_wrapped, grads_wrapped = jax.jit(jax.vmap(jax.value_and_grad(
         basis
     )))(eval_points)
-    basis_knots = np.arange(-(ORDER + 1) / 2, (ORDER + 3) / 2)
     evaluations_scipy = BSpline.basis_element(basis_knots)(eval_points)
     evaluations_scipy[
         (eval_points < basis_knots[0]) | (eval_points > basis_knots[-1])
@@ -125,17 +136,22 @@ if __name__ == "__main__":
     evaluations_scipy_old = bspline(eval_points, ORDER)
     print(
         "JAX implementation and current scipy BSpline all close? "
-        f"{jnp.allclose(evaluations, evaluations_scipy)}"
+        f"{jnp.allclose(evals_wrapped, evaluations_scipy)}"
     )
     print(
         "JAX implementation and deprecated scipy bspline all close? "
-        f"{jnp.allclose(evaluations, evaluations_scipy_old)}"
+        f"{jnp.allclose(evals_wrapped, evaluations_scipy_old)}"
+    )
+    print(
+        "Wrapper and direct call all close? "
+        f"{jnp.allclose(evals_wrapped, evals_direct)}. "
+        f"Gradients? {jnp.allclose(grads_wrapped, grads_direct)}"
     )
 
     if PLOT:
         fig, ax = plt.subplots(1, 1)
-        ax.plot(eval_points, evaluations, label="Value")
-        ax.plot(eval_points, gradients, label="Gradient")
+        ax.plot(eval_points, evals_wrapped, label="Value")
+        ax.plot(eval_points, grads_wrapped, label="Gradient")
         ax.legend()
         ax.set_title(f"B-Spline basis element of order {ORDER}")
         fig.show()
