@@ -3,6 +3,7 @@
 from functools import partial
 from typing import Callable
 
+import jax
 import jax.numpy as jnp
 
 
@@ -91,67 +92,18 @@ def evaluate_basis_element(
 
 
 def create_bspline_basis_element(
-    order: int,
+    order: int = 3,
 ) -> Callable[[float], jnp.ndarray]:
     """Wrapper to create a B-spline basis element of given order centered at 0
 
     Args:
-        order: Order of the spline.
-            Defines the reference interval [-(order + 1) / 2, (order + 3) / 2]
+        order: Order of the spline, has to be greater or equal to 1.
+            Defines the reference interval [-(order + 1) / 2, (order + 1) / 2]
     Returns:
         Function that takes the point on the reference interval as input
         and returns the evaluation of the B-spline basis at that point
     """
+    if order < 1:
+        raise ValueError("Requested order is smaller than 1.")
     knots = jnp.arange(-(order + 1) / 2, (order + 3) / 2)
     return partial(evaluate_basis_element, knots)
-
-
-if __name__ == "__main__":
-    import jax
-    import matplotlib.pyplot as plt
-    import numpy as np
-    from scipy.interpolate import BSpline
-    from scipy.signal import bspline
-
-    ORDER = 3
-    PLOT = True
-
-    basis_knots = np.arange(-(ORDER + 1) / 2, (ORDER + 3) / 2)
-    basis = create_bspline_basis_element(ORDER)
-    eval_points = jnp.linspace(basis_knots[0], basis_knots[-1], num=51)
-
-    evals_direct, grads_direct = jax.jit(
-        jax.vmap(
-            jax.value_and_grad(evaluate_basis_element, argnums=1),
-            in_axes=[None, 0],
-        )
-    )(basis_knots, eval_points)
-    evals_wrapped, grads_wrapped = jax.jit(jax.vmap(jax.value_and_grad(
-        basis
-    )))(eval_points)
-    evaluations_scipy = BSpline.basis_element(basis_knots)(eval_points)
-    evaluations_scipy[
-        (eval_points < basis_knots[0]) | (eval_points > basis_knots[-1])
-    ] = 0.0
-    evaluations_scipy_old = bspline(eval_points, ORDER)
-    print(
-        "JAX implementation and current scipy BSpline all close? "
-        f"{jnp.allclose(evals_wrapped, evaluations_scipy)}"
-    )
-    print(
-        "JAX implementation and deprecated scipy bspline all close? "
-        f"{jnp.allclose(evals_wrapped, evaluations_scipy_old)}"
-    )
-    print(
-        "Wrapper and direct call all close? "
-        f"{jnp.allclose(evals_wrapped, evals_direct)}. "
-        f"Gradients? {jnp.allclose(grads_wrapped, grads_direct)}"
-    )
-
-    if PLOT:
-        fig, ax = plt.subplots(1, 1)
-        ax.plot(eval_points, evals_wrapped, label="Value")
-        ax.plot(eval_points, grads_wrapped, label="Gradient")
-        ax.legend()
-        ax.set_title(f"B-Spline basis element of order {ORDER}")
-        fig.show()
