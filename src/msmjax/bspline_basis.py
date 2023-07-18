@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 """B-spline basis function implementation"""
 from functools import partial
-from typing import Callable
+from typing import Callable, SupportsFloat, Union
 
 import jax
 import jax.numpy as jnp
+
+JaxScalar = Union[jnp.ndarray, SupportsFloat]
 
 
 def _divide_zero_safe(
@@ -28,7 +30,7 @@ def _divide_zero_safe(
     )
 
 
-def characteristic(knots: jnp.ndarray, eval_point: float) -> jnp.ndarray:
+def characteristic(knots: jnp.ndarray, eval_point: JaxScalar) -> jnp.ndarray:
     """Characteristic function chi on intervals defined by knots.
     chi(eval_point) evaluates to 1 for knots[t] <= eval_point < knots[t+1],
     0 otherwise
@@ -49,7 +51,7 @@ def characteristic(knots: jnp.ndarray, eval_point: float) -> jnp.ndarray:
 
 def evaluate_basis_element(
     knots: jnp.ndarray,
-    eval_point: float,
+    eval_point: JaxScalar,
 ) -> jnp.ndarray:
     """Evaluate the B-spline basis on the reference interval defined by knots
     using the recursive definition by de Boor. The order of the basis element
@@ -93,7 +95,7 @@ def evaluate_basis_element(
 
 def create_bspline_basis_element(
     order: int = 3,
-) -> Callable[[float], jnp.ndarray]:
+) -> Callable[[JaxScalar], jnp.ndarray]:
     """Wrapper to create a B-spline basis element of given order centered at 0
 
     Args:
