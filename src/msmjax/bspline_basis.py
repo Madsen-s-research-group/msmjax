@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 """B-spline basis function implementation"""
 from functools import partial
-from typing import Callable, SupportsFloat, Union
+from typing import Callable
 
 import jax
 import jax.numpy as jnp
-
-JaxScalar = Union[jnp.ndarray, SupportsFloat]
+from jax.typing import ArrayLike
 
 
 def _divide_zero_safe(
@@ -30,7 +29,7 @@ def _divide_zero_safe(
     )
 
 
-def characteristic(knots: jnp.ndarray, eval_point: JaxScalar) -> jnp.ndarray:
+def characteristic(knots: jnp.ndarray, eval_point: ArrayLike) -> jnp.ndarray:
     """Characteristic function chi on intervals defined by knots.
     chi(eval_point) evaluates to 1 for knots[t] <= eval_point < knots[t+1],
     0 otherwise
@@ -43,15 +42,19 @@ def characteristic(knots: jnp.ndarray, eval_point: JaxScalar) -> jnp.ndarray:
         Array containing characteristic function evaluation chi(eval_point)
         on each interval. Array is of length len(knots) - 1
     """
-    return jnp.where(jnp.logical_and(
-        knots[:-1] <= eval_point,
-        eval_point < knots[1:],
-    ), 1.0, 0.0)
+    return jnp.where(
+        jnp.logical_and(
+            knots[:-1] <= eval_point,
+            eval_point < knots[1:],
+        ),
+        1.0,
+        0.0,
+    )
 
 
 def evaluate_basis_element(
     knots: jnp.ndarray,
-    eval_point: JaxScalar,
+    eval_point: ArrayLike,
 ) -> jnp.ndarray:
     """Evaluate the B-spline basis on the reference interval defined by knots
     using the recursive definition by de Boor. The order of the basis element
@@ -65,6 +68,7 @@ def evaluate_basis_element(
     Returns:
         B-spline basis evaluation for the given reference interval
     """
+
     def de_boor_scan_step(
         evals: jnp.ndarray,
         current_order: jnp.ndarray,
@@ -76,11 +80,11 @@ def evaluate_basis_element(
         knots_shifted_upmost = jnp.roll(knots, -(current_order + 1))
         prefactor_second = _divide_zero_safe(
             knots_shifted_upmost - eval_point,
-            knots_shifted_upmost - jnp.roll(knots, -1)
+            knots_shifted_upmost - jnp.roll(knots, -1),
         )
         return (
-            prefactor_first[:-1] * evals +
-            prefactor_second[:-1] * jnp.roll(evals, -1)
+            prefactor_first[:-1] * evals
+            + prefactor_second[:-1] * jnp.roll(evals, -1)
         ), None
 
     eval_minus_knots = eval_point - knots  # Constant for every iteration
@@ -95,7 +99,7 @@ def evaluate_basis_element(
 
 def create_bspline_basis_element(
     order: int = 3,
-) -> Callable[[JaxScalar], jnp.ndarray]:
+) -> Callable[[ArrayLike], jnp.ndarray]:
     """Wrapper to create a B-spline basis element of given order centered at 0
 
     Args:
