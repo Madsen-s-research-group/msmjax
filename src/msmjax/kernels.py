@@ -11,11 +11,12 @@
         of Illinois at Urbana-Champaign, 2006.
 """
 
-from typing import Callable, NamedTuple
+from typing import Callable
 
 import jax
 import jax.numpy as jnp
 import numpy as onp
+from utils import _divide_zero_safe
 
 
 class SofteningFunctionOneOverR:
@@ -48,7 +49,9 @@ class SofteningFunctionOneOverR:
 
     def __call__(self, rho):
         return jnp.where(
-            rho < 1.0, jnp.polyval(self.coeffs, rho * rho - 1.0), 1.0 / rho
+            rho < 1.0,
+            jnp.polyval(self.coeffs, rho * rho - 1.0),
+            _divide_zero_safe(1.0, rho),
         )
 
 
@@ -118,8 +121,6 @@ if __name__ == "__main__":
     import os
 
     os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
-
-    import time
 
     import matplotlib.pyplot as plt
 
