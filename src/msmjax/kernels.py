@@ -16,7 +16,8 @@ from typing import Callable
 import jax
 import jax.numpy as jnp
 import numpy as onp
-from utils import _divide_zero_safe
+
+from msmjax.utils import _divide_zero_safe
 
 
 class SofteningFunctionOneOverR:
