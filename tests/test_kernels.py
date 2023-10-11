@@ -14,10 +14,10 @@ def level_zero_cutoff():
     return 2.5
 
 
-@pytest.fixture
-def partial_kernels(level_zero_cutoff):
+@pytest.fixture(params=[1, 2, 3])
+def partial_kernels(level_zero_cutoff, request):
     return split_one_over_r_kernel(
-        max_level=3,  # TODO: parametrize?
+        max_level=request.param,
         level_zero_cutoff=level_zero_cutoff,
         softening_function=SofteningFunctionOneOverR(
             order=4
