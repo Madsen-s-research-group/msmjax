@@ -41,3 +41,17 @@ def test_partial_kernels_summing_up_to_total(
     )
 
     assert jnp.allclose(summed, target)
+
+
+def test_partial_kernels_cutoffs(partial_kernels, level_zero_cutoff):
+    """Test if different partial kernels go to zero at the correct distance."""
+    for ell, k in enumerate(partial_kernels[:-1]):
+        cutoff = 2**ell * level_zero_cutoff
+        # The kernels have very small values already at distances
+        # appreciably below the cutoff. To pass the greater-zero check,
+        # we must therefore not get too close to the cutoff (at least for it
+        # to work with JAX's default single precision arithmetic).
+        r_below = jnp.arange(0.01 * level_zero_cutoff, 0.95 * cutoff, 0.01)
+        assert (k(r_below) > 0.0).all()
+        r_above = jnp.arange(cutoff, 2 * cutoff, 0.01)
+        assert jnp.allclose(k(r_above), 0.0)
