@@ -14,20 +14,53 @@ def level_zero_cutoff():
     return 2.5
 
 
+@pytest.fixture(params=[2, 4, 6])
+def softening_function(request):
+    return SofteningFunctionOneOverR(order=request.param)
+
+
 @pytest.fixture(params=[1, 2, 3])
-def partial_kernels(level_zero_cutoff, request):
+def partial_kernels(request, level_zero_cutoff, softening_function):
     return split_one_over_r_kernel(
         max_level=request.param,
         level_zero_cutoff=level_zero_cutoff,
-        softening_function=SofteningFunctionOneOverR(
-            order=4
-        ),  # TODO: (how to) make into fixture? Should order be parametrized?
+        softening_function=softening_function,
     )
 
 
-def test_partial_kernels_summing_up_to_total(
-    partial_kernels, level_zero_cutoff
-):
+def test_err_max_level_noninteger(softening_function):
+    """Test if kernel splitting errors for max level that is not integer."""
+    with pytest.raises(ValueError):
+        split_one_over_r_kernel(
+            max_level=2.0,
+            level_zero_cutoff=level_zero_cutoff,
+            softening_function=softening_function,
+        )
+
+
+@pytest.mark.parametrize("max_level", [-1, 0])
+def test_err_max_level_not_at_least_one(softening_function, max_level):
+    """Test if kernel splitting errors for max level not at least one."""
+    with pytest.raises(ValueError):
+        split_one_over_r_kernel(
+            max_level=max_level,
+            level_zero_cutoff=level_zero_cutoff,
+            softening_function=softening_function,
+        )
+
+
+@pytest.mark.parametrize("cutoff", [-2.5, 0.0])
+def test_err_cutoff_not_positive(softening_function, cutoff):
+    """Test if kernel splitting errors for cutoff that is zero or negative."""
+    with pytest.raises(ValueError):
+        split_one_over_r_kernel(
+            max_level=2,
+            level_zero_cutoff=cutoff,
+            softening_function=softening_function,
+        )
+
+
+def test_partial_kernels_sum_to_total(partial_kernels, level_zero_cutoff):
     """Test if the partial kernels sum up to the total kernel."""
     max_cutoff = 2 ** (len(partial_kernels) - 1) * level_zero_cutoff
     range_of_r = jnp.arange(
