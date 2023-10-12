@@ -74,7 +74,7 @@ def split_one_over_r_kernel(
         that represent the terms in the splitting of the interaction kernel.
         These have their respective cutoffs 'built in' already (in the sense
         that they evaluate to zero for distances beyond) and take their
-        arguments in the same length units that `level_zero_cutoff` was
+        arguments in the same length units that `fixture_level_zero_cutoff` was
         supplied in.
 
     Raises:
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     # print("- brute force:")
     # t1 = time.time()
     # for x in jnp.linspace(0.5, 1.0, 5001):
-    #     _ = softening_function(x).block_until_ready()
+    #     _ = fixture_softening_function(x).block_until_ready()
     # t2 = time.time()
     # print(t2 - t1)
     # print()
