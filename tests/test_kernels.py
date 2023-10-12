@@ -31,6 +31,28 @@ def fixture_partial_kernels(
     )
 
 
+def test_softening_function_derivatives(fixture_softening_function):
+    highest_deriv_order = min(2 * fixture_softening_function.order, 6)
+    derivatives = [fixture_softening_function]
+    # for k in range(1, 2 * fixture_softening_function.order + 1):
+    for k in range(1, highest_deriv_order + 1):
+        derivatives.append(jax.grad(derivatives[-1]))
+
+    # TODO: check at rho = 1
+    # Check the function itself
+    target = 1.0
+    assert jnp.isclose(derivatives[0](1.0), target)
+    # ...and its derivatives.
+    for k in range(1, fixture_softening_function.order):
+        target *= -k
+        assert jnp.isclose(derivatives[k](1.0), target)
+
+    # TODO: check at rho = 0
+    # for dgamma in derivatives[1 : highest_deriv_order + 1 : 2]:
+    for dgamma in derivatives[1::2]:
+        assert jnp.isclose(dgamma(0.0), 0.0)
+
+
 def test_err_max_level_noninteger(fixture_softening_function):
     """Test if kernel splitting errors for max level that is not integer."""
     with pytest.raises(ValueError):
