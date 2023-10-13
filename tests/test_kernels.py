@@ -48,7 +48,7 @@ def test_softening_function_continuity_at_one(fixture_softening_function):
     """Test if softener and its derivatives are continuous with 1/rho at rho=1.
 
     The condition being tested is a theoretical requirement on the softening
-    function proposed in Ref. [1] and is explained in Section II.A thereof.
+    function proposed in Ref. [1] and contained in Section II.A thereof.
     """
     # TODO: avoid duplication of setting up the derivative functions
     derivatives = [fixture_softening_function]
@@ -69,10 +69,10 @@ def test_softening_function_derivatives_at_zero(fixture_softening_function):
     """Test if the odd derivatives of the softener vanish at rho=0.
 
     The condition being tested is a theoretical requirement on the softening
-    function proposed in Ref. [1] and is explained in Section II.A thereof.
+    function proposed in Ref. [1] and contained in Section II.A thereof.
 
     Since this test involves derivatives of very high order, it is restricted
-    to lower-order softening functions only.
+    to only lower-order softening functions for run time reasons.
     """
     # TODO: avoid duplication of setting up the derivative functions
     derivatives = [fixture_softening_function]
@@ -90,10 +90,10 @@ def test_softening_function_high_deriv_vanishes_globally(
     """Test if (2*order)-th derivative of softening function vanishes globally.
 
     The condition being tested is a theoretical requirement on the softening
-    function proposed in Ref. [1] and is explained in Section II.A thereof.
+    function proposed in Ref. [1] and contained in Section II.A thereof.
 
     Since this test involves derivatives of very high order, it is restricted
-    to lower-order softening functions only.
+    to only lower-order softening functions for run time reasons.
     """
     # TODO: avoid duplication of setting up the derivative functions
     derivatives = [fixture_softening_function]
