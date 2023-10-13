@@ -33,6 +33,15 @@ def fixture_softening_function(request):
     return SofteningFunctionOneOverR(order=request.param)
 
 
+@pytest.fixture
+def fixture_softening_function_derivatives(fixture_softening_function):
+    derivatives = [fixture_softening_function]
+    for k in range(1, 2 * fixture_softening_function.order + 1):
+        derivatives.append(jax.grad(derivatives[-1]))
+
+    return derivatives
+
+
 @pytest.fixture(params=[1, 2, 3])
 def fixture_partial_kernels(
     request, fixture_level_zero_cutoff, fixture_softening_function
@@ -44,28 +53,29 @@ def fixture_partial_kernels(
     )
 
 
-def test_softening_function_continuity_at_one(fixture_softening_function):
+def test_softening_function_continuity_at_one(
+    fixture_softening_function, fixture_softening_function_derivatives
+):
     """Test if softener and its derivatives are continuous with 1/rho at rho=1.
 
     The condition being tested is a theoretical requirement on the softening
     function proposed in Ref. [1] and contained in Section II.A thereof.
     """
-    # TODO: avoid duplication of setting up the derivative functions
-    derivatives = [fixture_softening_function]
-    for k in range(1, 2 * fixture_softening_function.order + 1):
-        derivatives.append(jax.grad(derivatives[-1]))
-
     # Check the function itself
     target = 1.0
-    assert jnp.isclose(derivatives[0](1.0), target)
+    assert jnp.isclose(fixture_softening_function(1.0), target)
     # ...and its derivatives.
     for k in range(1, fixture_softening_function.order):
         target *= -k
-        assert jnp.isclose(derivatives[k](1.0), target)
+        assert jnp.isclose(
+            fixture_softening_function_derivatives[k](1.0), target
+        )
 
 
 @pytest.mark.parametrize("fixture_softening_function", [2, 4], indirect=True)
-def test_softening_function_derivatives_at_zero(fixture_softening_function):
+def test_softening_function_derivatives_at_zero(
+    fixture_softening_function, fixture_softening_function_derivatives
+):
     """Test if the odd derivatives of the softener vanish at rho=0.
 
     The condition being tested is a theoretical requirement on the softening
@@ -74,20 +84,15 @@ def test_softening_function_derivatives_at_zero(fixture_softening_function):
     Since this test involves derivatives of very high order, it is restricted
     to only lower-order softening functions for run time reasons.
     """
-    # TODO: avoid duplication of setting up the derivative functions
-    derivatives = [fixture_softening_function]
-    for k in range(1, 2 * fixture_softening_function.order + 1):
-        derivatives.append(jax.grad(derivatives[-1]))
-
-    for dgamma in derivatives[1::2]:
+    for dgamma in fixture_softening_function_derivatives[1::2]:
         assert jnp.isclose(dgamma(0.0), 0.0)
 
 
 @pytest.mark.parametrize("fixture_softening_function", [2, 4], indirect=True)
 def test_softening_function_high_deriv_vanishes_globally(
-    fixture_softening_function,
+    fixture_softening_function, fixture_softening_function_derivatives
 ):
-    """Test if (2*order)-th derivative of softening function vanishes globally.
+    """Test if (2*order)-th derivative of softener vanishes for rho < 1.
 
     The condition being tested is a theoretical requirement on the softening
     function proposed in Ref. [1] and contained in Section II.A thereof.
@@ -95,16 +100,13 @@ def test_softening_function_high_deriv_vanishes_globally(
     Since this test involves derivatives of very high order, it is restricted
     to only lower-order softening functions for run time reasons.
     """
-    # TODO: avoid duplication of setting up the derivative functions
-    derivatives = [fixture_softening_function]
-    for k in range(1, 2 * fixture_softening_function.order + 1):
-        derivatives.append(jax.grad(derivatives[-1]))
-
     range_of_rho = jnp.linspace(0.0, 0.99, 100)
     assert jnp.allclose(
-        jax.vmap(derivatives[2 * fixture_softening_function.order])(
-            range_of_rho
-        ),
+        jax.vmap(
+            fixture_softening_function_derivatives[
+                2 * fixture_softening_function.order
+            ]
+        )(range_of_rho),
         0.0,
     )
 
