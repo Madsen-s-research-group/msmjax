@@ -15,6 +15,8 @@ import os
 
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 
+from typing import Callable, List
+
 import jax
 import jax.numpy as jnp
 import numpy as onp
@@ -24,17 +26,19 @@ from msmjax.kernels import SofteningFunctionOneOverR, split_one_over_r_kernel
 
 
 @pytest.fixture
-def fixture_level_zero_cutoff():
+def fixture_level_zero_cutoff() -> float:
     return 2.5
 
 
 @pytest.fixture(params=[2, 4, 6])
-def fixture_softening_function(request):
+def fixture_softening_function(request) -> SofteningFunctionOneOverR:
     return SofteningFunctionOneOverR(order=request.param)
 
 
 @pytest.fixture
-def fixture_softening_function_derivatives(fixture_softening_function):
+def fixture_softening_function_derivatives(
+    fixture_softening_function,
+) -> List[Callable]:
     derivatives = [fixture_softening_function]
     for k in range(1, 2 * fixture_softening_function.order + 1):
         derivatives.append(jax.grad(derivatives[-1]))
@@ -45,12 +49,26 @@ def fixture_softening_function_derivatives(fixture_softening_function):
 @pytest.fixture(params=[1, 2, 3])
 def fixture_partial_kernels(
     request, fixture_level_zero_cutoff, fixture_softening_function
-):
+) -> List[Callable]:
     return split_one_over_r_kernel(
         max_level=request.param,
         level_zero_cutoff=fixture_level_zero_cutoff,
         softening_function=fixture_softening_function,
     )
+
+
+@pytest.mark.parametrize("order", [1.0, 1.5])
+def test_softening_function_err_order_noninteger(order):
+    """Test if initializing softening function fails for noninteger order."""
+    with pytest.raises(ValueError, match=r".*integer.*"):
+        SofteningFunctionOneOverR(order)
+
+
+@pytest.mark.parametrize("order", [-1, 0])
+def test_softening_function_err_order_too_low(order):
+    """Test if initializing softening function fails for too low order."""
+    with pytest.raises(ValueError, match=r".*one.*"):
+        SofteningFunctionOneOverR(order)
 
 
 def test_softening_function_continuity_at_one(
@@ -111,8 +129,8 @@ def test_softening_function_high_deriv_vanishes_globally(
     )
 
 
-def test_err_max_level_noninteger(fixture_softening_function):
-    """Test if kernel splitting errors for max level that is not integer."""
+def test_split_err_max_level_noninteger(fixture_softening_function):
+    """Test if kernel splitting fails for max level that is not integer."""
     with pytest.raises(ValueError):
         split_one_over_r_kernel(
             max_level=2.0,
@@ -122,8 +140,8 @@ def test_err_max_level_noninteger(fixture_softening_function):
 
 
 @pytest.mark.parametrize("max_level", [-1, 0])
-def test_err_max_level_not_at_least_one(fixture_softening_function, max_level):
-    """Test if kernel splitting errors for max level not at least one."""
+def test_split_err_max_level_too_low(fixture_softening_function, max_level):
+    """Test if kernel splitting fails for max level not at least one."""
     with pytest.raises(ValueError):
         split_one_over_r_kernel(
             max_level=max_level,
@@ -133,8 +151,8 @@ def test_err_max_level_not_at_least_one(fixture_softening_function, max_level):
 
 
 @pytest.mark.parametrize("cutoff", [-2.5, 0.0])
-def test_err_cutoff_not_positive(fixture_softening_function, cutoff):
-    """Test if kernel splitting errors for cutoff that is zero or negative."""
+def test_split_err_cutoff_not_positive(fixture_softening_function, cutoff):
+    """Test if kernel splitting fails for cutoff that is zero or negative."""
     with pytest.raises(ValueError):
         split_one_over_r_kernel(
             max_level=2,
@@ -143,7 +161,7 @@ def test_err_cutoff_not_positive(fixture_softening_function, cutoff):
         )
 
 
-def test_jit_compile_partial_kernels(
+def test_partial_kernels_jit_compilation(
     fixture_partial_kernels, fixture_level_zero_cutoff
 ):
     """Test if jit compilation does not fail."""

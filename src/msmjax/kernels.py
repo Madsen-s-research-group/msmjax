@@ -37,7 +37,7 @@ class SofteningFunctionOneOverR:
         if not isinstance(order, (int, onp.integer, jnp.integer)):
             raise ValueError("'order' must be an integer.")
         if order < 1:
-            raise ValueError("The expansion must have at least one term.")
+            raise ValueError("The expansion must at least be of order one.")
         # TODO: Should it be checked (at this point) whether the order is even?
         self.order = order
         last_coeff = 1.0
