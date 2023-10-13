@@ -57,6 +57,19 @@ def fixture_partial_kernels(
     )
 
 
+@pytest.fixture()
+def fixture_range_of_r(fixture_level_zero_cutoff, fixture_partial_kernels):
+    """Generate a range of distance values covering all relevant cutoffs."""
+    max_cutoff = (
+        2 ** (len(fixture_partial_kernels) - 1) * fixture_level_zero_cutoff
+    )
+    return jnp.arange(
+        0.01 * fixture_level_zero_cutoff,
+        2 * max_cutoff,
+        0.01,
+    )
+
+
 @pytest.mark.parametrize("order", [1.0, 1.5])
 def test_softening_function_err_order_noninteger(order):
     """Test if initializing softening function fails for noninteger order."""
@@ -162,39 +175,24 @@ def test_split_err_cutoff_not_positive(fixture_softening_function, cutoff):
 
 
 def test_partial_kernels_jit_compilation(
-    fixture_partial_kernels, fixture_level_zero_cutoff
+    fixture_partial_kernels, fixture_range_of_r
 ):
     """Test if jit compilation does not fail."""
-    # TODO: avoid this code duplication
-    max_cutoff = (
-        2 ** (len(fixture_partial_kernels) - 1) * fixture_level_zero_cutoff
-    )
-    range_of_r = jnp.arange(
-        0.01 * fixture_level_zero_cutoff,
-        2 * max_cutoff,
-        0.01,
-    )
     for kernelfunc in fixture_partial_kernels:
         jitted_kernelfunc = jax.jit(jax.vmap(kernelfunc))
-        jitted_kernelfunc(range_of_r)
+        jitted_kernelfunc(fixture_range_of_r)
 
 
 def test_partial_kernels_sum_to_total(
-    fixture_partial_kernels, fixture_level_zero_cutoff
+    fixture_partial_kernels, fixture_range_of_r
 ):
     """Test if the partial kernels sum up to the total kernel."""
-    # TODO: avoid this code duplication
-    max_cutoff = (
-        2 ** (len(fixture_partial_kernels) - 1) * fixture_level_zero_cutoff
-    )
-    range_of_r = jnp.arange(
-        0.01 * fixture_level_zero_cutoff,
-        2 * max_cutoff,
-        0.01,
-    )
-    target = 1.0 / range_of_r
+    target = 1.0 / fixture_range_of_r
     summed = jnp.sum(
-        jnp.vstack([k(range_of_r) for k in fixture_partial_kernels]), axis=0
+        jnp.vstack(
+            [kernel(fixture_range_of_r) for kernel in fixture_partial_kernels]
+        ),
+        axis=0,
     )
 
     assert jnp.allclose(summed, target)
