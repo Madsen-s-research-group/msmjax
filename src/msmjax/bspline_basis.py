@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """B-spline basis function implementation"""
 from functools import partial
-from typing import Callable
+from typing import Callable, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -72,7 +72,7 @@ def evaluate_basis_element(
     def de_boor_scan_step(
         evals: jnp.ndarray,
         current_order: jnp.ndarray,
-    ) -> tuple[jnp.ndarray, None]:
+    ) -> Tuple[jnp.ndarray, None]:
         prefactor_first = _divide_zero_safe(
             eval_minus_knots,
             jnp.roll(knots, -current_order) - knots,
