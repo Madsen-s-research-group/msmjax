@@ -25,7 +25,8 @@ def set_up_grid_axis(length: float, h: float, p: int, periodic: bool):
     if periodic:
         raise ValueError("Periodic axes not supported yet.")  # TODO
     else:
-        n_domain = int(onp.ceil(length / h))
+        # TODO: determination of number of grid points might not be numerically robust
+        n_domain = int(onp.ceil(length / h)) + 1
         n_total = n_domain + p
 
     def process_raw_indices_nonperiodic(raw_indices: npt.ArrayLike):
