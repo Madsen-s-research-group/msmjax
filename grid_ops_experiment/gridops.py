@@ -79,3 +79,46 @@ def create_anterpolation_function(grid: GridAxis1D):
         return gridcharge, indices, splinevals
 
     return anterpolate
+
+
+def make_restriction_function(
+    grid: GridAxis1D, grid_below: GridAxis1D, J: npt.ArrayLike
+) -> Callable:
+    J = jnp.asarray(J)
+
+    # TODO: How should p be passed/inferred? Probably should be an attribute of the grid?
+    p = len(J) - 1
+
+    def get_gridinds_one_below(m_raw: int) -> jax.Array:
+        n_raw_selected = (2 * m_raw - p // 2) + jnp.arange(p + 1)
+        n_selected = grid_below.process_raw_indices(n_raw_selected)
+        return n_selected
+
+    if grid.periodic:
+        raise  # TODO: not implemented
+    else:
+        # TODO: should this be handled by a generic grid function as well? (how?)
+        raw_ms = jnp.arange(grid.n_total) - p // 2
+        ms = grid.process_raw_indices(raw_ms)
+
+    def apply_restrict(gridcharge_below: jax.Array) -> jax.Array:
+        selected_ns = jax.vmap(get_gridinds_one_below)(raw_ms)
+        is_in_bounds = jnp.logical_and(
+            selected_ns >= 0, selected_ns < grid_below.n_total
+        )
+        intentionally_out_of_bounds_index = grid_below.n_total + 1
+        selected_ns = jnp.where(
+            is_in_bounds, selected_ns, intentionally_out_of_bounds_index
+        )
+        selected_gridcharges_below = gridcharge_below.at[selected_ns].get(
+            mode="fill", fill_value=0.0
+        )
+
+        gridcharge = jnp.zeros(grid.n_total)
+        gridcharge = gridcharge.at[ms].add(
+            (selected_gridcharges_below * J).sum(axis=1)
+        )
+
+        return gridcharge
+
+    return apply_restrict
