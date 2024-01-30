@@ -156,20 +156,27 @@ def make_prolongation_operator(
         # TODO: should this be handled by a generic grid function as well? (how?)
         raw_ms = jnp.arange(grid.n_total) - p // 2
         ms = grid.process_raw_indices(raw_ms)
+        if (p // 2) % 2 == 0:
+            slice_even = slice(0, None, 2)
+            slice_odd = slice(1, None, 2)
+        else:
+            slice_even = slice(1, None, 2)
+            slice_odd = slice(0, None, 2)
 
     def prolongate(gridarray_above: jax.Array) -> jax.Array:
         gridarray = jnp.zeros(grid.n_total)
 
-        ns_even_ms = jax.vmap(get_ns_one_above_even)(raw_ms[0::2])
-        ns_odd_ms = jax.vmap(get_ns_one_above_odd)(raw_ms[1::2])
+        # TODO: the identification of odd/even is wrong when p // 2 is odd!
+        ns_even_ms = jax.vmap(get_ns_one_above_even)(raw_ms[slice_even])
+        ns_odd_ms = jax.vmap(get_ns_one_above_odd)(raw_ms[slice_odd])
 
-        gridarray = gridarray.at[ms[0::2]].add(
+        gridarray = gridarray.at[ms[slice_even]].add(
             (
                 gridarray_above[ns_even_ms]
                 * J_zeroplus[jnp.abs(inds_into_J_even)]
             ).sum(axis=1)
         )
-        gridarray = gridarray.at[ms[1::2]].add(
+        gridarray = gridarray.at[ms[slice_odd]].add(
             (
                 gridarray_above[ns_odd_ms]
                 * J_zeroplus[jnp.abs(inds_into_J_odd)]
