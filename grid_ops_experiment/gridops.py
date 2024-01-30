@@ -90,6 +90,7 @@ def make_restriction_function(
     p = len(J) - 1
 
     def get_gridinds_one_below(m_raw: int) -> jax.Array:
+        # TODO: would 2 * m_raw + jnp.arange(-p // 2, p // 2 + 1) be better readable (assuming that is really correct and the same)?
         n_raw_selected = (2 * m_raw - p // 2) + jnp.arange(p + 1)
         n_selected = grid_below.process_raw_indices(n_raw_selected)
         return n_selected
@@ -122,3 +123,59 @@ def make_restriction_function(
         return gridcharge
 
     return apply_restrict
+
+
+def make_prolongation_operator(
+    grid: GridAxis1D, grid_above: GridAxis1D, p: int, J_zeroplus: npt.ArrayLike
+):
+    # TODO: J
+    J_zeroplus = jnp.asarray(J_zeroplus)
+
+    start_even = onp.ceil(onp.round(-p / 4, decimals=1)).astype(int)
+    end_even = onp.floor(onp.round(p / 4, decimals=1)).astype(int)
+    start_odd = onp.ceil(onp.round(0.5 - p / 4, decimals=1)).astype(int)
+    end_odd = onp.floor(onp.round(0.5 + p / 4, decimals=1)).astype(int)
+
+    displacements_even = jnp.arange(start_even, end_even + 1)
+    displacements_odd = jnp.arange(start_odd, end_odd + 1)
+
+    inds_into_J_even = -2 * displacements_even
+    inds_into_J_odd = 1 - 2 * displacements_odd
+
+    def get_ns_one_above_even(m_raw: int):
+        n_raw_selected = m_raw // 2 + displacements_even
+        return grid_above.process_raw_indices(n_raw_selected)
+
+    def get_ns_one_above_odd(m_raw: int):
+        n_raw_selected = m_raw // 2 + displacements_odd
+        return grid_above.process_raw_indices(n_raw_selected)
+
+    if grid.periodic:
+        raise  # TODO: not implemented
+    else:
+        # TODO: should this be handled by a generic grid function as well? (how?)
+        raw_ms = jnp.arange(grid.n_total) - p // 2
+        ms = grid.process_raw_indices(raw_ms)
+
+    def prolongate(gridarray_above: jax.Array) -> jax.Array:
+        gridarray = jnp.zeros(grid.n_total)
+
+        ns_even_ms = jax.vmap(get_ns_one_above_even)(raw_ms[0::2])
+        ns_odd_ms = jax.vmap(get_ns_one_above_odd)(raw_ms[1::2])
+
+        gridarray = gridarray.at[ms[0::2]].add(
+            (
+                gridarray_above[ns_even_ms]
+                * J_zeroplus[jnp.abs(inds_into_J_even)]
+            ).sum(axis=1)
+        )
+        gridarray = gridarray.at[ms[1::2]].add(
+            (
+                gridarray_above[ns_odd_ms]
+                * J_zeroplus[jnp.abs(inds_into_J_odd)]
+            ).sum(axis=1)
+        )
+
+        return gridarray
+
+    return prolongate
