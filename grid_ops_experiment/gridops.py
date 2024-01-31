@@ -108,8 +108,7 @@ def make_restriction_operator(
         is_in_bounds = jnp.logical_and(
             selected_ns >= 0, selected_ns < grid_source.n_total
         )
-        # TODO: without "+1" suffices
-        intentionally_out_of_bounds_index = grid_source.n_total + 1
+        intentionally_out_of_bounds_index = grid_source.n_total
         selected_ns = jnp.where(
             is_in_bounds, selected_ns, intentionally_out_of_bounds_index
         )
@@ -187,3 +186,43 @@ def make_prolongation_operator(
         return array_fine
 
     return prolongate
+
+
+def create_interaction_operator(
+    grid: GridAxis1D, kernelstencil: npt.ArrayLike
+):
+    kernelstencil = jnp.asarray(kernelstencil)
+    interaction_range = len(kernelstencil) // 2
+    gridsize = grid.n_total
+
+    def apply_interaction(inarray):
+        ms = jnp.arange(gridsize)
+        ns_within_kernel_range = ms[:, jnp.newaxis] + jnp.arange(
+            -interaction_range, interaction_range + 1
+        )
+
+        # TODO: The whole bounds-checking step could be put into a new,
+        #  more general, function for handling boundary conditions?
+        # TODO: Current implementation works for non-periodic case only.
+        is_in_bounds = jnp.logical_and(
+            ns_within_kernel_range >= 0, ns_within_kernel_range < gridsize
+        )
+        intentionally_out_of_bounds_index = gridsize
+        selected_ns = jnp.where(
+            is_in_bounds,
+            ns_within_kernel_range,
+            intentionally_out_of_bounds_index,
+        )
+
+        selected_values = inarray.at[selected_ns].get(
+            mode="fill", fill_value=0.0
+        )
+
+        outarray = jnp.zeros(gridsize)
+        outarray = outarray.at[ms].add(
+            (selected_values * kernelstencil).sum(axis=1)
+        )
+
+        return outarray
+
+    return apply_interaction
