@@ -108,6 +108,7 @@ def make_restriction_operator(
         is_in_bounds = jnp.logical_and(
             selected_ns >= 0, selected_ns < grid_source.n_total
         )
+        # TODO: without "+1" suffices
         intentionally_out_of_bounds_index = grid_source.n_total + 1
         selected_ns = jnp.where(
             is_in_bounds, selected_ns, intentionally_out_of_bounds_index
@@ -164,13 +165,6 @@ def make_prolongation_operator(
         ms = grid_target.process_raw_indices(raw_ms)
         slice_even = slice((p // 2) % 2, None, 2)
         slice_odd = slice(1 - (p // 2) % 2, None, 2)
-        # TODO
-        # if (p // 2) % 2 == 0:
-        #     slice_even = slice(0, None, 2)
-        #     slice_odd = slice(1, None, 2)
-        # else:
-        #     slice_even = slice(1, None, 2)
-        #     slice_odd = slice(0, None, 2)
 
     def prolongate(array_coarse: jax.Array) -> jax.Array:
         # TODO: the identification of odd/even is wrong when p // 2 is odd!
