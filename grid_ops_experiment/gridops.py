@@ -17,6 +17,8 @@ class GridAxis1D(NamedTuple):
     n_total: int
     process_raw_indices: Callable
     get_gridindices_and_splinevals: Callable
+    evaluate_bspline_basis_multi: Callable
+    evaluate_bspline_basis_gradient_multi: Callable
 
 
 def set_up_grid_axis(length: float, h: float, p: int, periodic: bool):
@@ -52,6 +54,7 @@ def set_up_grid_axis(length: float, h: float, p: int, periodic: bool):
         # TODO: should this return raw or processed indices?
         indices = process_raw_indices(raw_indices)
         if return_spline_gradients:
+            # TODO: if done like this, we are taking the derivative w.r.t. x / h instead of h!
             spline_outputs = jax.vmap(
                 jax.value_and_grad(bspline_basis_element)
             )(x_over_h - raw_indices)
@@ -62,6 +65,28 @@ def set_up_grid_axis(length: float, h: float, p: int, periodic: bool):
 
         return indices, spline_outputs
 
+    def evaluate_bspline_basis_for_one_particle(
+        x: float,
+    ) -> Tuple[jax.Array, jax.Array]:
+        x_over_h = x / h
+        reference_index = jnp.ceil(x_over_h).astype(int)
+        raw_indices = reference_index + jnp.arange(-p // 2, p // 2)
+        splinevals = jax.vmap(bspline_basis_element)(x_over_h - raw_indices)
+        # TODO: should this return raw or processed indices?
+        indices = process_raw_indices(raw_indices)
+
+        return splinevals, indices
+
+    def evaluate_bspline_basis_multi(positions: jax.Array) -> jax.Array:
+        return jax.vmap(evaluate_bspline_basis_for_one_particle)(positions)
+
+    def evaluate_bspline_basis_gradient_multi(
+        positions: jax.Array,
+    ) -> jax.Array:
+        return jax.vmap(
+            jax.jacfwd(evaluate_bspline_basis_for_one_particle, has_aux=True)
+        )(positions)
+
     return GridAxis1D(
         periodic=periodic,
         length=length,
@@ -70,6 +95,8 @@ def set_up_grid_axis(length: float, h: float, p: int, periodic: bool):
         n_total=n_total,
         process_raw_indices=process_raw_indices,
         get_gridindices_and_splinevals=get_gridindices_and_splinevals,
+        evaluate_bspline_basis_multi=evaluate_bspline_basis_multi,
+        evaluate_bspline_basis_gradient_multi=evaluate_bspline_basis_gradient_multi,
     )
 
 
@@ -328,14 +355,13 @@ def make_compute_U_oneplus(
     def compute_U_oneplus(
         positions: jax.Array, charges: jax.Array
     ) -> jax.Array:
-        (
-            gridpotential_level_one,
-            indices,
-            spline_outputs,
-        ) = compute_gridpotential_level_one(
+        gridpotential_level_one, _, _ = compute_gridpotential_level_one(
             positions=positions, charges=charges
         )
-        splinevals = spline_outputs[0]
+        # TODO: splinevals and indices from anterpolation could, in principle,
+        #  be reused here instead of recalculated;
+        #  but would this be any faster in practice?
+        splinevals, indices = grids[1].evaluate_bspline_basis_multi(positions)
         return (
             0.5
             * (
@@ -361,15 +387,16 @@ def make_compute_U_and_f_oneplus(
     def compute_U_and_f_oneplus(
         positions: jax.Array, charges: jax.Array
     ) -> Tuple[jax.Array, jax.Array]:
-        (
-            gridpotential_level_one,
-            indices,
-            spline_outputs,
-        ) = compute_gridpotential_level_one(
+        gridpotential_level_one, _, _ = compute_gridpotential_level_one(
             positions=positions, charges=charges
         )
-        splinevals = spline_outputs[0]
-        splinegrads = spline_outputs[1]
+        # TODO: splinevals, splinegrads and indices from anterpolation could,
+        #  in principle, be reused here instead of recalculated;
+        #  but would this be any faster in practice?
+        splinevals, indices = grids[1].evaluate_bspline_basis_multi(positions)
+        splinegrads, _ = grids[1].evaluate_bspline_basis_gradient_multi(
+            positions
+        )
         U_0 = (
             0.5
             * (
