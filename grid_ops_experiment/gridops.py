@@ -103,26 +103,14 @@ def set_up_grid_axis(length: float, h: float, p: int, periodic: bool):
 def create_anterpolation_function(
     grid: GridAxis1D, return_spline_gradients: bool = False
 ):
-    get_gridindices_and_splinevals = functools.partial(
-        grid.get_gridindices_and_splinevals,
-        return_spline_gradients=return_spline_gradients,
-    )
-    vmapped_get_gridindices_and_splinevals = jax.vmap(
-        get_gridindices_and_splinevals,
-    )
-
-    def anterpolate(positions_1d, charges):
-        indices, spline_outputs = vmapped_get_gridindices_and_splinevals(
-            positions_1d
-        )
-        splinevals = spline_outputs[0]
-
+    def anterpolate(positions_1d: jax.Array, charges: jax.Array) -> jax.Array:
+        splinevals, indices = grid.evaluate_bspline_basis_multi(positions_1d)
         gridcharge = jnp.zeros(grid.n_total)
         gridcharge = gridcharge.at[indices].add(
             charges[:, jnp.newaxis] * splinevals
         )
 
-        return gridcharge, indices, spline_outputs
+        return gridcharge
 
     return anterpolate
 
@@ -315,9 +303,9 @@ def create_compute_gridpotential_level_one(
 
     def compute_gridpotential_level_one(
         positions: jax.Array, charges: jax.Array
-    ) -> Tuple[jax.Array, jax.Array, jax.Array]:
+    ) -> jax.Array:
         # Compute lowest-level grid charge from particle positions and charges
-        gridcharge_level_one, indices, spline_outputs = anterpolate(
+        gridcharge_level_one = anterpolate(
             positions_1d=positions, charges=charges
         )
         gridcharges_all_levels = {1: gridcharge_level_one}
@@ -340,7 +328,7 @@ def create_compute_gridpotential_level_one(
                 gridcharges_all_levels[lvl]
             ) + prolongation_funcs[lvl](gridpotential)
 
-        return gridpotential, indices, spline_outputs
+        return gridpotential
 
     return compute_gridpotential_level_one
 
@@ -355,7 +343,7 @@ def make_compute_U_oneplus(
     def compute_U_oneplus(
         positions: jax.Array, charges: jax.Array
     ) -> jax.Array:
-        gridpotential_level_one, _, _ = compute_gridpotential_level_one(
+        gridpotential_level_one = compute_gridpotential_level_one(
             positions=positions, charges=charges
         )
         # TODO: splinevals and indices from anterpolation could, in principle,
@@ -387,7 +375,7 @@ def make_compute_U_and_f_oneplus(
     def compute_U_and_f_oneplus(
         positions: jax.Array, charges: jax.Array
     ) -> Tuple[jax.Array, jax.Array]:
-        gridpotential_level_one, _, _ = compute_gridpotential_level_one(
+        gridpotential_level_one = compute_gridpotential_level_one(
             positions=positions, charges=charges
         )
         # TODO: splinevals, splinegrads and indices from anterpolation could,
