@@ -15,6 +15,8 @@ class GridAxis1D(NamedTuple):
     n_domain: int
     n_total: int
     process_raw_indices: Callable
+    wrap_indices_if_periodic: Callable
+    wrap_or_invalidate_indices: Callable
     evaluate_bspline_basis_multi: Callable
     evaluate_bspline_basis_gradient_multi: Callable
 
@@ -24,7 +26,10 @@ def set_up_grid_axis(length: float, h: float, p: int, periodic: bool):
         raise ValueError("p must be even")
 
     if periodic:
-        raise ValueError("Periodic axes not supported yet.")  # TODO
+        # TODO
+        # raise ValueError("Periodic axes not supported yet.")
+        n_domain = int(onp.ceil(length / h))
+        n_total = n_domain
     else:
         # TODO: determination of number of grid points might not be numerically robust
         n_domain = int(onp.ceil(length / h)) + 1
@@ -43,6 +48,23 @@ def set_up_grid_axis(length: float, h: float, p: int, periodic: bool):
 
     bspline_basis_element = create_bspline_basis_element(order=p - 1)
 
+    def wrap_indices_if_periodic(indices):
+        if periodic:
+            return indices % n_total
+        else:
+            return indices
+
+    def wrap_or_invalidate_indices(indices):
+        if periodic:
+            return indices % n_total
+        else:
+            intentionally_out_of_bounds_index = n_total
+            # TODO: Checking only for negative indices would be enough, but is it less readable?
+            is_in_bounds = jnp.logical_and(indices >= 0, indices < n_total)
+            return jnp.where(
+                is_in_bounds, indices, intentionally_out_of_bounds_index
+            )
+
     def evaluate_bspline_basis_for_one_particle(
         x: float,
     ) -> Tuple[jax.Array, jax.Array]:
@@ -55,12 +77,14 @@ def set_up_grid_axis(length: float, h: float, p: int, periodic: bool):
 
         return splinevals, indices
 
-    def evaluate_bspline_basis_multi(positions: jax.Array) -> jax.Array:
+    def evaluate_bspline_basis_multi(
+        positions: jax.Array,
+    ) -> Tuple[jax.Array, jax.Array]:
         return jax.vmap(evaluate_bspline_basis_for_one_particle)(positions)
 
     def evaluate_bspline_basis_gradient_multi(
         positions: jax.Array,
-    ) -> jax.Array:
+    ) -> Tuple[jax.Array, jax.Array]:
         return jax.vmap(
             jax.jacfwd(evaluate_bspline_basis_for_one_particle, has_aux=True)
         )(positions)
@@ -72,14 +96,14 @@ def set_up_grid_axis(length: float, h: float, p: int, periodic: bool):
         n_domain=n_domain,
         n_total=n_total,
         process_raw_indices=process_raw_indices,
+        wrap_indices_if_periodic=wrap_indices_if_periodic,
+        wrap_or_invalidate_indices=wrap_or_invalidate_indices,
         evaluate_bspline_basis_multi=evaluate_bspline_basis_multi,
         evaluate_bspline_basis_gradient_multi=evaluate_bspline_basis_gradient_multi,
     )
 
 
-def create_anterpolation_function(
-    grid: GridAxis1D, return_spline_gradients: bool = False
-):
+def create_anterpolation_function(grid: GridAxis1D):
     def anterpolate(positions_1d: jax.Array, charges: jax.Array) -> jax.Array:
         splinevals, indices = grid.evaluate_bspline_basis_multi(positions_1d)
         gridcharge = jnp.zeros(grid.n_total)
@@ -177,7 +201,6 @@ def make_prolongation_operator(
         slice_odd = slice(1 - (p // 2) % 2, None, 2)
 
     def prolongate(array_coarse: jax.Array) -> jax.Array:
-        # TODO: the identification of odd/even is wrong when p // 2 is odd!
         ns_even_ms = jax.vmap(get_ns_one_above_even)(raw_ms[slice_even])
         ns_odd_ms = jax.vmap(get_ns_one_above_odd)(raw_ms[slice_odd])
 
@@ -243,16 +266,13 @@ def create_compute_gridpotential_level_one(
     grids,
     kernelstencils,
     J: npt.ArrayLike,
-    return_spline_gradients: bool = False,
 ) -> Callable:
     J_zeroplus = J[len(J) // 2 :]  # TODO: pass J or J_zeroplus?
     p = len(J) - 1  # TODO: How should p be passed/inferred?
 
     max_gridlevel = len(grids) - 1
 
-    anterpolate = create_anterpolation_function(
-        grids[1], return_spline_gradients=return_spline_gradients
-    )
+    anterpolate = create_anterpolation_function(grids[1])
 
     restriction_funcs = {}
     for lvl in range(2, max_gridlevel + 1):
@@ -346,7 +366,6 @@ def make_compute_U_and_f_oneplus(
         grids=grids,
         kernelstencils=kernelstencils,
         J=J,
-        return_spline_gradients=True,
     )
 
     def compute_U_and_f_oneplus(
