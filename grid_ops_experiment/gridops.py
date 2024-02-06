@@ -39,7 +39,8 @@ def set_up_grid_axis(length: float, h: float, p: int, periodic: bool):
         return raw_indices + p // 2
 
     def process_raw_indices_periodic(raw_indices: npt.ArrayLike):
-        raise  # TODO
+        # raise  # TODO
+        return raw_indices
 
     if periodic:
         process_raw_indices = process_raw_indices_periodic
@@ -73,7 +74,7 @@ def set_up_grid_axis(length: float, h: float, p: int, periodic: bool):
         raw_indices = reference_index + jnp.arange(-p // 2, p // 2)
         splinevals = jax.vmap(bspline_basis_element)(x_over_h - raw_indices)
         # TODO: should this return raw or processed indices?
-        indices = process_raw_indices(raw_indices)
+        indices = wrap_indices_if_periodic(process_raw_indices(raw_indices))
 
         return splinevals, indices
 
@@ -132,7 +133,9 @@ def make_restriction_operator(
         return n_selected
 
     if grid_target.periodic:
-        raise  # TODO: not implemented
+        # raise  # TODO: not implemented
+        raw_ms = jnp.arange(grid_target.n_total)
+        ms = grid_target.process_raw_indices(raw_ms)
     else:
         # TODO: should this be handled by a generic grid function as well? (how?)
         raw_ms = jnp.arange(grid_target.n_total) - p // 2
@@ -140,13 +143,7 @@ def make_restriction_operator(
 
     def restrict(array_fine: jax.Array) -> jax.Array:
         selected_ns = jax.vmap(get_gridinds_one_below)(raw_ms)
-        is_in_bounds = jnp.logical_and(
-            selected_ns >= 0, selected_ns < grid_source.n_total
-        )
-        intentionally_out_of_bounds_index = grid_source.n_total
-        selected_ns = jnp.where(
-            is_in_bounds, selected_ns, intentionally_out_of_bounds_index
-        )
+        selected_ns = grid_source.wrap_or_invalidate_indices(selected_ns)
         selected_gridcharges_below = array_fine.at[selected_ns].get(
             mode="fill", fill_value=0.0
         )
@@ -190,9 +187,11 @@ def make_prolongation_operator(
         return grid_source.process_raw_indices(n_raw_selected)
 
     if grid_target.periodic:
-        raise  # TODO: not implemented
-        # slice_even = slice(0, None, 2)
-        # slice_odd = slice(1, None, 2)
+        # raise  # TODO: not implemented
+        raw_ms = jnp.arange(grid_target.n_total)
+        ms = grid_target.process_raw_indices(raw_ms)
+        slice_even = slice(0, None, 2)
+        slice_odd = slice(1, None, 2)
     else:
         # TODO: should this be handled by a generic grid function as well? (how?)
         raw_ms = jnp.arange(grid_target.n_total) - p // 2
@@ -203,6 +202,9 @@ def make_prolongation_operator(
     def prolongate(array_coarse: jax.Array) -> jax.Array:
         ns_even_ms = jax.vmap(get_ns_one_above_even)(raw_ms[slice_even])
         ns_odd_ms = jax.vmap(get_ns_one_above_odd)(raw_ms[slice_odd])
+
+        ns_even_ms = grid_source.wrap_indices_if_periodic(ns_even_ms)
+        ns_odd_ms = grid_source.wrap_indices_if_periodic(ns_odd_ms)
 
         array_fine = jnp.zeros(grid_target.n_total)
         array_fine = array_fine.at[ms[slice_even]].add(
@@ -238,16 +240,7 @@ def create_interaction_operator(
         # TODO: The whole bounds-checking step could be put into a new,
         #  more general, function for handling boundary conditions?
         # TODO: Current implementation works for non-periodic case only.
-        is_in_bounds = jnp.logical_and(
-            ns_within_kernel_range >= 0, ns_within_kernel_range < gridsize
-        )
-        intentionally_out_of_bounds_index = gridsize
-        selected_ns = jnp.where(
-            is_in_bounds,
-            ns_within_kernel_range,
-            intentionally_out_of_bounds_index,
-        )
-
+        selected_ns = grid.wrap_or_invalidate_indices(ns_within_kernel_range)
         selected_values = inarray.at[selected_ns].get(
             mode="fill", fill_value=0.0
         )
