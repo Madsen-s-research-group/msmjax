@@ -8,10 +8,12 @@ import numpy.typing as npt
 from msmjax.bspline_basis import create_bspline_basis_element
 
 
-class GridAxis1D(NamedTuple):
-    periodic: bool
+class BSplineInterpolationGrid1D(NamedTuple):
     length: float
     h: float
+    p: int
+    J_zeroplus: npt.ArrayLike
+    periodic: bool
     n_domain: int
     n_total: int
     process_raw_indices: Callable
@@ -21,7 +23,9 @@ class GridAxis1D(NamedTuple):
     evaluate_bspline_basis_gradient_multi: Callable
 
 
-def set_up_grid_axis(length: float, h: float, p: int, periodic: bool):
+def set_up_grid_axis(
+    length: float, h: float, p: int, J_zeroplus: npt.ArrayLike, periodic: bool
+):
     if p % 2 != 0:
         raise ValueError("p must be even")
 
@@ -90,10 +94,12 @@ def set_up_grid_axis(length: float, h: float, p: int, periodic: bool):
             jax.jacfwd(evaluate_bspline_basis_for_one_particle, has_aux=True)
         )(positions)
 
-    return GridAxis1D(
+    return BSplineInterpolationGrid1D(
         periodic=periodic,
         length=length,
         h=h,
+        p=p,
+        J_zeroplus=J_zeroplus,
         n_domain=n_domain,
         n_total=n_total,
         process_raw_indices=process_raw_indices,
@@ -104,7 +110,7 @@ def set_up_grid_axis(length: float, h: float, p: int, periodic: bool):
     )
 
 
-def create_anterpolation_function(grid: GridAxis1D):
+def create_anterpolation_function(grid: BSplineInterpolationGrid1D):
     def anterpolate(positions_1d: jax.Array, charges: jax.Array) -> jax.Array:
         splinevals, indices = grid.evaluate_bspline_basis_multi(positions_1d)
         gridcharge = jnp.zeros(grid.n_total)
@@ -118,13 +124,14 @@ def create_anterpolation_function(grid: GridAxis1D):
 
 
 def make_restriction_operator(
-    grid_source: GridAxis1D, grid_target: GridAxis1D, J: npt.ArrayLike
+    grid_source: BSplineInterpolationGrid1D,
+    grid_target: BSplineInterpolationGrid1D,
 ) -> Callable:
-    # TODO: full J or J_zeroplus part only?
-    J = jnp.asarray(J)
-
-    # TODO: How should p be passed/inferred? Probably should be an attribute of the grid?
-    p = len(J) - 1
+    # TODO: check if both grids have same J and p?
+    # TODO: check if shape of J is compatible with p?
+    p = grid_source.p
+    J_zeroplus = grid_source.J_zeroplus
+    J = jnp.concatenate((J_zeroplus[::-1][:-1], J_zeroplus))
 
     def get_gridinds_one_below(m_raw: int) -> jax.Array:
         # TODO: would 2 * m_raw + jnp.arange(-p // 2, p // 2 + 1) be better readable (assuming that is really correct and the same)?
@@ -133,7 +140,6 @@ def make_restriction_operator(
         return n_selected
 
     if grid_target.periodic:
-        # raise  # TODO: not implemented
         raw_ms = jnp.arange(grid_target.n_total)
         ms = grid_target.process_raw_indices(raw_ms)
     else:
@@ -159,13 +165,13 @@ def make_restriction_operator(
 
 
 def make_prolongation_operator(
-    grid_source: GridAxis1D,
-    grid_target: GridAxis1D,
-    p: int,
-    J_zeroplus: npt.ArrayLike,
+    grid_source: BSplineInterpolationGrid1D,
+    grid_target: BSplineInterpolationGrid1D,
 ):
-    # TODO: J (pass full or only zeroplus part?)
-    J_zeroplus = jnp.asarray(J_zeroplus)
+    # TODO: check if both grids have same J and p?
+    # TODO: check if shape of J is compatible with p?
+    p = grid_source.p
+    J_zeroplus = jnp.asarray(grid_source.J_zeroplus)
 
     start_even = onp.ceil(onp.round(-p / 4, decimals=1)).astype(int)
     end_even = onp.floor(onp.round(p / 4, decimals=1)).astype(int)
@@ -187,7 +193,6 @@ def make_prolongation_operator(
         return grid_source.process_raw_indices(n_raw_selected)
 
     if grid_target.periodic:
-        # raise  # TODO: not implemented
         raw_ms = jnp.arange(grid_target.n_total)
         ms = grid_target.process_raw_indices(raw_ms)
         slice_even = slice(0, None, 2)
@@ -225,13 +230,13 @@ def make_prolongation_operator(
 
 
 def create_interaction_operator(
-    grid: GridAxis1D, kernelstencil: npt.ArrayLike
+    grid: BSplineInterpolationGrid1D, kernelstencil: npt.ArrayLike
 ):
     kernelstencil = jnp.asarray(kernelstencil)
     interaction_range = len(kernelstencil) // 2
     gridsize = grid.n_total
 
-    def apply_interaction(inarray):
+    def apply_interaction(in_array):
         ms = jnp.arange(gridsize)
         ns_within_kernel_range = ms[:, jnp.newaxis] + jnp.arange(
             -interaction_range, interaction_range + 1
@@ -241,7 +246,7 @@ def create_interaction_operator(
         #  more general, function for handling boundary conditions?
         # TODO: Current implementation works for non-periodic case only.
         selected_ns = grid.wrap_or_invalidate_indices(ns_within_kernel_range)
-        selected_values = inarray.at[selected_ns].get(
+        selected_values = in_array.at[selected_ns].get(
             mode="fill", fill_value=0.0
         )
 
@@ -255,13 +260,9 @@ def create_interaction_operator(
     return apply_interaction
 
 
-def create_compute_gridpotential_level_one(
-    grids,
-    kernelstencils,
-    J: npt.ArrayLike,
-) -> Callable:
-    J_zeroplus = J[len(J) // 2 :]  # TODO: pass J or J_zeroplus?
-    p = len(J) - 1  # TODO: How should p be passed/inferred?
+def create_compute_gridpotential_level_one(grids, kernelstencils) -> Callable:
+    # TODO: check if all grids have same J and p?
+    # TODO: check if shape of J is compatible with p?
 
     max_gridlevel = len(grids) - 1
 
@@ -270,17 +271,14 @@ def create_compute_gridpotential_level_one(
     restriction_funcs = {}
     for lvl in range(2, max_gridlevel + 1):
         restrict = make_restriction_operator(
-            grid_source=grids[lvl - 1], grid_target=grids[lvl], J=J
+            grid_source=grids[lvl - 1], grid_target=grids[lvl]
         )
         restriction_funcs[lvl] = restrict
 
     prolongation_funcs = {}
     for lvl in range(1, max_gridlevel):
         prolongate = make_prolongation_operator(
-            grid_source=grids[lvl + 1],
-            grid_target=grids[lvl],
-            J_zeroplus=J_zeroplus,
-            p=p,
+            grid_source=grids[lvl + 1], grid_target=grids[lvl]
         )
         prolongation_funcs[lvl] = prolongate
 
@@ -323,11 +321,9 @@ def create_compute_gridpotential_level_one(
     return compute_gridpotential_level_one
 
 
-def make_compute_U_oneplus(
-    grids, kernelstencils, J: npt.ArrayLike
-) -> Callable:
+def make_compute_U_oneplus(grids, kernelstencils) -> Callable:
     compute_gridpotential_level_one = create_compute_gridpotential_level_one(
-        grids=grids, kernelstencils=kernelstencils, J=J
+        grids=grids, kernelstencils=kernelstencils
     )
 
     def compute_U_oneplus(
@@ -349,13 +345,9 @@ def make_compute_U_oneplus(
     return compute_U_oneplus
 
 
-def make_compute_U_and_f_oneplus(
-    grids, kernelstencils, J: npt.ArrayLike
-) -> Callable:
+def make_compute_U_and_f_oneplus(grids, kernelstencils) -> Callable:
     compute_gridpotential_level_one = create_compute_gridpotential_level_one(
-        grids=grids,
-        kernelstencils=kernelstencils,
-        J=J,
+        grids=grids, kernelstencils=kernelstencils
     )
 
     def compute_U_and_f_oneplus(
