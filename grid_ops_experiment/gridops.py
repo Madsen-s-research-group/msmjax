@@ -340,13 +340,10 @@ def make_compute_U_oneplus(
         #  be reused here instead of recalculated;
         #  but would this be any faster in practice?
         splinevals, indices = grids[1].evaluate_bspline_basis_multi(positions)
-        return (
-            0.5
-            * (
-                charges[:, jnp.newaxis]
-                * gridpotential_level_one[indices]
-                * splinevals
-            ).sum()
+
+        return 0.5 * jnp.sum(
+            charges
+            * (gridpotential_level_one[indices] * splinevals).sum(axis=1)
         )
 
     return compute_U_oneplus
@@ -374,16 +371,12 @@ def make_compute_U_and_f_oneplus(
         splinegrads, _ = grids[1].evaluate_bspline_basis_gradient_multi(
             positions
         )
-        U_0 = (
-            0.5
-            * (
-                charges[:, jnp.newaxis]
-                * gridpotential_level_one[indices]
-                * splinevals
-            ).sum()
+        U_0 = 0.5 * jnp.sum(
+            charges
+            * (gridpotential_level_one[indices] * splinevals).sum(axis=1)
         )
-        f_0 = -charges * (gridpotential_level_one[indices] * splinegrads).sum(
-            axis=1
+        f_0 = -charges * jnp.sum(
+            gridpotential_level_one[indices] * splinegrads, axis=1
         )
 
         return U_0, f_0
