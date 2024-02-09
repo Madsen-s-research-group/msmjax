@@ -16,7 +16,8 @@ class BSplineInterpolationGrid1D(NamedTuple):
     periodic: bool
     n_domain: int
     n_total: int
-    process_raw_indices: Callable
+    to_raw_indices: Callable
+    from_raw_indices: Callable
     wrap_indices_if_periodic: Callable
     wrap_or_invalidate_indices: Callable
     evaluate_bspline_basis_multi: Callable
@@ -30,8 +31,6 @@ def set_up_grid_axis(
         raise ValueError("p must be even")
 
     if periodic:
-        # TODO
-        # raise ValueError("Periodic axes not supported yet.")
         n_domain = int(onp.ceil(length / h))
         n_total = n_domain
     else:
@@ -39,17 +38,17 @@ def set_up_grid_axis(
         n_domain = int(onp.ceil(length / h)) + 1
         n_total = n_domain + p
 
-    def process_raw_indices_nonperiodic(raw_indices: npt.ArrayLike):
-        return raw_indices + p // 2
+    def to_raw_indices(indices):
+        if periodic:
+            return indices
+        else:
+            return indices - p // 2
 
-    def process_raw_indices_periodic(raw_indices: npt.ArrayLike):
-        # raise  # TODO
-        return raw_indices
-
-    if periodic:
-        process_raw_indices = process_raw_indices_periodic
-    else:
-        process_raw_indices = process_raw_indices_nonperiodic
+    def from_raw_indices(indices):
+        if periodic:
+            return indices
+        else:
+            return indices + p // 2
 
     bspline_basis_element = create_bspline_basis_element(order=p - 1)
 
@@ -64,7 +63,7 @@ def set_up_grid_axis(
             return indices % n_total
         else:
             intentionally_out_of_bounds_index = n_total
-            # TODO: Checking only for negative indices would be enough, but is it less readable?
+            # TODO: Checking only for negative indices would be enough, but perhapss less readable?
             is_in_bounds = jnp.logical_and(indices >= 0, indices < n_total)
             return jnp.where(
                 is_in_bounds, indices, intentionally_out_of_bounds_index
@@ -74,11 +73,10 @@ def set_up_grid_axis(
         x: float,
     ) -> Tuple[jax.Array, jax.Array]:
         x_over_h = x / h
-        reference_index = jnp.ceil(x_over_h).astype(int)
-        raw_indices = reference_index + jnp.arange(-p // 2, p // 2)
+        raw_reference_index = jnp.ceil(x_over_h).astype(int)
+        raw_indices = raw_reference_index + jnp.arange(-p // 2, p // 2)
         splinevals = jax.vmap(bspline_basis_element)(x_over_h - raw_indices)
-        # TODO: should this return raw or processed indices?
-        indices = wrap_indices_if_periodic(process_raw_indices(raw_indices))
+        indices = wrap_indices_if_periodic(from_raw_indices(raw_indices))
 
         return splinevals, indices
 
@@ -102,7 +100,8 @@ def set_up_grid_axis(
         J_zeroplus=J_zeroplus,
         n_domain=n_domain,
         n_total=n_total,
-        process_raw_indices=process_raw_indices,
+        to_raw_indices=to_raw_indices,
+        from_raw_indices=from_raw_indices,
         wrap_indices_if_periodic=wrap_indices_if_periodic,
         wrap_or_invalidate_indices=wrap_or_invalidate_indices,
         evaluate_bspline_basis_multi=evaluate_bspline_basis_multi,
@@ -133,23 +132,19 @@ def make_restriction_operator(
     J_zeroplus = grid_source.J_zeroplus
     J = jnp.concatenate((J_zeroplus[::-1][:-1], J_zeroplus))
 
-    def get_gridinds_one_below(m_raw: int) -> jax.Array:
+    def get_gridinds_one_below(m: int) -> jax.Array:
         # TODO: would 2 * m_raw + jnp.arange(-p // 2, p // 2 + 1) be better readable (assuming that is really correct and the same)?
+        m_raw = grid_target.to_raw_indices(m)
         n_raw_selected = (2 * m_raw - p // 2) + jnp.arange(p + 1)
-        n_selected = grid_source.process_raw_indices(n_raw_selected)
+        n_selected = grid_source.from_raw_indices(n_raw_selected)
         return n_selected
 
-    if grid_target.periodic:
-        raw_ms = jnp.arange(grid_target.n_total)
-        ms = grid_target.process_raw_indices(raw_ms)
-    else:
-        # TODO: should this be handled by a generic grid function as well? (how?)
-        raw_ms = jnp.arange(grid_target.n_total) - p // 2
-        ms = grid_target.process_raw_indices(raw_ms)
+    ms = jnp.arange(grid_target.n_total)
 
     def restrict(array_fine: jax.Array) -> jax.Array:
-        selected_ns = jax.vmap(get_gridinds_one_below)(raw_ms)
+        selected_ns = jax.vmap(get_gridinds_one_below)(ms)
         selected_ns = grid_source.wrap_or_invalidate_indices(selected_ns)
+        # TODO: variable name should probably be more generic and not mention "grid charge" (?)
         selected_gridcharges_below = array_fine.at[selected_ns].get(
             mode="fill", fill_value=0.0
         )
@@ -184,33 +179,30 @@ def make_prolongation_operator(
     inds_into_J_even = -2 * dists_to_neighboring_ms_even
     inds_into_J_odd = 1 - 2 * dist_to_neighboring_ms_odd
 
-    def get_ns_one_above_even(m_raw: int):
+    def get_ns_one_above_even(m: int):
+        m_raw = grid_target.to_raw_indices(m)
         n_raw_selected = m_raw // 2 + dists_to_neighboring_ms_even
-        return grid_source.process_raw_indices(n_raw_selected)
+        n_selected = grid_source.from_raw_indices(n_raw_selected)
+        return grid_source.wrap_indices_if_periodic(n_selected)
 
-    def get_ns_one_above_odd(m_raw: int):
+    def get_ns_one_above_odd(m: int):
+        m_raw = grid_target.to_raw_indices(m)
         n_raw_selected = m_raw // 2 + dist_to_neighboring_ms_odd
-        return grid_source.process_raw_indices(n_raw_selected)
+        n_selected = grid_source.from_raw_indices(n_raw_selected)
+        return grid_source.wrap_indices_if_periodic(n_selected)
 
     if grid_target.periodic:
-        raw_ms = jnp.arange(grid_target.n_total)
-        ms = grid_target.process_raw_indices(raw_ms)
         slice_even = slice(0, None, 2)
         slice_odd = slice(1, None, 2)
     else:
-        # TODO: should this be handled by a generic grid function as well? (how?)
-        raw_ms = jnp.arange(grid_target.n_total) - p // 2
-        ms = grid_target.process_raw_indices(raw_ms)
         slice_even = slice((p // 2) % 2, None, 2)
         slice_odd = slice(1 - (p // 2) % 2, None, 2)
 
+    ms = jnp.arange(grid_target.n_total)
+
     def prolongate(array_coarse: jax.Array) -> jax.Array:
-        ns_even_ms = jax.vmap(get_ns_one_above_even)(raw_ms[slice_even])
-        ns_odd_ms = jax.vmap(get_ns_one_above_odd)(raw_ms[slice_odd])
-
-        ns_even_ms = grid_source.wrap_indices_if_periodic(ns_even_ms)
-        ns_odd_ms = grid_source.wrap_indices_if_periodic(ns_odd_ms)
-
+        ns_even_ms = jax.vmap(get_ns_one_above_even)(ms[slice_even])
+        ns_odd_ms = jax.vmap(get_ns_one_above_odd)(ms[slice_odd])
         array_fine = jnp.zeros(grid_target.n_total)
         array_fine = array_fine.at[ms[slice_even]].add(
             (
@@ -242,20 +234,17 @@ def create_interaction_operator(
             -interaction_range, interaction_range + 1
         )
 
-        # TODO: The whole bounds-checking step could be put into a new,
-        #  more general, function for handling boundary conditions?
-        # TODO: Current implementation works for non-periodic case only.
         selected_ns = grid.wrap_or_invalidate_indices(ns_within_kernel_range)
         selected_values = in_array.at[selected_ns].get(
             mode="fill", fill_value=0.0
         )
 
-        outarray = jnp.zeros(gridsize)
-        outarray = outarray.at[ms].add(
+        out_array = jnp.zeros(gridsize)
+        out_array = out_array.at[ms].add(
             (selected_values * kernelstencil).sum(axis=1)
         )
 
-        return outarray
+        return out_array
 
     return apply_interaction
 
