@@ -110,7 +110,10 @@ def set_up_grid_axis(
 
 
 def create_anterpolation_operator(grid: BSplineInterpolationGrid1D):
+    """Create a function that anterpolates charge from particles to grid"""
+
     def anterpolate(positions_1d: jax.Array, charges: jax.Array) -> jax.Array:
+        """Anterpolate charge from particles to grid"""
         splinevals, indices = grid.evaluate_bspline_basis_multi(positions_1d)
         gridcharge = jnp.zeros(grid.n_total)
         gridcharge = gridcharge.at[indices].add(
@@ -126,6 +129,7 @@ def create_restriction_operator(
     grid_source_fine: BSplineInterpolationGrid1D,
     grid_target_coarse: BSplineInterpolationGrid1D,
 ) -> Callable:
+    """Create function that performs the restriction operation"""
     # TODO: check if both grids have same J and p?
     # TODO: check if shape of J is compatible with p?
     p = grid_source_fine.p
@@ -133,6 +137,7 @@ def create_restriction_operator(
     J = jnp.concatenate((J_zeroplus[::-1][:-1], J_zeroplus))
 
     def get_neigbhor_inds_on_sourcegrid(idx_targetgrid: int) -> jax.Array:
+        """Get a target-grid index's neighbor indices on source grid."""
         raw_idx_targetgrid = grid_target_coarse.to_raw_indices(idx_targetgrid)
         raw_neighbor_inds_sourcegrid = 2 * raw_idx_targetgrid + jnp.arange(
             -p // 2, p // 2 + 1
@@ -152,7 +157,6 @@ def create_restriction_operator(
         neighbor_inds_sourcegrid = grid_source_fine.wrap_or_invalidate_indices(
             neighbor_inds_sourcegrid
         )
-        # TODO: variable name should probably be more generic and not mention "grid charge" (?)
         neighbor_values_sourcegrid = in_array_fine.at[
             neighbor_inds_sourcegrid
         ].get(mode="fill", fill_value=0.0)
@@ -251,11 +255,13 @@ def make_prolongation_operator(
 def create_interaction_operator(
     grid: BSplineInterpolationGrid1D, kernel_stencil: npt.ArrayLike
 ):
+    """Create a function that computes the interaction at one grid level"""
     kernel_stencil = jnp.asarray(kernel_stencil)
     interaction_range = len(kernel_stencil) // 2
     gridsize = grid.n_total
 
     def apply_interaction(in_array):
+        """Convolve array defined on grid with interaction kernel stencil."""
         inds = jnp.arange(gridsize)
         neighbor_inds = inds[:, jnp.newaxis] + jnp.arange(
             -interaction_range, interaction_range + 1
