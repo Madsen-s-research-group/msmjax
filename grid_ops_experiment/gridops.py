@@ -123,38 +123,45 @@ def create_anterpolation_function(grid: BSplineInterpolationGrid1D):
 
 
 def make_restriction_operator(
-    grid_source: BSplineInterpolationGrid1D,
-    grid_target: BSplineInterpolationGrid1D,
+    grid_source_fine: BSplineInterpolationGrid1D,
+    grid_target_coarse: BSplineInterpolationGrid1D,
 ) -> Callable:
     # TODO: check if both grids have same J and p?
     # TODO: check if shape of J is compatible with p?
-    p = grid_source.p
-    J_zeroplus = grid_source.J_zeroplus
+    p = grid_source_fine.p
+    J_zeroplus = grid_source_fine.J_zeroplus
     J = jnp.concatenate((J_zeroplus[::-1][:-1], J_zeroplus))
 
-    def get_gridinds_one_below(m: int) -> jax.Array:
-        # TODO: would 2 * m_raw + jnp.arange(-p // 2, p // 2 + 1) be better readable (assuming that is really correct and the same)?
-        m_raw = grid_target.to_raw_indices(m)
-        n_raw_selected = (2 * m_raw - p // 2) + jnp.arange(p + 1)
-        n_selected = grid_source.from_raw_indices(n_raw_selected)
-        return n_selected
+    def get_neigbhor_inds_on_sourcegrid(idx_targetgrid: int) -> jax.Array:
+        raw_idx_targetgrid = grid_target_coarse.to_raw_indices(idx_targetgrid)
+        raw_neighbor_inds_sourcegrid = 2 * raw_idx_targetgrid + jnp.arange(
+            -p // 2, p // 2 + 1
+        )
+        neighbor_inds_sourcegrid = grid_source_fine.from_raw_indices(
+            raw_neighbor_inds_sourcegrid
+        )
+        return neighbor_inds_sourcegrid
 
-    ms = jnp.arange(grid_target.n_total)
+    inds_targetgrid = jnp.arange(grid_target_coarse.n_total)
 
-    def restrict(array_fine: jax.Array) -> jax.Array:
-        selected_ns = jax.vmap(get_gridinds_one_below)(ms)
-        selected_ns = grid_source.wrap_or_invalidate_indices(selected_ns)
+    def restrict(in_array_fine: jax.Array) -> jax.Array:
+        neighbor_inds_sourcegrid = jax.vmap(get_neigbhor_inds_on_sourcegrid)(
+            inds_targetgrid
+        )
+        neighbor_inds_sourcegrid = grid_source_fine.wrap_or_invalidate_indices(
+            neighbor_inds_sourcegrid
+        )
         # TODO: variable name should probably be more generic and not mention "grid charge" (?)
-        selected_gridcharges_below = array_fine.at[selected_ns].get(
-            mode="fill", fill_value=0.0
+        neighbor_values_sourcegrid = in_array_fine.at[
+            neighbor_inds_sourcegrid
+        ].get(mode="fill", fill_value=0.0)
+
+        out_array_coarse = jnp.zeros(grid_target_coarse.n_total)
+        out_array_coarse = out_array_coarse.at[inds_targetgrid].add(
+            (neighbor_values_sourcegrid * J).sum(axis=1)
         )
 
-        array_coarse = jnp.zeros(grid_target.n_total)
-        array_coarse = array_coarse.at[ms].add(
-            (selected_gridcharges_below * J).sum(axis=1)
-        )
-
-        return array_coarse
+        return out_array_coarse
 
     return restrict
 
@@ -260,7 +267,7 @@ def create_compute_gridpotential_level_one(grids, kernelstencils) -> Callable:
     restriction_funcs = {}
     for lvl in range(2, max_gridlevel + 1):
         restrict = make_restriction_operator(
-            grid_source=grids[lvl - 1], grid_target=grids[lvl]
+            grid_source_fine=grids[lvl - 1], grid_target_coarse=grids[lvl]
         )
         restriction_funcs[lvl] = restrict
 
