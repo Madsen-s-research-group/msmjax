@@ -281,41 +281,33 @@ def create_interaction_operator(
 
 
 def create_compute_gridpotential_level_one(grids, kernel_stencils) -> Callable:
+    """Create closure for computing potential on lowest-level grid"""
     # TODO: check if all grids have same J and p?
     # TODO: check if shape of J is compatible with p?
-
-    max_gridlevel = len(grids) - 1
-
-    anterpolate = create_anterpolation_operator(grids[1])
-
-    restriction_funcs = {}
-    for lvl in range(2, max_gridlevel + 1):
-        restrict = create_restriction_operator(
-            grid_source_fine=grids[lvl - 1], grid_target_coarse=grids[lvl]
-        )
-        restriction_funcs[lvl] = restrict
-
-    prolongation_funcs = {}
-    for lvl in range(1, max_gridlevel):
-        prolongate = create_prolongation_operator(
-            grid_source_coarse=grids[lvl + 1], grid_target_fine=grids[lvl]
-        )
-        prolongation_funcs[lvl] = prolongate
-
-    interaction_funcs = {}
-    for lvl in range(1, max_gridlevel + 1):
-        interact = create_interaction_operator(
-            grid=grids[lvl], kernel_stencil=kernel_stencils[lvl]
-        )
-        interaction_funcs[lvl] = interact
+    (
+        restriction_funcs,
+        prolongation_funcs,
+        interaction_funcs,
+    ) = create_all_grid_to_grid_ops(grids, kernel_stencils)
 
     def compute_gridpotential_level_one(
-        positions: jax.Array, charges: jax.Array
+        gridcharge_level_one: jax.Array,
     ) -> jax.Array:
-        # Compute lowest-level grid charge from particle positions and charges
-        gridcharge_level_one = anterpolate(
-            positions_1d=positions, charges=charges
-        )
+        """Compute level-one grid potential from level-one grid charge.
+
+        Computes the quantity called e^{1+} in the reference article.
+
+        This corresponds to going from the lowest grid level on the left side
+        of ladder in Fig. 5 of the reference article all the way up to the
+        highest grid level and back down to the lowest grid level on the right.
+
+        Args:
+            gridcharge_level_one: Array of grid charge at lowest grid level
+
+        Returns:
+            Accumulated potential at the lowest grid level
+        """
+        max_gridlevel = len(grids) - 1
         gridcharges_all_levels = {1: gridcharge_level_one}
 
         # Go up ladder
@@ -327,8 +319,8 @@ def create_compute_gridpotential_level_one(grids, kernel_stencils) -> Callable:
 
         # Apply top-level interaction
         gridcharge_toplevel = gridcharges_all_levels[max_gridlevel]
-        interaction_toplevel = interaction_funcs[max_gridlevel]
-        gridpotential = interaction_toplevel(gridcharge_toplevel)
+        interact_toplevel = interaction_funcs[max_gridlevel]
+        gridpotential = interact_toplevel(gridcharge_toplevel)
 
         # Go down ladder
         for lvl in range(max_gridlevel - 1, 0, -1):
@@ -341,7 +333,37 @@ def create_compute_gridpotential_level_one(grids, kernel_stencils) -> Callable:
     return compute_gridpotential_level_one
 
 
+def create_all_grid_to_grid_ops(grids, kernel_stencils):
+    """Create all necessary functions that map from grids to grids"""
+    max_gridlevel = len(grids) - 1
+
+    restriction_funcs = [None] * (max_gridlevel + 1)
+    for lvl in range(2, max_gridlevel + 1):
+        restrict = create_restriction_operator(
+            grid_source_fine=grids[lvl - 1], grid_target_coarse=grids[lvl]
+        )
+        restriction_funcs[lvl] = restrict
+
+    prolongation_funcs = [None] * (max_gridlevel + 1)
+    for lvl in range(1, max_gridlevel):
+        prolongate = create_prolongation_operator(
+            grid_source_coarse=grids[lvl + 1], grid_target_fine=grids[lvl]
+        )
+        prolongation_funcs[lvl] = prolongate
+
+    interaction_funcs = [None] * (max_gridlevel + 1)
+    for lvl in range(1, max_gridlevel + 1):
+        interact = create_interaction_operator(
+            grid=grids[lvl], kernel_stencil=kernel_stencils[lvl]
+        )
+        interaction_funcs[lvl] = interact
+
+    return restriction_funcs, prolongation_funcs, interaction_funcs
+
+
 def create_compute_U_oneplus(grids, kernel_stencils) -> Callable:
+    """Create closure for computing grid contribution to the energy"""
+    anterpolate_level_one = create_anterpolation_operator(grids[1])
     compute_gridpotential_level_one = create_compute_gridpotential_level_one(
         grids=grids, kernel_stencils=kernel_stencils
     )
@@ -349,9 +371,13 @@ def create_compute_U_oneplus(grids, kernel_stencils) -> Callable:
     def compute_U_oneplus(
         positions: jax.Array, charges: jax.Array
     ) -> jax.Array:
-        gridpotential_level_one = compute_gridpotential_level_one(
-            positions=positions, charges=charges
+        gridcharge_level_one = anterpolate_level_one(
+            positions_1d=positions, charges=charges
         )
+        gridpotential_level_one = compute_gridpotential_level_one(
+            gridcharge_level_one
+        )
+
         # TODO: splinevals and indices from anterpolation could, in principle,
         #  be reused here instead of recalculated;
         #  but would this be any faster in practice?
@@ -366,6 +392,8 @@ def create_compute_U_oneplus(grids, kernel_stencils) -> Callable:
 
 
 def create_compute_U_and_f_oneplus(grids, kernel_stencils) -> Callable:
+    """Create closure for computing grid contribution to energy and forces"""
+    anterpolate_level_one = create_anterpolation_operator(grids[1])
     compute_gridpotential_level_one = create_compute_gridpotential_level_one(
         grids=grids, kernel_stencils=kernel_stencils
     )
@@ -373,9 +401,13 @@ def create_compute_U_and_f_oneplus(grids, kernel_stencils) -> Callable:
     def compute_U_and_f_oneplus(
         positions: jax.Array, charges: jax.Array
     ) -> Tuple[jax.Array, jax.Array]:
-        gridpotential_level_one = compute_gridpotential_level_one(
-            positions=positions, charges=charges
+        gridcharge_level_one = anterpolate_level_one(
+            positions_1d=positions, charges=charges
         )
+        gridpotential_level_one = compute_gridpotential_level_one(
+            gridcharge_level_one
+        )
+
         # TODO: splinevals, splinegrads and indices from anterpolation could,
         #  in principle, be reused here instead of recalculated;
         #  but would this be any faster in practice?
@@ -383,14 +415,14 @@ def create_compute_U_and_f_oneplus(grids, kernel_stencils) -> Callable:
         splinegrads, _ = grids[1].evaluate_bspline_basis_gradient_multi(
             positions
         )
-        U_0 = 0.5 * jnp.sum(
+        energy = 0.5 * jnp.sum(
             charges
             * (gridpotential_level_one[indices] * splinevals).sum(axis=1)
         )
-        f_0 = -charges * jnp.sum(
+        forces = -charges * jnp.sum(
             gridpotential_level_one[indices] * splinegrads, axis=1
         )
 
-        return U_0, f_0
+        return energy, forces
 
     return compute_U_and_f_oneplus
