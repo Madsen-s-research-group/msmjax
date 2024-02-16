@@ -171,7 +171,7 @@ def create_restriction_operator(
     return restrict
 
 
-def make_prolongation_operator(
+def create_prolongation_operator(
     grid_source_coarse: BSplineInterpolationGrid1D,
     grid_target_fine: BSplineInterpolationGrid1D,
 ):
@@ -297,7 +297,7 @@ def create_compute_gridpotential_level_one(grids, kernel_stencils) -> Callable:
 
     prolongation_funcs = {}
     for lvl in range(1, max_gridlevel):
-        prolongate = make_prolongation_operator(
+        prolongate = create_prolongation_operator(
             grid_source_coarse=grids[lvl + 1], grid_target_fine=grids[lvl]
         )
         prolongation_funcs[lvl] = prolongate
@@ -341,9 +341,9 @@ def create_compute_gridpotential_level_one(grids, kernel_stencils) -> Callable:
     return compute_gridpotential_level_one
 
 
-def make_compute_U_oneplus(grids, kernelstencils) -> Callable:
+def create_compute_U_oneplus(grids, kernel_stencils) -> Callable:
     compute_gridpotential_level_one = create_compute_gridpotential_level_one(
-        grids=grids, kernel_stencils=kernelstencils
+        grids=grids, kernel_stencils=kernel_stencils
     )
 
     def compute_U_oneplus(
@@ -365,9 +365,9 @@ def make_compute_U_oneplus(grids, kernelstencils) -> Callable:
     return compute_U_oneplus
 
 
-def make_compute_U_and_f_oneplus(grids, kernelstencils) -> Callable:
+def create_compute_U_and_f_oneplus(grids, kernel_stencils) -> Callable:
     compute_gridpotential_level_one = create_compute_gridpotential_level_one(
-        grids=grids, kernel_stencils=kernelstencils
+        grids=grids, kernel_stencils=kernel_stencils
     )
 
     def compute_U_and_f_oneplus(
