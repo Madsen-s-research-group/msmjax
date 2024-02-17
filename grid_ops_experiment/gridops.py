@@ -280,6 +280,34 @@ def create_interaction_operator(
     return apply_interaction
 
 
+def create_all_grid_to_grid_ops(grids, kernel_stencils):
+    """Create all necessary functions that map from grids to grids"""
+    max_gridlevel = len(grids) - 1
+
+    restriction_funcs = [None] * (max_gridlevel + 1)
+    for lvl in range(2, max_gridlevel + 1):
+        restrict = create_restriction_operator(
+            grid_source_fine=grids[lvl - 1], grid_target_coarse=grids[lvl]
+        )
+        restriction_funcs[lvl] = restrict
+
+    prolongation_funcs = [None] * (max_gridlevel + 1)
+    for lvl in range(1, max_gridlevel):
+        prolongate = create_prolongation_operator(
+            grid_source_coarse=grids[lvl + 1], grid_target_fine=grids[lvl]
+        )
+        prolongation_funcs[lvl] = prolongate
+
+    interaction_funcs = [None] * (max_gridlevel + 1)
+    for lvl in range(1, max_gridlevel + 1):
+        interact = create_interaction_operator(
+            grid=grids[lvl], kernel_stencil=kernel_stencils[lvl]
+        )
+        interaction_funcs[lvl] = interact
+
+    return restriction_funcs, prolongation_funcs, interaction_funcs
+
+
 def create_compute_gridpotential_level_one(grids, kernel_stencils) -> Callable:
     """Create closure for computing potential on lowest-level grid"""
     # TODO: check if all grids have same J and p?
@@ -331,34 +359,6 @@ def create_compute_gridpotential_level_one(grids, kernel_stencils) -> Callable:
         return gridpotential
 
     return compute_gridpotential_level_one
-
-
-def create_all_grid_to_grid_ops(grids, kernel_stencils):
-    """Create all necessary functions that map from grids to grids"""
-    max_gridlevel = len(grids) - 1
-
-    restriction_funcs = [None] * (max_gridlevel + 1)
-    for lvl in range(2, max_gridlevel + 1):
-        restrict = create_restriction_operator(
-            grid_source_fine=grids[lvl - 1], grid_target_coarse=grids[lvl]
-        )
-        restriction_funcs[lvl] = restrict
-
-    prolongation_funcs = [None] * (max_gridlevel + 1)
-    for lvl in range(1, max_gridlevel):
-        prolongate = create_prolongation_operator(
-            grid_source_coarse=grids[lvl + 1], grid_target_fine=grids[lvl]
-        )
-        prolongation_funcs[lvl] = prolongate
-
-    interaction_funcs = [None] * (max_gridlevel + 1)
-    for lvl in range(1, max_gridlevel + 1):
-        interact = create_interaction_operator(
-            grid=grids[lvl], kernel_stencil=kernel_stencils[lvl]
-        )
-        interaction_funcs[lvl] = interact
-
-    return restriction_funcs, prolongation_funcs, interaction_funcs
 
 
 def create_compute_U_oneplus(grids, kernel_stencils) -> Callable:
