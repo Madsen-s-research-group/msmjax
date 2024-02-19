@@ -20,6 +20,7 @@ class BSplineInterpolationGrid1D(NamedTuple):
     from_raw_indices: Callable
     wrap_indices_if_periodic: Callable
     wrap_or_invalidate_indices: Callable
+    evaluate_bspline_basis_for_one_particle: Callable
     evaluate_bspline_basis_multi: Callable
     evaluate_bspline_basis_gradient_multi: Callable
 
@@ -104,6 +105,7 @@ def set_up_grid_axis(
         from_raw_indices=from_raw_indices,
         wrap_indices_if_periodic=wrap_indices_if_periodic,
         wrap_or_invalidate_indices=wrap_or_invalidate_indices,
+        evaluate_bspline_basis_for_one_particle=evaluate_bspline_basis_for_one_particle,
         evaluate_bspline_basis_multi=evaluate_bspline_basis_multi,
         evaluate_bspline_basis_gradient_multi=evaluate_bspline_basis_gradient_multi,
     )
