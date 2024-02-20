@@ -1,4 +1,4 @@
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, List, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -111,13 +111,68 @@ def set_up_grid_axis(
     )
 
 
-def create_anterpolation_operator(grid: BSplineInterpolationAxis):
+def arbitrary_dim_outer(*xi: jax.Array) -> jax.Array:
+    """Compute the outer product of an arbitrary number of arrays"""
+    return jnp.prod(jnp.array(jnp.meshgrid(*xi, indexing="ij")), axis=0)
+
+
+def make_multi_indices_one_particle(*inds_individual_axes):
+    # TODO: name of this function and its arguments?
+    multi_inds = jnp.array(
+        [
+            arr.ravel()
+            for arr in jnp.meshgrid(*inds_individual_axes, indexing="ij")
+        ]
+    ).T
+    return multi_inds
+
+
+class BSplineInterpolationGrid:
+    def __init__(self, axes: List[BSplineInterpolationAxis]):
+        self.axes = axes
+
+        self.shape = tuple(g.n_total for g in axes)
+        self.ndim = len(axes)
+        self.size = int(onp.prod(self.shape))
+
+    def evaluate_bspline_basis_one_particle(self, position):
+        spline_outputs_one_particle = [
+            self.axes[idx_cartesian].evaluate_bspline_basis_for_one_particle(
+                position[idx_cartesian]
+            )
+            for idx_cartesian in range(self.ndim)
+        ]
+        vals_individual_axes = [spl[0] for spl in spline_outputs_one_particle]
+        inds_individual_axes = [spl[1] for spl in spline_outputs_one_particle]
+
+        vals_flat = arbitrary_dim_outer(*vals_individual_axes).ravel()
+
+        multi_inds = make_multi_indices_one_particle(*inds_individual_axes)
+        # TODO: mode?
+        inds_flat = jax.vmap(
+            lambda mi: jnp.ravel_multi_index(mi, dims=self.shape, mode="clip")
+        )(multi_inds)
+
+        return vals_flat, inds_flat
+
+    def evaluate_bspline_basis_multiparticle(self, positions):
+        return jax.vmap(self.evaluate_bspline_basis_one_particle)(positions)
+
+    def evaluate_bspline_basis_gradient_multiparticle(self, positions):
+        return jax.vmap(
+            jax.jacfwd(self.evaluate_bspline_basis_one_particle, has_aux=True)
+        )(positions)
+
+
+def create_anterpolation_operator(grid: BSplineInterpolationGrid):
     """Create a function that anterpolates charge from particles to grid"""
 
-    def anterpolate(positions_1d: jax.Array, charges: jax.Array) -> jax.Array:
+    def anterpolate(positions: jax.Array, charges: jax.Array) -> jax.Array:
         """Anterpolate charge from particles to grid"""
-        splinevals, indices = grid.evaluate_bspline_basis_multi(positions_1d)
-        gridcharge = jnp.zeros(grid.n_total)
+        splinevals, indices = grid.evaluate_bspline_basis_multiparticle(
+            positions
+        )
+        gridcharge = jnp.zeros(grid.size)
         gridcharge = gridcharge.at[indices].add(
             charges[:, jnp.newaxis] * splinevals
         )
