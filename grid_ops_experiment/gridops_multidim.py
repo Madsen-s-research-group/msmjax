@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Callable, List, NamedTuple, Tuple
 
 import jax
@@ -183,37 +184,61 @@ def create_anterpolation_operator(grid: BSplineInterpolationGrid):
 
 
 def create_restriction_operator(
-    grid_source_fine: BSplineInterpolationAxis,
-    grid_target_coarse: BSplineInterpolationAxis,
+    grid_source_fine: BSplineInterpolationGrid,
+    grid_target_coarse: BSplineInterpolationGrid,
 ) -> Callable:
     """Create function that performs the restriction operation"""
+    # TODO: should p and J be stored as attributes of grid instead of individual axes?
     # TODO: check if both grids have same J and p?
     # TODO: check if shape of J is compatible with p?
-    p = grid_source_fine.p
-    J_zeroplus = grid_source_fine.J_zeroplus
+    p = grid_source_fine.axes[0].p
+    J_zeroplus = grid_source_fine.axes[0].J_zeroplus
     J = jnp.concatenate((J_zeroplus[::-1][:-1], J_zeroplus))
 
-    def get_neigbhor_inds_on_sourcegrid(idx_targetgrid: int) -> jax.Array:
+    def get_neigbhor_inds_on_source_axis(
+        idx_target_axis: int,
+        axis_source_fine: BSplineInterpolationAxis,
+        axis_target_coarse: BSplineInterpolationAxis,
+    ) -> jax.Array:
         """Get a target-grid index's neighbor indices on source grid."""
-        raw_idx_targetgrid = grid_target_coarse.to_raw_indices(idx_targetgrid)
-        raw_neighbor_inds_sourcegrid = 2 * raw_idx_targetgrid + jnp.arange(
+        raw_idx_target_axis = axis_target_coarse.to_raw_indices(
+            idx_target_axis
+        )
+        raw_neighbor_inds_source_axis = 2 * raw_idx_target_axis + jnp.arange(
             -p // 2, p // 2 + 1
         )
-        neighbor_inds_sourcegrid = grid_source_fine.from_raw_indices(
-            raw_neighbor_inds_sourcegrid
+        neighbor_inds_sourcegrid = axis_source_fine.from_raw_indices(
+            raw_neighbor_inds_source_axis
         )
         return neighbor_inds_sourcegrid
 
-    inds_targetgrid = jnp.arange(grid_target_coarse.n_total)
+    boundary_condition_functions_source = [
+        ga.wrap_or_invalidate_indices for ga in grid_source_fine.axes
+    ]
+
+    vmapped_neighbor_functions_individual_axes = []
+    for idx_cartesian in range(grid_source_fine.ndim):
+        nb_fun = partial(
+            get_neigbhor_inds_on_source_axis,
+            axis_source_fine=grid_source_fine.axes[idx_cartesian],
+            axis_target_coarse=grid_target_coarse.axes[idx_cartesian],
+        )
+        vmapped_neighbor_functions_individual_axes.append(jax.vmap(nb_fun))
+
+    inds_target_individual_axes = [
+        jnp.arange(s) for s in grid_target_coarse.shape
+    ]
 
     def restrict(in_array_fine: jax.Array) -> jax.Array:
         """Restrict array defined on grid to the next-coarser (higher) grid"""
-        neighbor_inds_sourcegrid = jax.vmap(get_neigbhor_inds_on_sourcegrid)(
-            inds_targetgrid
-        )
-        neighbor_inds_sourcegrid = grid_source_fine.wrap_or_invalidate_indices(
-            neighbor_inds_sourcegrid
-        )
+        neighbor_inds_sourcegrid_individual_axes = [
+            boundary_fun(vmapped_nb_fun(inds))
+            for boundary_fun, vmapped_nb_fun, inds in zip(
+                boundary_condition_functions_source,
+                vmapped_neighbor_functions_individual_axes,
+                inds_target_individual_axes,
+            )
+        ]
         neighbor_values_sourcegrid = in_array_fine.at[
             neighbor_inds_sourcegrid
         ].get(mode="fill", fill_value=0.0)
