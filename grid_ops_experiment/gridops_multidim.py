@@ -249,11 +249,11 @@ def create_restriction_operator(
     def restrict(in_array_fine):
         out_array_coarse = in_array_fine
 
-        for idx_cartesian, restriction_func in enumerate(
+        for idx_cartesian, rf_1d in enumerate(
             restriction_funcs_1d_individual_axes
         ):
             out_array_coarse = jnp.apply_along_axis(
-                func1d=restriction_func,
+                func1d=rf_1d,
                 axis=idx_cartesian,
                 arr=out_array_coarse,
             )
@@ -263,14 +263,14 @@ def create_restriction_operator(
     return restrict
 
 
-def create_prolongation_operator(
-    grid_source_coarse: BSplineInterpolationAxis,
-    grid_target_fine: BSplineInterpolationAxis,
+def create_prolongation_operator_1d(
+    axis_source_coarse: BSplineInterpolationAxis,
+    axis_target_fine: BSplineInterpolationAxis,
 ):
     # TODO: check if both grids have same J and p?
     # TODO: check if shape of J is compatible with p?
-    p = grid_source_coarse.p
-    J_zeroplus = jnp.asarray(grid_source_coarse.J_zeroplus)
+    p = axis_source_coarse.p
+    J_zeroplus = jnp.asarray(axis_source_coarse.J_zeroplus)
 
     start_even = int(onp.ceil(onp.round(-p / 4, decimals=1)))
     end_even = int(onp.floor(onp.round(p / 4, decimals=1)))
@@ -284,38 +284,38 @@ def create_prolongation_operator(
 
     def get_neighbor_inds_on_sourcegrid_even(idx_target_even: int):
         """Get an even target-grid index's neighbor indices on source grid"""
-        raw_idx_target = grid_target_fine.to_raw_indices(idx_target_even)
+        raw_idx_target = axis_target_fine.to_raw_indices(idx_target_even)
         raw_neighbor_inds_source = (
             raw_idx_target // 2 + neighbor_distances_even_target_idx
         )
-        neighbor_inds_source = grid_source_coarse.from_raw_indices(
+        neighbor_inds_source = axis_source_coarse.from_raw_indices(
             raw_neighbor_inds_source
         )
-        return grid_source_coarse.wrap_indices_if_periodic(
+        return axis_source_coarse.wrap_indices_if_periodic(
             neighbor_inds_source
         )
 
     def get_neighbor_inds_on_sourcegrid_odd(idx_target_odd: int):
         """Get an odd target-grid index's neighbor indices on source grid"""
-        raw_idx_target = grid_target_fine.to_raw_indices(idx_target_odd)
+        raw_idx_target = axis_target_fine.to_raw_indices(idx_target_odd)
         raw_neighbor_inds_source = (
             raw_idx_target // 2 + neighbor_distances_odd_target_idx
         )
-        neighbor_inds_source = grid_source_coarse.from_raw_indices(
+        neighbor_inds_source = axis_source_coarse.from_raw_indices(
             raw_neighbor_inds_source
         )
-        return grid_source_coarse.wrap_indices_if_periodic(
+        return axis_source_coarse.wrap_indices_if_periodic(
             neighbor_inds_source
         )
 
-    if grid_target_fine.periodic:
+    if axis_target_fine.periodic:
         slice_even = slice(0, None, 2)
         slice_odd = slice(1, None, 2)
     else:
         slice_even = slice((p // 2) % 2, None, 2)
         slice_odd = slice(1 - (p // 2) % 2, None, 2)
 
-    inds_targetgrid = jnp.arange(grid_target_fine.n_total)
+    inds_targetgrid = jnp.arange(axis_target_fine.n_total)
 
     def prolongate(in_array_coarse: jax.Array) -> jax.Array:
         """Prolongate array defined on grid to the next-finer (lower) grid"""
@@ -325,7 +325,7 @@ def create_prolongation_operator(
         inds_source_odd = jax.vmap(get_neighbor_inds_on_sourcegrid_odd)(
             inds_targetgrid[slice_odd]
         )
-        out_array_fine = jnp.zeros(grid_target_fine.n_total)
+        out_array_fine = jnp.zeros(axis_target_fine.n_total)
         out_array_fine = out_array_fine.at[inds_targetgrid[slice_even]].add(
             (
                 in_array_coarse[inds_source_even]
@@ -342,6 +342,38 @@ def create_prolongation_operator(
         return out_array_fine
 
     return prolongate
+
+
+def create_prolongation_operator(
+    grid_source_coarse: BSplineInterpolationGrid,
+    grid_target_fine: BSplineInterpolationGrid,
+) -> Callable:
+    prolongation_funcs_1d_individual_axes = []
+    for axis_source, axis_target in zip(
+        grid_source_coarse.axes, grid_target_fine.axes
+    ):
+        prolongation_funcs_1d_individual_axes.append(
+            create_prolongation_operator_1d(
+                axis_source_coarse=axis_source,
+                axis_target_fine=axis_target,
+            )
+        )
+
+    def restrict(in_array_coarse):
+        out_array_fine = in_array_coarse
+
+        for idx_cartesian, pf_1d in enumerate(
+            prolongation_funcs_1d_individual_axes
+        ):
+            out_array_fine = jnp.apply_along_axis(
+                func1d=pf_1d,
+                axis=idx_cartesian,
+                arr=out_array_fine,
+            )
+
+        return out_array_fine
+
+    return restrict
 
 
 def create_interaction_operator(
@@ -385,8 +417,8 @@ def create_all_grid_to_grid_ops(grids, kernel_stencils):
 
     prolongation_funcs = [None] * (max_gridlevel + 1)
     for lvl in range(1, max_gridlevel):
-        prolongate = create_prolongation_operator(
-            grid_source_coarse=grids[lvl + 1], grid_target_fine=grids[lvl]
+        prolongate = create_prolongation_operator_1d(
+            axis_source_coarse=grids[lvl + 1], axis_target_fine=grids[lvl]
         )
         prolongation_funcs[lvl] = prolongate
 
