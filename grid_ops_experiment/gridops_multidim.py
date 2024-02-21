@@ -269,20 +269,6 @@ def create_restriction_operator(
         )
         return ravel_multi_inds_and_apply_bcs_source(multi_inds_source)
 
-    # TODO
-    # boundary_condition_functions_source = [
-    #     ga.wrap_or_invalidate_indices for ga in grid_source_fine.axes
-    # ]
-
-    # vmapped_neighbor_functions_individual_axes = []
-    # for idx_cartesian in range(grid_source_fine.ndim):
-    #     nb_fun = partial(
-    #         get_neighbor_inds_on_source_axis,
-    #         axis_source_fine=grid_source_fine.axes[idx_cartesian],
-    #         axis_target_coarse=grid_target_coarse.axes[idx_cartesian],
-    #     )
-    #     vmapped_neighbor_functions_individual_axes.append(jax.vmap(nb_fun))
-
     multi_inds_target = make_multi_indices_one_particle(
         *[jnp.arange(s) for s in grid_target_coarse.shape]
     )
@@ -291,15 +277,6 @@ def create_restriction_operator(
     )
 
     def restrict(in_array_fine: jax.Array) -> jax.Array:
-        """Restrict array defined on grid to the next-coarser (higher) grid"""
-        # neighbor_inds_sourcegrid_individual_axes = [
-        #     boundary_fun(vmapped_nb_fun(inds))
-        #     for boundary_fun, vmapped_nb_fun, inds in zip(
-        #         boundary_condition_functions_source,
-        #         vmapped_neighbor_functions_individual_axes,
-        #         inds_target_individual_axes,
-        #     )
-        # ]
         flat_neighbor_inds_all_target_gridpoints = jax.vmap(
             get_neighbor_flat_inds_one_gridpoint
         )(multi_inds_target)
@@ -573,3 +550,35 @@ def create_compute_U_and_f_oneplus(grids, kernel_stencils) -> Callable:
         return energy, forces
 
     return compute_U_and_f_oneplus
+
+
+def create_restriction_operator_alternative(
+    grid_source_fine: BSplineInterpolationGrid,
+    grid_target_coarse: BSplineInterpolationGrid,
+) -> Callable:
+    restriction_funcs_1d_individual_axes = []
+    for axis_source, axis_target in zip(
+        grid_source_fine.axes, grid_target_coarse.axes
+    ):
+        restriction_funcs_1d_individual_axes.append(
+            create_restriction_operator_1d(
+                grid_source_fine=axis_source,
+                grid_target_coarse=axis_target,
+            )
+        )
+
+    def restrict(in_array_fine):
+        out_array_coarse = in_array_fine
+
+        for idx_cartesian, restriction_func in enumerate(
+            restriction_funcs_1d_individual_axes
+        ):
+            out_array_coarse = jnp.apply_along_axis(
+                func1d=restriction_func,
+                axis=idx_cartesian,
+                arr=out_array_coarse,
+            )
+
+        return out_array_coarse
+
+    return restrict
