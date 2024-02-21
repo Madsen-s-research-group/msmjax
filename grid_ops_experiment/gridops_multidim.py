@@ -117,7 +117,7 @@ def arbitrary_dim_outer(*xi: jax.Array) -> jax.Array:
     return jnp.prod(jnp.array(jnp.meshgrid(*xi, indexing="ij")), axis=0)
 
 
-def make_multi_indices_one_particle(*inds_individual_axes):
+def multi_inds_from_individual_axes_inds(*inds_individual_axes):
     # TODO: name of this function and its arguments?
     multi_inds = jnp.array(
         [
@@ -148,7 +148,9 @@ class BSplineInterpolationGrid:
 
         vals_flat = arbitrary_dim_outer(*vals_individual_axes).ravel()
 
-        multi_inds = make_multi_indices_one_particle(*inds_individual_axes)
+        multi_inds = multi_inds_from_individual_axes_inds(
+            *inds_individual_axes
+        )
         # TODO: mode?
         inds_flat = jax.vmap(
             lambda mi: jnp.ravel_multi_index(mi, dims=self.shape, mode="clip")
@@ -163,34 +165,6 @@ class BSplineInterpolationGrid:
         return jax.vmap(
             jax.jacfwd(self.evaluate_bspline_basis_one_particle, has_aux=True)
         )(positions)
-
-
-def make_ravel_multi_inds_and_apply_bcs(grid: BSplineInterpolationGrid):
-    # TODO: should this be a method of BSplineInterpolationGrid?
-    is_not_periodic = ~jnp.array([ga.periodic for ga in grid.axes])
-    intentionally_out_of_bounds_index = grid.size
-
-    def ravel_multi_inds_and_apply_bcs(multi_indices: jax.Array) -> jax.Array:
-        # This handles periodic axes on its own due to the "wrap" keyword
-        flat_inds = jax.vmap(
-            lambda multi_index: jnp.ravel_multi_index(
-                multi_index, dims=grid.shape, mode="wrap"
-            )
-        )(multi_indices)
-        # Explicitly handle non-periodic axes
-        is_out_of_bounds = jnp.logical_or(
-            multi_indices < 0, multi_indices >= jnp.array(grid.shape)
-        )
-        is_out_of_bounds = (is_out_of_bounds & is_not_periodic).any(axis=1)
-        flat_inds = jnp.where(
-            is_out_of_bounds.ravel(),
-            intentionally_out_of_bounds_index,
-            flat_inds,
-        )
-
-        return flat_inds
-
-    return ravel_multi_inds_and_apply_bcs
 
 
 def create_anterpolation_operator(grid: BSplineInterpolationGrid):
@@ -211,84 +185,78 @@ def create_anterpolation_operator(grid: BSplineInterpolationGrid):
     return anterpolate
 
 
+def create_restriction_operator_1d(
+    axis_source_fine: BSplineInterpolationAxis,
+    axis_target_coarse: BSplineInterpolationAxis,
+) -> Callable:
+    """Create function that performs the restriction operation"""
+    # TODO: check if both grids have same J and p?
+    # TODO: check if shape of J is compatible with p?
+    p = axis_source_fine.p
+    J_zeroplus = axis_source_fine.J_zeroplus
+    J = jnp.concatenate((J_zeroplus[::-1][:-1], J_zeroplus))
+
+    def get_neigbhor_inds_on_sourcegrid(idx_targetgrid: int) -> jax.Array:
+        """Get a target-grid index's neighbor indices on source grid."""
+        raw_idx_targetgrid = axis_target_coarse.to_raw_indices(idx_targetgrid)
+        raw_neighbor_inds_sourcegrid = 2 * raw_idx_targetgrid + jnp.arange(
+            -p // 2, p // 2 + 1
+        )
+        neighbor_inds_sourcegrid = axis_source_fine.from_raw_indices(
+            raw_neighbor_inds_sourcegrid
+        )
+        return neighbor_inds_sourcegrid
+
+    inds_targetgrid = jnp.arange(axis_target_coarse.n_total)
+
+    def restrict(in_array_fine: jax.Array) -> jax.Array:
+        """Restrict array defined on grid to the next-coarser (higher) grid"""
+        neighbor_inds_sourcegrid = jax.vmap(get_neigbhor_inds_on_sourcegrid)(
+            inds_targetgrid
+        )
+        neighbor_inds_sourcegrid = axis_source_fine.wrap_or_invalidate_indices(
+            neighbor_inds_sourcegrid
+        )
+        neighbor_values_sourcegrid = in_array_fine.at[
+            neighbor_inds_sourcegrid
+        ].get(mode="fill", fill_value=0.0)
+
+        out_array_coarse = jnp.zeros(axis_target_coarse.n_total)
+        out_array_coarse = out_array_coarse.at[inds_targetgrid].add(
+            (neighbor_values_sourcegrid * J).sum(axis=1)
+        )
+
+        return out_array_coarse
+
+    return restrict
+
+
 def create_restriction_operator(
     grid_source_fine: BSplineInterpolationGrid,
     grid_target_coarse: BSplineInterpolationGrid,
 ) -> Callable:
-    """Create function that performs the restriction operation"""
-    # TODO: should p and J be stored as attributes of grid instead of individual axes?
-    # TODO: check if both grids have same J and p?
-    # TODO: check if shape of J is compatible with p?
-    p = grid_source_fine.axes[0].p
-    J_zeroplus = grid_source_fine.axes[0].J_zeroplus
-    J = jnp.concatenate((J_zeroplus[::-1][:-1], J_zeroplus))
-
-    J_multidim_flat = arbitrary_dim_outer(
-        *([J] * grid_source_fine.ndim)
-    ).ravel()
-
-    def get_neighbor_inds_on_source_axis(
-        idx_target_axis: int,
-        axis_source_fine: BSplineInterpolationAxis,
-        axis_target_coarse: BSplineInterpolationAxis,
-    ) -> jax.Array:
-        """Get a target-grid index's neighbor indices on source grid."""
-        raw_idx_target_axis = axis_target_coarse.to_raw_indices(
-            idx_target_axis
-        )
-        raw_neighbor_inds_source_axis = 2 * raw_idx_target_axis + jnp.arange(
-            -p // 2, p // 2 + 1
-        )
-        neighbor_inds_sourcegrid = axis_source_fine.from_raw_indices(
-            raw_neighbor_inds_source_axis
-        )
-        return neighbor_inds_sourcegrid
-
-    neighbor_functions_individual_axes = []
-    for idx_cartesian in range(grid_source_fine.ndim):
-        nb_fun = partial(
-            get_neighbor_inds_on_source_axis,
-            axis_source_fine=grid_source_fine.axes[idx_cartesian],
-            axis_target_coarse=grid_target_coarse.axes[idx_cartesian],
-        )
-        neighbor_functions_individual_axes.append(nb_fun)
-
-    ravel_multi_inds_and_apply_bcs_source = (
-        make_ravel_multi_inds_and_apply_bcs(grid_source_fine)
-    )
-
-    def get_neighbor_flat_inds_one_gridpoint(multi_idx_target):
-        neighbor_inds_source_individual_axes = [
-            nb_fun(idx)
-            for nb_fun, idx in zip(
-                neighbor_functions_individual_axes, multi_idx_target
+    restriction_funcs_1d_individual_axes = []
+    for axis_source, axis_target in zip(
+        grid_source_fine.axes, grid_target_coarse.axes
+    ):
+        restriction_funcs_1d_individual_axes.append(
+            create_restriction_operator_1d(
+                axis_source_fine=axis_source,
+                axis_target_coarse=axis_target,
             )
-        ]
-        multi_inds_source = make_multi_indices_one_particle(
-            *neighbor_inds_source_individual_axes
         )
-        return ravel_multi_inds_and_apply_bcs_source(multi_inds_source)
 
-    multi_inds_target = make_multi_indices_one_particle(
-        *[jnp.arange(s) for s in grid_target_coarse.shape]
-    )
-    flat_inds_target = make_ravel_multi_inds_and_apply_bcs(grid_target_coarse)(
-        multi_inds_target
-    )
+    def restrict(in_array_fine):
+        out_array_coarse = in_array_fine
 
-    def restrict(in_array_fine: jax.Array) -> jax.Array:
-        flat_neighbor_inds_all_target_gridpoints = jax.vmap(
-            get_neighbor_flat_inds_one_gridpoint
-        )(multi_inds_target)
-
-        neighbor_values_sourcegrid = in_array_fine.at[
-            flat_neighbor_inds_all_target_gridpoints
-        ].get(mode="fill", fill_value=0.0)
-
-        out_array_coarse = jnp.zeros(grid_target_coarse.size)
-        out_array_coarse = out_array_coarse.at[flat_inds_target].add(
-            (neighbor_values_sourcegrid * J_multidim_flat).sum(axis=1)
-        )
+        for idx_cartesian, restriction_func in enumerate(
+            restriction_funcs_1d_individual_axes
+        ):
+            out_array_coarse = jnp.apply_along_axis(
+                func1d=restriction_func,
+                axis=idx_cartesian,
+                arr=out_array_coarse,
+            )
 
         return out_array_coarse
 
@@ -550,35 +518,3 @@ def create_compute_U_and_f_oneplus(grids, kernel_stencils) -> Callable:
         return energy, forces
 
     return compute_U_and_f_oneplus
-
-
-def create_restriction_operator_alternative(
-    grid_source_fine: BSplineInterpolationGrid,
-    grid_target_coarse: BSplineInterpolationGrid,
-) -> Callable:
-    restriction_funcs_1d_individual_axes = []
-    for axis_source, axis_target in zip(
-        grid_source_fine.axes, grid_target_coarse.axes
-    ):
-        restriction_funcs_1d_individual_axes.append(
-            create_restriction_operator_1d(
-                grid_source_fine=axis_source,
-                grid_target_coarse=axis_target,
-            )
-        )
-
-    def restrict(in_array_fine):
-        out_array_coarse = in_array_fine
-
-        for idx_cartesian, restriction_func in enumerate(
-            restriction_funcs_1d_individual_axes
-        ):
-            out_array_coarse = jnp.apply_along_axis(
-                func1d=restriction_func,
-                axis=idx_cartesian,
-                arr=out_array_coarse,
-            )
-
-        return out_array_coarse
-
-    return restrict
