@@ -167,7 +167,6 @@ class BSplineInterpolationGrid:
 
 def make_ravel_multi_inds_and_apply_bcs(grid: BSplineInterpolationGrid):
     # TODO: should this be a method of BSplineInterpolationGrid?
-    shape = jnp.array(grid.shape)
     is_not_periodic = ~jnp.array([ga.periodic for ga in grid.axes])
     intentionally_out_of_bounds_index = grid.size
 
@@ -175,12 +174,12 @@ def make_ravel_multi_inds_and_apply_bcs(grid: BSplineInterpolationGrid):
         # This handles periodic axes on its own due to the "wrap" keyword
         flat_inds = jax.vmap(
             lambda multi_index: jnp.ravel_multi_index(
-                multi_index, dims=shape, mode="wrap"
+                multi_index, dims=grid.shape, mode="wrap"
             )
         )(multi_indices)
         # Explicitly handle non-periodic axes
         is_out_of_bounds = jnp.logical_or(
-            multi_indices < 0, multi_indices >= shape
+            multi_indices < 0, multi_indices >= jnp.array(grid.shape)
         )
         is_out_of_bounds = (is_out_of_bounds & is_not_periodic).any(axis=1)
         flat_inds = jnp.where(
