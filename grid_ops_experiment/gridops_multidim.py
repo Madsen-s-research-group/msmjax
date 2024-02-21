@@ -165,6 +165,35 @@ class BSplineInterpolationGrid:
         )(positions)
 
 
+def make_ravel_multi_inds_and_apply_bcs(grid: BSplineInterpolationGrid):
+    # TODO: should this be a method of BSplineInterpolationGrid?
+    shape = jnp.array(grid.shape)
+    is_not_periodic = ~jnp.array([ga.periodic for ga in grid.axes])
+    intentionally_out_of_bounds_index = grid.size
+
+    def ravel_multi_inds_and_apply_bcs(multi_indices: jax.Array) -> jax.Array:
+        # This handles periodic axes on its own due to the "wrap" keyword
+        flat_inds = jax.vmap(
+            lambda multi_index: jnp.ravel_multi_index(
+                multi_index, dims=shape, mode="wrap"
+            )
+        )(multi_indices)
+        # Explicitly handle non-periodic axes
+        is_out_of_bounds = jnp.logical_or(
+            multi_indices < 0, multi_indices >= shape
+        )
+        is_out_of_bounds = (is_out_of_bounds & is_not_periodic).any(axis=1)
+        flat_inds = jnp.where(
+            is_out_of_bounds.ravel(),
+            intentionally_out_of_bounds_index,
+            flat_inds,
+        )
+
+        return flat_inds
+
+    return ravel_multi_inds_and_apply_bcs
+
+
 def create_anterpolation_operator(grid: BSplineInterpolationGrid):
     """Create a function that anterpolates charge from particles to grid"""
 
@@ -195,7 +224,11 @@ def create_restriction_operator(
     J_zeroplus = grid_source_fine.axes[0].J_zeroplus
     J = jnp.concatenate((J_zeroplus[::-1][:-1], J_zeroplus))
 
-    def get_neigbhor_inds_on_source_axis(
+    J_multidim_flat = arbitrary_dim_outer(
+        *([J] * grid_source_fine.ndim)
+    ).ravel()
+
+    def get_neighbor_inds_on_source_axis(
         idx_target_axis: int,
         axis_source_fine: BSplineInterpolationAxis,
         axis_target_coarse: BSplineInterpolationAxis,
@@ -212,40 +245,73 @@ def create_restriction_operator(
         )
         return neighbor_inds_sourcegrid
 
-    boundary_condition_functions_source = [
-        ga.wrap_or_invalidate_indices for ga in grid_source_fine.axes
-    ]
-
-    vmapped_neighbor_functions_individual_axes = []
+    neighbor_functions_individual_axes = []
     for idx_cartesian in range(grid_source_fine.ndim):
         nb_fun = partial(
-            get_neigbhor_inds_on_source_axis,
+            get_neighbor_inds_on_source_axis,
             axis_source_fine=grid_source_fine.axes[idx_cartesian],
             axis_target_coarse=grid_target_coarse.axes[idx_cartesian],
         )
-        vmapped_neighbor_functions_individual_axes.append(jax.vmap(nb_fun))
+        neighbor_functions_individual_axes.append(nb_fun)
 
-    inds_target_individual_axes = [
-        jnp.arange(s) for s in grid_target_coarse.shape
-    ]
+    ravel_multi_inds_and_apply_bcs_source = (
+        make_ravel_multi_inds_and_apply_bcs(grid_source_fine)
+    )
+
+    def get_neighbor_flat_inds_one_gridpoint(multi_idx_target):
+        neighbor_inds_source_individual_axes = [
+            nb_fun(idx)
+            for nb_fun, idx in zip(
+                neighbor_functions_individual_axes, multi_idx_target
+            )
+        ]
+        multi_inds_source = make_multi_indices_one_particle(
+            *neighbor_inds_source_individual_axes
+        )
+        return ravel_multi_inds_and_apply_bcs_source(multi_inds_source)
+
+    # TODO
+    # boundary_condition_functions_source = [
+    #     ga.wrap_or_invalidate_indices for ga in grid_source_fine.axes
+    # ]
+
+    # vmapped_neighbor_functions_individual_axes = []
+    # for idx_cartesian in range(grid_source_fine.ndim):
+    #     nb_fun = partial(
+    #         get_neighbor_inds_on_source_axis,
+    #         axis_source_fine=grid_source_fine.axes[idx_cartesian],
+    #         axis_target_coarse=grid_target_coarse.axes[idx_cartesian],
+    #     )
+    #     vmapped_neighbor_functions_individual_axes.append(jax.vmap(nb_fun))
+
+    multi_inds_target = make_multi_indices_one_particle(
+        *[jnp.arange(s) for s in grid_target_coarse.shape]
+    )
+    flat_inds_target = make_ravel_multi_inds_and_apply_bcs(grid_target_coarse)(
+        multi_inds_target
+    )
 
     def restrict(in_array_fine: jax.Array) -> jax.Array:
         """Restrict array defined on grid to the next-coarser (higher) grid"""
-        neighbor_inds_sourcegrid_individual_axes = [
-            boundary_fun(vmapped_nb_fun(inds))
-            for boundary_fun, vmapped_nb_fun, inds in zip(
-                boundary_condition_functions_source,
-                vmapped_neighbor_functions_individual_axes,
-                inds_target_individual_axes,
-            )
-        ]
+        # neighbor_inds_sourcegrid_individual_axes = [
+        #     boundary_fun(vmapped_nb_fun(inds))
+        #     for boundary_fun, vmapped_nb_fun, inds in zip(
+        #         boundary_condition_functions_source,
+        #         vmapped_neighbor_functions_individual_axes,
+        #         inds_target_individual_axes,
+        #     )
+        # ]
+        flat_neighbor_inds_all_target_gridpoints = jax.vmap(
+            get_neighbor_flat_inds_one_gridpoint
+        )(multi_inds_target)
+
         neighbor_values_sourcegrid = in_array_fine.at[
-            neighbor_inds_sourcegrid
+            flat_neighbor_inds_all_target_gridpoints
         ].get(mode="fill", fill_value=0.0)
 
-        out_array_coarse = jnp.zeros(grid_target_coarse.n_total)
-        out_array_coarse = out_array_coarse.at[inds_targetgrid].add(
-            (neighbor_values_sourcegrid * J).sum(axis=1)
+        out_array_coarse = jnp.zeros(grid_target_coarse.size)
+        out_array_coarse = out_array_coarse.at[flat_inds_target].add(
+            (neighbor_values_sourcegrid * J_multidim_flat).sum(axis=1)
         )
 
         return out_array_coarse
