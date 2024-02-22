@@ -1,5 +1,4 @@
-from functools import partial
-from typing import Callable, List, NamedTuple, Tuple
+from typing import Callable, Iterable, List, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -222,6 +221,7 @@ def create_restriction_operator_1d(
         ].get(mode="fill", fill_value=0.0)
 
         out_array_coarse = jnp.zeros(axis_target_coarse.n_total)
+        # TODO: use `set` instead of `add`?
         out_array_coarse = out_array_coarse.at[inds_targetgrid].add(
             (neighbor_values_sourcegrid * J).sum(axis=1)
         )
@@ -326,12 +326,14 @@ def create_prolongation_operator_1d(
             inds_targetgrid[slice_odd]
         )
         out_array_fine = jnp.zeros(axis_target_fine.n_total)
+        # TODO: use `set` instead of `add`?
         out_array_fine = out_array_fine.at[inds_targetgrid[slice_even]].add(
             (
                 in_array_coarse[inds_source_even]
                 * J_zeroplus[jnp.abs(inds_into_J_even)]
             ).sum(axis=1)
         )
+        # TODO: use `set` instead of `add`?
         out_array_fine = out_array_fine.at[inds_targetgrid[slice_odd]].add(
             (
                 in_array_coarse[inds_source_odd]
@@ -400,6 +402,38 @@ def create_interaction_operator(
         )
 
         return out_array
+
+    return apply_interaction
+
+
+def create_interaction_operator_multidim(
+    grid: BSplineInterpolationGrid, kernel_stencil: npt.ArrayLike
+):
+    kernel_stencil = jnp.asarray(kernel_stencil)
+    kernelranges_individual_axes = [
+        jnp.arange(-(s // 2), (s // 2) + 1) for s in kernel_stencil.shape
+    ]
+
+    ravel_multi_inds_and_apply_bcs = make_ravel_multi_inds_and_apply_bcs(grid)
+
+    def get_neighbor_flat_inds(multi_index: Iterable):
+        neighbor_inds_individual_axes = [
+            idx + kernelrange
+            for idx, kernelrange in zip(
+                multi_index, kernelranges_individual_axes
+            )
+        ]
+        neighbor_multi_inds = multi_inds_from_individual_axes_inds(
+            *neighbor_inds_individual_axes
+        )
+        return ravel_multi_inds_and_apply_bcs(neighbor_multi_inds)
+
+    multi_inds_all_points = multi_inds_from_individual_axes_inds(
+        *[jnp.arange(s) for s in grid.shape]
+    )
+
+    def apply_interaction(in_array):
+        pass
 
     return apply_interaction
 
