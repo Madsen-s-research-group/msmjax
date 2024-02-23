@@ -166,6 +166,39 @@ class BSplineInterpolationGrid:
         )(positions)
 
 
+def make_ravel_multi_inds_and_apply_bcs(grid: BSplineInterpolationGrid):
+    # TODO: should this be a method of BSplineInterpolationGrid?
+    is_not_periodic = ~jnp.array([ga.periodic for ga in grid.axes])
+    intentionally_out_of_bounds_index = grid.size
+
+    def ravel_multi_inds_and_apply_bcs(multi_indices: jax.Array) -> jax.Array:
+        # This handles periodic axes on its own by using the "wrap" keyword
+        # TODO: Does the vmapping without transpose argument give the same
+        #  as argument transpose with no vmap?
+        # flat_inds = jax.vmap(
+        #     lambda multi_index: jnp.ravel_multi_index(
+        #         multi_index, dims=grid.shape, mode="wrap"
+        #     )
+        # )(multi_indices)
+        flat_inds = jnp.ravel_multi_index(
+            multi_indices.T, dims=grid.shape, mode="wrap"
+        )
+        # Explicitly handle non-periodic axes
+        is_out_of_bounds = jnp.logical_or(
+            multi_indices < 0, multi_indices >= jnp.array(grid.shape)
+        )
+        is_out_of_bounds = (is_out_of_bounds & is_not_periodic).any(axis=-1)
+        flat_inds = jnp.where(
+            is_out_of_bounds.ravel(),
+            intentionally_out_of_bounds_index,
+            flat_inds,
+        )
+
+        return flat_inds
+
+    return ravel_multi_inds_and_apply_bcs
+
+
 def create_anterpolation_operator(grid: BSplineInterpolationGrid):
     """Create a function that anterpolates charge from particles to grid"""
 
@@ -431,9 +464,31 @@ def create_interaction_operator_multidim(
     multi_inds_all_points = multi_inds_from_individual_axes_inds(
         *[jnp.arange(s) for s in grid.shape]
     )
+    # As long as the target point indices cannot be out of bounds,
+    # we can use `ravel_multi_index` directly,
+    # rather than `ravel_multi_inds_and_apply_bcs`.
+    flat_inds_all_points = jnp.ravel_multi_index(
+        multi_inds_all_points.T, dims=grid.shape, mode="clip"
+    )
 
     def apply_interaction(in_array):
-        pass
+        flat_neighbor_inds_of_all_points = jax.vmap(get_neighbor_flat_inds)(
+            multi_inds_all_points
+        )
+        flat_neighbor_vals_of_all_points = jnp.take(
+            in_array,
+            flat_neighbor_inds_of_all_points,
+            mode="fill",
+            fill_value=0.0,
+        )
+        out_array_flat = jnp.zeros(grid.size)
+        out_array_flat = out_array_flat.at[flat_inds_all_points].set(
+            (flat_neighbor_vals_of_all_points * kernel_stencil.ravel()).sum(
+                axis=1
+            )
+        )
+
+        return out_array_flat.reshape(grid.shape)
 
     return apply_interaction
 
