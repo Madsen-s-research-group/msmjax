@@ -604,8 +604,10 @@ def create_compute_U_and_f_oneplus(grids, kernel_stencils) -> Callable:
             charges
             * (gridpotential_level_one.take(indices) * splinevals).sum(axis=1)
         )
-        forces = -charges * jnp.sum(
-            gridpotential_level_one.take(indices) * splinegrads, axis=1
+        forces = -charges[:, jnp.newaxis] * jnp.sum(
+            gridpotential_level_one.take(indices)[..., jnp.newaxis]
+            * splinegrads,
+            axis=1,
         )
 
         return energy, forces
