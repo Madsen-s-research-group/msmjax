@@ -207,12 +207,12 @@ def create_anterpolation_operator(grid: BSplineInterpolationGrid):
         splinevals, indices = grid.evaluate_bspline_basis_multiparticle(
             positions
         )
-        gridcharge = jnp.zeros(grid.size)
-        gridcharge = gridcharge.at[indices].add(
+        gridcharge_flat = jnp.zeros(grid.size)
+        gridcharge_flat = gridcharge_flat.at[indices].add(
             charges[:, jnp.newaxis] * splinevals
         )
 
-        return gridcharge
+        return gridcharge_flat.reshape(grid.shape)
 
     return anterpolate
 
@@ -412,34 +412,6 @@ def create_prolongation_operator(
 
 
 def create_interaction_operator(
-    grid: BSplineInterpolationAxis, kernel_stencil: npt.ArrayLike
-):
-    """Create a function that computes the interaction at one grid level"""
-    kernel_stencil = jnp.asarray(kernel_stencil)
-    interaction_range = len(kernel_stencil) // 2
-    gridsize = grid.n_total
-
-    def apply_interaction(in_array):
-        """Convolve array defined on grid with interaction kernel stencil."""
-        inds = jnp.arange(gridsize)
-        neighbor_inds = inds[:, jnp.newaxis] + jnp.arange(
-            -interaction_range, interaction_range + 1
-        )
-        neighbor_inds = grid.wrap_or_invalidate_indices(neighbor_inds)
-        neighbor_values = in_array.at[neighbor_inds].get(
-            mode="fill", fill_value=0.0
-        )
-        out_array = jnp.zeros(gridsize)
-        out_array = out_array.at[inds].add(
-            (neighbor_values * kernel_stencil).sum(axis=1)
-        )
-
-        return out_array
-
-    return apply_interaction
-
-
-def create_interaction_operator_multidim(
     grid: BSplineInterpolationGrid, kernel_stencil: npt.ArrayLike
 ):
     kernel_stencil = jnp.asarray(kernel_stencil)
@@ -506,8 +478,8 @@ def create_all_grid_to_grid_ops(grids, kernel_stencils):
 
     prolongation_funcs = [None] * (max_gridlevel + 1)
     for lvl in range(1, max_gridlevel):
-        prolongate = create_prolongation_operator_1d(
-            axis_source_coarse=grids[lvl + 1], axis_target_fine=grids[lvl]
+        prolongate = create_prolongation_operator(
+            grid_source_coarse=grids[lvl + 1], grid_target_fine=grids[lvl]
         )
         prolongation_funcs[lvl] = prolongate
 
@@ -584,9 +556,7 @@ def create_compute_U_oneplus(grids, kernel_stencils) -> Callable:
     def compute_U_oneplus(
         positions: jax.Array, charges: jax.Array
     ) -> jax.Array:
-        gridcharge_level_one = anterpolate_level_one(
-            positions_1d=positions, charges=charges
-        )
+        gridcharge_level_one = anterpolate_level_one(positions, charges)
         gridpotential_level_one = compute_gridpotential_level_one(
             gridcharge_level_one
         )
@@ -594,11 +564,13 @@ def create_compute_U_oneplus(grids, kernel_stencils) -> Callable:
         # TODO: splinevals and indices from anterpolation could, in principle,
         #  be reused here instead of recalculated;
         #  but would this be any faster in practice?
-        splinevals, indices = grids[1].evaluate_bspline_basis_multi(positions)
+        splinevals, indices = grids[1].evaluate_bspline_basis_multiparticle(
+            positions
+        )
 
         return 0.5 * jnp.sum(
             charges
-            * (gridpotential_level_one[indices] * splinevals).sum(axis=1)
+            * (gridpotential_level_one.take(indices) * splinevals).sum(axis=1)
         )
 
     return compute_U_oneplus
@@ -614,9 +586,7 @@ def create_compute_U_and_f_oneplus(grids, kernel_stencils) -> Callable:
     def compute_U_and_f_oneplus(
         positions: jax.Array, charges: jax.Array
     ) -> Tuple[jax.Array, jax.Array]:
-        gridcharge_level_one = anterpolate_level_one(
-            positions_1d=positions, charges=charges
-        )
+        gridcharge_level_one = anterpolate_level_one(positions, charges)
         gridpotential_level_one = compute_gridpotential_level_one(
             gridcharge_level_one
         )
@@ -624,16 +594,18 @@ def create_compute_U_and_f_oneplus(grids, kernel_stencils) -> Callable:
         # TODO: splinevals, splinegrads and indices from anterpolation could,
         #  in principle, be reused here instead of recalculated;
         #  but would this be any faster in practice?
-        splinevals, indices = grids[1].evaluate_bspline_basis_multi(positions)
-        splinegrads, _ = grids[1].evaluate_bspline_basis_gradient_multi(
+        splinevals, indices = grids[1].evaluate_bspline_basis_multiparticle(
             positions
         )
+        splinegrads, _ = grids[
+            1
+        ].evaluate_bspline_basis_gradient_multiparticle(positions)
         energy = 0.5 * jnp.sum(
             charges
-            * (gridpotential_level_one[indices] * splinevals).sum(axis=1)
+            * (gridpotential_level_one.take(indices) * splinevals).sum(axis=1)
         )
         forces = -charges * jnp.sum(
-            gridpotential_level_one[indices] * splinegrads, axis=1
+            gridpotential_level_one.take(indices) * splinegrads, axis=1
         )
 
         return energy, forces
