@@ -568,6 +568,9 @@ def create_compute_U_oneplus(grids, kernel_stencils) -> Callable:
             positions
         )
 
+        # TODO: Do we need to use a fill value with `take` here?
+        #  (it shouldn't be possible for indices returned by the spline eval
+        #  functions to be out of bounds)
         return 0.5 * jnp.sum(
             charges
             * (gridpotential_level_one.take(indices) * splinevals).sum(axis=1)
@@ -600,6 +603,9 @@ def create_compute_U_and_f_oneplus(grids, kernel_stencils) -> Callable:
         splinegrads, _ = grids[
             1
         ].evaluate_bspline_basis_gradient_multiparticle(positions)
+        # TODO: Do we need to use a fill value with `take` here?
+        #  (it shouldn't be possible for indices returned by the spline eval
+        #  functions to be out of bounds)
         energy = 0.5 * jnp.sum(
             charges
             * (gridpotential_level_one.take(indices) * splinevals).sum(axis=1)
