@@ -50,28 +50,30 @@ def make_evaluate_shortrange_with_neighbor_list(
         displacement_fn, box, r_cutoff=cutoff, **neighbor_kwargs
     )
 
-    def evaluate_one_row_of_neighborlist(idx_of_row, row, dR):
+    def evaluate_one_row_of_neighborlist(idx_of_row, row, dR, qq):
         nb_particles = dR.shape[0]
         pair_contribs = jnp.where(
             row < nb_particles,
-            shortrange_kernel(jnp.linalg.norm(dR[idx_of_row, row], axis=1)),
+            qq[idx_of_row, row]
+            * shortrange_kernel(jnp.linalg.norm(dR[idx_of_row, row], axis=1)),
             0.0,
         )
 
         return jnp.sum(pair_contribs)
 
-    def energy_fn(positions, neighborlist):
+    def energy_fn(positions, charges, neighborlist):
         dR = space.map_product(displacement_fn)(positions, positions)
-
+        qq = charges[:, jnp.newaxis] * charges
         all_indices = jnp.arange(neighborlist.idx.shape[0])
-
         energy = 0.5 * jnp.sum(
-            jax.vmap(evaluate_one_row_of_neighborlist, (0, 0, None), 0)(
-                all_indices, neighborlist.idx, dR
+            jax.vmap(evaluate_one_row_of_neighborlist, (0, 0, None, None), 0)(
+                all_indices, neighborlist.idx, dR, qq
             )
         )
 
         return energy
+
+    # TODO: subtract the "self-energy" term
 
     return neighbor_fn, energy_fn
 
@@ -89,6 +91,8 @@ if __name__ == "__main__":
     rng = onp.random.default_rng(58347)
     pos = rng.uniform(low=0.0, high=sidelength, size=(n_particles, ndim))
     chg = rng.uniform(low=-1.0, high=1.0, size=n_particles)
+    pos = jnp.array(pos)
+    chg = jnp.array(chg)
 
     print(pos)
     print(chg)
@@ -99,21 +103,19 @@ if __name__ == "__main__":
         softening_function=SofteningFunctionOneOverR(p),
     )
 
-    neighbor_fn, energy_fn = make_evaluate_shortrange_with_neighbor_list(
+    neighbor_fun, energy_fun = make_evaluate_shortrange_with_neighbor_list(
         shortrange_kernel=kernels[0],
         cutoff=level_zero_cutoff,
         box=box,
         pbcs=pbcs,
     )
-    nbl_allocate_fun = neighbor_fn.allocate
-    nbl_update_fun = neighbor_fn.update
-    jitted_nbl_update_fun = jax.jit(nbl_update_fun)
-    jitted_eval_direct_energy = jax.jit(energy_fn)
+    nbl_allocate_fun = neighbor_fun.allocate
+    nbl_update_fun = neighbor_fun.update
 
     neighborlist = nbl_allocate_fun(pos)
 
-    e = jitted_eval_direct_energy(pos, neighborlist)
-    print(e)
+    e_neighborlist = energy_fun(pos, chg, neighborlist)
+    print(e_neighborlist)
 
     def calculate_energy_reference_loop(positions, charges):
         out = 0.0
@@ -126,3 +128,7 @@ if __name__ == "__main__":
 
     e_ref = calculate_energy_reference_loop(pos, chg)
     print(e_ref)
+
+    displacement_fn, shift_fn = space.free()
+    dR = space.map_product(displacement_fn)(pos, pos)
+    print(dR.shape)
