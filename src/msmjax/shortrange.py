@@ -43,7 +43,6 @@ def make_evaluate_shortrange_with_neighbor_list(
     if not (jnp.all(pbcs) or jnp.all(~pbcs)):
         raise ValueError("Mixed boundary conditions currently not supported.")
     periodic = pbcs[0]
-
     if periodic:
         displacement_fn, shift_fn = space.periodic(box)
     else:
@@ -65,11 +64,11 @@ def make_evaluate_shortrange_with_neighbor_list(
         return jnp.sum(pair_contribs)
 
     def calculate_direct_energy_neighborlist(positions, charges, neighborlist):
-        dR = space.map_product(displacement_fn)(positions, positions)  # TODO
+        dR = space.map_product(displacement_fn)(positions, positions)
         qq = charges[:, jnp.newaxis] * charges
         all_indices = jnp.arange(neighborlist.idx.shape[0])
         pair_term = 0.5 * jnp.sum(
-            jax.vmap(evaluate_one_row_of_neighborlist, (0, 0, None, None), 0)(
+            jax.vmap(evaluate_one_row_of_neighborlist, (0, 0, None, None))(
                 all_indices, neighborlist.idx, dR, qq
             )
         )
