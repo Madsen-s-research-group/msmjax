@@ -14,7 +14,7 @@ import os
 
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 
-from typing import Callable, Tuple
+from typing import Callable, List, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -26,12 +26,15 @@ from msmjax.kernels import SofteningFunctionOneOverR, split_one_over_r_kernel
 
 
 def make_evaluate_shortrange_with_neighbor_list(
-    shortrange_kernel: Callable,
+    kernels: List[Callable],
     cutoff: float,
     box: npt.ArrayLike,
     pbcs: npt.ArrayLike,
     **neighbor_kwargs,
 ) -> Tuple[partition.NeighborFn, Callable]:
+    k_0 = kernels[0]
+    sum_k_l_to_L = lambda r: jnp.sum(jnp.asarray([k(r) for k in kernels[1:]]))
+
     box = jnp.asarray(box)
     pbcs = jnp.asarray(pbcs)
 
@@ -55,27 +58,28 @@ def make_evaluate_shortrange_with_neighbor_list(
         pair_contribs = jnp.where(
             row < nb_particles,
             qq[idx_of_row, row]
-            * shortrange_kernel(jnp.linalg.norm(dR[idx_of_row, row], axis=1)),
+            * k_0(jnp.linalg.norm(dR[idx_of_row, row], axis=1)),
             0.0,
         )
 
         return jnp.sum(pair_contribs)
 
-    def energy_fn(positions, charges, neighborlist):
-        dR = space.map_product(displacement_fn)(positions, positions)
+    def calculate_direct_energy_neighborlist(positions, charges, neighborlist):
+        dR = space.map_product(displacement_fn)(positions, positions)  # TODO
         qq = charges[:, jnp.newaxis] * charges
         all_indices = jnp.arange(neighborlist.idx.shape[0])
-        energy = 0.5 * jnp.sum(
+        pair_term = 0.5 * jnp.sum(
             jax.vmap(evaluate_one_row_of_neighborlist, (0, 0, None, None), 0)(
                 all_indices, neighborlist.idx, dR, qq
             )
         )
+        self_interaction_term = 0.5 * jnp.sum(
+            charges * charges * sum_k_l_to_L(0.0)
+        )
 
-        return energy
+        return pair_term - self_interaction_term
 
-    # TODO: subtract the "self-energy" term
-
-    return neighbor_fn, energy_fn
+    return neighbor_fn, calculate_direct_energy_neighborlist
 
 
 if __name__ == "__main__":
@@ -85,7 +89,7 @@ if __name__ == "__main__":
     max_gridlevel = 4
     p = 4
     n_particles = 15
-    pbcs = [True] * ndim
+    pbcs = [False] * ndim
     box = jnp.array([sidelength] * 3)
 
     rng = onp.random.default_rng(58347)
@@ -104,7 +108,7 @@ if __name__ == "__main__":
     )
 
     neighbor_fun, energy_fun = make_evaluate_shortrange_with_neighbor_list(
-        shortrange_kernel=kernels[0],
+        kernels=kernels,
         cutoff=level_zero_cutoff,
         box=box,
         pbcs=pbcs,
@@ -117,18 +121,23 @@ if __name__ == "__main__":
     e_neighborlist = energy_fun(pos, chg, neighborlist)
     print(e_neighborlist)
 
-    def calculate_energy_reference_loop(positions, charges):
-        out = 0.0
+    def calculate_direct_energy_reference(positions, charges):
+        k_0 = kernels[0]
+        k_l_to_L = lambda r: jnp.sum(jnp.asarray([k(r) for k in kernels[1:]]))
+
+        pair_term = 0.0
         for i in range(positions.shape[0]):
             for j in range(i):
                 r_ij = onp.linalg.norm(positions[i] - positions[j])
-                out += charges[i] * charges[j] * kernels[0](r_ij)
+                pair_term += charges[i] * charges[j] * k_0(r_ij)
 
-        return out
+        self_interaction_term = 0.5 * jnp.sum(
+            charges * charges * k_l_to_L(0.0)
+        )
 
-    e_ref = calculate_energy_reference_loop(pos, chg)
+        return pair_term - self_interaction_term
+
+    e_ref = calculate_direct_energy_reference(pos, chg)
     print(e_ref)
 
-    displacement_fn, shift_fn = space.free()
-    dR = space.map_product(displacement_fn)(pos, pos)
-    print(dR.shape)
+    assert jnp.isclose(e_neighborlist, e_ref)
