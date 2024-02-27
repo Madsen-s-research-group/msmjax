@@ -32,10 +32,16 @@ def set_up_grid_axis(
         raise ValueError("p must be even")
 
     if periodic:
+        # TODO: Check if n_domain * h == length
+        if not (onp.isclose(length % h, 0.0) or onp.isclose(length % h, h)):
+            raise ValueError(
+                "The grid spacing must evenly divide the box length along "
+                "periodic axes."
+            )
         n_domain = int(onp.ceil(length / h))
         n_total = n_domain
     else:
-        # TODO: determination of number of grid points might not be numerically robust
+        # TODO: Is this determination of the number of grid points numerically robust?
         n_domain = int(onp.ceil(length / h)) + 1
         n_total = n_domain + p
 
@@ -166,6 +172,55 @@ class BSplineInterpolationGrid:
         )(positions)
 
 
+def set_up_grids_all_levels(
+    box_lengths: Iterable[float],
+    level_one_spacings: Iterable[float],
+    pbcs: Iterable[bool],
+    n_levels: int,
+    p: int,
+    J_zeroplus: npt.ArrayLike,
+):
+    if n_levels < 1:
+        raise ValueError("Need at least one grid level.")
+
+    bspline_params = {"p": p, "J_zeroplus": J_zeroplus}
+
+    # TODO: More flexible determination of grid spacing and number of levels
+    #  - Non-periodic: option to leave out n_levels and determine from spacing
+    #  - Periodic: if n_levels given but not spacing, determine n_levels from spacing
+    #  - Periodic: if spacing given, but not n_levels, find n_levels for which
+    #    the corresponding spacing most closely matches the one that was given
+    #  - Mixed: ???
+    #  - In general: check out how this is done in NAMD
+    actual_level_one_spacings = []
+    for length, spacing, periodic in zip(
+        box_lengths, level_one_spacings, pbcs
+    ):
+        if periodic:
+            actual_level_one_spacings.append(length / 2 ** (n_levels - 1))
+        else:
+            actual_level_one_spacings.append(spacing)
+
+    grids_all_levels = [None]
+
+    for lvl in range(1, n_levels + 1):
+        axes = [
+            set_up_grid_axis(
+                length=length,
+                h=2 ** (lvl - 1) * spacing,
+                periodic=periodic,
+                **bspline_params,
+            )
+            for length, spacing, periodic in zip(
+                box_lengths, actual_level_one_spacings, pbcs
+            )
+        ]
+        grid = BSplineInterpolationGrid(axes)
+        grids_all_levels.append(grid)
+
+    return grids_all_levels
+
+
 def make_ravel_multi_inds_and_apply_bcs(grid: BSplineInterpolationGrid):
     # TODO: should this be a method of BSplineInterpolationGrid?
     is_not_periodic = ~jnp.array([ga.periodic for ga in grid.axes])
@@ -241,7 +296,7 @@ def create_restriction_operator_1d(
 
     inds_targetgrid = jnp.arange(axis_target_coarse.n_total)
 
-    def restrict(in_array_fine: jax.Array) -> jax.Array:
+    def restrict_1d(in_array_fine: jax.Array) -> jax.Array:
         """Restrict array defined on grid to the next-coarser (higher) grid"""
         neighbor_inds_sourcegrid = jax.vmap(get_neigbhor_inds_on_sourcegrid)(
             inds_targetgrid
@@ -261,7 +316,7 @@ def create_restriction_operator_1d(
 
         return out_array_coarse
 
-    return restrict
+    return restrict_1d
 
 
 def create_restriction_operator(
@@ -350,7 +405,7 @@ def create_prolongation_operator_1d(
 
     inds_targetgrid = jnp.arange(axis_target_fine.n_total)
 
-    def prolongate(in_array_coarse: jax.Array) -> jax.Array:
+    def prolongate_1d(in_array_coarse: jax.Array) -> jax.Array:
         """Prolongate array defined on grid to the next-finer (lower) grid"""
         inds_source_even = jax.vmap(get_neighbor_inds_on_sourcegrid_even)(
             inds_targetgrid[slice_even]
@@ -376,7 +431,7 @@ def create_prolongation_operator_1d(
 
         return out_array_fine
 
-    return prolongate
+    return prolongate_1d
 
 
 def create_prolongation_operator(
@@ -467,24 +522,24 @@ def create_interaction_operator(
 
 def create_all_grid_to_grid_ops(grids, kernel_stencils):
     """Create all necessary functions that map from grids to grids"""
-    max_gridlevel = len(grids) - 1
+    n_levels = len(grids) - 1
 
-    restriction_funcs = [None] * (max_gridlevel + 1)
-    for lvl in range(2, max_gridlevel + 1):
+    restriction_funcs = [None] * (n_levels + 1)
+    for lvl in range(2, n_levels + 1):
         restrict = create_restriction_operator(
             grid_source_fine=grids[lvl - 1], grid_target_coarse=grids[lvl]
         )
         restriction_funcs[lvl] = restrict
 
-    prolongation_funcs = [None] * (max_gridlevel + 1)
-    for lvl in range(1, max_gridlevel):
+    prolongation_funcs = [None] * (n_levels + 1)
+    for lvl in range(1, n_levels):
         prolongate = create_prolongation_operator(
             grid_source_coarse=grids[lvl + 1], grid_target_fine=grids[lvl]
         )
         prolongation_funcs[lvl] = prolongate
 
-    interaction_funcs = [None] * (max_gridlevel + 1)
-    for lvl in range(1, max_gridlevel + 1):
+    interaction_funcs = [None] * (n_levels + 1)
+    for lvl in range(1, n_levels + 1):
         interact = create_interaction_operator(
             grid=grids[lvl], kernel_stencil=kernel_stencils[lvl]
         )
@@ -520,23 +575,23 @@ def create_compute_gridpotential_level_one(grids, kernel_stencils) -> Callable:
         Returns:
             Accumulated potential at the lowest grid level
         """
-        max_gridlevel = len(grids) - 1
+        n_levels = len(grids) - 1
         gridcharges_all_levels = {1: gridcharge_level_one}
 
         # Go up ladder
-        for lvl in range(2, max_gridlevel + 1):
+        for lvl in range(2, n_levels + 1):
             restrict = restriction_funcs[lvl]
             gridcharge_fine = gridcharges_all_levels[lvl - 1]
             gridcharge_coarse = restrict(gridcharge_fine)
             gridcharges_all_levels[lvl] = gridcharge_coarse
 
         # Apply top-level interaction
-        gridcharge_toplevel = gridcharges_all_levels[max_gridlevel]
-        interact_toplevel = interaction_funcs[max_gridlevel]
+        gridcharge_toplevel = gridcharges_all_levels[n_levels]
+        interact_toplevel = interaction_funcs[n_levels]
         gridpotential = interact_toplevel(gridcharge_toplevel)
 
         # Go down ladder
-        for lvl in range(max_gridlevel - 1, 0, -1):
+        for lvl in range(n_levels - 1, 0, -1):
             gridpotential = interaction_funcs[lvl](
                 gridcharges_all_levels[lvl]
             ) + prolongation_funcs[lvl](gridpotential)
