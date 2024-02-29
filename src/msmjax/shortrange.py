@@ -10,11 +10,12 @@
         Forces for the Simulation of Biomolecules (PhD thesis), University
         of Illinois at Urbana-Champaign, 2006.
 """
+
 import os
 
+# TODO: remove once all actual code-running lines have been moved to tests
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 
-import itertools
 from typing import Callable, List, Tuple
 
 import jax
@@ -27,20 +28,42 @@ from tqdm import tqdm
 from msmjax.kernels import SofteningFunctionOneOverR, split_one_over_r_kernel
 
 
-def make_evaluate_shortrange_with_neighbor_list(
+def make_compute_U_zero_with_neighborlist(
     kernels: List[Callable],
     cutoff: float,
-    box: npt.ArrayLike,
+    box_lenghts: npt.ArrayLike,
     pbcs: npt.ArrayLike,
     **neighbor_kwargs,
 ) -> Tuple[partition.NeighborFn, Callable]:
-    box = jnp.asarray(box)
+    """Get functions handling neighbor list, and computing direct energy part.
+
+    Args:
+        kernels: List of one-argument functions of a scalar argument,
+            representing the interaction kernels at all levels.
+        cutoff: Cutoff radius of the level-zero kernel (which is evaluated
+            directly rather than by interpolation from grids).
+        box_lenghts: Sequence of side lengths of simulation box, one per
+            spatial dimension.
+        pbcs: Sequence of boolean values indicating whether the system is
+            periodic along the corresponding direction.
+        **neighbor_kwargs: Will be passed to `jax_md.partition.neighbor_list`.
+
+    Returns:
+        Tuple containing:
+            - An instance of `jax_md.partition.NeighborListFns` that in turn
+                consists of functions to allocate and update a neighbor list.
+            - A function for calculating the direct energy contribution from
+                given particle positions, charges, and a neighbor list.
+
+    """
+    box_lenghts = jnp.asarray(box_lenghts)
     pbcs = jnp.asarray(pbcs)
 
+    # TODO: make mixed boundary conditions work
     if not (jnp.all(pbcs) or jnp.all(~pbcs)):
         raise ValueError("Mixed boundary conditions currently not supported.")
     periodic = pbcs[0]
-    if periodic and cutoff > 0.5 * min(box):
+    if periodic and cutoff > 0.5 * min(box_lenghts):
         raise ValueError("Cutoff must not exceed half the shortest box length")
 
     shortrange_kernel = kernels[0]
@@ -48,32 +71,79 @@ def make_evaluate_shortrange_with_neighbor_list(
         jnp.asarray([k(0.0) for k in kernels[1:]])
     )
 
-    if periodic:
-        displacement_fn, shift_fn = space.periodic(box)
-    else:
-        displacement_fn, shift_fn = space.free()
-    neighbor_fn = partition.neighbor_list(
-        displacement_fn, box, r_cutoff=cutoff, **neighbor_kwargs
-    )
+    def process_one_particle_and_neighbors(
+        idx_center: int,
+        inds_neighbors: jax.Array,
+        R_ij: jax.Array,
+        qi_qj: jax.Array,
+    ) -> jax.Array:
+        """Compute energy contribution due to one particle and its neighbors.
 
-    def evaluate_one_row_of_neighborlist(idx_of_row, row, dR, qq):
-        nb_particles = dR.shape[0]
+        Args:
+            idx_center: Index of the central particle.
+            inds_neighbors: Indices of neighbor particless to be included in
+                energy computation. Index values greater equal than the total
+                number of particles are interpreted as fill values and ignored.
+            R_ij: Array of pairwise distance vectors, of shape
+                `(n_particles, n_particles, n_dim)`. They are passed to the
+                pair potential as-is, i.e., in the case of periodic boundary
+                conditions the minimum image convention must have been
+                accounted for beforehand.
+            qi_qj: Array of pairwise products of particle charges,
+                of shape `(n_particles, n_particles)`.
+
+        Returns:
+            Energy contribution from summing pairwise interaction over
+            all neighbors.
+        """
+        n_particles = R_ij.shape[0]
+        is_neighbor = inds_neighbors < n_particles
         pair_contribs = jnp.where(
-            row < nb_particles,
-            qq[idx_of_row, row]
-            * shortrange_kernel(jnp.linalg.norm(dR[idx_of_row, row], axis=1)),
+            is_neighbor,
+            qi_qj[idx_center, inds_neighbors]
+            * shortrange_kernel(
+                jnp.linalg.norm(R_ij[idx_center, inds_neighbors], axis=1)
+            ),
             0.0,
         )
 
         return jnp.sum(pair_contribs)
 
-    def calculate_direct_energy_neighborlist(positions, charges, neighborlist):
-        dR = space.map_product(displacement_fn)(positions, positions)
-        qq = charges[:, jnp.newaxis] * charges
-        all_indices = jnp.arange(neighborlist.idx.shape[0])
+    if periodic:
+        displacement_fn, shift_fn = space.periodic(box_lenghts)
+    else:
+        displacement_fn, shift_fn = space.free()
+    neighbor_fn = partition.neighbor_list(
+        displacement_fn, box_lenghts, r_cutoff=cutoff, **neighbor_kwargs
+    )
+
+    def compute_U_zero_with_neighborlist(
+        positions: jax.Array,
+        charges: jax.Array,
+        neighbor_indices: jax.Array,
+    ) -> jax.Array:
+        """Compute the direct energy contribution ($U^0$ in the article).
+
+        Args:
+            positions: Particle positions in cartesian coordinates,
+                array of shape `(n_particles, n_dim)`.
+            charges: Particle charges, array of shape `(n_particles,)`.
+            neighbor_indices: Array of shape `(n_particles, n_max_neighbors)`,
+                where the `i`-th row contains the indices of the neighbors of
+                particle `i`. Index values greater than or equal to the total
+                number of particles are interpreted as fill values (padding to
+                consistent neighbor list shape plus spare capacity), and
+                ignored in the energy evaluation.
+
+        Returns:
+            The calculated energy contribution.
+        """
+        R_ij = space.map_product(displacement_fn)(positions, positions)
+        qi_qj = charges[:, jnp.newaxis] * charges
+        all_indices = jnp.arange(neighbor_indices.shape[0])
         pair_term = 0.5 * jnp.sum(
-            jax.vmap(evaluate_one_row_of_neighborlist, (0, 0, None, None))(
-                all_indices, neighborlist.idx, dR, qq
+            jax.vmap(process_one_particle_and_neighbors, (0, 0, None, None))(
+                all_indices, neighbor_indices, R_ij, qi_qj
             )
         )
         self_interaction_term = (
@@ -82,26 +152,26 @@ def make_evaluate_shortrange_with_neighbor_list(
 
         return pair_term - self_interaction_term
 
-    return neighbor_fn, calculate_direct_energy_neighborlist
+    return neighbor_fn, compute_U_zero_with_neighborlist
 
 
 if __name__ == "__main__":
     # Structure settings
-    BOX_LENGHTS = jnp.array([10.0, 10.0, 10.0])
+    BOX_LENGTHS = jnp.array([10.0, 12.0, 17.5])
     PERIODIC = False
-    N_PARTICLES = 25
+    N_PARTICLES = 50
 
     # MSM settings
     LEVEL_ZERO_CUTOFF = 3.5
     MAX_GRIDLEVEL = 4
     P = 4
 
-    n_dim = len(BOX_LENGHTS)
+    n_dim = len(BOX_LENGTHS)
     pbcs = [PERIODIC] * n_dim
 
     rng = onp.random.default_rng(58347)
     pos = rng.uniform(
-        low=[0.0] * n_dim, high=BOX_LENGHTS, size=(N_PARTICLES, n_dim)
+        low=[0.0] * n_dim, high=BOX_LENGTHS, size=(N_PARTICLES, n_dim)
     )
     chg = rng.uniform(low=-1.0, high=1.0, size=N_PARTICLES)
     pos = jnp.array(pos)
@@ -113,16 +183,16 @@ if __name__ == "__main__":
         softening_function=SofteningFunctionOneOverR(P),
     )
 
-    neighbor_fun, energy_fun = make_evaluate_shortrange_with_neighbor_list(
+    neighbor_fun, energy_fun = make_compute_U_zero_with_neighborlist(
         kernels=kernels,
         cutoff=LEVEL_ZERO_CUTOFF,
-        box=BOX_LENGHTS,
+        box_lenghts=BOX_LENGTHS,
         pbcs=pbcs,
     )
     nbl_allocate_fun = neighbor_fun.allocate
     nbl_update_fun = neighbor_fun.update
     neighborlist = nbl_allocate_fun(pos)
-    e_neighborlist = energy_fun(pos, chg, neighborlist)
+    e_neighborlist = energy_fun(pos, chg, neighborlist.idx)
     print(e_neighborlist)
 
     def calculate_direct_energy_reference(
@@ -162,7 +232,7 @@ if __name__ == "__main__":
         return pair_term - self_interaction_term
 
     e_ref = calculate_direct_energy_reference(
-        pos, chg, LEVEL_ZERO_CUTOFF, mic=PERIODIC, box_sizes=BOX_LENGHTS
+        pos, chg, LEVEL_ZERO_CUTOFF, mic=PERIODIC, box_sizes=BOX_LENGTHS
     )
 
     print(e_ref)
