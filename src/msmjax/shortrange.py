@@ -86,10 +86,12 @@ def make_evaluate_shortrange_with_neighbor_list(
 
 
 if __name__ == "__main__":
+    # Structure settings
     BOX_LENGHTS = jnp.array([10.0, 10.0, 10.0])
     PERIODIC = False
     N_PARTICLES = 25
 
+    # MSM settings
     LEVEL_ZERO_CUTOFF = 3.5
     MAX_GRIDLEVEL = 4
     P = 4
@@ -146,54 +148,12 @@ if __name__ == "__main__":
             for j in range(i):
                 R_ij = positions[i] - positions[j]
                 R_ij = apply_boundary_conditions(R_ij)
-                # TODO: check inside cutoff here?
                 r_ij_2 = (R_ij * R_ij).sum()
                 if r_ij_2 <= cutoff**2:
                     r_ij = onp.sqrt(r_ij_2)
                     pair_term += (
                         charges[i] * charges[j] * shortrange_kernel(r_ij)
                     )
-
-        self_interaction_term = (
-            0.5 * jnp.sum(charges * charges) * sum_of_higher_kernels_at_zero
-        )
-
-        return pair_term - self_interaction_term
-
-    def calculate_direct_energy_reference_periodic(
-        positions, charges, cell, cutoff
-    ):
-        shortrange_kernel = jax.jit(kernels[0])
-        sum_of_higher_kernels_at_zero = jnp.sum(
-            jnp.asarray([k(0.0) for k in kernels[1:]])
-        )
-
-        n_dim = positions.shape[1]
-        n_cells_inside_cutoff = [int(onp.ceil(cutoff / l)) for l in cell]
-        cellshifts_1d = [
-            onp.arange(-n_reps, n_reps + 1) for n_reps in n_cells_inside_cutoff
-        ]
-        cellshifts_nonzero = [
-            onp.array(cs)
-            for cs in itertools.product(*cellshifts_1d)
-            if cs != (0,) * n_dim
-        ]
-        positions_extended = [positions] + [
-            positions + cs * BOX_LENGHTS for cs in cellshifts_nonzero
-        ]
-        positions_extended = onp.concatenate(positions_extended)
-        charges_extended = onp.tile(charges, len(cellshifts_nonzero) + 1)
-
-        pair_term = 0.0
-        for i in tqdm(range(positions.shape[0])):
-            for j in itertools.chain(
-                range(i), range(i + 1, positions_extended.shape[0])
-            ):
-                r_ij = onp.linalg.norm(positions[i] - positions_extended[j])
-                pair_term += (
-                    charges[i] * charges_extended[j] * shortrange_kernel(r_ij)
-                )
-        pair_term *= 0.5
 
         self_interaction_term = (
             0.5 * jnp.sum(charges * charges) * sum_of_higher_kernels_at_zero
