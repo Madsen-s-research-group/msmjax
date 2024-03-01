@@ -30,7 +30,9 @@ from tqdm import tqdm
 from msmjax.kernels import SofteningFunctionOneOverR, split_one_over_r_kernel
 
 
-def make_eval_all_pairs_neighborlist(pair_distance_vector_fun, eval_fun):
+def make_eval_all_pairs_neighborlist(
+    pair_distance_vector_fun, eval_fun, eval_fun_output_shape
+):
     # TODO: docstring
     def process_one_particle_and_neighbors(
         idx_center: int,
@@ -42,44 +44,34 @@ def make_eval_all_pairs_neighborlist(pair_distance_vector_fun, eval_fun):
 
         Args:
             idx_center: Index of the central particle.
-            inds_neighbors: Indices of neighbor particles to be included in
-                energy computation. Index values greater equal than the total
-                number of particles are interpreted as fill values and ignored.
+            inds_neighbors: 1-d array of indices of neighbor particles to be
+                included in energy computation, of shape (n_max_neighbors,).
+                Index values greater than or equal to the total number of
+                particles are interpreted as fill values and ignored.
             R_ij: Array of pairwise distance vectors, of shape
                 `(n_particles, n_particles, n_dim)`. They are passed to the
                 pair potential as-is, i.e., in the case of periodic boundary
                 conditions the minimum image convention must have been
                 accounted for beforehand.
-            qi_qj: Array of pairwise products of particle charges,
-                of shape `(n_particles, n_particles)`. # TODO
+            charges: Array of particle charges, of shape `(n_particles,)`.
 
         Returns:
-            Energy contribution from summing pairwise interaction over
-            all neighbors.  # TODO
+            Array of length `n_max_neighbors` along the first axis, containing
+            the contribution from each neighbor.
         """
         n_particles = R_ij.shape[0]
         is_neighbor = inds_neighbors < n_particles
-        n_max_neighbors = inds_neighbors.shape[0]
-        # TODO
-        # pair_contribs = jnp.where(
-        #     is_neighbor,
-        #     jax.vmap(eval_fun, in_axes=(0, None, 0))(
-        #         R_ij[idx_center, inds_neighbors],
-        #         charges[idx_center],
-        #         charges[inds_neighbors],
-        #     ),
-        #     0.0,
-        # )
-        pair_contribs = jax.vmap(eval_fun, in_axes=(0, None, 0))(
-            R_ij[idx_center, inds_neighbors],
-            charges[idx_center],
-            charges[inds_neighbors],
-        )
-        inds_selection = jnp.where(
-            is_neighbor, jnp.arange(n_max_neighbors), n_max_neighbors
-        )
-        pair_contribs = pair_contribs.at[inds_selection].get(
-            mode="fill", fill_value=0.0
+        neighbor_cond_made_shape_compatible = jnp.tile(
+            is_neighbor, (*eval_fun_output_shape, 1)
+        ).T.squeeze()
+        pair_contribs = jnp.where(
+            neighbor_cond_made_shape_compatible,
+            jax.vmap(eval_fun, in_axes=(0, None, 0))(
+                R_ij[idx_center, inds_neighbors],
+                charges[idx_center],
+                charges[inds_neighbors],
+            ),
+            0.0,
         )
 
         return pair_contribs
@@ -100,13 +92,12 @@ def make_eval_all_pairs_neighborlist(pair_distance_vector_fun, eval_fun):
                 particle `i`. Index values greater than or equal to the total
                 number of particles are interpreted as fill values (padding to
                 consistent neighbor list shape plus spare capacity), and
-                ignored in the energy evaluation.
+                ignored in the evaluation.  # TODO
 
         Returns:
-            The calculated energy contribution.
+            The calculated energy contribution. # TODO
         """
-        R_ij = pair_distance_vector_fun(positions, positions)
-        # qi_qj = charges[:, jnp.newaxis] * charges # TODO
+        R_ij = pair_distance_vector_fun(positions)
         all_indices = jnp.arange(neighbor_indices.shape[0])
         return jax.vmap(
             process_one_particle_and_neighbors, (0, 0, None, None)
@@ -166,9 +157,10 @@ def make_compute_U_zero_with_neighborlist(
         displacement_fn, box_lengths, r_cutoff=cutoff, **neighbor_kwargs
     )
 
-    def compute_pair_distance_vectors(R_i, R_j):
-        # TODO: comment on the minus
-        return -space.map_product(displacement_fn)(R_i, R_j)
+    def compute_pair_distance_vectors(positions):
+        # With the extra minus, the element `(i, j)` of the output is equal
+        # to (under boundary conditions) `positions[i] - positions[j]`
+        return -space.map_product(displacement_fn)(positions, positions)
 
     def eval_shortrange_one_pair(R_ij, qi, qj):
         return qi * qj * shortrange_kernel(jnp.linalg.norm(R_ij))
@@ -176,6 +168,7 @@ def make_compute_U_zero_with_neighborlist(
     eval_shortrange_all_pairs_neighborlist = make_eval_all_pairs_neighborlist(
         pair_distance_vector_fun=compute_pair_distance_vectors,
         eval_fun=eval_shortrange_one_pair,
+        eval_fun_output_shape=(1,),
     )
 
     def compute_U_zero_with_neighborlist(
@@ -265,9 +258,12 @@ def make_compute_f_zero_with_neighborlist(
         displacement_fn, box_lengths, r_cutoff=cutoff, **neighbor_kwargs
     )
 
-    def compute_pair_distance_vectors(R_i, R_j):
-        # TODO: comment on the minus
-        return -space.map_product(displacement_fn)(R_i, R_j)
+    n_dim = len(pbcs)
+
+    def compute_pair_distance_vectors(positions):
+        # With the extra minus, the element `(i, j)` of the output is equal
+        # to (under boundary conditions) `positions[i] - positions[j]`
+        return -space.map_product(displacement_fn)(positions, positions)
 
     def eval_shortrange_force_contrib_one_pair(R_ij, q_i, q_j):
         r_ij = jnp.linalg.norm(R_ij)
@@ -276,6 +272,7 @@ def make_compute_f_zero_with_neighborlist(
     eval_shortrange_all_pairs_neighborlist = make_eval_all_pairs_neighborlist(
         pair_distance_vector_fun=compute_pair_distance_vectors,
         eval_fun=eval_shortrange_force_contrib_one_pair,
+        eval_fun_output_shape=(n_dim,),
     )
 
     def compute_f_zero_with_neighborlist(
@@ -314,8 +311,8 @@ def make_compute_f_zero_with_neighborlist(
 if __name__ == "__main__":
     # Structure settings
     BOX_LENGTHS = jnp.array([10.0, 12.0, 17.5])
-    PERIODIC = True
-    N_PARTICLES = 30
+    PERIODIC = False
+    N_PARTICLES = 50
 
     # MSM settings
     LEVEL_ZERO_CUTOFF = 3.5
