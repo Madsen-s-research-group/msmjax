@@ -31,7 +31,7 @@ from msmjax.kernels import SofteningFunctionOneOverR, split_one_over_r_kernel
 
 
 def make_eval_all_pairs_neighborlist(
-    pair_distance_vector_fun, eval_fun, eval_fun_output_shape
+    pair_distance_vector_fun, pair_eval_fun, pair_eval_fun_output_shape
 ):
     # TODO: docstring
     def process_one_particle_and_neighbors(
@@ -62,11 +62,11 @@ def make_eval_all_pairs_neighborlist(
         n_particles = R_ij.shape[0]
         is_neighbor = inds_neighbors < n_particles
         neighbor_cond_made_shape_compatible = jnp.tile(
-            is_neighbor, (*eval_fun_output_shape, 1)
-        ).T.squeeze()
+            is_neighbor, (*pair_eval_fun_output_shape, 1)
+        ).T
         pair_contribs = jnp.where(
             neighbor_cond_made_shape_compatible,
-            jax.vmap(eval_fun, in_axes=(0, None, 0))(
+            jax.vmap(pair_eval_fun, in_axes=(0, None, 0))(
                 R_ij[idx_center, inds_neighbors],
                 charges[idx_center],
                 charges[inds_neighbors],
@@ -162,13 +162,13 @@ def make_compute_U_zero_with_neighborlist(
         # to (under boundary conditions) `positions[i] - positions[j]`
         return -space.map_product(displacement_fn)(positions, positions)
 
-    def eval_shortrange_one_pair(R_ij, qi, qj):
+    def pair_eval_fun(R_ij, qi, qj):
         return qi * qj * shortrange_kernel(jnp.linalg.norm(R_ij))
 
     eval_shortrange_all_pairs_neighborlist = make_eval_all_pairs_neighborlist(
         pair_distance_vector_fun=compute_pair_distance_vectors,
-        eval_fun=eval_shortrange_one_pair,
-        eval_fun_output_shape=(1,),
+        pair_eval_fun=pair_eval_fun,
+        pair_eval_fun_output_shape=(),
     )
 
     def compute_U_zero_with_neighborlist(
@@ -265,14 +265,14 @@ def make_compute_f_zero_with_neighborlist(
         # to (under boundary conditions) `positions[i] - positions[j]`
         return -space.map_product(displacement_fn)(positions, positions)
 
-    def eval_shortrange_force_contrib_one_pair(R_ij, q_i, q_j):
+    def pair_eval_fun(R_ij, q_i, q_j):
         r_ij = jnp.linalg.norm(R_ij)
         return -q_i * q_j * k_0_prime(r_ij) * R_ij / r_ij
 
-    eval_shortrange_all_pairs_neighborlist = make_eval_all_pairs_neighborlist(
+    eval_fun = make_eval_all_pairs_neighborlist(
         pair_distance_vector_fun=compute_pair_distance_vectors,
-        eval_fun=eval_shortrange_force_contrib_one_pair,
-        eval_fun_output_shape=(n_dim,),
+        pair_eval_fun=pair_eval_fun,
+        pair_eval_fun_output_shape=(n_dim,),
     )
 
     def compute_f_zero_with_neighborlist(
@@ -297,9 +297,7 @@ def make_compute_f_zero_with_neighborlist(
             The calculated energy contribution.
         """
         forces = jnp.sum(
-            eval_shortrange_all_pairs_neighborlist(
-                positions, charges, neighbor_indices
-            ),
+            eval_fun(positions, charges, neighbor_indices),
             axis=1,
         )
 
@@ -367,7 +365,7 @@ def make_compute_U_and_f_zero_with_neighborlist(
         # to (under boundary conditions) `positions[i] - positions[j]`
         return -space.map_product(displacement_fn)(positions, positions)
 
-    def eval_fun(R_ij, q_i, q_j):
+    def pair_eval_fun(R_ij, q_i, q_j):
         r_ij = jnp.linalg.norm(R_ij)
         energy_contrib = q_i * q_j * k_0(jnp.linalg.norm(R_ij))
         force_contrib = -q_i * q_j * k_0_prime(r_ij) * R_ij / r_ij
@@ -375,8 +373,8 @@ def make_compute_U_and_f_zero_with_neighborlist(
 
     eval_shortrange_all_pairs_neighborlist = make_eval_all_pairs_neighborlist(
         pair_distance_vector_fun=compute_pair_distance_vectors,
-        eval_fun=eval_fun,
-        eval_fun_output_shape=(n_dim + 1,),
+        pair_eval_fun=pair_eval_fun,
+        pair_eval_fun_output_shape=(n_dim + 1,),
     )
 
     def compute_U_and_f_zero_with_neighborlist(
@@ -419,7 +417,10 @@ def make_compute_U_and_f_zero_with_neighborlist(
 
 if __name__ == "__main__":
     # Structure settings
+    # BOX_LENGTHS = jnp.array([10.0, 12.0, 17.5, 20.0])
     BOX_LENGTHS = jnp.array([10.0, 12.0, 17.5])
+    # BOX_LENGTHS = jnp.array([10.0, 12.0])
+    # BOX_LENGTHS = jnp.array([10.0])
     PERIODIC = True
     N_PARTICLES = 50
 
@@ -445,22 +446,6 @@ if __name__ == "__main__":
         softening_function=SofteningFunctionOneOverR(P),
     )
 
-    (
-        neighbor_fun,
-        energy_and_force_fun,
-    ) = make_compute_U_and_f_zero_with_neighborlist(
-        kernels=kernels,
-        cutoff=LEVEL_ZERO_CUTOFF,
-        box_lengths=BOX_LENGTHS,
-        pbcs=pbcs,
-    )
-    nbl_allocate_fun = neighbor_fun.allocate
-    nbl_update_fun = neighbor_fun.update
-    neighborlist = nbl_allocate_fun(pos)
-    e_nbl_comb, f_nbl_comb = energy_and_force_fun(pos, chg, neighborlist.idx)
-    print(e_nbl_comb)
-    print(f_nbl_comb)
-
     neighbor_fun, energy_fun = make_compute_U_zero_with_neighborlist(
         kernels=kernels,
         cutoff=LEVEL_ZERO_CUTOFF,
@@ -469,9 +454,46 @@ if __name__ == "__main__":
     )
     nbl_allocate_fun = neighbor_fun.allocate
     nbl_update_fun = neighbor_fun.update
+    energy_fun = jax.jit(energy_fun)
     neighborlist = nbl_allocate_fun(pos)
     e_neighborlist = energy_fun(pos, chg, neighborlist.idx)
     print(e_neighborlist)
+
+    @jax.jit
+    def wrapper_energy_neighborlist(positions, charges):
+        updated_neighborlist = nbl_update_fun(positions, neighborlist)
+        return energy_fun(positions, charges, updated_neighborlist.idx)
+
+    @jax.jit
+    def wrapper_forces_neighborlist(positions, charges):
+        return -jax.grad(wrapper_energy_neighborlist, argnums=0)(
+            positions, charges
+        )
+
+    e_from_wrapper = wrapper_energy_neighborlist(pos, chg)
+    f_from_wrapper = wrapper_forces_neighborlist(pos, chg)
+
+    print(e_from_wrapper)
+
+    _, force_fun = make_compute_f_zero_with_neighborlist(
+        kernels=kernels,
+        cutoff=LEVEL_ZERO_CUTOFF,
+        box_lengths=BOX_LENGTHS,
+        pbcs=pbcs,
+    )
+    force_fun = jax.jit(force_fun)
+    f_neighborlist = force_fun(pos, chg, neighborlist.idx)
+
+    (_, energy_and_force_fun,) = make_compute_U_and_f_zero_with_neighborlist(
+        kernels=kernels,
+        cutoff=LEVEL_ZERO_CUTOFF,
+        box_lengths=BOX_LENGTHS,
+        pbcs=pbcs,
+    )
+    energy_and_force_fun = jax.jit(energy_and_force_fun)
+    e_nbl_comb, f_nbl_comb = energy_and_force_fun(pos, chg, neighborlist.idx)
+    print(e_nbl_comb)
+    print(f_nbl_comb)
 
     def calculate_direct_energy_reference(
         positions, charges, cutoff, mic=False, box_sizes=None
@@ -512,9 +534,7 @@ if __name__ == "__main__":
     e_ref = calculate_direct_energy_reference(
         pos, chg, LEVEL_ZERO_CUTOFF, mic=PERIODIC, box_sizes=BOX_LENGTHS
     )
-
     print(e_ref)
-
     assert jnp.isclose(e_neighborlist, e_ref)
     assert jnp.isclose(e_nbl_comb, e_ref)
 
@@ -555,31 +575,6 @@ if __name__ == "__main__":
     f_ref = calculate_direct_forces_reference(
         pos, chg, LEVEL_ZERO_CUTOFF, mic=PERIODIC, box_sizes=BOX_LENGTHS
     )
-
-    _, force_fun = make_compute_f_zero_with_neighborlist(
-        kernels=kernels,
-        cutoff=LEVEL_ZERO_CUTOFF,
-        box_lengths=BOX_LENGTHS,
-        pbcs=pbcs,
-    )
-    f_neighborlist = force_fun(pos, chg, neighborlist.idx)
-
-    @jax.jit
-    def wrapper_energy_neighborlist(positions, charges):
-        updated_neighborlist = nbl_update_fun(positions, neighborlist)
-        return energy_fun(positions, charges, updated_neighborlist.idx)
-
-    @jax.jit
-    def wrapper_forces_neighborlist(positions, charges):
-        return -jax.grad(wrapper_energy_neighborlist, argnums=0)(
-            positions, charges
-        )
-
-    e_from_wrapper = wrapper_energy_neighborlist(pos, chg)
-    f_from_wrapper = wrapper_forces_neighborlist(pos, chg)
-
-    print(e_from_wrapper)
-
     assert jnp.allclose(f_ref, f_from_wrapper)
     assert jnp.allclose(f_ref, f_neighborlist)
     assert jnp.allclose(f_ref, f_nbl_comb)
