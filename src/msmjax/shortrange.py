@@ -168,7 +168,9 @@ def make_compute_U_zero_with_neighborlist(
     eval_shortrange_all_pairs_neighborlist = make_eval_all_pairs_neighborlist(
         pair_distance_vector_fun=compute_pair_distance_vectors,
         pair_eval_fun=pair_eval_fun,
-        pair_eval_fun_output_shape=(),
+        pair_eval_fun_output_shape=pair_eval_fun(
+            jnp.ones(n_dim), 1.0, 1.0
+        ).shape,
     )
 
     def compute_U_zero_with_neighborlist(
@@ -272,7 +274,9 @@ def make_compute_f_zero_with_neighborlist(
     eval_fun = make_eval_all_pairs_neighborlist(
         pair_distance_vector_fun=compute_pair_distance_vectors,
         pair_eval_fun=pair_eval_fun,
-        pair_eval_fun_output_shape=(n_dim,),
+        pair_eval_fun_output_shape=pair_eval_fun(
+            jnp.ones(n_dim), 1.0, 1.0
+        ).shape,
     )
 
     def compute_f_zero_with_neighborlist(
@@ -374,7 +378,9 @@ def make_compute_U_and_f_zero_with_neighborlist(
     eval_shortrange_all_pairs_neighborlist = make_eval_all_pairs_neighborlist(
         pair_distance_vector_fun=compute_pair_distance_vectors,
         pair_eval_fun=pair_eval_fun,
-        pair_eval_fun_output_shape=(n_dim + 1,),
+        pair_eval_fun_output_shape=pair_eval_fun(
+            jnp.ones(n_dim), 1.0, 1.0
+        ).shape,
     )
 
     def compute_U_and_f_zero_with_neighborlist(
