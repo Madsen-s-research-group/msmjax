@@ -520,9 +520,16 @@ def create_interaction_operator(
     return apply_interaction
 
 
-def create_all_grid_to_grid_ops(grids, kernel_stencils):
-    """Create all necessary functions that map from grids to grids"""
+def create_all_grid_to_grid_ops(grids, kernel_stencils, convolution_methods):
+    """Create all necessary functions that map from grids to grids
+
+    Args:
+        convolution_methods:
+    """
     n_levels = len(grids) - 1
+
+    if convolution_methods is None:
+        convolution_methods = [None] + ["custom"] * n_levels
 
     restriction_funcs = [None] * (n_levels + 1)
     for lvl in range(2, n_levels + 1):
@@ -540,15 +547,34 @@ def create_all_grid_to_grid_ops(grids, kernel_stencils):
 
     interaction_funcs = [None] * (n_levels + 1)
     for lvl in range(1, n_levels + 1):
-        interact = create_interaction_operator(
-            grid=grids[lvl], kernel_stencil=kernel_stencils[lvl]
-        )
+        conv_meth = convolution_methods[lvl]
+        # TODO: test that all these convolution methods actually give the
+        #  same result (probably best to define the scipy-based ones as
+        #  functions of their own for that purpose).
+        if conv_meth == "custom":
+            interact = create_interaction_operator(
+                grid=grids[lvl], kernel_stencil=kernel_stencils[lvl]
+            )
+        elif conv_meth == "scipy-direct":
+            interact = lambda arr: jax.scipy.signal.convolve(
+                arr, kernel_stencils[lvl], mode="same", method="direct"
+            )
+        elif conv_meth == "scipy-fft":
+            interact = lambda arr: jax.scipy.signal.convolve(
+                arr, kernel_stencils[lvl], mode="same", method="fft"
+            )
+        else:
+            raise ValueError(
+                f"`{conv_meth}` is not a valid convolution method"
+            )
         interaction_funcs[lvl] = interact
 
     return restriction_funcs, prolongation_funcs, interaction_funcs
 
 
-def create_compute_gridpotential_level_one(grids, kernel_stencils) -> Callable:
+def create_compute_gridpotential_level_one(
+    grids, kernel_stencils, convolution_methods=None
+) -> Callable:
     """Create closure for computing potential on lowest-level grid"""
     # TODO: check if all grids have same J and p?
     # TODO: check if shape of J is compatible with p?
@@ -556,7 +582,9 @@ def create_compute_gridpotential_level_one(grids, kernel_stencils) -> Callable:
         restriction_funcs,
         prolongation_funcs,
         interaction_funcs,
-    ) = create_all_grid_to_grid_ops(grids, kernel_stencils)
+    ) = create_all_grid_to_grid_ops(
+        grids, kernel_stencils, convolution_methods
+    )
 
     def compute_gridpotential_level_one(
         gridcharge_level_one: jax.Array,
@@ -601,11 +629,15 @@ def create_compute_gridpotential_level_one(grids, kernel_stencils) -> Callable:
     return compute_gridpotential_level_one
 
 
-def create_compute_U_oneplus(grids, kernel_stencils) -> Callable:
+def create_compute_U_oneplus(
+    grids, kernel_stencils, convolution_methods=None
+) -> Callable:
     """Create closure for computing grid contribution to the energy"""
     anterpolate_level_one = create_anterpolation_operator(grids[1])
     compute_gridpotential_level_one = create_compute_gridpotential_level_one(
-        grids=grids, kernel_stencils=kernel_stencils
+        grids=grids,
+        kernel_stencils=kernel_stencils,
+        convolution_methods=convolution_methods,
     )
 
     def compute_U_oneplus(
@@ -634,11 +666,15 @@ def create_compute_U_oneplus(grids, kernel_stencils) -> Callable:
     return compute_U_oneplus
 
 
-def create_compute_U_and_f_oneplus(grids, kernel_stencils) -> Callable:
+def create_compute_U_and_f_oneplus(
+    grids, kernel_stencils, convolution_methods=None
+) -> Callable:
     """Create closure for computing grid contribution to energy and forces"""
     anterpolate_level_one = create_anterpolation_operator(grids[1])
     compute_gridpotential_level_one = create_compute_gridpotential_level_one(
-        grids=grids, kernel_stencils=kernel_stencils
+        grids=grids,
+        kernel_stencils=kernel_stencils,
+        convolution_methods=convolution_methods,
     )
 
     def compute_U_and_f_oneplus(
