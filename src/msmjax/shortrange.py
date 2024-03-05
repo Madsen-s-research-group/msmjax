@@ -157,6 +157,8 @@ def make_compute_U_zero_with_neighborlist(
         displacement_fn, box_lengths, r_cutoff=cutoff, **neighbor_kwargs
     )
 
+    n_dim = box_lengths.shape[0]
+
     def compute_pair_distance_vectors(positions):
         # With the extra minus, the element `(i, j)` of the output is equal
         # to (under boundary conditions) `positions[i] - positions[j]`
@@ -260,7 +262,7 @@ def make_compute_f_zero_with_neighborlist(
         displacement_fn, box_lengths, r_cutoff=cutoff, **neighbor_kwargs
     )
 
-    n_dim = len(pbcs)
+    n_dim = box_lengths.shape[0]
 
     def compute_pair_distance_vectors(positions):
         # With the extra minus, the element `(i, j)` of the output is equal
@@ -362,7 +364,7 @@ def make_compute_U_and_f_zero_with_neighborlist(
         displacement_fn, box_lengths, r_cutoff=cutoff, **neighbor_kwargs
     )
 
-    n_dim = len(pbcs)
+    n_dim = box_lengths.shape[0]
 
     def compute_pair_distance_vectors(positions):
         # With the extra minus, the element `(i, j)` of the output is equal
