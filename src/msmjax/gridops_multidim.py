@@ -1,3 +1,4 @@
+import functools
 from typing import Callable, Iterable, List, NamedTuple, Tuple
 
 import jax
@@ -520,7 +521,18 @@ def create_interaction_operator(
     return apply_interaction
 
 
-def create_all_grid_to_grid_ops(grids, kernel_stencils, convolution_methods):
+def create_interaction_operator_scipy(kernel_stencil, method):
+    return functools.partial(
+        jax.scipy.signal.convolve,
+        in2=kernel_stencil,
+        mode="same",
+        method=method,
+    )
+
+
+def create_all_grid_to_grid_ops(
+    grids, kernel_stencils, convolution_methods=None
+):
     """Create all necessary functions that map from grids to grids
 
     Args:
@@ -551,17 +563,18 @@ def create_all_grid_to_grid_ops(grids, kernel_stencils, convolution_methods):
         # TODO: test that all these convolution methods actually give the
         #  same result (probably best to define the scipy-based ones as
         #  functions of their own for that purpose).
+        # TODO: handling of periodic boundary conditions in the scipy methods
         if conv_meth == "custom":
             interact = create_interaction_operator(
                 grid=grids[lvl], kernel_stencil=kernel_stencils[lvl]
             )
         elif conv_meth == "scipy-direct":
-            interact = lambda arr: jax.scipy.signal.convolve(
-                arr, kernel_stencils[lvl], mode="same", method="direct"
+            interact = create_interaction_operator_scipy(
+                kernel_stencil=kernel_stencils[lvl], method="direct"
             )
         elif conv_meth == "scipy-fft":
-            interact = lambda arr: jax.scipy.signal.convolve(
-                arr, kernel_stencils[lvl], mode="same", method="fft"
+            interact = create_interaction_operator_scipy(
+                kernel_stencil=kernel_stencils[lvl], method="fft"
             )
         else:
             raise ValueError(
