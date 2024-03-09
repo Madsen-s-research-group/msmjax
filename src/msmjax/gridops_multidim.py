@@ -310,7 +310,7 @@ def create_restriction_operator_1d(
         ].get(mode="fill", fill_value=0.0)
 
         out_array_coarse = jnp.zeros(axis_target_coarse.n_total)
-        # TODO: use `set` instead of `add`?
+        # TODO: use `set` instead of `add`? Or get rid of the `at` altogether!
         out_array_coarse = out_array_coarse.at[inds_targetgrid].add(
             (neighbor_values_sourcegrid * J).sum(axis=1)
         )
@@ -415,14 +415,14 @@ def create_prolongation_operator_1d(
             inds_targetgrid[slice_odd]
         )
         out_array_fine = jnp.zeros(axis_target_fine.n_total)
-        # TODO: use `set` instead of `add`?
+        # TODO: use `set` instead of `add`? Or get rid of the `at` altogether!
         out_array_fine = out_array_fine.at[inds_targetgrid[slice_even]].add(
             (
                 in_array_coarse[inds_source_even]
                 * J_zeroplus[jnp.abs(inds_into_J_even)]
             ).sum(axis=1)
         )
-        # TODO: use `set` instead of `add`?
+        # TODO: use `set` instead of `add`? Or get rid of the `at` altogether!
         out_array_fine = out_array_fine.at[inds_targetgrid[slice_odd]].add(
             (
                 in_array_coarse[inds_source_odd]
@@ -521,6 +521,57 @@ def create_interaction_operator(
     return apply_interaction
 
 
+def create_custom_interaction_operator_2(
+    grid: BSplineInterpolationGrid, kernel_stencil: npt.ArrayLike
+):
+    # TODO: make this the default interaction operator
+    #  and remove `create_interaction_operator`
+
+    kernel_stencil = jnp.asarray(kernel_stencil)
+    kernelranges_individual_axes = [
+        jnp.arange(-(s // 2), (s // 2) + 1) for s in kernel_stencil.shape
+    ]
+
+    inds_all = jnp.meshgrid(
+        *[jnp.arange(s) for s in grid.shape], indexing="ij"
+    )
+    inds_all = [i.ravel() for i in inds_all]
+
+    def get_neighbor_inds(*ii):
+        neigbor_inds_individual_axes = [
+            i + offsets for i, offsets in zip(ii, kernelranges_individual_axes)
+        ]
+        neigbor_inds_individual_axes = [
+            ga.wrap_or_invalidate_indices(nghbr_inds)
+            for ga, nghbr_inds in zip(grid.axes, neigbor_inds_individual_axes)
+        ]
+        meshgrid = jnp.meshgrid(*neigbor_inds_individual_axes, indexing="ij")
+        neighbor_multi_inds = tuple(inds.ravel() for inds in meshgrid)
+
+        return neighbor_multi_inds
+
+    def calculate_one_element(in_array, *ii):
+        neighbor_multi_inds = get_neighbor_inds(*ii)
+        # TODO: if all directions are periodic, we can omit the in-bounds check,
+        #  potentially saving some time
+        is_in_bounds = jnp.array(
+            [inds < s for inds, s in zip(neighbor_multi_inds, in_array.shape)]
+        ).all(axis=0)
+        return jnp.where(
+            is_in_bounds,
+            in_array[neighbor_multi_inds] * kernel_stencil.ravel(),
+            0.0,
+        ).sum()
+
+    def apply_interaction(in_array):
+        convolved = jax.vmap(
+            calculate_one_element, in_axes=(None,) + (0,) * grid.ndim
+        )(in_array, *inds_all)
+        return convolved.reshape(grid.shape)
+
+    return apply_interaction
+
+
 def create_interaction_operator_scipy(kernel_stencil, method):
     return functools.partial(
         jax.scipy.signal.convolve,
@@ -566,6 +617,12 @@ def create_all_grid_to_grid_ops(
         # TODO: handling of periodic boundary conditions in the scipy methods
         if conv_meth == "custom":
             interact = create_interaction_operator(
+                grid=grids[lvl], kernel_stencil=kernel_stencils[lvl]
+            )
+        elif conv_meth == "custom2":
+            # TODO: this should become the default (taking the place of the
+            #  current `custom` option, which it will replace)
+            interact = create_custom_interaction_operator_2(
                 grid=grids[lvl], kernel_stencil=kernel_stencils[lvl]
             )
         elif conv_meth == "scipy-direct":
