@@ -608,6 +608,9 @@ def create_all_grid_to_grid_ops(
         )
         prolongation_funcs[lvl] = prolongate
 
+    # TODO: There might be more efficient ways to compute the convolution on
+    #  the highest for non-periodic cases (where the stencil is always larger
+    #  than the grid)
     interaction_funcs = [None] * (n_levels + 1)
     for lvl in range(1, n_levels + 1):
         conv_meth = convolution_methods[lvl]
