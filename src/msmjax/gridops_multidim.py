@@ -34,10 +34,15 @@ def set_up_grid_axis(
 
     if periodic:
         # TODO: Check if n_domain * h == length
-        if not (onp.isclose(length % h, 0.0) or onp.isclose(length % h, h)):
+        if not (
+            onp.isclose(length % h, 0.0)
+            or onp.isclose(length % h, h)
+            or onp.isclose(h % length, 0.0)
+            or onp.isclose(h % length, length)
+        ):
             raise ValueError(
-                "The grid spacing must evenly divide the box length along "
-                "periodic axes."
+                "Along any periodic axis, the grid spacing must either evenly "
+                "divide the box length or be a multiple thereof."
             )
         n_domain = int(onp.ceil(length / h))
         n_total = n_domain
@@ -188,19 +193,20 @@ def set_up_grids_all_levels(
 
     # TODO: More flexible determination of grid spacing and number of levels
     #  - Non-periodic: option to leave out n_levels and determine from spacing
-    #  - Periodic: if n_levels given but not spacing, determine n_levels from spacing
+    #  - Periodic: if n_levels given but not spacing, determine spacing from n_levels
     #  - Periodic: if spacing given, but not n_levels, find n_levels for which
     #    the corresponding spacing most closely matches the one that was given
     #  - Mixed: ???
     #  - In general: check out how this is done in NAMD
-    actual_level_one_spacings = []
-    for length, spacing, periodic in zip(
-        box_lengths, level_one_spacings, pbcs
-    ):
-        if periodic:
-            actual_level_one_spacings.append(length / 2 ** (n_levels - 1))
-        else:
-            actual_level_one_spacings.append(spacing)
+    # TODO: commented part does not make sense?
+    # actual_level_one_spacings = []
+    # for length, spacing, periodic in zip(
+    #     box_lengths, level_one_spacings, pbcs
+    # ):
+    #     if periodic:
+    #         actual_level_one_spacings.append(length / 2 ** (n_levels - 1))
+    #     else:
+    #         actual_level_one_spacings.append(spacing)
 
     grids_all_levels = [None]
 
@@ -213,7 +219,7 @@ def set_up_grids_all_levels(
                 **bspline_params,
             )
             for length, spacing, periodic in zip(
-                box_lengths, actual_level_one_spacings, pbcs
+                box_lengths, level_one_spacings, pbcs
             )
         ]
         grid = BSplineInterpolationGrid(axes)
