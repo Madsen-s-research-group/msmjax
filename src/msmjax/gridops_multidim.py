@@ -52,12 +52,14 @@ def set_up_grid_axis(
         n_total = n_domain + p
 
     def to_raw_indices(indices):
+        # TODO: name? (something like `zero_align_indices`?)
         if periodic:
             return indices
         else:
             return indices - p // 2
 
     def from_raw_indices(indices):
+        # TODO: name?
         if periodic:
             return indices
         else:
@@ -101,6 +103,7 @@ def set_up_grid_axis(
     def evaluate_bspline_basis_gradient_multi(
         positions: jax.Array,
     ) -> Tuple[jax.Array, jax.Array]:
+        # TODO: jacfwd vs. jacrev performance considerations?
         return jax.vmap(
             jax.jacfwd(evaluate_bspline_basis_for_one_particle, has_aux=True)
         )(positions)
@@ -125,6 +128,8 @@ def set_up_grid_axis(
 
 def arbitrary_dim_outer(*xi: jax.Array) -> jax.Array:
     """Compute the outer product of an arbitrary number of arrays"""
+    # TODO: could this be made more efficient? (the way it is currently done
+    #   technically involves redundant multiplications)
     return jnp.prod(jnp.array(jnp.meshgrid(*xi, indexing="ij")), axis=0)
 
 
@@ -290,7 +295,7 @@ def create_restriction_operator_1d(
     J_zeroplus = axis_source_fine.J_zeroplus
     J = jnp.concatenate((J_zeroplus[::-1][:-1], J_zeroplus))
 
-    def get_neigbhor_inds_on_sourcegrid(idx_targetgrid: int) -> jax.Array:
+    def get_neighbor_inds_on_sourcegrid(idx_targetgrid: int) -> jax.Array:
         """Get a target-grid index's neighbor indices on source grid."""
         raw_idx_targetgrid = axis_target_coarse.to_raw_indices(idx_targetgrid)
         raw_neighbor_inds_sourcegrid = 2 * raw_idx_targetgrid + jnp.arange(
@@ -305,12 +310,14 @@ def create_restriction_operator_1d(
 
     def restrict_1d(in_array_fine: jax.Array) -> jax.Array:
         """Restrict array defined on grid to the next-coarser (higher) grid"""
-        neighbor_inds_sourcegrid = jax.vmap(get_neigbhor_inds_on_sourcegrid)(
+        neighbor_inds_sourcegrid = jax.vmap(get_neighbor_inds_on_sourcegrid)(
             inds_targetgrid
         )
         neighbor_inds_sourcegrid = axis_source_fine.wrap_or_invalidate_indices(
             neighbor_inds_sourcegrid
         )
+        # TODO: replace `get` with a `jnp.where` construct? (more efficient?)
+        #  (see create_custom_interaction_operator_2 for an example)
         neighbor_values_sourcegrid = in_array_fine.at[
             neighbor_inds_sourcegrid
         ].get(mode="fill", fill_value=0.0)
@@ -456,7 +463,7 @@ def create_prolongation_operator(
             )
         )
 
-    def restrict(in_array_coarse):
+    def prolongate(in_array_coarse):
         out_array_fine = in_array_coarse
 
         for idx_cartesian, pf_1d in enumerate(
@@ -470,7 +477,7 @@ def create_prolongation_operator(
 
         return out_array_fine
 
-    return restrict
+    return prolongate
 
 
 def create_interaction_operator(
@@ -709,7 +716,10 @@ def create_compute_gridpotential_level_one(
 
 
 def create_compute_U_oneplus(
-    grids, kernel_stencils, convolution_methods=None
+    grids,
+    kernel_stencils,
+    convolution_methods=None,
+    return_particle_contribs=False,
 ) -> Callable:
     """Create closure for computing grid contribution to the energy"""
     anterpolate_level_one = create_anterpolation_operator(grids[1])
@@ -730,17 +740,26 @@ def create_compute_U_oneplus(
         # TODO: splinevals and indices from anterpolation could, in principle,
         #  be reused here instead of recalculated;
         #  but would this be any faster in practice?
+        # TODO: ... or compute by directly contraction grid charges with
+        #  grid potential? Why would one need to (re-)evaluate the spline
+        #  basis functions?
         splinevals, indices = grids[1].evaluate_bspline_basis_multiparticle(
             positions
         )
-
         # TODO: Do we need to use a fill value with `take` here?
         #  (it shouldn't be possible for indices returned by the spline eval
         #  functions to be out of bounds)
-        return 0.5 * jnp.sum(
-            charges
-            * (gridpotential_level_one.take(indices) * splinevals).sum(axis=1)
-        )
+        # TODO: return per-particle energy contributions, or electrostatic
+        #  potential at particle positions, or ...?
+        particle_contribs = charges * (
+            gridpotential_level_one.take(indices) * splinevals
+        ).sum(axis=1)
+        energy = 0.5 * jnp.sum(particle_contribs)
+
+        if return_particle_contribs:
+            return energy, particle_contribs
+        else:
+            return energy
 
     return compute_U_oneplus
 
