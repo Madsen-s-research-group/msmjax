@@ -234,6 +234,7 @@ def set_up_grids_all_levels(
 
 
 def make_ravel_multi_inds_and_apply_bcs(grid: BSplineInterpolationGrid):
+    # TODO: this is not used anywhere except in (obsolete) custom interaction operator
     # TODO: should this be a method of BSplineInterpolationGrid?
     is_not_periodic = ~jnp.array([ga.periodic for ga in grid.axes])
     intentionally_out_of_bounds_index = grid.size
@@ -564,6 +565,10 @@ def create_custom_interaction_operator_2(
         return neighbor_multi_inds
 
     def calculate_one_element(in_array, *ii):
+        # TODO: it might be cleaner to not pass central idx as arg and determine
+        #  neighbor inds inside this function, but pass precomputed neighbor inds.
+        #  Precomputing all neighbor inds could be done like (informally) `inds_all + offsets`,
+        #  or determine for just one central idx and then shift to all other central inds
         neighbor_multi_inds = get_neighbor_inds(*ii)
         # TODO: if all directions are periodic, we can omit the in-bounds check,
         #  potentially saving some time
@@ -740,7 +745,7 @@ def create_compute_U_oneplus(
         # TODO: splinevals and indices from anterpolation could, in principle,
         #  be reused here instead of recalculated;
         #  but would this be any faster in practice?
-        # TODO: ... or compute by directly contraction grid charges with
+        # TODO: ... or compute by directly contracting grid charges with
         #  grid potential? Why would one need to (re-)evaluate the spline
         #  basis functions?
         splinevals, indices = grids[1].evaluate_bspline_basis_multiparticle(
