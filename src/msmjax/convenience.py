@@ -1,4 +1,10 @@
+import functools
+import math
+
+import jax
+import jax.numpy as jnp
 import numpy as onp
+from neuralil.bessel_descriptors import gen_supercell
 
 
 def suggest_p(alpha):
@@ -235,3 +241,155 @@ def suggest_msm_params(
         "n_levels": n_levels,
         **kwargs,
     }
+
+
+def remove_diag(x):
+    """Remove diagonal of a 2-d array in a jit-compatible way.
+
+    This feels more complicated than it should be.
+    """
+    inds_triu = jnp.triu_indices(n=x.shape[0], m=x.shape[1], k=1)
+    inds_tril = jnp.tril_indices(n=x.shape[0], m=x.shape[1], k=-1)
+    i_without_diag = jnp.concatenate([inds_triu[0], inds_tril[0]])
+    j_without_diag = jnp.concatenate([inds_triu[1], inds_tril[1]])
+    shape_without_diag = (x.shape[0], x.shape[1] - 1, *x.shape[2:])
+    sorted = jnp.lexsort((j_without_diag, i_without_diag))
+    x_without_diag = x[
+        (i_without_diag[sorted], j_without_diag[sorted])
+    ].reshape(shape_without_diag)
+
+    return x_without_diag
+
+
+def make_compute_shortrange_periodic(
+    pair_potential, cutoff, box_lengths, return_particle_contribs=False
+):
+    sc_a, sc_b, sc_c = onp.floor(2 * cutoff / box_lengths).astype(int) + 1
+    replicate_system = functools.partial(
+        gen_supercell, sc_a=sc_a, sc_b=sc_b, sc_c=sc_c
+    )
+    # call once with mostly dummy arguments to get the replicated box lengths
+    _, _, super_cell = replicate_system(
+        coordinates=jnp.zeros((1, 3)),
+        types=jnp.zeros(1),
+        cell=jnp.diag(box_lengths),
+    )
+    super_box_lengths = onp.diag(super_cell)
+
+    if cutoff > 0.5 * min(super_box_lengths):
+        raise ValueError(
+            "Cutoff does not fit. There might be a bug in the supercell size determination."
+        )
+
+    def compute_shortrange_periodic(positions, charges):
+        positions_extended, charges_extended, _ = replicate_system(
+            coordinates=positions,
+            types=charges,
+            cell=jnp.diag(box_lengths),
+        )
+        R_ij = positions[:, jnp.newaxis, :] - positions_extended
+        R_ij -= jnp.rint(R_ij / super_box_lengths) * super_box_lengths
+        R_ij = remove_diag(R_ij)
+        r_ij = jnp.linalg.norm(R_ij, axis=2)
+        qi_qj = charges[:, jnp.newaxis] * charges_extended
+        qi_qj = remove_diag(qi_qj)
+        particle_contribs = (qi_qj * jax.vmap(pair_potential)(r_ij)).sum(
+            axis=1
+        )
+        # TODO: factor 1/2 here or include in particle contributions?
+        energy = 0.5 * particle_contribs.sum()
+
+        if return_particle_contribs:
+            return energy, particle_contribs
+        else:
+            return energy
+
+    return compute_shortrange_periodic
+
+
+def make_compute_U_zero_periodic_no_nbl(
+    kernels, cutoff, box_lengths, return_particle_contribs
+):
+    compute_pair_term = make_compute_shortrange_periodic(
+        pair_potential=kernels[0],
+        cutoff=cutoff,
+        box_lengths=box_lengths,
+        return_particle_contribs=return_particle_contribs,
+    )
+
+    sum_of_higher_kernels_at_zero = jnp.sum(
+        jnp.asarray([k(0.0) for k in kernels[1:]])
+    )
+
+    def compute_U_zero(positions, charges):
+        result_pairs = compute_pair_term(positions, charges)
+        result_self_energy = (
+            0.5 * (charges**2).sum() * sum_of_higher_kernels_at_zero
+        )
+        if return_particle_contribs:
+            energy = result_pairs[0] - result_self_energy
+            particle_contribs = (
+                result_pairs[1] - 2 * result_self_energy / positions.shape[0]
+            )
+            return energy, particle_contribs
+        else:
+            return result_pairs - result_self_energy
+
+    return compute_U_zero
+
+
+def set_up_msm_components_periodic_no_nbl(
+    box_lengths,
+    level_one_gridspacing,
+    level_zero_cutoff,
+    p,
+    mu,
+    n_levels,
+    conv_meth,
+    return_aux=False,
+    return_particle_contribs=False,
+):
+    n_levels_incl_omitted_top = n_levels + 1
+
+    if conv_meth is None:
+        convolution_methods = None
+    else:
+        convolution_methods = [None] + [conv_meth] * n_levels_incl_omitted_top
+
+    kernels, grids, kernel_stencils = set_up_grids_and_kernels(
+        box_lengths=box_lengths,
+        pbcs=[True] * len(box_lengths),
+        level_one_gridspacing=level_one_gridspacing,
+        level_zero_cutoff=level_zero_cutoff,
+        p=p,
+        mu=mu,
+        n_levels=n_levels_incl_omitted_top,
+    )
+
+    if grids[-1].size != 1:
+        raise ValueError("Highest grid level should have only one point.")
+
+    compute_U_zero = make_compute_U_zero_periodic_no_nbl(
+        kernels=kernels,  # TODO: should this include the highest kernel?
+        cutoff=level_zero_cutoff,
+        box_lengths=box_lengths,
+        return_particle_contribs=return_particle_contribs,
+    )
+    compute_U_oneplus = create_compute_U_oneplus(
+        grids=grids[:-1],
+        kernel_stencils=kernel_stencils[:-1],
+        convolution_methods=convolution_methods[:-1],
+        return_particle_contribs=return_particle_contribs,
+    )
+
+    if return_aux:
+        return (
+            compute_U_zero,
+            compute_U_oneplus,
+            (kernels, grids, kernel_stencils),
+        )
+    else:
+        return (
+            compute_U_zero,
+            compute_U_oneplus,
+        )
