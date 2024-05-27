@@ -6,6 +6,13 @@ import jax.numpy as jnp
 import numpy as onp
 from neuralil.bessel_descriptors import gen_supercell
 
+from msmjax import wrappers_old_code
+from msmjax.gridops_multidim import (
+    create_compute_U_oneplus,
+    set_up_grids_all_levels,
+)
+from msmjax.kernels import SofteningFunctionOneOverR, split_one_over_r_kernel
+
 
 def suggest_p(alpha):
     """Find the interpolation order p that the article recommends.
@@ -214,10 +221,15 @@ def suggest_msm_params(
         )
         level_one_gridspacing = actual_spacings[0]
 
+    # TODO: With this implementation it is currently not possible to fix a
+    #  certain value of the ratio alpha, if the actual spacing is adjusted
+    #  in the case of periodicity.
     alpha = level_zero_cutoff / level_one_gridspacing
     if p is None:
         p = suggest_p(alpha)
     # See section "1. Preprocessing" of the article
+    # TODO: Allow different mus for each level? (The article suggests
+    #  mu >= 3*p/2 for the highest grid level)
     if mu is None:
         mu = max(int(4 * alpha + p // 2), 3 * p // 2)
     if not periodic and n_levels is None:
@@ -233,6 +245,8 @@ def suggest_msm_params(
     # TODO: check that n_levels is at least one (or is this function not the
     #  right place for that?)
 
+    # TODO: Convert all return values to native Python types?
+    #  (for easy json-serialization etc.)
     return {
         "level_one_gridspacing": level_one_gridspacing,
         "level_zero_cutoff": level_zero_cutoff,
@@ -241,6 +255,43 @@ def suggest_msm_params(
         "n_levels": n_levels,
         **kwargs,
     }
+
+
+def set_up_grids_and_kernels(
+    box_lengths,
+    pbcs,
+    level_one_gridspacing,
+    level_zero_cutoff,
+    p,
+    mu,
+    n_levels,
+):
+    n_dim = len(pbcs)
+
+    kernels = split_one_over_r_kernel(
+        max_level=n_levels,
+        level_zero_cutoff=level_zero_cutoff,
+        softening_function=SofteningFunctionOneOverR(p),
+    )
+    grids = set_up_grids_all_levels(
+        box_lengths=box_lengths,
+        level_one_spacings=[level_one_gridspacing] * n_dim,
+        pbcs=pbcs,
+        n_levels=n_levels,
+        p=p,
+        J_zeroplus=wrappers_old_code._compute_J_zeroplus(p),
+    )
+    kernel_stencils = wrappers_old_code._construct_kernel_stencils(
+        kernels=kernels,
+        box_lengths=box_lengths,
+        level_one_gridspacing=level_one_gridspacing,
+        level_zero_cutoff=level_zero_cutoff,
+        n_levels=n_levels,
+        p=p,
+        mu=mu,
+    )
+
+    return kernels, grids, kernel_stencils
 
 
 def remove_diag(x):
@@ -264,6 +315,7 @@ def remove_diag(x):
 def make_compute_shortrange_periodic(
     pair_potential, cutoff, box_lengths, return_particle_contribs=False
 ):
+    box_lengths = onp.asarray(box_lengths)
     sc_a, sc_b, sc_c = onp.floor(2 * cutoff / box_lengths).astype(int) + 1
     replicate_system = functools.partial(
         gen_supercell, sc_a=sc_a, sc_b=sc_b, sc_c=sc_c
