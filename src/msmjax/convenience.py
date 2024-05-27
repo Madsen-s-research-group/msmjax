@@ -202,7 +202,8 @@ def suggest_msm_params(
     pbcs,
     n_particles,
     level_one_gridspacing,
-    level_zero_cutoff,
+    level_zero_cutoff=None,
+    alpha=None,
     p=None,
     mu=None,
     n_levels=None,
@@ -221,10 +222,16 @@ def suggest_msm_params(
         )
         level_one_gridspacing = actual_spacings[0]
 
-    # TODO: With this implementation it is currently not possible to fix a
-    #  certain value of the ratio alpha, if the actual spacing is adjusted
-    #  in the case of periodicity.
-    alpha = level_zero_cutoff / level_one_gridspacing
+    if alpha is None and level_zero_cutoff is not None:
+        alpha = level_zero_cutoff / level_one_gridspacing
+    elif level_zero_cutoff is None and alpha is not None:
+        level_zero_cutoff = alpha * level_one_gridspacing
+    else:
+        raise ValueError(
+            "Either `level_zero_cutoff` or `alpha` is required,"
+            "and not both at the same time."
+        )
+
     if p is None:
         p = suggest_p(alpha)
     # See section "1. Preprocessing" of the article
