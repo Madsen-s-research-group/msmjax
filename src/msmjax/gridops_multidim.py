@@ -33,7 +33,6 @@ def set_up_grid_axis(
         raise ValueError("p must be even")
 
     if periodic:
-        # TODO: Check if n_domain * h == length
         if not (
             onp.isclose(length % h, 0.0)
             or onp.isclose(length % h, h)
@@ -89,6 +88,9 @@ def set_up_grid_axis(
     ) -> Tuple[jax.Array, jax.Array]:
         x_over_h = x / h
         raw_reference_index = jnp.ceil(x_over_h).astype(int)
+        # TODO: this could be onp.arange (to emphasize staticness, I don't think
+        #  it makes a performance difference in this case).
+        #  The same goes for other usags of jnp.arange as well.
         raw_indices = raw_reference_index + jnp.arange(-p // 2, p // 2)
         splinevals = jax.vmap(bspline_basis_element)(x_over_h - raw_indices)
         indices = wrap_indices_if_periodic(from_raw_indices(raw_indices))
