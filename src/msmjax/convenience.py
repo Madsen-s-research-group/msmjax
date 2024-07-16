@@ -228,7 +228,7 @@ def suggest_msm_params(
         level_zero_cutoff = alpha * level_one_gridspacing
     else:
         raise ValueError(
-            "Either `level_zero_cutoff` or `alpha` is required,"
+            "Either `level_zero_cutoff` or `alpha` is required, "
             "and not both at the same time."
         )
 
@@ -255,11 +255,11 @@ def suggest_msm_params(
     # TODO: Convert all return values to native Python types?
     #  (for easy json-serialization etc.)
     return {
-        "level_one_gridspacing": level_one_gridspacing,
-        "level_zero_cutoff": level_zero_cutoff,
-        "p": p,
-        "mu": mu,
-        "n_levels": n_levels,
+        "level_one_gridspacing": float(level_one_gridspacing),
+        "level_zero_cutoff": float(level_zero_cutoff),
+        "p": int(p),
+        "mu": int(mu),
+        "n_levels": int(n_levels),
         **kwargs,
     }
 

@@ -613,6 +613,8 @@ def create_all_grid_to_grid_ops(
 
     if convolution_methods is None:
         convolution_methods = [None] + ["custom"] * n_levels
+    if isinstance(convolution_methods, str):
+        convolution_methods = [None] + [convolution_methods] * n_levels
 
     restriction_funcs = [None] * (n_levels + 1)
     for lvl in range(2, n_levels + 1):
