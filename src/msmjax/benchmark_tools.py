@@ -44,7 +44,6 @@ def get_metadata(additional_repository_paths: dict = None):
         },
     }
 
-    # TODO: take the correct parent path of the file path
     path_msmjax = str(Path(__file__).resolve().parents[2])
     repository_info_msmjax = get_repository_info(path_msmjax)
     metadata["repository_info_msmjax"] = repository_info_msmjax
@@ -72,11 +71,8 @@ def time_set_of_structures(structures, pbc, setup_fn, **kwargs):
         jax.device_put(chg)
         times_all.append(timed_calc(pos, chg))
 
-    # TODO: don't just save avg and std, but the parameters required to
-    #  (re-)create a box-and-whisker plot?
     output = {
-        "time_avg": float(onp.mean(times_all)),
-        "time_std": float(onp.std(times_all)),
+        "times": times_all.tolist(),
         "info": info,
     }
 
