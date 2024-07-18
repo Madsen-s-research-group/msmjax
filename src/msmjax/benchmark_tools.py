@@ -11,6 +11,10 @@ import jax.numpy as jnp
 import jaxlib
 import numpy as onp
 
+path_input_structures = (
+    Path(__file__).resolve().parents[2] / "data" / "benchmark" / "structures"
+)
+
 
 def get_git_commit_id(repository_path):
     proc = subprocess.run(
