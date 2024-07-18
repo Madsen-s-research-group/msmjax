@@ -33,6 +33,9 @@ class SofteningFunctionOneOverR:
             a function of s = rho**2) is equal to order - 1.
     """
 
+    # TODO: The `order` argument must be consistent with the `order` argument
+    #  of the B-spline basis elements.
+
     def __init__(self, order: int):
         if not isinstance(order, (int, onp.integer, jnp.integer)):
             raise ValueError("'order' must be an integer.")
@@ -74,7 +77,7 @@ def split_one_over_r_kernel(
         that represent the terms in the splitting of the interaction kernel.
         These have their respective cutoffs 'built in' already (in the sense
         that they evaluate to zero for distances beyond) and take their
-        arguments in the same length units that `fixture_level_zero_cutoff` was
+        arguments in the same length units that `level_zero_cutoff` was
         supplied in.
 
     Raises:
