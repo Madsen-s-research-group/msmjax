@@ -76,7 +76,7 @@ def time_set_of_structures(structures, pbc, setup_fn, **kwargs):
         times_all.append(timed_calc(pos, chg))
 
     output = {
-        "times": times_all.tolist(),
+        "times": onp.array(times_all).tolist(),
         "info": info,
     }
 
