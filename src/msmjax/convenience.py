@@ -8,7 +8,7 @@ from neuralil.bessel_descriptors import gen_supercell
 
 from msmjax import wrappers_old_code
 from msmjax.gridops_multidim import (
-    create_compute_U_oneplus,
+    create_compute_U_oneplus_via_potential,
     set_up_grids_all_levels,
 )
 from msmjax.kernels import SofteningFunctionOneOverR, split_one_over_r_kernel
@@ -434,7 +434,7 @@ def set_up_msm_components_periodic_no_nbl(
         box_lengths=box_lengths,
         return_particle_contribs=return_particle_contribs,
     )
-    compute_U_oneplus = create_compute_U_oneplus(
+    compute_U_oneplus = create_compute_U_oneplus_via_potential(
         grids=grids[:-1],
         kernel_stencils=kernel_stencils[:-1],
         convolution_methods=convolution_methods[:-1],

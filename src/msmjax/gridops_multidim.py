@@ -701,7 +701,7 @@ def create_compute_gridpotential_level_one(
     return compute_gridpotential_level_one
 
 
-def create_compute_U_oneplus(
+def create_compute_U_oneplus_via_potential(
     grids,
     kernel_stencils,
     convolution_methods=None,
@@ -750,7 +750,7 @@ def create_compute_U_oneplus(
     return compute_U_oneplus
 
 
-def create_compute_f_oneplus(
+def create_compute_f_oneplus_via_potential(
     grids, kernel_stencils, convolution_methods=None
 ) -> Callable:
     """Create closure for computing grid contribution to forces"""
@@ -789,7 +789,7 @@ def create_compute_f_oneplus(
     return compute_f_oneplus
 
 
-def create_compute_U_and_f_oneplus(
+def create_compute_U_and_f_oneplus_via_potential(
     grids, kernel_stencils, convolution_methods=None
 ) -> Callable:
     """Create closure for computing grid contribution to energy and forces"""
@@ -835,7 +835,7 @@ def create_compute_U_and_f_oneplus(
     return compute_U_and_f_oneplus
 
 
-def create_reworked_compute_U_oneplus(
+def create_compute_U_oneplus_direct(
     grids,
     kernel_stencils,
     convolution_methods=None,
