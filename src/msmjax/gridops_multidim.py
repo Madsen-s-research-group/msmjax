@@ -1,5 +1,5 @@
-import functools
-from typing import Callable, Iterable, List, NamedTuple, Tuple
+from functools import partial
+from typing import Callable, Iterable, List, Literal, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -153,6 +153,7 @@ class BSplineInterpolationGrid:
         self.shape = tuple(g.n_total for g in axes)
         self.ndim = len(axes)
         self.size = int(onp.prod(self.shape))
+        self.pbc = tuple(ax.periodic for ax in self.axes)
 
     def evaluate_bspline_basis_one_particle(self, position):
         spline_outputs_one_particle = [
@@ -320,7 +321,7 @@ def create_restriction_operator_1d(
             neighbor_inds_sourcegrid
         )
         # TODO: replace `get` with a `jnp.where` construct? (more efficient?)
-        #  (see create_custom_interaction_operator_2 for an example)
+        #  (see create_interaction_operator_custom for an example)
         neighbor_values_sourcegrid = in_array_fine.at[
             neighbor_inds_sourcegrid
         ].get(mode="fill", fill_value=0.0)
@@ -483,66 +484,9 @@ def create_prolongation_operator(
     return prolongate
 
 
-def create_interaction_operator(
+def create_interaction_operator_custom(
     grid: BSplineInterpolationGrid, kernel_stencil: npt.ArrayLike
 ):
-    kernel_stencil = jnp.asarray(kernel_stencil)
-    kernelranges_individual_axes = [
-        jnp.arange(-(s // 2), (s // 2) + 1) for s in kernel_stencil.shape
-    ]
-
-    ravel_multi_inds_and_apply_bcs = make_ravel_multi_inds_and_apply_bcs(grid)
-
-    def get_neighbor_flat_inds(multi_index: Iterable):
-        neighbor_inds_individual_axes = [
-            idx + kernelrange
-            for idx, kernelrange in zip(
-                multi_index, kernelranges_individual_axes
-            )
-        ]
-        neighbor_multi_inds = multi_inds_from_individual_axes_inds(
-            *neighbor_inds_individual_axes
-        )
-        return ravel_multi_inds_and_apply_bcs(neighbor_multi_inds)
-
-    multi_inds_all_points = multi_inds_from_individual_axes_inds(
-        *[jnp.arange(s) for s in grid.shape]
-    )
-    # As long as the target point indices cannot be out of bounds,
-    # we can use `ravel_multi_index` directly,
-    # rather than `ravel_multi_inds_and_apply_bcs`.
-    flat_inds_all_points = jnp.ravel_multi_index(
-        multi_inds_all_points.T, dims=grid.shape, mode="clip"
-    )
-
-    def apply_interaction(in_array):
-        flat_neighbor_inds_of_all_points = jax.vmap(get_neighbor_flat_inds)(
-            multi_inds_all_points
-        )
-        flat_neighbor_vals_of_all_points = jnp.take(
-            in_array,
-            flat_neighbor_inds_of_all_points,
-            mode="fill",
-            fill_value=0.0,
-        )
-        out_array_flat = jnp.zeros(grid.size)
-        out_array_flat = out_array_flat.at[flat_inds_all_points].set(
-            (flat_neighbor_vals_of_all_points * kernel_stencil.ravel()).sum(
-                axis=1
-            )
-        )
-
-        return out_array_flat.reshape(grid.shape)
-
-    return apply_interaction
-
-
-def create_custom_interaction_operator_2(
-    grid: BSplineInterpolationGrid, kernel_stencil: npt.ArrayLike
-):
-    # TODO: make this the default interaction operator
-    #  and remove `create_interaction_operator`
-
     kernel_stencil = jnp.asarray(kernel_stencil)
     kernelranges_individual_axes = [
         jnp.arange(-(s // 2), (s // 2) + 1) for s in kernel_stencil.shape
@@ -592,13 +536,48 @@ def create_custom_interaction_operator_2(
     return apply_interaction
 
 
-def create_interaction_operator_scipy(kernel_stencil, method):
-    return functools.partial(
-        jax.scipy.signal.convolve,
-        in2=kernel_stencil,
-        mode="same",
-        method=method,
-    )
+@partial(jax.jit, static_argnames=["pbc", "method"])
+def convolve_scipy_general_pbc(
+    data: npt.ArrayLike,
+    kernel: npt.ArrayLike,
+    pbc: npt.ArrayLike,
+    method: Literal["direct", "fft"],
+):
+    pbc = onp.asarray(pbc)
+
+    if pbc.any():
+        size_kernel = onp.array(kernel.shape)
+        size_kernel_below_middle = size_kernel // 2
+        size_kernel_above_middle = size_kernel - size_kernel_below_middle - 1
+        pad_width = tuple(
+            (int(s_b), int(s_a))
+            for s_b, s_a in zip(
+                size_kernel_below_middle, size_kernel_above_middle
+            )
+        )
+        pad_width = tuple(
+            pw if periodic else (0, 0) for pw, periodic in zip(pad_width, pbc)
+        )
+        inds_reconstruct_unpadded = []
+        for pw, periodic in zip(pad_width, pbc):
+            if periodic:
+                inds_reconstruct_unpadded.append(slice(pw[0], -pw[1]))
+            else:
+                inds_reconstruct_unpadded.append(slice(None))
+        inds_reconstruct_unpadded = tuple(inds_reconstruct_unpadded)
+        data_extended = jnp.pad(
+            data,
+            pad_width=pad_width,
+            mode="wrap",
+        )
+        nruter = jax.scipy.signal.convolve(
+            data_extended, kernel, mode="same", method=method
+        )
+        return nruter[inds_reconstruct_unpadded]
+    else:
+        return jax.scipy.signal.convolve(
+            data, kernel, mode="same", method=method
+        )
 
 
 def create_all_grid_to_grid_ops(
@@ -631,32 +610,30 @@ def create_all_grid_to_grid_ops(
         prolongation_funcs[lvl] = prolongate
 
     # TODO: There might be more efficient ways to compute the convolution on
-    #  the highest for non-periodic cases (where the stencil is always larger
-    #  than the grid)
+    #  the highest level for non-periodic cases (where the stencil is always
+    #  larger than the grid)
     interaction_funcs = [None] * (n_levels + 1)
     for lvl in range(1, n_levels + 1):
         conv_meth = convolution_methods[lvl]
         # TODO: test that all these convolution methods actually give the
-        #  same result (probably best to define the scipy-based ones as
-        #  functions of their own for that purpose).
-        # TODO: handling of periodic boundary conditions in the scipy methods
-        if conv_meth == "custom":
-            interact = create_interaction_operator(
-                grid=grids[lvl], kernel_stencil=kernel_stencils[lvl]
-            )
-        elif conv_meth == "custom2":
-            # TODO: this should become the default (taking the place of the
-            #  current `custom` option, which it will replace)
-            interact = create_custom_interaction_operator_2(
+        #  same result
+        if conv_meth == "custom-direct":
+            interact = create_interaction_operator_custom(
                 grid=grids[lvl], kernel_stencil=kernel_stencils[lvl]
             )
         elif conv_meth == "scipy-direct":
-            interact = create_interaction_operator_scipy(
-                kernel_stencil=kernel_stencils[lvl], method="direct"
+            interact = partial(
+                convolve_scipy_general_pbc,
+                kernel=kernel_stencils[lvl],
+                pbc=grids[lvl].pbc,
+                method="direct",
             )
         elif conv_meth == "scipy-fft":
-            interact = create_interaction_operator_scipy(
-                kernel_stencil=kernel_stencils[lvl], method="fft"
+            interact = partial(
+                convolve_scipy_general_pbc,
+                kernel=kernel_stencils[lvl],
+                pbc=grids[lvl].pbc,
+                method="fft",
             )
         else:
             raise ValueError(
