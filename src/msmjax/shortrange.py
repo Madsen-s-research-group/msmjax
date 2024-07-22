@@ -449,6 +449,28 @@ def make_pair_term_fn(kernel_fn: Callable, pbc: npt.ArrayLike):
     return compute_pair_term
 
 
+def make_compute_U0(kernel_fns: List[Callable], pbc: npt.ArrayLike):
+    # TODO: Where to put the neighbor list option? Argument to this function,
+    #  or make two separate functions?
+    compute_pair_term = make_pair_term_fn(kernel_fn=kernel_fns[0], pbc=pbc)
+    sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
+
+    def compute_U0(positions, charges, cell, neighbor_list):
+        # TODO: Replicate positions, charges, cell before passing to `compute_pair_term`
+        pair_term = compute_pair_term(
+            positions=positions,
+            charges=charges,
+            cell=cell,
+            neighbor_list=neighbor_list,
+        )
+        self_interaction_term = (
+            0.5 * jnp.sum(charges * charges) * sum_of_higher_kernels_at_zero
+        )
+        return pair_term - self_interaction_term
+
+    return compute_U0
+
+
 if __name__ == "__main__":
     # Structure settings
     # BOX_LENGTHS = jnp.array([10.0, 12.0, 17.5, 20.0])
