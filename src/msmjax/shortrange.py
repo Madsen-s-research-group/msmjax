@@ -25,6 +25,7 @@ import jax.numpy as jnp
 import numpy as onp
 import numpy.typing as npt
 from jax_md import partition, space
+from jaxborlist.neighbor_list import compute_pairwise_deltas
 from tqdm import tqdm
 
 from msmjax.kernels import SofteningFunctionOneOverR, split_one_over_r_kernel
@@ -421,6 +422,31 @@ def make_compute_U_and_f_zero_with_neighborlist(
         return energy, forces
 
     return neighbor_fn, compute_U_and_f_zero_with_neighborlist
+
+
+def make_pair_term_fn(kernel_fn: Callable, pbc: npt.ArrayLike):
+    pbc = onp.asarray(pbc)
+
+    def apply_mic(deltas, cell):
+        scaled = deltas @ jnp.linalg.pinv(cell)
+        shifts = jnp.rint(scaled)
+        return jnp.where(pbc, (scaled - shifts) @ cell, deltas)
+
+    def compute_pair_term(positions, charges, cell, neighbor_list):
+        n_particles = positions.shape[0]
+        is_not_placeholder = jnp.logical_and(
+            neighbor_list[0] < n_particles, neighbor_list[1] < n_particles
+        )
+        dR = positions[neighbor_list[1]] - positions[neighbor_list[0]]
+        dR = apply_mic(dR, cell)
+        dr = jnp.linalg.norm(dR, axis=1)
+        # Set distances of placeholder pairs to a value at which the potential
+        # can be safely evaluated
+        dr = jnp.where(is_not_placeholder, dr, 1.0)
+        qi_qj = charges[neighbor_list[0]] * charges[neighbor_list[1]]
+        return jnp.where(is_not_placeholder, qi_qj * kernel_fn(dr), 0.0).sum()
+
+    return compute_pair_term
 
 
 if __name__ == "__main__":
