@@ -591,7 +591,7 @@ def create_all_grid_to_grid_ops(
     n_levels = len(grids) - 1
 
     if convolution_methods is None:
-        convolution_methods = [None] + ["custom"] * n_levels
+        convolution_methods = [None] + ["scipy-fft"] * n_levels
     if isinstance(convolution_methods, str):
         convolution_methods = [None] + [convolution_methods] * n_levels
 
@@ -701,13 +701,19 @@ def create_compute_gridpotential_level_one(
     return compute_gridpotential_level_one
 
 
-def create_compute_U_oneplus(
+def create_compute_U_oneplus_via_potential(
     grids,
     kernel_stencils,
     convolution_methods=None,
     return_particle_contribs=False,
 ) -> Callable:
-    """Create closure for computing grid contribution to the energy"""
+    """Create closure for computing grid contribution to the energy
+
+    This function is one of several ways how this can be done. It computes the
+    energy by first explicitly reconstructing the electrostatic potential at
+    the positions of particles, by contracting the grid potential with the
+    interpolation basis functions.
+    """
     anterpolate_level_one = create_anterpolation_operator(grids[1])
     compute_gridpotential_level_one = create_compute_gridpotential_level_one(
         grids=grids,
@@ -750,10 +756,61 @@ def create_compute_U_oneplus(
     return compute_U_oneplus
 
 
-def create_compute_U_and_f_oneplus(
+def create_compute_f_oneplus_via_potential(
     grids, kernel_stencils, convolution_methods=None
 ) -> Callable:
-    """Create closure for computing grid contribution to energy and forces"""
+    """Create closure for computing grid contribution to forces
+
+    This function is one of several ways how this can be done. It computes the
+    forces by first explicitly reconstructing the electric field at the
+    positions of particles, by contracting the grid potential with the
+    negative gradient of the interpolation basis functions."""
+    anterpolate_level_one = create_anterpolation_operator(grids[1])
+    compute_gridpotential_level_one = create_compute_gridpotential_level_one(
+        grids=grids,
+        kernel_stencils=kernel_stencils,
+        convolution_methods=convolution_methods,
+    )
+
+    def compute_f_oneplus(
+        positions: jax.Array, charges: jax.Array
+    ) -> Tuple[jax.Array, jax.Array]:
+        gridcharge_level_one = anterpolate_level_one(positions, charges)
+        gridpotential_level_one = compute_gridpotential_level_one(
+            gridcharge_level_one
+        )
+
+        # TODO: splinevals, splinegrads and indices from anterpolation could,
+        #  in principle, be reused here instead of recalculated;
+        #  but would this be any faster in practice?
+        splinegrads, indices = grids[
+            1
+        ].evaluate_bspline_basis_gradient_multiparticle(positions)
+        # TODO: Do we need to use a fill value with `take` here?
+        #  (it shouldn't be possible for indices returned by the spline eval
+        #  functions to be out of bounds)
+        forces = -charges[:, jnp.newaxis] * jnp.sum(
+            gridpotential_level_one.take(indices)[..., jnp.newaxis]
+            * splinegrads,
+            axis=1,
+        )
+
+        return forces
+
+    return compute_f_oneplus
+
+
+def create_compute_U_and_f_oneplus_via_potential(
+    grids, kernel_stencils, convolution_methods=None
+) -> Callable:
+    """Create closure for computing grid contribution to energy and forces.
+
+    This function is one of several ways how this can be done. It computes the
+    energy and forces by first explicitly reconstructing the electrostatic
+    potential and electric field at the positions of particles, by contracting
+    the grid potential with the interpolation basis functions and their
+    gradients, respectively.
+    """
     anterpolate_level_one = create_anterpolation_operator(grids[1])
     compute_gridpotential_level_one = create_compute_gridpotential_level_one(
         grids=grids,
@@ -794,3 +851,33 @@ def create_compute_U_and_f_oneplus(
         return energy, forces
 
     return compute_U_and_f_oneplus
+
+
+def create_compute_U_oneplus_direct(
+    grids,
+    kernel_stencils,
+    convolution_methods=None,
+) -> Callable:
+    """Create closure for computing grid contribution to the energy.
+
+    This function is one of several ways how this can be done. It computes the
+    energy by directly contracting the grid charge with the grid potential,
+    without reconstructing the particle-level electrostatic potential.
+    """
+    anterpolate_level_one = create_anterpolation_operator(grids[1])
+    compute_gridpotential_level_one = create_compute_gridpotential_level_one(
+        grids=grids,
+        kernel_stencils=kernel_stencils,
+        convolution_methods=convolution_methods,
+    )
+
+    def compute_U_oneplus(
+        positions: jax.Array, charges: jax.Array
+    ) -> jax.Array:
+        gridcharge_level_one = anterpolate_level_one(positions, charges)
+        gridpotential_level_one = compute_gridpotential_level_one(
+            gridcharge_level_one
+        )
+        return 0.5 * (gridcharge_level_one * gridpotential_level_one).sum()
+
+    return compute_U_oneplus
