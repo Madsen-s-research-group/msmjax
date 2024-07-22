@@ -18,7 +18,8 @@ os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 os.environ["JAX_ENABLE_X64"] = "true"
 
 import itertools
-from typing import Callable, List, Tuple
+from collections.abc import Sequence
+from typing import Callable, List, Tuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -422,6 +423,28 @@ def make_compute_U_and_f_zero_with_neighborlist(
         return energy, forces
 
     return neighbor_fn, compute_U_and_f_zero_with_neighborlist
+
+
+def gen_supercell(
+    positions: jnp.ndarray,
+    charges: jnp.ndarray,
+    cell: jnp.ndarray,
+    supercell_diag: Union[int, Sequence[int]] = 1,
+):
+    """Adapted from NeuralIL
+
+    TODO: proper attribution
+    """
+    M = sc_a * sc_b * sc_c
+    n = positions.shape[0]
+    tile_coordinates = jnp.tile(positions, (M, 1))
+    super_types = jnp.tile(charges, M)
+    grid = jnp.indices((sc_a, sc_b, sc_c)).reshape(3, -1).T
+    translations = jnp.dot(grid, cell)
+    tile_translations = jnp.repeat(translations, n, axis=0)
+    super_coordinates = tile_coordinates + tile_translations
+    super_cell = cell * jnp.array([sc_a, sc_b, sc_c])[:, jnp.newaxis]
+    return super_coordinates, super_types, super_cell
 
 
 def make_pair_term_fn(kernel_fn: Callable, pbc: npt.ArrayLike):
