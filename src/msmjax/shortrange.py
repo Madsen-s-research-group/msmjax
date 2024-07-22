@@ -429,8 +429,7 @@ def make_pair_term_fn(kernel_fn: Callable, pbc: npt.ArrayLike):
 
     def apply_mic(deltas, cell):
         scaled = deltas @ jnp.linalg.pinv(cell)
-        shifts = jnp.rint(scaled)
-        return jnp.where(pbc, (scaled - shifts) @ cell, deltas)
+        return jnp.where(pbc, (scaled - jnp.rint(scaled)) @ cell, deltas)
 
     def compute_pair_term(positions, charges, cell, neighbor_list):
         n_particles = positions.shape[0]
@@ -455,7 +454,38 @@ def make_compute_U0(kernel_fns: List[Callable], pbc: npt.ArrayLike):
     compute_pair_term = make_pair_term_fn(kernel_fn=kernel_fns[0], pbc=pbc)
     sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
 
-    def compute_U0(positions, charges, cell, neighbor_list):
+    def compute_U0(positions, charges, cell):
+        # TODO: Replicate positions, charges, cell before passing to `compute_pair_term`
+        n_centers = positions.shape[0]
+        n_total = positions.shape[1]
+        # TODO: Should the construction of these pair indices be put into a
+        #  separate function (for isolated testing)?
+        trivial_all_pairs_neighbor_list = onp.where(
+            onp.arange(n_centers)[:, onp.newaxis] < onp.arange(n_total)
+        )
+        pair_term = compute_pair_term(
+            positions=positions,
+            charges=charges,
+            cell=cell,
+            neighbor_list=trivial_all_pairs_neighbor_list,
+        )
+        self_interaction_term = (
+            0.5 * jnp.sum(charges * charges) * sum_of_higher_kernels_at_zero
+        )
+        return pair_term - self_interaction_term
+
+    return compute_U0
+
+
+def make_compute_U0_neighbor_list(
+    kernel_fns: List[Callable], pbc: npt.ArrayLike
+):
+    # TODO: Where to put the neighbor list option? Argument to this function,
+    #  or make two separate functions?
+    compute_pair_term = make_pair_term_fn(kernel_fn=kernel_fns[0], pbc=pbc)
+    sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
+
+    def compute_U0_neighbor_list(positions, charges, cell, neighbor_list):
         # TODO: Replicate positions, charges, cell before passing to `compute_pair_term`
         pair_term = compute_pair_term(
             positions=positions,
@@ -468,7 +498,7 @@ def make_compute_U0(kernel_fns: List[Callable], pbc: npt.ArrayLike):
         )
         return pair_term - self_interaction_term
 
-    return compute_U0
+    return compute_U0_neighbor_list
 
 
 if __name__ == "__main__":
