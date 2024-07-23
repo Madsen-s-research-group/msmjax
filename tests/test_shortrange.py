@@ -35,8 +35,8 @@ def fixture_dir_structures() -> Path:
 
 
 @pytest.fixture(scope="module")
-def fixture_structure(fixture_dir_structures) -> dict:
-    """Get one pre-generated structure with a given number of particles."""
+def fixture_structure_cubic(fixture_dir_structures) -> dict:
+    """Get a cubic structure by loading from pre-generated ones"""
     structsfile = fixture_dir_structures / ("structures_500.npz")
     structures = onp.load(structsfile)
     return {
@@ -47,13 +47,21 @@ def fixture_structure(fixture_dir_structures) -> dict:
 
 
 @pytest.fixture(scope="module")
-def fixture_structure_nonortho(fixture_structure) -> dict:
+def fixture_structure_nonortho(fixture_structure_cubic) -> dict:
+    """Get a non-orthorhombic structure by stretching/distorting a cubic one
+
+    Args:
+        fixture_structure_cubic: The original cubic structure
+
+    Returns:
+        Stretched/distorted version of the original cubic structure
+    """
     atoms = Atoms(
-        positions=fixture_structure["positions"],
-        charges=fixture_structure["charges"],
-        cell=fixture_structure["cell"],
+        positions=fixture_structure_cubic["positions"],
+        charges=fixture_structure_cubic["charges"],
+        cell=fixture_structure_cubic["cell"],
     )
-    new_lengths = onp.diag(fixture_structure["cell"]) * (0.8, 1.0, 1.25)
+    new_lengths = onp.diag(fixture_structure_cubic["cell"]) * (0.8, 1.0, 1.25)
     new_angles = [75, 90, 120]
     nonortho_cell = onp.concatenate([new_lengths, new_angles])
     atoms.set_cell(nonortho_cell, scale_atoms=True)
@@ -64,10 +72,22 @@ def fixture_structure_nonortho(fixture_structure) -> dict:
     }
 
 
+@pytest.fixture(scope="module")
+def fixture_structure(request):
+    """Helper fixture for requesting a specific structure fixture"""
+    return request.getfixturevalue(request.param)
+
+
+@pytest.mark.parametrize(
+    "fixture_structure",
+    ["fixture_structure_cubic", "fixture_structure_nonortho"],
+    indirect=True,
+)
 @pytest.mark.parametrize(
     "supercell_diag", [1, 2, (1, 1, 1), (2, 2, 2), (1, 2, 3)]
 )
 def test_gen_supercell(fixture_structure, supercell_diag):
+    """Test cell replication result against `ase.atoms.Atoms.repeat()`"""
     pos = fixture_structure["positions"]
     chg = fixture_structure["charges"]
     cell = fixture_structure["cell"]
@@ -80,10 +100,6 @@ def test_gen_supercell(fixture_structure, supercell_diag):
     assert onp.allclose(super_pos, atoms.get_positions())
     assert onp.allclose(super_chg, atoms.get_initial_charges())
     assert onp.allclose(super_cell, atoms.cell[...])
-
-
-# def test_gen_supercell_nonortho():
-#     raise ValueError
 
 
 # def test_gen_supercell_2d():
