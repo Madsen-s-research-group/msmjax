@@ -102,5 +102,25 @@ def test_gen_supercell(fixture_structure, supercell_diag):
     assert onp.allclose(super_cell, atoms.cell[...])
 
 
-# def test_gen_supercell_2d():
-#     raise ValueError
+@pytest.mark.parametrize("supercell_diag", [1, 2, (1, 1), (2, 2), (2, 3)])
+def test_gen_supercell_2d(fixture_structure_cubic, supercell_diag):
+    pos = fixture_structure_cubic["positions"]
+    chg = fixture_structure_cubic["charges"]
+    cell = fixture_structure_cubic["cell"]
+    pos_2d = pos[:, :2]
+    cell_2d = cell[:2, :2]
+    super_pos_2d, super_chg, super_cell_2d = gen_supercell(
+        positions=pos_2d,
+        charges=chg,
+        cell=cell_2d,
+        supercell_diag=supercell_diag,
+    )
+    atoms = Atoms(positions=pos, charges=chg, cell=cell)
+    if onp.ndim(supercell_diag) == 0:
+        atoms = atoms.repeat((supercell_diag, supercell_diag, 1))
+    else:
+        atoms = atoms.repeat(supercell_diag + (1,))
+
+    assert onp.allclose(super_pos_2d, atoms.get_positions()[:, :2])
+    assert onp.allclose(super_chg, atoms.get_initial_charges())
+    assert onp.allclose(super_cell_2d, atoms.cell[:2, :2])
