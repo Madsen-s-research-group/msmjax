@@ -18,8 +18,7 @@ os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 os.environ["JAX_ENABLE_X64"] = "true"
 
 import itertools
-from collections.abc import Sequence
-from typing import Callable, List, Tuple, Union
+from typing import Callable, List, Sequence, Tuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -426,25 +425,28 @@ def make_compute_U_and_f_zero_with_neighborlist(
 
 
 def gen_supercell(
-    positions: jnp.ndarray,
-    charges: jnp.ndarray,
-    cell: jnp.ndarray,
-    supercell_diag: Union[int, Sequence[int]] = 1,
+    positions: jax.Array,
+    charges: jax.Array,
+    cell: jax.Array,
+    supercell_diag: Union[int, Sequence[int]],
 ):
     """Adapted from NeuralIL
 
     TODO: proper attribution
     """
-    M = sc_a * sc_b * sc_c
-    n = positions.shape[0]
-    tile_coordinates = jnp.tile(positions, (M, 1))
-    super_types = jnp.tile(charges, M)
-    grid = jnp.indices((sc_a, sc_b, sc_c)).reshape(3, -1).T
+    n_particles, n_dim = positions.shape
+    if onp.ndim(supercell_diag) == 0:
+        supercell_diag = (supercell_diag,) * n_dim
+    M = onp.prod(supercell_diag)
+    tile_positions = jnp.tile(positions, (M, 1))
+    super_charges = jnp.tile(charges, M)
+    # TODO: automatic dimension instead of 3 in reshape
+    grid = jnp.indices(supercell_diag).reshape(n_dim, -1).T
     translations = jnp.dot(grid, cell)
-    tile_translations = jnp.repeat(translations, n, axis=0)
-    super_coordinates = tile_coordinates + tile_translations
-    super_cell = cell * jnp.array([sc_a, sc_b, sc_c])[:, jnp.newaxis]
-    return super_coordinates, super_types, super_cell
+    tile_translations = jnp.repeat(translations, n_particles, axis=0)
+    super_positions = tile_positions + tile_translations
+    super_cell = cell * jnp.array(supercell_diag)[:, jnp.newaxis]
+    return super_positions, super_charges, super_cell
 
 
 def make_pair_term_fn(kernel_fn: Callable, pbc: npt.ArrayLike):
@@ -472,8 +474,9 @@ def make_pair_term_fn(kernel_fn: Callable, pbc: npt.ArrayLike):
 
 
 def make_compute_U0(kernel_fns: List[Callable], pbc: npt.ArrayLike):
-    # TODO: Where to put the neighbor list option? Argument to this function,
-    #  or make two separate functions?
+    # TODO: For testing it would be more convenient, if the
+    #  neighbor-list/no-neighbor-list distinction was made on the level of
+    #  `make_pair_term_fn`
     compute_pair_term = make_pair_term_fn(kernel_fn=kernel_fns[0], pbc=pbc)
     sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
 
@@ -503,8 +506,9 @@ def make_compute_U0(kernel_fns: List[Callable], pbc: npt.ArrayLike):
 def make_compute_U0_neighbor_list(
     kernel_fns: List[Callable], pbc: npt.ArrayLike
 ):
-    # TODO: Where to put the neighbor list option? Argument to this function,
-    #  or make two separate functions?
+    # TODO: For testing it would be more convenient, if the
+    #  neighbor-list/no-neighbor-list distinction was made on the level of
+    #  `make_pair_term_fn`
     compute_pair_term = make_pair_term_fn(kernel_fn=kernel_fns[0], pbc=pbc)
     sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
 
