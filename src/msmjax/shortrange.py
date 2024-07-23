@@ -18,6 +18,7 @@ os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 os.environ["JAX_ENABLE_X64"] = "true"
 
 import itertools
+from functools import partial
 from typing import Callable, List, Sequence, Tuple, Union
 
 import jax
@@ -448,26 +449,88 @@ def gen_supercell(
     return super_positions, super_charges, super_cell
 
 
-def make_pair_term_fn(kernel_fn: Callable, pbc: npt.ArrayLike):
-    pbc = onp.asarray(pbc)
-
+def _evaluate_pairs(
+    positions,
+    charges,
+    cell,
+    indices_pairs,
+    kernel_fn: Callable,
+    pbc: jax.Array,
+):
     def apply_mic(deltas, cell):
         scaled = deltas @ jnp.linalg.pinv(cell)
         return jnp.where(pbc, (scaled - jnp.rint(scaled)) @ cell, deltas)
 
-    def compute_pair_term(positions, charges, cell, indices_pairs):
-        n_particles = positions.shape[0]
-        is_not_placeholder = jnp.logical_and(
-            indices_pairs[0] < n_particles, indices_pairs[1] < n_particles
+    n_particles = positions.shape[0]
+    is_not_placeholder = jnp.logical_and(
+        indices_pairs[0] < n_particles, indices_pairs[1] < n_particles
+    )
+    dR = positions[indices_pairs[1]] - positions[indices_pairs[0]]
+    dR = apply_mic(dR, cell)
+    dr = jnp.linalg.norm(dR, axis=1)
+    # Set distances of placeholder pairs to a value at which the potential
+    # can be safely evaluated
+    dr = jnp.where(is_not_placeholder, dr, 1.0)
+    qi_qj = charges[indices_pairs[0]] * charges[indices_pairs[1]]
+
+    return jnp.where(is_not_placeholder, qi_qj * kernel_fn(dr), 0.0).sum()
+
+
+def make_pair_term_fn(
+    kernel_fn: Callable,
+    pbc: npt.ArrayLike,
+    supercell_diag: Union[int, Sequence[int]] = 1,
+):
+    pbc = onp.asarray(pbc)
+    _compute_pair_term = partial(_evaluate_pairs, kernel_fn=kernel_fn, pbc=pbc)
+
+    def compute_pair_term(positions, charges, cell):
+        super_positions, super_charges, super_cell = gen_supercell(
+            positions=positions,
+            charges=charges,
+            cell=cell,
+            supercell_diag=supercell_diag,
         )
-        dR = positions[indices_pairs[1]] - positions[indices_pairs[0]]
-        dR = apply_mic(dR, cell)
-        dr = jnp.linalg.norm(dR, axis=1)
-        # Set distances of placeholder pairs to a value at which the potential
-        # can be safely evaluated
-        dr = jnp.where(is_not_placeholder, dr, 1.0)
-        qi_qj = charges[indices_pairs[0]] * charges[indices_pairs[1]]
-        return jnp.where(is_not_placeholder, qi_qj * kernel_fn(dr), 0.0).sum()
+        n_centers = positions.shape[0]
+        n_total = super_positions.shape[0]  # TODO: from external constant?
+        # TODO: Should the construction of these pair indices be put into a
+        #  separate function (for isolated testing)?
+        indices_trivial_all_pairs = onp.where(
+            onp.arange(n_centers)[:, onp.newaxis] < onp.arange(n_total)
+        )
+        pair_term = _compute_pair_term(
+            positions=super_positions,
+            charges=super_charges,
+            cell=super_cell,
+            indices_pairs=indices_trivial_all_pairs,
+        )
+        return pair_term
+
+    return compute_pair_term
+
+
+def make_pair_term_fn_with_neighbor_list(
+    kernel_fn: Callable,
+    pbc: npt.ArrayLike,
+    supercell_diag: Union[int, Sequence[int]] = 1,
+):
+    pbc = onp.asarray(pbc)
+    _compute_pair_term = partial(_evaluate_pairs, kernel_fn=kernel_fn, pbc=pbc)
+
+    def compute_pair_term(positions, charges, cell, neighbor_list):
+        super_positions, super_charges, super_cell = gen_supercell(
+            positions=positions,
+            charges=charges,
+            cell=cell,
+            supercell_diag=supercell_diag,
+        )
+        pair_term = _compute_pair_term(
+            positions=super_positions,
+            charges=super_charges,
+            cell=super_cell,
+            indices_pairs=neighbor_list,
+        )
+        return pair_term
 
     return compute_pair_term
 
@@ -477,58 +540,36 @@ def make_compute_U0(
     pbc: npt.ArrayLike,
     supercell_diag: Union[int, Sequence[int]] = 1,
 ):
-    # TODO: For testing it would be more convenient, if the
-    #  neighbor-list/no-neighbor-list distinction was made on the level of
-    #  `make_pair_term_fn`
-    compute_pair_term = make_pair_term_fn(kernel_fn=kernel_fns[0], pbc=pbc)
+    compute_pair_term = make_pair_term_fn(
+        kernel_fn=kernel_fns[0], pbc=pbc, supercell_diag=supercell_diag
+    )
     sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
 
     def compute_U0(positions, charges, cell):
-        # TODO: Replicate positions, charges, cell before passing to `compute_pair_term`
-        super_positions, super_charges, super_cell = gen_supercell(
+        pair_term = compute_pair_term(
             positions=positions,
             charges=charges,
             cell=cell,
-            supercell_diag=supercell_diag,
         )
-
-        # begin no-neighbor-list
-        n_centers = positions.shape[0]
-        n_total = super_positions.shape[0]  # TODO: from external constant?
-        # TODO: Should the construction of these pair indices be put into a
-        #  separate function (for isolated testing)?
-        indices_trivial_all_pairs = onp.where(
-            onp.arange(n_centers)[:, onp.newaxis] < onp.arange(n_total)
-        )
-        # end no-neighbor-list
-
-        pair_term = compute_pair_term(
-            positions=super_positions,
-            charges=super_charges,
-            cell=super_cell,
-            indices_pairs=indices_trivial_all_pairs,
-        )
-
         self_interaction_term = (
             0.5 * jnp.sum(charges * charges) * sum_of_higher_kernels_at_zero
         )
-
         return pair_term - self_interaction_term
 
     return compute_U0
 
 
-def make_compute_U0_neighbor_list(
-    kernel_fns: List[Callable], pbc: npt.ArrayLike
+def make_compute_U0_with_neighbor_list(
+    kernel_fns: List[Callable],
+    pbc: npt.ArrayLike,
+    supercell_diag: Union[int, Sequence[int]] = 1,
 ):
-    # TODO: For testing it would be more convenient, if the
-    #  neighbor-list/no-neighbor-list distinction was made on the level of
-    #  `make_pair_term_fn`
-    compute_pair_term = make_pair_term_fn(kernel_fn=kernel_fns[0], pbc=pbc)
+    compute_pair_term = make_pair_term_fn_with_neighbor_list(
+        kernel_fn=kernel_fns[0], pbc=pbc, supercell_diag=supercell_diag
+    )
     sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
 
-    def compute_U0_neighbor_list(positions, charges, cell, neighbor_list):
-        # TODO: Replicate positions, charges, cell before passing to `compute_pair_term`
+    def compute_U0(positions, charges, cell, neighbor_list):
         pair_term = compute_pair_term(
             positions=positions,
             charges=charges,
@@ -540,7 +581,7 @@ def make_compute_U0_neighbor_list(
         )
         return pair_term - self_interaction_term
 
-    return compute_U0_neighbor_list
+    return compute_U0
 
 
 if __name__ == "__main__":
