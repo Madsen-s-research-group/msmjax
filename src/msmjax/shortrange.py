@@ -440,7 +440,6 @@ def gen_supercell(
     M = onp.prod(supercell_diag)
     tile_positions = jnp.tile(positions, (M, 1))
     super_charges = jnp.tile(charges, M)
-    # TODO: automatic dimension instead of 3 in reshape
     grid = jnp.indices(supercell_diag).reshape(n_dim, -1).T
     translations = jnp.dot(grid, cell)
     tile_translations = jnp.repeat(translations, n_particles, axis=0)
@@ -456,24 +455,28 @@ def make_pair_term_fn(kernel_fn: Callable, pbc: npt.ArrayLike):
         scaled = deltas @ jnp.linalg.pinv(cell)
         return jnp.where(pbc, (scaled - jnp.rint(scaled)) @ cell, deltas)
 
-    def compute_pair_term(positions, charges, cell, neighbor_list):
+    def compute_pair_term(positions, charges, cell, indices_pairs):
         n_particles = positions.shape[0]
         is_not_placeholder = jnp.logical_and(
-            neighbor_list[0] < n_particles, neighbor_list[1] < n_particles
+            indices_pairs[0] < n_particles, indices_pairs[1] < n_particles
         )
-        dR = positions[neighbor_list[1]] - positions[neighbor_list[0]]
+        dR = positions[indices_pairs[1]] - positions[indices_pairs[0]]
         dR = apply_mic(dR, cell)
         dr = jnp.linalg.norm(dR, axis=1)
         # Set distances of placeholder pairs to a value at which the potential
         # can be safely evaluated
         dr = jnp.where(is_not_placeholder, dr, 1.0)
-        qi_qj = charges[neighbor_list[0]] * charges[neighbor_list[1]]
+        qi_qj = charges[indices_pairs[0]] * charges[indices_pairs[1]]
         return jnp.where(is_not_placeholder, qi_qj * kernel_fn(dr), 0.0).sum()
 
     return compute_pair_term
 
 
-def make_compute_U0(kernel_fns: List[Callable], pbc: npt.ArrayLike):
+def make_compute_U0(
+    kernel_fns: List[Callable],
+    pbc: npt.ArrayLike,
+    supercell_diag: Union[int, Sequence[int]] = 1,
+):
     # TODO: For testing it would be more convenient, if the
     #  neighbor-list/no-neighbor-list distinction was made on the level of
     #  `make_pair_term_fn`
@@ -482,22 +485,34 @@ def make_compute_U0(kernel_fns: List[Callable], pbc: npt.ArrayLike):
 
     def compute_U0(positions, charges, cell):
         # TODO: Replicate positions, charges, cell before passing to `compute_pair_term`
-        n_centers = positions.shape[0]
-        n_total = positions.shape[1]
-        # TODO: Should the construction of these pair indices be put into a
-        #  separate function (for isolated testing)?
-        trivial_all_pairs_neighbor_list = onp.where(
-            onp.arange(n_centers)[:, onp.newaxis] < onp.arange(n_total)
-        )
-        pair_term = compute_pair_term(
+        super_positions, super_charges, super_cell = gen_supercell(
             positions=positions,
             charges=charges,
             cell=cell,
-            neighbor_list=trivial_all_pairs_neighbor_list,
+            supercell_diag=supercell_diag,
         )
+
+        # begin no-neighbor-list
+        n_centers = positions.shape[0]
+        n_total = super_positions.shape[0]  # TODO: from external constant?
+        # TODO: Should the construction of these pair indices be put into a
+        #  separate function (for isolated testing)?
+        indices_trivial_all_pairs = onp.where(
+            onp.arange(n_centers)[:, onp.newaxis] < onp.arange(n_total)
+        )
+        # end no-neighbor-list
+
+        pair_term = compute_pair_term(
+            positions=super_positions,
+            charges=super_charges,
+            cell=super_cell,
+            indices_pairs=indices_trivial_all_pairs,
+        )
+
         self_interaction_term = (
             0.5 * jnp.sum(charges * charges) * sum_of_higher_kernels_at_zero
         )
+
         return pair_term - self_interaction_term
 
     return compute_U0
@@ -518,7 +533,7 @@ def make_compute_U0_neighbor_list(
             positions=positions,
             charges=charges,
             cell=cell,
-            neighbor_list=neighbor_list,
+            indices_pairs=neighbor_list,
         )
         self_interaction_term = (
             0.5 * jnp.sum(charges * charges) * sum_of_higher_kernels_at_zero
