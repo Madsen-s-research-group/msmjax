@@ -30,6 +30,7 @@ from jaxborlist.neighbor_list import compute_pairwise_deltas
 from tqdm import tqdm
 
 from msmjax.kernels import SofteningFunctionOneOverR, split_one_over_r_kernel
+from msmjax.utils import _sqrt
 
 
 def make_eval_all_pairs_neighborlist(
@@ -467,7 +468,8 @@ def _evaluate_pairs(
     )
     dR = positions[indices_pairs[1]] - positions[indices_pairs[0]]
     dR = apply_mic(dR, cell)
-    dr = jnp.linalg.norm(dR, axis=1)
+    dr_2 = (dR * dR).sum(axis=1)
+    dr = _sqrt(dr_2)
     # Set distances of placeholder pairs to a value at which the potential
     # can be safely evaluated
     dr = jnp.where(is_not_placeholder, dr, 1.0)

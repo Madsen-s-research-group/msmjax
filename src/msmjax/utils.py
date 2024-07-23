@@ -1,3 +1,4 @@
+import jax
 import jax.numpy as jnp
 
 
@@ -21,3 +22,18 @@ def _divide_zero_safe(
         0.0,
         numerator / denominator_masked,
     )
+
+
+@jax.custom_jvp
+def _sqrt(x):
+    # see https://gitlab.tuwien.ac.at/e165-03-1_theoretische_materialchemie/scripts-et-al/-/wikis/Sqrt-without-trivial-NaN-derivative-for-jax
+    return jnp.sqrt(x)
+
+
+@_sqrt.defjvp
+def _sqrt_jvp(primals, tangents):
+    (x,) = primals
+    (xdot,) = tangents
+    primal_out = _sqrt(x)
+    tangent_out = jnp.where(x == 0.0, 0.0, 0.5 / primal_out) * xdot
+    return (primal_out, tangent_out)
