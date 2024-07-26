@@ -105,8 +105,9 @@ def make_pair_term_fn(
         # TODO: Should the construction of these pair indices be put into a
         #  separate function (for isolated testing)?
         # FIXME: This is wrong, because pairs between particles in the original
-        #  cell don't need a factor of 1/2 (because of triu), whereas pairs
-        #  involving particles from the extended cell do!
+        #  cell don't need a factor of 1/2 (because they're constructed without
+        #  duplicates from the start), whereas pairs  involving particles from
+        #  the extended cell do!
         indices_trivial_all_pairs = onp.where(
             onp.arange(n_centers)[:, onp.newaxis] < onp.arange(n_total)
         )
@@ -136,6 +137,7 @@ def make_pair_term_fn_with_neighbor_list(
             cell=cell,
             supercell_diag=supercell_diag,
         )
+        # FIXME: Factors of 1/2 (see comment in the no-neighbor-list version)
         pair_term = _compute_pair_term(
             positions=super_positions,
             charges=super_charges,
