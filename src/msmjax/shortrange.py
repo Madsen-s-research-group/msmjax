@@ -104,6 +104,9 @@ def make_pair_term_fn(
         n_total = super_positions.shape[0]  # TODO: from external constant?
         # TODO: Should the construction of these pair indices be put into a
         #  separate function (for isolated testing)?
+        # FIXME: This is wrong, because pairs between particles in the original
+        #  cell don't need a factor of 1/2 (because of triu), whereas pairs
+        #  involving particles from the extended cell do!
         indices_trivial_all_pairs = onp.where(
             onp.arange(n_centers)[:, onp.newaxis] < onp.arange(n_total)
         )
