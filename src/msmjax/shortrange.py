@@ -80,6 +80,7 @@ def _evaluate_pairs(
     # TODO: Should this "safe distance" be a function argument?
     # Set distances of placeholder pairs to a value at which the potential
     # can be safely evaluated
+    # TODO: ignoring of placeholder indices should be tested
     dr = jnp.where(is_not_placeholder, dr, 1.0)
     qi_qj = charges[indices_pairs[0]] * charges[indices_pairs[1]]
 
@@ -138,10 +139,10 @@ def make_pair_term_fn_with_neighbor_list(
     kernel_fn: Callable,
     pbc: npt.ArrayLike,
 ):
-    # TODO: add `pair_weights` parameter
     pbc = onp.asarray(pbc)
     _compute_pair_term = partial(_evaluate_pairs, kernel_fn=kernel_fn, pbc=pbc)
 
+    # TODO: add `pair_weights` parameter (name of parameter?)
     def compute_pair_term(positions, charges, cell, neighbor_list, weights):
         pair_term = _compute_pair_term(
             positions=positions,
@@ -188,6 +189,7 @@ def make_compute_U0_with_neighbor_list(
     )
     sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
 
+    # TODO: add `pair_weights` parameter (name of parameter?)
     def compute_U0(positions, charges, cell, neighbor_list):
         pair_term = compute_pair_term(
             positions=positions,

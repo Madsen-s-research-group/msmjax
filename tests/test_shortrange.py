@@ -245,14 +245,21 @@ def test_pair_term_supercell_multiple(fixture_structure, supercell_diag):
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
     indirect=True,
 )
-def test_pair_term_periodic_wrap_vs_replicate(fixture_structure):
+@pytest.mark.parametrize(
+    "cutoff_multiplier, supercell_diag", [(0.99, 1), (1.99, 2)]
+)
+def test_pair_term_periodic_wrap_vs_replicate(
+    fixture_structure, cutoff_multiplier, supercell_diag
+):
     n_particles = 100
     pos = fixture_structure["positions"][:n_particles]
     chg = fixture_structure["charges"][:n_particles]
     cell = fixture_structure["cell"]
 
+    # TODO: also test cutoff that don't fit without supercell_diag
     kernel_fn = partial(
-        shortrange_quadratic_potential, r_cut=(0.99 * get_max_cutoff_3d(cell))
+        shortrange_quadratic_potential,
+        r_cut=cutoff_multiplier * get_max_cutoff_3d(cell),
     )
 
     n_repeats_explicit = (3, 3, 3)
@@ -284,7 +291,9 @@ def test_pair_term_periodic_wrap_vs_replicate(fixture_structure):
     )
 
     pair_term_fn_wrap = make_pair_term_fn(
-        kernel_fn=kernel_fn, pbc=(True, True, True), supercell_diag=2
+        kernel_fn=kernel_fn,
+        pbc=(True, True, True),
+        supercell_diag=supercell_diag,
     )
     energy_wrap = pair_term_fn_wrap(pos, chg, cell)
 
