@@ -138,6 +138,7 @@ def make_pair_term_fn_with_neighbor_list(
     kernel_fn: Callable,
     pbc: npt.ArrayLike,
 ):
+    # TODO: add `pair_weights` parameter
     pbc = onp.asarray(pbc)
     _compute_pair_term = partial(_evaluate_pairs, kernel_fn=kernel_fn, pbc=pbc)
 

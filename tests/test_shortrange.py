@@ -22,7 +22,11 @@ import pytest
 from ase.atoms import Atoms
 
 from msmjax.benchmark_tools import path_input_structures
-from msmjax.shortrange import gen_supercell, make_pair_term_fn
+from msmjax.shortrange import (
+    gen_supercell,
+    make_pair_term_fn,
+    make_pair_term_fn_with_neighbor_list,
+)
 
 jax.config.update("jax_enable_x64", True)
 
@@ -188,16 +192,49 @@ def test_pair_term_with_and_without_supercell(fixture_structure):
     pos = fixture_structure["positions"]
     chg = fixture_structure["charges"]
     cell = fixture_structure["cell"]
-    r_cut = 0.99 * get_max_cutoff_3d(cell)
     pbc = (True, True, True)
-    pair_term_fn = make_pair_term_fn(
-        kernel_fn=partial(shortrange_quadratic_potential, r_cut=r_cut), pbc=pbc
+    kernel_fn = partial(
+        shortrange_quadratic_potential, r_cut=(0.99 * get_max_cutoff_3d(cell))
     )
+    pair_term_fn = make_pair_term_fn(kernel_fn=kernel_fn, pbc=pbc)
     pair_term_fn_supercell = make_pair_term_fn(
-        kernel_fn=partial(shortrange_quadratic_potential, r_cut=r_cut),
+        kernel_fn=kernel_fn,
         pbc=pbc,
         supercell_diag=(2, 2, 2),
     )
     assert onp.isclose(
         pair_term_fn(pos, chg, cell), pair_term_fn_supercell(pos, chg, cell)
     )
+
+
+@pytest.mark.parametrize(
+    "fixture_structure",
+    ["fixture_structure_cubic", "fixture_structure_nonortho"],
+    indirect=True,
+)
+@pytest.mark.parametrize("supercell_diag", [(2, 2, 2), (1, 2, 3)])
+def test_pair_term_supercell_multiple(fixture_structure, supercell_diag):
+    # TODO: docstring
+    pos = fixture_structure["positions"]
+    chg = fixture_structure["charges"]
+    cell = fixture_structure["cell"]
+    pbc = (True, True, True)
+    kernel_fn = partial(
+        shortrange_quadratic_potential, r_cut=(0.99 * get_max_cutoff_3d(cell))
+    )
+    pair_term_fn = make_pair_term_fn_with_neighbor_list(
+        kernel_fn=kernel_fn, pbc=pbc
+    )
+    super_pos, super_chg, super_cell = gen_supercell(
+        pos, chg, cell, supercell_diag
+    )
+    energy = pair_term_fn(
+        pos, chg, cell, neighbor_list=jnp.triu_indices(pos.shape[0], k=1)
+    )
+    energy_supercell = pair_term_fn(
+        super_pos,
+        super_chg,
+        super_cell,
+        neighbor_list=jnp.triu_indices(super_pos.shape[0], k=1),
+    )
+    assert onp.isclose(energy_supercell, onp.prod(supercell_diag) * energy)
