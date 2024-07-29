@@ -63,6 +63,7 @@ def _evaluate_pairs(
     indices_pairs,
     kernel_fn: Callable,
     pbc: jax.Array,
+    weights_pairs: Union[float, int, jax.Array] = 1.0,
 ):
     def apply_mic(deltas, cell):
         scaled = deltas @ jnp.linalg.pinv(cell)
@@ -82,7 +83,9 @@ def _evaluate_pairs(
     dr = jnp.where(is_not_placeholder, dr, 1.0)
     qi_qj = charges[indices_pairs[0]] * charges[indices_pairs[1]]
 
-    return jnp.where(is_not_placeholder, qi_qj * kernel_fn(dr), 0.0).sum()
+    return jnp.where(
+        is_not_placeholder, weights_pairs * qi_qj * kernel_fn(dr), 0.0
+    ).sum()
 
 
 def make_pair_term_fn(
@@ -111,11 +114,15 @@ def make_pair_term_fn(
         indices_trivial_all_pairs = onp.where(
             onp.arange(n_centers)[:, onp.newaxis] < onp.arange(n_total)
         )
+        weights_pairs = onp.where(
+            indices_trivial_all_pairs[1] < n_centers, 1.0, 0.5
+        )
         pair_term = _compute_pair_term(
             positions=super_positions,
             charges=super_charges,
             cell=super_cell,
             indices_pairs=indices_trivial_all_pairs,
+            weights_pairs=weights_pairs,
         )
         return pair_term
 
@@ -125,23 +132,15 @@ def make_pair_term_fn(
 def make_pair_term_fn_with_neighbor_list(
     kernel_fn: Callable,
     pbc: npt.ArrayLike,
-    supercell_diag: Union[int, Sequence[int]] = 1,
 ):
     pbc = onp.asarray(pbc)
     _compute_pair_term = partial(_evaluate_pairs, kernel_fn=kernel_fn, pbc=pbc)
 
     def compute_pair_term(positions, charges, cell, neighbor_list):
-        super_positions, super_charges, super_cell = gen_supercell(
+        pair_term = _compute_pair_term(
             positions=positions,
             charges=charges,
             cell=cell,
-            supercell_diag=supercell_diag,
-        )
-        # FIXME: Factors of 1/2 (see comment in the no-neighbor-list version)
-        pair_term = _compute_pair_term(
-            positions=super_positions,
-            charges=super_charges,
-            cell=super_cell,
             indices_pairs=neighbor_list,
         )
         return pair_term
@@ -176,10 +175,9 @@ def make_compute_U0(
 def make_compute_U0_with_neighbor_list(
     kernel_fns: List[Callable],
     pbc: npt.ArrayLike,
-    supercell_diag: Union[int, Sequence[int]] = 1,
 ):
     compute_pair_term = make_pair_term_fn_with_neighbor_list(
-        kernel_fn=kernel_fns[0], pbc=pbc, supercell_diag=supercell_diag
+        kernel_fn=kernel_fns[0], pbc=pbc
     )
     sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
 

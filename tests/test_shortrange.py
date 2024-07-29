@@ -10,18 +10,19 @@
         Forces for the Simulation of Biomolecules (PhD thesis), University
         of Illinois at Urbana-Champaign, 2006.
 """
-
+from functools import partial
 from pathlib import Path
 from typing import Callable, List
 
 import jax
 import jax.config
+import jax.numpy as jnp
 import numpy as onp
 import pytest
 from ase.atoms import Atoms
 
 from msmjax.benchmark_tools import path_input_structures
-from msmjax.shortrange import gen_supercell
+from msmjax.shortrange import gen_supercell, make_pair_term_fn
 
 jax.config.update("jax_enable_x64", True)
 
@@ -40,9 +41,9 @@ def fixture_structure_cubic(fixture_dir_structures) -> dict:
     structsfile = fixture_dir_structures / ("structures_500.npz")
     structures = onp.load(structsfile)
     return {
-        "cell": structures["cells"][0],
-        "positions": structures["positions"][0],
-        "charges": structures["charges"][0],
+        "cell": structures["cells"][0].astype(onp.float64),
+        "positions": structures["positions"][0].astype(onp.float64),
+        "charges": structures["charges"][0].astype(onp.float64),
     }
 
 
@@ -124,3 +125,36 @@ def test_gen_supercell_2d(fixture_structure_cubic, supercell_diag):
     assert onp.allclose(super_pos_2d, atoms.get_positions()[:, :2])
     assert onp.allclose(super_chg, atoms.get_initial_charges())
     assert onp.allclose(super_cell_2d, atoms.cell[:2, :2])
+
+
+def shortrange_quadratic_potential(r, r_cut):
+    return jnp.where(r < r_cut, (r - r_cut) ** 2, 0.0)
+
+
+def shortrange_counting_potential(r, r_cut):
+    return jnp.where(r < r_cut, 1.0, 0.0)
+
+
+@pytest.mark.parametrize(
+    "fixture_structure",
+    ["fixture_structure_cubic", "fixture_structure_nonortho"],
+    indirect=True,
+)
+def test_pair_term_with_and_without_supercell(fixture_structure):
+    pos = fixture_structure["positions"]
+    chg = fixture_structure["charges"]
+    cell = fixture_structure["cell"]
+    # TODO: get max cutoff for non_ortho structure
+    r_cut = 0.49 * cell[0, 0]
+    pbc = (True, True, True)  # TODO: parametrize?
+    pair_term_fn = make_pair_term_fn(
+        kernel_fn=partial(shortrange_quadratic_potential, r_cut=r_cut), pbc=pbc
+    )
+    pair_term_fn_supercell = make_pair_term_fn(
+        kernel_fn=partial(shortrange_quadratic_potential, r_cut=r_cut),
+        pbc=pbc,
+        supercell_diag=(2, 2, 2),
+    )
+    assert onp.isclose(
+        pair_term_fn(pos, chg, cell), pair_term_fn_supercell(pos, chg, cell)
+    )
