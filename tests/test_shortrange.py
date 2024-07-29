@@ -135,18 +135,61 @@ def shortrange_counting_potential(r, r_cut):
     return jnp.where(r < r_cut, 1.0, 0.0)
 
 
+def get_max_cutoff_3d(cell: jnp.ndarray):
+    """Get the maximum cutoff value that fits into a 3D cell.
+
+    Args:
+        cell: Cell, shape=(3, 3).
+
+    Returns:
+        Cutoff radius
+    """
+    return jnp.min(
+        jnp.fabs(
+            jnp.linalg.det(cell)
+            / jnp.array(
+                [
+                    jnp.linalg.norm(jnp.cross(i, j))
+                    for i, j in zip(cell, jnp.roll(cell, 1, axis=0))
+                ]
+            )
+        )
+        / 2.0
+    )
+
+
+@pytest.mark.parametrize(
+    "pbc, supercell_diag",
+    [
+        ((False, False, False), (2, 2, 2)),
+        ((False, False, True), (2, 2, 1)),
+        ((False, False, True), (2, 1, 1)),
+        ((False, True, True), (2, 3, 4)),
+        ((False, True, True), (3, 1, 2)),
+    ],
+)
+def test_error_supercell_nonperiodic(pbc, supercell_diag):
+    """Test if error when cell replication along non-periodic axis requested"""
+    with pytest.raises(ValueError, match=r"along non-periodic axes"):
+        make_pair_term_fn(
+            kernel_fn=partial(shortrange_quadratic_potential, r_cut=1.0),
+            pbc=pbc,
+            supercell_diag=supercell_diag,
+        )
+
+
 @pytest.mark.parametrize(
     "fixture_structure",
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
     indirect=True,
 )
 def test_pair_term_with_and_without_supercell(fixture_structure):
+    # TODO: docstring
     pos = fixture_structure["positions"]
     chg = fixture_structure["charges"]
     cell = fixture_structure["cell"]
-    # TODO: get max cutoff for non_ortho structure
-    r_cut = 0.49 * cell[0, 0]
-    pbc = (True, True, True)  # TODO: parametrize?
+    r_cut = 0.99 * get_max_cutoff_3d(cell)
+    pbc = (True, True, True)
     pair_term_fn = make_pair_term_fn(
         kernel_fn=partial(shortrange_quadratic_potential, r_cut=r_cut), pbc=pbc
     )

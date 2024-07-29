@@ -94,6 +94,11 @@ def make_pair_term_fn(
     supercell_diag: Union[int, Sequence[int]] = 1,
 ):
     pbc = onp.asarray(pbc)
+    if onp.logical_and(~pbc, onp.asarray(supercell_diag) != 1).any():
+        raise ValueError(
+            "`supercell_diag` must be equal to one along non-periodic axes"
+        )
+    # TODO: check supercell_diag >= 1?
     _compute_pair_term = partial(_evaluate_pairs, kernel_fn=kernel_fn, pbc=pbc)
 
     def compute_pair_term(positions, charges, cell):
