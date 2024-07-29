@@ -238,3 +238,54 @@ def test_pair_term_supercell_multiple(fixture_structure, supercell_diag):
         neighbor_list=jnp.triu_indices(super_pos.shape[0], k=1),
     )
     assert onp.isclose(energy_supercell, onp.prod(supercell_diag) * energy)
+
+
+@pytest.mark.parametrize(
+    "fixture_structure",
+    ["fixture_structure_cubic", "fixture_structure_nonortho"],
+    indirect=True,
+)
+def test_pair_term_periodic_wrap_vs_replicate(fixture_structure):
+    n_particles = 100
+    pos = fixture_structure["positions"][:n_particles]
+    chg = fixture_structure["charges"][:n_particles]
+    cell = fixture_structure["cell"]
+
+    kernel_fn = partial(
+        shortrange_quadratic_potential, r_cut=(0.99 * get_max_cutoff_3d(cell))
+    )
+
+    n_repeats_explicit = (3, 3, 3)
+    M = onp.prod(n_repeats_explicit)
+    pair_term_fn_explicit_replicate = make_pair_term_fn_with_neighbor_list(
+        kernel_fn=kernel_fn, pbc=(False, False, False)
+    )
+    pos_ext, chg_ext, cell_ext = gen_supercell(
+        positions=pos,
+        charges=chg,
+        cell=cell,
+        supercell_diag=n_repeats_explicit,
+    )
+    pos_ext = jnp.roll(pos_ext, (M // 2 + 1) * n_particles, axis=0)
+    n_centers = pos.shape[0]
+    n_total = pos_ext.shape[0]
+    pair_inds_explicit_replicate = onp.where(
+        onp.arange(n_centers)[:, onp.newaxis] < onp.arange(n_total)
+    )
+    pair_weights_explicit_replicate = onp.where(
+        pair_inds_explicit_replicate[1] < n_centers, 1.0, 0.5
+    )
+    energy_explicit_replicate = pair_term_fn_explicit_replicate(
+        pos_ext,
+        chg_ext,
+        cell_ext,
+        neighbor_list=pair_inds_explicit_replicate,
+        weights=pair_weights_explicit_replicate,
+    )
+
+    pair_term_fn_wrap = make_pair_term_fn(
+        kernel_fn=kernel_fn, pbc=(True, True, True), supercell_diag=2
+    )
+    energy_wrap = pair_term_fn_wrap(pos, chg, cell)
+
+    assert onp.isclose(energy_explicit_replicate, energy_wrap)

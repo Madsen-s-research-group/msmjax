@@ -142,12 +142,13 @@ def make_pair_term_fn_with_neighbor_list(
     pbc = onp.asarray(pbc)
     _compute_pair_term = partial(_evaluate_pairs, kernel_fn=kernel_fn, pbc=pbc)
 
-    def compute_pair_term(positions, charges, cell, neighbor_list):
+    def compute_pair_term(positions, charges, cell, neighbor_list, weights):
         pair_term = _compute_pair_term(
             positions=positions,
             charges=charges,
             cell=cell,
             indices_pairs=neighbor_list,
+            weights_pairs=weights,
         )
         return pair_term
 
