@@ -66,21 +66,25 @@ def _evaluate_pairs(
     weights_pairs: Union[float, int, jax.Array] = 1.0,
 ):
     def apply_mic(deltas, cell):
+        # TODO: test this on its own?
         scaled = deltas @ jnp.linalg.pinv(cell)
         return jnp.where(pbc, (scaled - jnp.rint(scaled)) @ cell, deltas)
 
     n_particles = positions.shape[0]
-    is_not_placeholder = jnp.logical_and(
-        indices_pairs[0] < n_particles, indices_pairs[1] < n_particles
-    )
     dR = positions[indices_pairs[1]] - positions[indices_pairs[0]]
     dR = apply_mic(dR, cell)
     dr_2 = (dR * dR).sum(axis=1)
     dr = _sqrt(dr_2)
+    # TODO: refactor the part up to here into a function
+    #  `compute_distance_vectors(positions, pair_indices)`(or similarly named)
+    #  and test separately?
+    # TODO: Test if placeholder indices are correctly ignored
+    is_not_placeholder = jnp.logical_and(
+        indices_pairs[0] < n_particles, indices_pairs[1] < n_particles
+    )
     # TODO: Should this "safe distance" be a function argument?
     # Set distances of placeholder pairs to a value at which the potential
     # can be safely evaluated
-    # TODO: ignoring of placeholder indices should be tested
     dr = jnp.where(is_not_placeholder, dr, 1.0)
     qi_qj = charges[indices_pairs[0]] * charges[indices_pairs[1]]
 
@@ -94,6 +98,7 @@ def make_pair_term_fn(
     pbc: npt.ArrayLike,
     supercell_diag: Union[int, Sequence[int]] = 1,
 ):
+    # TODO: test jitting
     pbc = onp.asarray(pbc)
     if onp.logical_and(~pbc, onp.asarray(supercell_diag) != 1).any():
         raise ValueError(
@@ -111,12 +116,6 @@ def make_pair_term_fn(
         )
         n_centers = positions.shape[0]
         n_total = super_positions.shape[0]  # TODO: from external constant?
-        # TODO: Should the construction of these pair indices be put into a
-        #  separate function (for isolated testing)?
-        # FIXME: This is wrong, because pairs between particles in the original
-        #  cell don't need a factor of 1/2 (because they're constructed without
-        #  duplicates from the start), whereas pairs  involving particles from
-        #  the extended cell do!
         indices_trivial_all_pairs = onp.where(
             onp.arange(n_centers)[:, onp.newaxis] < onp.arange(n_total)
         )

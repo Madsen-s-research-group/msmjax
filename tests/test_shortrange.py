@@ -251,12 +251,13 @@ def test_pair_term_supercell_multiple(fixture_structure, supercell_diag):
 def test_pair_term_periodic_wrap_vs_replicate(
     fixture_structure, cutoff_multiplier, supercell_diag
 ):
+    # TODO: docstring (explain the idea of the test, and what the params are)
+    # TODO: can this test be written more compactly?
     n_particles = 100
     pos = fixture_structure["positions"][:n_particles]
     chg = fixture_structure["charges"][:n_particles]
     cell = fixture_structure["cell"]
 
-    # TODO: also test cutoff that don't fit without supercell_diag
     kernel_fn = partial(
         shortrange_quadratic_potential,
         r_cut=cutoff_multiplier * get_max_cutoff_3d(cell),
