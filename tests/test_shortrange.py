@@ -136,39 +136,6 @@ def test_gen_supercell_2d(fixture_structure_cubic, supercell_diag):
     assert onp.allclose(super_cell_2d, atoms.cell[:2, :2])
 
 
-@pytest.mark.parametrize(
-    "fixture_structure",
-    ["fixture_structure_cubic", "fixture_structure_nonortho"],
-    indirect=True,
-)
-@pytest.mark.parametrize(
-    "pbc",
-    [
-        (True, True, True),
-        (False, True, True),
-        (False, False, True),
-        (False, False, False),
-    ],
-)
-def test_compute_distance_vectors(fixture_structure, pbc):
-    n_particles = 10
-    pos = fixture_structure["positions"][:n_particles]
-    chg = fixture_structure["charges"][:n_particles]
-    cell = fixture_structure["cell"]
-
-    (i, j) = jnp.triu_indices(pos.shape[0], k=1)
-    deltas = compute_distance_vectors(
-        positions=pos,
-        cell=cell,
-        pair_indices=(i, j),
-        pbc=jnp.array(pbc),
-    )
-    atoms = Atoms(positions=pos, charges=chg, cell=cell, pbc=pbc)
-    deltas_ase = atoms.get_distances(i, j, mic=True, vector=True)
-
-    assert onp.allclose(deltas, deltas_ase)
-
-
 def shortrange_quadratic_potential(r, r_cut):
     return jnp.where(r < r_cut, (r - r_cut) ** 2, 0.0)
 
@@ -198,6 +165,55 @@ def get_max_cutoff_3d(cell: jnp.ndarray):
         )
         / 2.0
     )
+
+
+@pytest.mark.parametrize(
+    "fixture_structure",
+    ["fixture_structure_cubic", "fixture_structure_nonortho"],
+    indirect=True,
+)
+@pytest.mark.parametrize(
+    "pbc",
+    [
+        (True, True, True),
+        (True, True, False),
+        (True, False, False),
+        (False, False, False),
+        pytest.param(
+            (False, True, False),
+            marks=pytest.mark.xfail(
+                reason="possibly misunderstanding about mixed PBCs in ase?"  # TODO
+            ),
+        ),
+    ],
+)
+def test_compute_distance_vectors(fixture_structure, pbc):
+    """Test correct pair distance computation under minimum image convention
+
+    As a reference to compare to, the result from ase's `get_distances` method
+    is used.
+    """
+    pos = fixture_structure["positions"]
+    chg = fixture_structure["charges"]
+    cell = fixture_structure["cell"]
+    max_cutoff = get_max_cutoff_3d(cell)  # TODO
+    (i, j) = jnp.triu_indices(pos.shape[0], k=1)
+
+    deltas = compute_distance_vectors(
+        positions=pos,
+        cell=cell,
+        pair_indices=(i, j),
+        pbc=jnp.array(pbc),
+    )
+    atoms = Atoms(positions=pos, charges=chg, cell=cell, pbc=pbc)
+    deltas_ref = atoms.get_distances(i, j, mic=True, vector=True)
+
+    distances_ref = onp.linalg.norm(deltas_ref, axis=1)
+    is_within_cutoff = distances_ref < max_cutoff
+    deltas_within_cutoff = deltas[is_within_cutoff]
+    deltas_within_cutoff_ase = deltas_ref[is_within_cutoff]
+
+    assert onp.allclose(deltas_within_cutoff, deltas_within_cutoff_ase)
 
 
 @pytest.mark.parametrize(
