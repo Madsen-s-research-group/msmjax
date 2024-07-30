@@ -56,6 +56,18 @@ def gen_supercell(
     return super_positions, super_charges, super_cell
 
 
+def compute_distance_vectors(positions, pair_indices, cell, pbc):
+    # TODO: order of arguments?
+    def apply_mic(deltas, cell):
+        # TODO: does this need to be a function of its own?
+        scaled = deltas @ jnp.linalg.pinv(cell)
+        return jnp.where(pbc, (scaled - jnp.rint(scaled)) @ cell, deltas)
+
+    deltas = positions[pair_indices[1]] - positions[pair_indices[0]]
+    deltas = apply_mic(deltas, cell)
+    return deltas
+
+
 def _evaluate_pairs(
     positions,
     charges,
@@ -105,7 +117,7 @@ def make_pair_term_fn(
             "`supercell_diag` must be equal to one along non-periodic axes"
         )
     # TODO: check supercell_diag >= 1?
-    _compute_pair_term = partial(_evaluate_pairs, kernel_fn=kernel_fn, pbc=pbc)
+    _compute_distance_vectors = partial(compute_distance_vectors, pbc=pbc)
 
     def compute_pair_term(positions, charges, cell):
         super_positions, super_charges, super_cell = gen_supercell(
@@ -122,14 +134,19 @@ def make_pair_term_fn(
         weights_pairs = onp.where(
             indices_trivial_all_pairs[1] < n_centers, 1.0, 0.5
         )
-        pair_term = _compute_pair_term(
+        dR = _compute_distance_vectors(
             positions=super_positions,
-            charges=super_charges,
+            pair_indices=indices_trivial_all_pairs,
             cell=super_cell,
-            indices_pairs=indices_trivial_all_pairs,
-            weights_pairs=weights_pairs,
         )
-        return pair_term
+        dr_2 = (dR * dR).sum(axis=1)
+        dr = _sqrt(dr_2)
+        qi_qj = (
+            super_charges[indices_trivial_all_pairs[0]]
+            * super_charges[indices_trivial_all_pairs[1]]
+        )
+
+        return (weights_pairs * qi_qj * kernel_fn(dr)).sum()
 
     return compute_pair_term
 
