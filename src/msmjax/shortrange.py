@@ -56,7 +56,7 @@ def gen_supercell(
     return super_positions, super_charges, super_cell
 
 
-def compute_distance_vectors(positions, pair_indices, cell, pbc):
+def compute_distance_vectors(positions, cell, pair_indices, pbc):
     # TODO: order of arguments?
     def apply_mic(deltas, cell):
         # TODO: does this need to be a function of its own?
@@ -64,45 +64,8 @@ def compute_distance_vectors(positions, pair_indices, cell, pbc):
         return jnp.where(pbc, (scaled - jnp.rint(scaled)) @ cell, deltas)
 
     deltas = positions[pair_indices[1]] - positions[pair_indices[0]]
-    deltas = apply_mic(deltas, cell)
-    return deltas
-
-
-def _evaluate_pairs(
-    positions,
-    charges,
-    cell,
-    indices_pairs,
-    kernel_fn: Callable,
-    pbc: jax.Array,
-    weights_pairs: Union[float, int, jax.Array] = 1.0,
-):
-    def apply_mic(deltas, cell):
-        # TODO: test this on its own?
-        scaled = deltas @ jnp.linalg.pinv(cell)
-        return jnp.where(pbc, (scaled - jnp.rint(scaled)) @ cell, deltas)
-
-    n_particles = positions.shape[0]
-    dR = positions[indices_pairs[1]] - positions[indices_pairs[0]]
-    dR = apply_mic(dR, cell)
-    dr_2 = (dR * dR).sum(axis=1)
-    dr = _sqrt(dr_2)
-    # TODO: refactor the part up to here into a function
-    #  `compute_distance_vectors(positions, pair_indices)`(or similarly named)
-    #  and test separately?
-    # TODO: Test if placeholder indices are correctly ignored
-    is_not_placeholder = jnp.logical_and(
-        indices_pairs[0] < n_particles, indices_pairs[1] < n_particles
-    )
-    # TODO: Should this "safe distance" be a function argument?
-    # Set distances of placeholder pairs to a value at which the potential
-    # can be safely evaluated
-    dr = jnp.where(is_not_placeholder, dr, 1.0)
-    qi_qj = charges[indices_pairs[0]] * charges[indices_pairs[1]]
-
-    return jnp.where(
-        is_not_placeholder, weights_pairs * qi_qj * kernel_fn(dr), 0.0
-    ).sum()
+    scaled = deltas @ jnp.linalg.pinv(cell)
+    return jnp.where(pbc, (scaled - jnp.rint(scaled)) @ cell, deltas)
 
 
 def make_pair_term_fn(
@@ -110,7 +73,7 @@ def make_pair_term_fn(
     pbc: npt.ArrayLike,
     supercell_diag: Union[int, Sequence[int]] = 1,
 ):
-    # TODO: test jitting
+    # TODO: unit test jitting
     pbc = onp.asarray(pbc)
     if onp.logical_and(~pbc, onp.asarray(supercell_diag) != 1).any():
         raise ValueError(
@@ -131,22 +94,18 @@ def make_pair_term_fn(
         indices_trivial_all_pairs = onp.where(
             onp.arange(n_centers)[:, onp.newaxis] < onp.arange(n_total)
         )
-        weights_pairs = onp.where(
-            indices_trivial_all_pairs[1] < n_centers, 1.0, 0.5
-        )
-        dR = _compute_distance_vectors(
+        (i, j) = indices_trivial_all_pairs
+        weights_pairs = onp.where(j < n_centers, 1.0, 0.5)
+        dR_ij = _compute_distance_vectors(
             positions=super_positions,
-            pair_indices=indices_trivial_all_pairs,
+            pair_indices=(i, j),
             cell=super_cell,
         )
-        dr_2 = (dR * dR).sum(axis=1)
-        dr = _sqrt(dr_2)
-        qi_qj = (
-            super_charges[indices_trivial_all_pairs[0]]
-            * super_charges[indices_trivial_all_pairs[1]]
-        )
+        dr_ij_2 = (dR_ij * dR_ij).sum(axis=1)
+        dr_ij = _sqrt(dr_ij_2)
+        qi_qj = super_charges[i] * super_charges[j]
 
-        return (weights_pairs * qi_qj * kernel_fn(dr)).sum()
+        return (weights_pairs * qi_qj * kernel_fn(dr_ij)).sum()
 
     return compute_pair_term
 
@@ -156,18 +115,28 @@ def make_pair_term_fn_with_neighbor_list(
     pbc: npt.ArrayLike,
 ):
     pbc = onp.asarray(pbc)
-    _compute_pair_term = partial(_evaluate_pairs, kernel_fn=kernel_fn, pbc=pbc)
+    _compute_distance_vectors = partial(compute_distance_vectors, pbc=pbc)
 
     # TODO: add `pair_weights` parameter (name of parameter?)
     def compute_pair_term(positions, charges, cell, neighbor_list, weights):
-        pair_term = _compute_pair_term(
+        (i, j) = neighbor_list
+        dR_ij = _compute_distance_vectors(
             positions=positions,
-            charges=charges,
+            pair_indices=(i, j),
             cell=cell,
-            indices_pairs=neighbor_list,
-            weights_pairs=weights,
         )
-        return pair_term
+        dr_ij_2 = (dR_ij * dR_ij).sum(axis=1)
+        dr_ij = _sqrt(dr_ij_2)
+        n_particles = positions.shape[0]
+        is_not_placeholder = jnp.logical_and(i < n_particles, j < n_particles)
+        # TODO: Should this "safe distance" be a function argument?
+        # Set distances of placeholder pairs to a value at which the potential
+        # can be safely evaluated
+        dr_ij = jnp.where(is_not_placeholder, dr_ij, 1.0)
+        qi_qj = charges[i] * charges[j]
+        return jnp.where(
+            is_not_placeholder, weights * qi_qj * kernel_fn(dr_ij), 0.0
+        ).sum()
 
     return compute_pair_term
 
@@ -177,6 +146,7 @@ def make_compute_U0(
     pbc: npt.ArrayLike,
     supercell_diag: Union[int, Sequence[int]] = 1,
 ):
+    # TODO: add tests for this
     compute_pair_term = make_pair_term_fn(
         kernel_fn=kernel_fns[0], pbc=pbc, supercell_diag=supercell_diag
     )
@@ -200,6 +170,7 @@ def make_compute_U0_with_neighbor_list(
     kernel_fns: List[Callable],
     pbc: npt.ArrayLike,
 ):
+    # TODO: add tests for this
     compute_pair_term = make_pair_term_fn_with_neighbor_list(
         kernel_fn=kernel_fns[0], pbc=pbc
     )

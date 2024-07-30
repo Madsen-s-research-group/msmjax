@@ -213,7 +213,9 @@ def test_pair_term_with_and_without_supercell(fixture_structure):
     indirect=True,
 )
 @pytest.mark.parametrize("supercell_diag", [(2, 2, 2), (1, 2, 3)])
-def test_pair_term_supercell_multiple(fixture_structure, supercell_diag):
+def test_pair_term_supercell_correct_multiple(
+    fixture_structure, supercell_diag
+):
     # TODO: docstring
     pos = fixture_structure["positions"]
     chg = fixture_structure["charges"]
@@ -222,21 +224,12 @@ def test_pair_term_supercell_multiple(fixture_structure, supercell_diag):
     kernel_fn = partial(
         shortrange_quadratic_potential, r_cut=(0.99 * get_max_cutoff_3d(cell))
     )
-    pair_term_fn = make_pair_term_fn_with_neighbor_list(
-        kernel_fn=kernel_fn, pbc=pbc
-    )
+    pair_term_fn = make_pair_term_fn(kernel_fn=kernel_fn, pbc=pbc)
     super_pos, super_chg, super_cell = gen_supercell(
         pos, chg, cell, supercell_diag
     )
-    energy = pair_term_fn(
-        pos, chg, cell, neighbor_list=jnp.triu_indices(pos.shape[0], k=1)
-    )
-    energy_supercell = pair_term_fn(
-        super_pos,
-        super_chg,
-        super_cell,
-        neighbor_list=jnp.triu_indices(super_pos.shape[0], k=1),
-    )
+    energy = pair_term_fn(pos, chg, cell)
+    energy_supercell = pair_term_fn(super_pos, super_chg, super_cell)
     assert onp.isclose(energy_supercell, onp.prod(supercell_diag) * energy)
 
 
