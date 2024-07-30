@@ -10,13 +10,6 @@
         Forces for the Simulation of Biomolecules (PhD thesis), University
         of Illinois at Urbana-Champaign, 2006.
 """
-
-import os
-
-# TODO: remove once all actual code-running lines have been moved to tests
-os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
-os.environ["JAX_ENABLE_X64"] = "true"
-
 import itertools
 from functools import partial
 from typing import Callable, List, Sequence, Tuple, Union
@@ -57,12 +50,6 @@ def gen_supercell(
 
 
 def compute_distance_vectors(positions, cell, pair_indices, pbc):
-    # TODO: order of arguments?
-    def apply_mic(deltas, cell):
-        # TODO: does this need to be a function of its own?
-        scaled = deltas @ jnp.linalg.pinv(cell)
-        return jnp.where(pbc, (scaled - jnp.rint(scaled)) @ cell, deltas)
-
     deltas = positions[pair_indices[1]] - positions[pair_indices[0]]
     scaled = deltas @ jnp.linalg.pinv(cell)
     return jnp.where(pbc, (scaled - jnp.rint(scaled)) @ cell, deltas)
@@ -98,8 +85,8 @@ def make_pair_term_fn(
         weights_pairs = onp.where(j < n_centers, 1.0, 0.5)
         dR_ij = _compute_distance_vectors(
             positions=super_positions,
-            pair_indices=(i, j),
             cell=super_cell,
+            pair_indices=(i, j),
         )
         dr_ij_2 = (dR_ij * dR_ij).sum(axis=1)
         dr_ij = _sqrt(dr_ij_2)
@@ -190,168 +177,3 @@ def make_compute_U0_with_neighbor_list(
         return pair_term - self_interaction_term
 
     return compute_U0
-
-
-if __name__ == "__main__":
-    # Structure settings
-    # BOX_LENGTHS = jnp.array([10.0, 12.0, 17.5, 20.0])
-    BOX_LENGTHS = jnp.array([10.0, 12.0, 17.5])
-    # BOX_LENGTHS = jnp.array([10.0, 12.0])
-    # BOX_LENGTHS = jnp.array([10.0])
-    PERIODIC = True
-    N_PARTICLES = 50
-
-    # MSM settings
-    LEVEL_ZERO_CUTOFF = 3.5
-    MAX_GRIDLEVEL = 4
-    P = 4
-
-    n_dim = len(BOX_LENGTHS)
-    pbcs = [PERIODIC] * n_dim
-
-    rng = onp.random.default_rng(58347)
-    pos = rng.uniform(
-        low=[0.0] * n_dim, high=BOX_LENGTHS, size=(N_PARTICLES, n_dim)
-    )
-    chg = rng.uniform(low=-1.0, high=1.0, size=N_PARTICLES)
-    pos = jnp.array(pos)
-    chg = jnp.array(chg)
-
-    kernels = split_one_over_r_kernel(
-        max_level=MAX_GRIDLEVEL,
-        level_zero_cutoff=LEVEL_ZERO_CUTOFF,
-        softening_function=SofteningFunctionOneOverR(P),
-    )
-
-    neighbor_fun, energy_fun = make_compute_U_zero_with_neighborlist(
-        kernels=kernels,
-        cutoff=LEVEL_ZERO_CUTOFF,
-        box_lengths=BOX_LENGTHS,
-        pbcs=pbcs,
-    )
-    nbl_allocate_fun = neighbor_fun.allocate
-    nbl_update_fun = neighbor_fun.update
-    energy_fun = jax.jit(energy_fun)
-    neighborlist = nbl_allocate_fun(pos)
-    e_neighborlist = energy_fun(pos, chg, neighborlist.idx)
-    print(e_neighborlist)
-
-    @jax.jit
-    def wrapper_energy_neighborlist(positions, charges):
-        updated_neighborlist = nbl_update_fun(positions, neighborlist)
-        return energy_fun(positions, charges, updated_neighborlist.idx)
-
-    @jax.jit
-    def wrapper_forces_neighborlist(positions, charges):
-        return -jax.grad(wrapper_energy_neighborlist, argnums=0)(
-            positions, charges
-        )
-
-    e_from_wrapper = wrapper_energy_neighborlist(pos, chg)
-    f_from_wrapper = wrapper_forces_neighborlist(pos, chg)
-
-    print(e_from_wrapper)
-
-    _, force_fun = make_compute_f_zero_with_neighborlist(
-        kernels=kernels,
-        cutoff=LEVEL_ZERO_CUTOFF,
-        box_lengths=BOX_LENGTHS,
-        pbcs=pbcs,
-    )
-    force_fun = jax.jit(force_fun)
-    f_neighborlist = force_fun(pos, chg, neighborlist.idx)
-
-    (_, energy_and_force_fun,) = make_compute_U_and_f_zero_with_neighborlist(
-        kernels=kernels,
-        cutoff=LEVEL_ZERO_CUTOFF,
-        box_lengths=BOX_LENGTHS,
-        pbcs=pbcs,
-    )
-    energy_and_force_fun = jax.jit(energy_and_force_fun)
-    e_nbl_comb, f_nbl_comb = energy_and_force_fun(pos, chg, neighborlist.idx)
-    print(e_nbl_comb)
-    print(f_nbl_comb)
-
-    def calculate_direct_energy_reference(
-        positions, charges, cutoff, mic=False, box_sizes=None
-    ):
-        shortrange_kernel = kernels[0]
-        sum_of_higher_kernels_at_zero = jnp.sum(
-            jnp.asarray([k(0.0) for k in kernels[1:]])
-        )
-
-        if mic:
-
-            def apply_boundary_conditions(R):
-                scaled_R = R / box_sizes
-                scaled_R -= onp.rint(scaled_R)
-                return scaled_R * box_sizes
-
-        else:
-            apply_boundary_conditions = lambda x: x
-
-        pair_term = 0.0
-        for i in tqdm(range(positions.shape[0])):
-            for j in range(i):
-                R_ij = positions[i] - positions[j]
-                R_ij = apply_boundary_conditions(R_ij)
-                r_ij_2 = (R_ij * R_ij).sum()
-                if r_ij_2 <= cutoff**2:
-                    r_ij = onp.sqrt(r_ij_2)
-                    pair_term += (
-                        charges[i] * charges[j] * shortrange_kernel(r_ij)
-                    )
-
-        self_interaction_term = (
-            0.5 * jnp.sum(charges * charges) * sum_of_higher_kernels_at_zero
-        )
-
-        return pair_term - self_interaction_term
-
-    e_ref = calculate_direct_energy_reference(
-        pos, chg, LEVEL_ZERO_CUTOFF, mic=PERIODIC, box_sizes=BOX_LENGTHS
-    )
-    print(e_ref)
-    assert jnp.isclose(e_neighborlist, e_ref)
-    assert jnp.isclose(e_nbl_comb, e_ref)
-
-    def calculate_direct_forces_reference(
-        positions, charges, cutoff, mic=False, box_sizes=None
-    ):
-        shortrange_kernel = kernels[0]
-        k_0_prime = jax.grad(shortrange_kernel)
-
-        if mic:
-
-            def apply_boundary_conditions(R):
-                scaled_R = R / box_sizes
-                scaled_R -= onp.rint(scaled_R)
-                return scaled_R * box_sizes
-
-        else:
-            apply_boundary_conditions = lambda x: x
-
-        n_particles = positions.shape[0]
-        n_dim = positions.shape[1]
-        forces = []
-        for i in tqdm(range(n_particles)):
-            f_i = jnp.zeros(n_dim)
-            for j in itertools.chain(range(i), range(i + 1, n_particles)):
-                R_ij = positions[i] - positions[j]
-                R_ij = apply_boundary_conditions(R_ij)
-                r_ij_2 = (R_ij * R_ij).sum()
-                if r_ij_2 <= cutoff**2:
-                    r_ij = onp.sqrt(r_ij_2)
-                    f_i -= (
-                        charges[i] * charges[j] * k_0_prime(r_ij) * R_ij / r_ij
-                    )
-            forces.append(f_i)
-
-        return jnp.array(forces)
-
-    f_ref = calculate_direct_forces_reference(
-        pos, chg, LEVEL_ZERO_CUTOFF, mic=PERIODIC, box_sizes=BOX_LENGTHS
-    )
-    assert jnp.allclose(f_ref, f_from_wrapper)
-    assert jnp.allclose(f_ref, f_neighborlist)
-    assert jnp.allclose(f_ref, f_nbl_comb)

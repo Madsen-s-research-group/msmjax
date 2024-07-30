@@ -10,6 +10,10 @@
         Forces for the Simulation of Biomolecules (PhD thesis), University
         of Illinois at Urbana-Champaign, 2006.
 """
+import os
+
+os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
+
 from functools import partial
 from pathlib import Path
 from typing import Callable, List
@@ -23,6 +27,7 @@ from ase.atoms import Atoms
 
 from msmjax.benchmark_tools import path_input_structures
 from msmjax.shortrange import (
+    compute_distance_vectors,
     gen_supercell,
     make_pair_term_fn,
     make_pair_term_fn_with_neighbor_list,
@@ -129,6 +134,39 @@ def test_gen_supercell_2d(fixture_structure_cubic, supercell_diag):
     assert onp.allclose(super_pos_2d, atoms.get_positions()[:, :2])
     assert onp.allclose(super_chg, atoms.get_initial_charges())
     assert onp.allclose(super_cell_2d, atoms.cell[:2, :2])
+
+
+@pytest.mark.parametrize(
+    "fixture_structure",
+    ["fixture_structure_cubic", "fixture_structure_nonortho"],
+    indirect=True,
+)
+@pytest.mark.parametrize(
+    "pbc",
+    [
+        (True, True, True),
+        (False, True, True),
+        (False, False, True),
+        (False, False, False),
+    ],
+)
+def test_compute_distance_vectors(fixture_structure, pbc):
+    n_particles = 10
+    pos = fixture_structure["positions"][:n_particles]
+    chg = fixture_structure["charges"][:n_particles]
+    cell = fixture_structure["cell"]
+
+    (i, j) = jnp.triu_indices(pos.shape[0], k=1)
+    deltas = compute_distance_vectors(
+        positions=pos,
+        cell=cell,
+        pair_indices=(i, j),
+        pbc=jnp.array(pbc),
+    )
+    atoms = Atoms(positions=pos, charges=chg, cell=cell, pbc=pbc)
+    deltas_ase = atoms.get_distances(i, j, mic=True, vector=True)
+
+    assert onp.allclose(deltas, deltas_ase)
 
 
 def shortrange_quadratic_potential(r, r_cut):
