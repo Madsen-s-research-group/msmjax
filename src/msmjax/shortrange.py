@@ -49,7 +49,15 @@ def gen_supercell(
     return super_positions, super_charges, super_cell
 
 
-def compute_distance_vectors(positions, cell, pair_indices, pbc):
+def compute_distance_vectors(
+    positions: jax.Array,
+    cell: jax.Array,
+    pair_indices: jax.Array,
+    pbc: jax.Array,
+):
+    # TODO: Out-of-bounds indexing? If `positions` is given as a regular numpy
+    #  array (despite the type hint demanding otherwise), and `pair_indices`
+    #  contains placeholders, we get an error -> Is this good or bad?
     deltas = positions[pair_indices[1]] - positions[pair_indices[0]]
     scaled = deltas @ jnp.linalg.pinv(cell)
     return jnp.where(pbc, (scaled - jnp.rint(scaled)) @ cell, deltas)
@@ -133,7 +141,6 @@ def make_compute_U0(
     pbc: npt.ArrayLike,
     supercell_diag: Union[int, Sequence[int]] = 1,
 ):
-    # TODO: add tests for this
     compute_pair_term = make_pair_term_fn(
         kernel_fn=kernel_fns[0], pbc=pbc, supercell_diag=supercell_diag
     )

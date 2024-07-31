@@ -24,6 +24,7 @@ import jax.numpy as jnp
 import numpy as onp
 import pytest
 from ase.atoms import Atoms
+from matscipy.neighbours import neighbour_list
 
 from msmjax.benchmark_tools import path_input_structures
 from msmjax.shortrange import (
@@ -415,3 +416,82 @@ def test_U0_self_interaction_term(fixture_structure, pbc):
     compute_U0 = make_compute_U0(kernel_fns=kernel_fns, pbc=pbc)
     ref = -len(ks_higher) * 0.5 * (chg * chg).sum()
     assert onp.isclose(compute_U0(pos, chg, cell), ref)
+
+
+@pytest.mark.parametrize(
+    "fixture_structure",
+    ["fixture_structure_cubic", "fixture_structure_nonortho"],
+    indirect=True,
+)
+@pytest.mark.parametrize(
+    "pbc",
+    [
+        (True, True, True),
+        (False, False, False),
+        (True, False, True),
+        (False, True, False),
+    ],
+)
+def test_with_and_without_neighbor_list(fixture_structure, pbc):
+    """Test equal result with and without neighbor list"""
+    # TODO: this test would be more conclusive if the potential used in the
+    #  neighbor list case did not have a cutoff (thus relying fully on the
+    #  neighbor list for excluding too distant pairs)
+    pos = fixture_structure["positions"]
+    chg = fixture_structure["charges"]
+    cell = fixture_structure["cell"]
+    cutoff = float(get_max_cutoff_3d(cell))
+    kernel_fn = partial(shortrange_quadratic_potential, r_cut=cutoff)
+    compute_pair_term = make_pair_term_fn(kernel_fn=kernel_fn, pbc=pbc)
+    compute_pair_term_nbl = make_pair_term_fn_with_neighbor_list(
+        kernel_fn=kernel_fn, pbc=pbc
+    )
+    nbl = neighbour_list(
+        quantities="ij", cutoff=cutoff, positions=pos, cell=cell, pbc=pbc
+    )
+    assert onp.isclose(
+        compute_pair_term(pos, chg, cell),
+        compute_pair_term_nbl(pos, chg, cell, neighbor_list=nbl, weights=0.5),
+    )
+
+
+@pytest.mark.parametrize(
+    "fixture_structure",
+    ["fixture_structure_cubic", "fixture_structure_nonortho"],
+    indirect=True,
+)
+@pytest.mark.parametrize(
+    "pbc",
+    [
+        (True, True, True),
+        (False, False, False),
+        (True, False, True),
+        (False, True, False),
+    ],
+)
+def test_ignore_placeholders(fixture_structure, pbc):
+    """Test that placeholder indices in the neighbor list have no effect."""
+    pos = jnp.asarray(fixture_structure["positions"])
+    chg = jnp.asarray(fixture_structure["charges"])
+    cell = jnp.asarray(fixture_structure["cell"])
+    cutoff = float(get_max_cutoff_3d(cell))
+    kernel_fn = partial(shortrange_quadratic_potential, r_cut=cutoff)
+    compute_pair_term_nbl = make_pair_term_fn_with_neighbor_list(
+        kernel_fn=kernel_fn, pbc=pbc
+    )
+    nbl = neighbour_list(
+        quantities="ij", cutoff=cutoff, positions=pos, cell=cell, pbc=pbc
+    )
+    placeholder_inds = onp.arange(100) + pos.shape[0]
+    nbl_with_placeholders = tuple(
+        onp.concatenate([inds, placeholder_inds]) for inds in nbl
+    )
+    assert onp.isclose(
+        compute_pair_term_nbl(pos, chg, cell, neighbor_list=nbl, weights=0.5),
+        compute_pair_term_nbl(
+            pos, chg, cell, neighbor_list=nbl_with_placeholders, weights=0.5
+        ),
+    )
+
+
+# TODO: turn pbc into a parametrized fixture
