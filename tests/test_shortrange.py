@@ -114,6 +114,7 @@ def test_gen_supercell(fixture_structure, supercell_diag):
 
 @pytest.mark.parametrize("supercell_diag", [1, 2, (1, 1), (2, 2), (2, 3)])
 def test_gen_supercell_2d(fixture_structure_cubic, supercell_diag):
+    """Test cell replication against `ase.atoms.Atoms.repeat()`, 2-d case"""
     pos = fixture_structure_cubic["positions"]
     chg = fixture_structure_cubic["charges"]
     cell = fixture_structure_cubic["cell"]
@@ -196,7 +197,7 @@ def test_compute_distance_vectors(fixture_structure, pbc):
     pos = fixture_structure["positions"]
     chg = fixture_structure["charges"]
     cell = fixture_structure["cell"]
-    max_cutoff = get_max_cutoff_3d(cell)  # TODO
+    max_cutoff = get_max_cutoff_3d(cell)
     (i, j) = jnp.triu_indices(pos.shape[0], k=1)
 
     deltas = compute_distance_vectors(
@@ -242,7 +243,13 @@ def test_error_supercell_nonperiodic(pbc, supercell_diag):
     indirect=True,
 )
 def test_pair_term_with_and_without_supercell(fixture_structure):
-    # TODO: docstring
+    """Test equal energy with and without supercell
+
+    For cutoffs small enough to fit, the following should be the same:
+        - Energy computed in the original cell
+        - Energy computed in a supercell, but using only the particles in the
+          original cell as centers
+    """
     pos = fixture_structure["positions"]
     chg = fixture_structure["charges"]
     cell = fixture_structure["cell"]
@@ -270,7 +277,7 @@ def test_pair_term_with_and_without_supercell(fixture_structure):
 def test_pair_term_supercell_correct_multiple(
     fixture_structure, supercell_diag
 ):
-    # TODO: docstring
+    """Test energy of whole supercell is right multiple of original cell's"""
     pos = fixture_structure["positions"]
     chg = fixture_structure["charges"]
     cell = fixture_structure["cell"]
@@ -298,7 +305,15 @@ def test_pair_term_supercell_correct_multiple(
 def test_pair_term_periodic_wrap_vs_replicate(
     fixture_structure, cutoff_multiplier, supercell_diag
 ):
-    # TODO: docstring (explain the idea of the test, and what the params are)
+    """Test periodic wrapping vs. explicit system replication
+
+    The following should be the same in a periodic system:
+        - Energy computed in the original cell, accounting for periodicity
+          by wrapping around the edges
+        - Energy computed in a cell replicated around the original cell on
+          all sides, using only the particles in the original cell as centers
+          (essentially faking periodicity in a larger non-periodic system)
+    """
     # TODO: can this test be written more compactly?
     n_particles = 100
     pos = fixture_structure["positions"][:n_particles]
@@ -315,15 +330,15 @@ def test_pair_term_periodic_wrap_vs_replicate(
     pair_term_fn_explicit_replicate = make_pair_term_fn_with_neighbor_list(
         kernel_fn=kernel_fn, pbc=(False, False, False)
     )
-    pos_ext, chg_ext, cell_ext = gen_supercell(
+    pos_extended, chg_extended, cell_extended = gen_supercell(
         positions=pos,
         charges=chg,
         cell=cell,
         supercell_diag=n_repeats_explicit,
     )
-    pos_ext = jnp.roll(pos_ext, (M // 2 + 1) * n_particles, axis=0)
+    pos_extended = jnp.roll(pos_extended, (M // 2 + 1) * n_particles, axis=0)
     n_centers = pos.shape[0]
-    n_total = pos_ext.shape[0]
+    n_total = pos_extended.shape[0]
     pair_inds_explicit_replicate = onp.where(
         onp.arange(n_centers)[:, onp.newaxis] < onp.arange(n_total)
     )
@@ -331,9 +346,9 @@ def test_pair_term_periodic_wrap_vs_replicate(
         pair_inds_explicit_replicate[1] < n_centers, 1.0, 0.5
     )
     energy_explicit_replicate = pair_term_fn_explicit_replicate(
-        pos_ext,
-        chg_ext,
-        cell_ext,
+        pos_extended,
+        chg_extended,
+        cell_extended,
         neighbor_list=pair_inds_explicit_replicate,
         weights=pair_weights_explicit_replicate,
     )
