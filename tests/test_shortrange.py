@@ -29,6 +29,7 @@ from msmjax.benchmark_tools import path_input_structures
 from msmjax.shortrange import (
     compute_distance_vectors,
     gen_supercell,
+    make_compute_U0,
     make_pair_term_fn,
     make_pair_term_fn_with_neighbor_list,
 )
@@ -361,3 +362,56 @@ def test_pair_term_periodic_wrap_vs_replicate(
     energy_wrap = pair_term_fn_wrap(pos, chg, cell)
 
     assert onp.isclose(energy_explicit_replicate, energy_wrap)
+
+
+@pytest.mark.parametrize(
+    "fixture_structure",
+    ["fixture_structure_cubic", "fixture_structure_nonortho"],
+    indirect=True,
+)
+@pytest.mark.parametrize(
+    "pbc", [(True, True, True), (False, False, False), (True, False, True)]
+)
+def test_U0_pair_term(fixture_structure, pbc):
+    """Test the pair term contribution to U0
+
+    To do this, all higher-level kernels are set to return a constant value of
+    zero. In this case, U0 should equal the result of the pair term alone.
+    """
+    pos = fixture_structure["positions"]
+    chg = fixture_structure["charges"]
+    cell = fixture_structure["cell"]
+    max_cutoff = get_max_cutoff_3d(cell)
+    k_0 = partial(shortrange_quadratic_potential, r_cut=0.99 * max_cutoff)
+    kernel_fns = [k_0] + [lambda x: 0.0] * 2
+    compute_U0 = make_compute_U0(kernel_fns=kernel_fns, pbc=pbc)
+    compute_pair_term = make_pair_term_fn(kernel_fn=k_0, pbc=pbc)
+    assert onp.isclose(
+        compute_U0(pos, chg, cell), compute_pair_term(pos, chg, cell)
+    )
+
+
+@pytest.mark.parametrize(
+    "fixture_structure",
+    ["fixture_structure_cubic", "fixture_structure_nonortho"],
+    indirect=True,
+)
+@pytest.mark.parametrize(
+    "pbc", [(True, True, True), (False, False, False), (True, False, True)]
+)
+def test_U0_self_interaction_term(fixture_structure, pbc):
+    """Test the self interaction term contribution to U0
+
+    To do this, the level-zero kernel is defined to be constantly zero, and the
+    higher-level kernels to be constantly one, such that the expected value
+    for U0 can be calculated from the charges alone.
+    """
+    pos = fixture_structure["positions"]
+    chg = fixture_structure["charges"]
+    cell = fixture_structure["cell"]
+    k_0 = lambda x: 0.0
+    ks_higher = [lambda x: 1.0] * 2
+    kernel_fns = [k_0] + ks_higher
+    compute_U0 = make_compute_U0(kernel_fns=kernel_fns, pbc=pbc)
+    ref = -len(ks_higher) * 0.5 * (chg * chg).sum()
+    assert onp.isclose(compute_U0(pos, chg, cell), ref)
