@@ -8,12 +8,15 @@ import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
+from typing import Tuple
 
 import ase.io
 import jax
 import jax.numpy as jnp
 import jaxlib
+import numpy as np
 import numpy as onp
+import numpy.typing as npt
 from ase import Atoms
 
 path_input_structures = (
@@ -176,18 +179,35 @@ CONVERSION_FACTOR = (4 * onp.pi) * 8.8541878128 / 1.602176634 / 10**3
 
 
 def evaluate_structure_with_lammps_p3m(
-    positions, charges, cell, lammps_executable="lmp", n_max_neighbors=None
-):
+    positions: npt.ArrayLike,
+    charges: npt.ArrayLike,
+    cell: npt.ArrayLike,
+    lammps_executable: str = "lmp",
+    max_neighbors_one_atom: int = None,
+) -> Tuple[float, np.ndarray]:
+    """Wrapper to compute periodic electrostatic energy, forces in LAMMPS with p3m
+
+    Args:
+        positions: Array of article positions, shape `(n_particles, 3)`
+        charges: Array of particle charges, `(n_particles,)`
+        cell: Unit cell
+        lammps_executable: Path to LAMMPS executable
+        max_neighbors_one_atom: Maximum number of neighbors of a single atom.
+            Supplied to LAMMPS via `neigh_modify one` if given. You may need
+            to increase this value if you're getting errors.
+
+    Returns:
+        energy, forces
+    """
     filename_lammps_data = "structure.data"
     filename_lammps_dump = "dump.lammpstrj"
     filename_lammps_log = "log.lammps"
     filename_lammps_in = "input.lammps"
 
     with tempfile.TemporaryDirectory() as folder_name:
-        lammps_workdir = Path(folder_name)
-        with dir_context(lammps_workdir):
+        with dir_context(folder_name):
             write_lammps_data(
-                filename=lammps_workdir / "structure.data",
+                filename=filename_lammps_data,
                 cell=cell,
                 positions=positions,
                 charges=charges,
@@ -195,22 +215,17 @@ def evaluate_structure_with_lammps_p3m(
             lammps_input_text = make_lammps_input_text(
                 filename_data=filename_lammps_data,
                 filename_dump=filename_lammps_dump,
-                max_neighbors_one_atom=n_max_neighbors,
+                max_neighbors_one_atom=max_neighbors_one_atom,
             )
-            with open(lammps_workdir / filename_lammps_in, "w") as f:
+            with open(filename_lammps_in, "w") as f:
                 f.write(lammps_input_text)
 
             subprocess.run(
                 [lammps_executable, "-in", filename_lammps_in],
-                cwd=lammps_workdir,
                 stdout=subprocess.DEVNULL,
             )
-            energy = parse_energy_from_lammps_log(
-                lammps_workdir / filename_lammps_log
-            )
-            forces = ase.io.read(
-                lammps_workdir / filename_lammps_dump
-            ).calc.results["forces"]
+            energy = parse_energy_from_lammps_log(filename_lammps_log)
+            forces = ase.io.read(filename_lammps_dump).calc.results["forces"]
 
     return CONVERSION_FACTOR * energy, CONVERSION_FACTOR * forces
 
@@ -219,16 +234,17 @@ if __name__ == "__main__":
     LAMMPS_EXECUTABLE = "/home/florian/Downloads/lammps-static/bin/lmp"
 
     structures = onp.load(path_input_structures / "structures_500.npz")
-    pos = structures["positions"][2]
-    chg = structures["charges"][2]
-    cell = structures["cells"][2]
+    idx = 0
+    pos = structures["positions"][idx]
+    chg = structures["charges"][idx]
+    cell = structures["cells"][idx]
 
     energy, forces = evaluate_structure_with_lammps_p3m(
         positions=pos,
         charges=chg,
         cell=cell,
         lammps_executable=LAMMPS_EXECUTABLE,
-        n_max_neighbors=10000,
+        max_neighbors_one_atom=10000,
     )
 
     print()
