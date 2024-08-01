@@ -45,7 +45,6 @@ dependencies = [
     "packaging>=23.1",
     "jax",
     "jaxlib",
-    "jax-md",
 ]
 dynamic = ["version"]
 readme = "README.md"
