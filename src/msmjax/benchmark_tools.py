@@ -6,10 +6,12 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+import ase.io
 import jax
 import jax.numpy as jnp
 import jaxlib
 import numpy as onp
+from ase import Atoms
 
 path_input_structures = (
     Path(__file__).resolve().parents[2] / "data" / "benchmark" / "structures"
@@ -81,3 +83,53 @@ def time_set_of_structures(structures, pbc, setup_fn, **kwargs):
     }
 
     return output
+
+
+def make_lammps_input_text(filename_data, filename_dump):
+    return f"""# 1) Initialization
+units metal
+dimension 3
+boundary p p p
+atom_style charge
+pair_style coul/long 10.0
+kspace_style pppm 1e-5
+
+# 2) System definition
+read_data {filename_data}
+
+# 3) Simulation settings
+mass 1 1
+pair_coeff * *
+
+# 4) Output settings
+thermo 1
+thermo_style custom pe
+dump mydmp all custom 1 {filename_dump} id type x y z fx fy fz
+
+# 5) Run
+run 0
+"""
+
+
+def write_lammps_data(filename, box_lengths, positions, charges):
+    n_particles = positions.shape[0]
+    n_dims = positions.shape[1]
+    atoms = Atoms(
+        symbols=["X"] * n_particles,
+        cell=box_lengths,
+        positions=positions,
+        charges=charges,
+        pbc=[True] * n_dims,
+    )
+    ase.io.write(filename, atoms, format="lammps-data", atom_style="charge")
+
+
+def parse_energy_from_lammps_log(filename):
+    with open(filename, "r") as f:
+        for line in f:
+            if "PotEng" in line:
+                line_poteng = f.readline()
+                energy = float(line_poteng.strip())
+                return energy
+
+    raise ValueError("EOF reached without finding energy")
