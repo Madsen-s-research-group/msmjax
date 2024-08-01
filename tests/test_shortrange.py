@@ -92,6 +92,19 @@ def fixture_structure(request):
     return request.getfixturevalue(request.param)
 
 
+@pytest.fixture(
+    scope="module",
+    params=[
+        (False, False, False),
+        (True, True, True),
+        (False, True, False),
+        (True, False, True),
+    ],
+)
+def fixture_pbc(request) -> tuple:
+    return request.param
+
+
 @pytest.mark.parametrize(
     "fixture_structure",
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
@@ -158,6 +171,7 @@ def get_max_cutoff_3d(cell: jnp.ndarray):
     Returns:
         Cutoff radius
     """
+    # TODO: move this function to some utils?
     return jnp.min(
         jnp.fabs(
             jnp.linalg.det(cell)
@@ -177,22 +191,7 @@ def get_max_cutoff_3d(cell: jnp.ndarray):
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
     indirect=True,
 )
-@pytest.mark.parametrize(
-    "pbc",
-    [
-        (True, True, True),
-        (True, True, False),
-        (True, False, False),
-        (False, False, False),
-        pytest.param(
-            (False, True, False),
-            marks=pytest.mark.xfail(
-                reason="possibly misunderstanding about mixed PBCs in ase?"  # TODO
-            ),
-        ),
-    ],
-)
-def test_compute_distance_vectors(fixture_structure, pbc):
+def test_compute_distance_vectors(fixture_structure, fixture_pbc):
     """Test correct pair distance computation under minimum image convention
 
     As a reference to compare to, the result from ase's `get_distances` method
@@ -208,9 +207,9 @@ def test_compute_distance_vectors(fixture_structure, pbc):
         positions=pos,
         cell=cell,
         pair_indices=(i, j),
-        pbc=jnp.array(pbc),
+        pbc=jnp.array(fixture_pbc),
     )
-    atoms = Atoms(positions=pos, charges=chg, cell=cell, pbc=pbc)
+    atoms = Atoms(positions=pos, charges=chg, cell=cell, pbc=fixture_pbc)
     deltas_ref = atoms.get_distances(i, j, mic=True, vector=True)
 
     distances_ref = onp.linalg.norm(deltas_ref, axis=1)
@@ -372,10 +371,7 @@ def test_pair_term_periodic_wrap_vs_replicate(
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
     indirect=True,
 )
-@pytest.mark.parametrize(
-    "pbc", [(True, True, True), (False, False, False), (True, False, True)]
-)
-def test_U0_pair_term(fixture_structure, pbc):
+def test_U0_pair_term(fixture_structure, fixture_pbc):
     """Test the pair term contribution to U0
 
     To do this, all higher-level kernels are set to return a constant value of
@@ -387,8 +383,8 @@ def test_U0_pair_term(fixture_structure, pbc):
     max_cutoff = get_max_cutoff_3d(cell)
     k_0 = partial(shortrange_quadratic_potential, r_cut=0.99 * max_cutoff)
     kernel_fns = [k_0] + [lambda x: 0.0] * 2
-    compute_U0 = make_compute_U0(kernel_fns=kernel_fns, pbc=pbc)
-    compute_pair_term = make_pair_term_fn(kernel_fn=k_0, pbc=pbc)
+    compute_U0 = make_compute_U0(kernel_fns=kernel_fns, pbc=fixture_pbc)
+    compute_pair_term = make_pair_term_fn(kernel_fn=k_0, pbc=fixture_pbc)
     assert onp.isclose(
         compute_U0(pos, chg, cell), compute_pair_term(pos, chg, cell)
     )
@@ -399,10 +395,7 @@ def test_U0_pair_term(fixture_structure, pbc):
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
     indirect=True,
 )
-@pytest.mark.parametrize(
-    "pbc", [(True, True, True), (False, False, False), (True, False, True)]
-)
-def test_U0_self_interaction_term(fixture_structure, pbc):
+def test_U0_self_interaction_term(fixture_structure, fixture_pbc):
     """Test the self interaction term contribution to U0
 
     To do this, the level-zero kernel is defined to be constantly zero, and the
@@ -415,7 +408,7 @@ def test_U0_self_interaction_term(fixture_structure, pbc):
     k_0 = lambda x: 0.0
     ks_higher = [lambda x: 1.0] * 2
     kernel_fns = [k_0] + ks_higher
-    compute_U0 = make_compute_U0(kernel_fns=kernel_fns, pbc=pbc)
+    compute_U0 = make_compute_U0(kernel_fns=kernel_fns, pbc=fixture_pbc)
     ref = -len(ks_higher) * 0.5 * (chg * chg).sum()
     assert onp.isclose(compute_U0(pos, chg, cell), ref)
 
@@ -425,16 +418,7 @@ def test_U0_self_interaction_term(fixture_structure, pbc):
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
     indirect=True,
 )
-@pytest.mark.parametrize(
-    "pbc",
-    [
-        (True, True, True),
-        (False, False, False),
-        (True, False, True),
-        (False, True, False),
-    ],
-)
-def test_with_and_without_neighbor_list(fixture_structure, pbc):
+def test_with_and_without_neighbor_list(fixture_structure, fixture_pbc):
     """Test equal result with and without neighbor list"""
     # TODO: this test would be more conclusive if the potential used in the
     #  neighbor list case did not have a cutoff (thus relying fully on the
@@ -444,12 +428,12 @@ def test_with_and_without_neighbor_list(fixture_structure, pbc):
     cell = fixture_structure["cell"]
     cutoff = float(get_max_cutoff_3d(cell))
     kernel_fn = partial(shortrange_quadratic_potential, r_cut=cutoff)
-    compute_pair_term = make_pair_term_fn(kernel_fn=kernel_fn, pbc=pbc)
+    compute_pair_term = make_pair_term_fn(kernel_fn=kernel_fn, pbc=fixture_pbc)
     compute_pair_term_nbl = make_pair_term_fn_with_neighbor_list(
-        kernel_fn=kernel_fn, pbc=pbc
+        kernel_fn=kernel_fn, pbc=fixture_pbc
     )
     nbl = neighbour_list(
-        quantities="ij", cutoff=cutoff, positions=pos, cell=cell, pbc=pbc
+        "ij", cutoff=cutoff, positions=pos, cell=cell, pbc=fixture_pbc
     )
     assert onp.isclose(
         compute_pair_term(pos, chg, cell),
@@ -462,16 +446,7 @@ def test_with_and_without_neighbor_list(fixture_structure, pbc):
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
     indirect=True,
 )
-@pytest.mark.parametrize(
-    "pbc",
-    [
-        (True, True, True),
-        (False, False, False),
-        (True, False, True),
-        (False, True, False),
-    ],
-)
-def test_ignore_placeholders(fixture_structure, pbc):
+def test_ignore_placeholders(fixture_structure, fixture_pbc):
     """Test that placeholder indices in the neighbor list have no effect."""
     pos = fixture_structure["positions"]
     chg = fixture_structure["charges"]
@@ -479,10 +454,10 @@ def test_ignore_placeholders(fixture_structure, pbc):
     cutoff = float(get_max_cutoff_3d(cell))
     kernel_fn = partial(shortrange_quadratic_potential, r_cut=cutoff)
     compute_pair_term_nbl = make_pair_term_fn_with_neighbor_list(
-        kernel_fn=kernel_fn, pbc=pbc
+        kernel_fn=kernel_fn, pbc=fixture_pbc
     )
     nbl = neighbour_list(
-        quantities="ij", cutoff=cutoff, positions=pos, cell=cell, pbc=pbc
+        "ij", cutoff=cutoff, positions=pos, cell=cell, pbc=fixture_pbc
     )
     placeholder_inds = onp.arange(100) + pos.shape[0]
     nbl_with_placeholders = tuple(
@@ -496,24 +471,12 @@ def test_ignore_placeholders(fixture_structure, pbc):
     )
 
 
-# TODO: turn pbc into a parametrized fixture
-
-
 @pytest.mark.parametrize(
     "fixture_structure",
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
     indirect=True,
 )
-@pytest.mark.parametrize(
-    "pbc",
-    [
-        (True, True, True),
-        (False, False, False),
-        (True, False, True),
-        (False, True, False),
-    ],
-)
-def test_compare_explicit_loop(fixture_structure, pbc):
+def test_compare_explicit_loop(fixture_structure, fixture_pbc):
     """Test energy and force results against explicit calculation in a loop"""
     n_particles = 30
     pos = fixture_structure["positions"][:n_particles]
@@ -528,7 +491,7 @@ def test_compare_explicit_loop(fixture_structure, pbc):
     forces_loop = onp.zeros((n_particles, 3))
     for i in range(n_particles):
         for j in range(i + 1, n_particles):
-            R_ij, _ = get_distances(pos[j], pos[i], cell=cell, pbc=pbc)
+            R_ij, _ = get_distances(pos[j], pos[i], cell=cell, pbc=fixture_pbc)
             R_ij = R_ij.reshape((3,))
             r_ij = onp.linalg.norm(R_ij)
             qi_qj = chg[i] * chg[j]
@@ -537,7 +500,7 @@ def test_compare_explicit_loop(fixture_structure, pbc):
             forces_loop[i] += f_ij
             forces_loop[j] -= f_ij
 
-    compute_pair_term = make_pair_term_fn(kernel_fn=kernel_fn, pbc=pbc)
+    compute_pair_term = make_pair_term_fn(kernel_fn=kernel_fn, pbc=fixture_pbc)
     energy = compute_pair_term(pos, chg, cell)
     forces = -jax.grad(compute_pair_term)(pos, chg, cell)
 
