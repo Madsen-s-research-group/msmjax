@@ -158,10 +158,6 @@ def shortrange_quadratic_potential(r, r_cut):
     return jnp.where(r < r_cut, (r - r_cut) ** 2, 0.0)
 
 
-def shortrange_counting_potential(r, r_cut):
-    return jnp.where(r < r_cut, 1.0, 0.0)
-
-
 def get_max_cutoff_3d(cell: jnp.ndarray):
     """Get the maximum cutoff value that fits into a 3D cell.
 
@@ -420,17 +416,19 @@ def test_U0_self_interaction_term(fixture_structure, fixture_pbc):
 )
 def test_with_and_without_neighbor_list(fixture_structure, fixture_pbc):
     """Test equal result with and without neighbor list"""
-    # TODO: this test would be more conclusive if the potential used in the
-    #  neighbor list case did not have a cutoff (thus relying fully on the
-    #  neighbor list for excluding too distant pairs)
     pos = fixture_structure["positions"]
     chg = fixture_structure["charges"]
     cell = fixture_structure["cell"]
     cutoff = float(get_max_cutoff_3d(cell))
-    kernel_fn = partial(shortrange_quadratic_potential, r_cut=cutoff)
-    compute_pair_term = make_pair_term_fn(kernel_fn=kernel_fn, pbc=fixture_pbc)
+    kernel_fn_no_cutoff = lambda r: 1.0
+    kernel_fn_cutoff = lambda r: jnp.where(
+        r < cutoff, kernel_fn_no_cutoff(r), 0.0
+    )
+    compute_pair_term = make_pair_term_fn(
+        kernel_fn=kernel_fn_cutoff, pbc=fixture_pbc
+    )
     compute_pair_term_nbl = make_pair_term_fn_with_neighbor_list(
-        kernel_fn=kernel_fn, pbc=fixture_pbc
+        kernel_fn=kernel_fn_no_cutoff, pbc=fixture_pbc
     )
     nbl = neighbour_list(
         "ij", cutoff=cutoff, positions=pos, cell=cell, pbc=fixture_pbc
