@@ -1,8 +1,11 @@
+import contextlib
+import os
 import platform
 import shlex
 import socket
 import subprocess
 import sys
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -85,14 +88,38 @@ def time_set_of_structures(structures, pbc, setup_fn, **kwargs):
     return output
 
 
-def make_lammps_input_text(filename_data, filename_dump):
-    return f"""# 1) Initialization
+@contextlib.contextmanager
+def dir_context(dir_name: Path):
+    """Create a context to run code in a different directory.
+
+    Args:
+        dir_name: Route to the directory.
+    """
+    cwd = os.getcwd()
+    try:
+        os.chdir(dir_name)
+        yield
+    finally:
+        os.chdir(cwd)
+
+
+def make_lammps_input_text(
+    filename_data, filename_dump, max_neighbors_one_atom
+):
+    """Write LAMMPS input script"""
+    if max_neighbors_one_atom is None:
+        neigh_line = ""
+    else:
+        neigh_line = f"neigh_modify one {max_neighbors_one_atom}"
+
+    text = f"""# 1) Initialization
 units metal
 dimension 3
 boundary p p p
 atom_style charge
 pair_style coul/long 10.0
 kspace_style pppm 1e-5
+{neigh_line}
 
 # 2) System definition
 read_data {filename_data}
@@ -109,14 +136,16 @@ dump mydmp all custom 1 {filename_dump} id type x y z fx fy fz
 # 5) Run
 run 0
 """
+    return text
 
 
-def write_lammps_data(filename, box_lengths, positions, charges):
+def write_lammps_data(filename, cell, positions, charges) -> None:
+    """Write structure as LAMMPS data file"""
     n_particles = positions.shape[0]
     n_dims = positions.shape[1]
     atoms = Atoms(
         symbols=["X"] * n_particles,
-        cell=box_lengths,
+        cell=cell,
         positions=positions,
         charges=charges,
         pbc=[True] * n_dims,
@@ -124,7 +153,8 @@ def write_lammps_data(filename, box_lengths, positions, charges):
     ase.io.write(filename, atoms, format="lammps-data", atom_style="charge")
 
 
-def parse_energy_from_lammps_log(filename):
+def parse_energy_from_lammps_log(filename) -> float:
+    """Get the energy from LAMMPS log file"""
     with open(filename, "r") as f:
         for line in f:
             if "PotEng" in line:
@@ -133,3 +163,74 @@ def parse_energy_from_lammps_log(filename):
                 return energy
 
     raise ValueError("EOF reached without finding energy")
+
+
+# We want to calculate the value of (q_i * q_j) / r_{ij}, in whatever units
+# q_i, q_j, r_i, r_j are supplied in, and whatever quantities they might actually
+# represent.
+# LAMMPS calculates energy = (1 / (4 * pi * epsilon_0)) * ((q_i * q_j) / r_{ij}),
+# with (for style `units metal`) q_i, q_j in units of elementary charge,
+# r_i, r_j in Angstrom, and energy in eV. Plugging in the values for epsilon_0,
+# Angstrom, eV, Coulomb, in SI units, the conversion factor is:
+CONVERSION_FACTOR = (4 * onp.pi) * 8.8541878128 / 1.602176634 / 10**3
+
+
+def evaluate_structure_with_lammps_p3m(
+    positions, charges, cell, lammps_executable="lmp", n_max_neighbors=None
+):
+    filename_lammps_data = "structure.data"
+    filename_lammps_dump = "dump.lammpstrj"
+    filename_lammps_log = "log.lammps"
+    filename_lammps_in = "input.lammps"
+
+    with tempfile.TemporaryDirectory() as folder_name:
+        lammps_workdir = Path(folder_name)
+        with dir_context(lammps_workdir):
+            write_lammps_data(
+                filename=lammps_workdir / "structure.data",
+                cell=cell,
+                positions=positions,
+                charges=charges,
+            )
+            lammps_input_text = make_lammps_input_text(
+                filename_data=filename_lammps_data,
+                filename_dump=filename_lammps_dump,
+                max_neighbors_one_atom=n_max_neighbors,
+            )
+            with open(lammps_workdir / filename_lammps_in, "w") as f:
+                f.write(lammps_input_text)
+
+            subprocess.run(
+                [lammps_executable, "-in", filename_lammps_in],
+                cwd=lammps_workdir,
+                stdout=subprocess.DEVNULL,
+            )
+            energy = parse_energy_from_lammps_log(
+                lammps_workdir / filename_lammps_log
+            )
+            forces = ase.io.read(
+                lammps_workdir / filename_lammps_dump
+            ).calc.results["forces"]
+
+    return CONVERSION_FACTOR * energy, CONVERSION_FACTOR * forces
+
+
+if __name__ == "__main__":
+    LAMMPS_EXECUTABLE = "/home/florian/Downloads/lammps-static/bin/lmp"
+
+    structures = onp.load(path_input_structures / "structures_500.npz")
+    pos = structures["positions"][2]
+    chg = structures["charges"][2]
+    cell = structures["cells"][2]
+
+    energy, forces = evaluate_structure_with_lammps_p3m(
+        positions=pos,
+        charges=chg,
+        cell=cell,
+        lammps_executable=LAMMPS_EXECUTABLE,
+        n_max_neighbors=10000,
+    )
+
+    print()
+    print(f"energy: {energy}")
+    print(f"forces: {forces}")
