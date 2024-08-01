@@ -12,6 +12,8 @@
 """
 import os
 
+from ase.geometry import get_distances
+
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 
 from functools import partial
@@ -52,9 +54,9 @@ def fixture_structure_cubic(fixture_dir_structures) -> dict:
     structsfile = fixture_dir_structures / ("structures_500.npz")
     structures = onp.load(structsfile)
     return {
-        "cell": structures["cells"][0].astype(onp.float64),
-        "positions": structures["positions"][0].astype(onp.float64),
-        "charges": structures["charges"][0].astype(onp.float64),
+        "cell": jnp.array(structures["cells"][0].astype(onp.float64)),
+        "positions": jnp.array(structures["positions"][0].astype(onp.float64)),
+        "charges": jnp.array(structures["charges"][0].astype(onp.float64)),
     }
 
 
@@ -78,9 +80,9 @@ def fixture_structure_nonortho(fixture_structure_cubic) -> dict:
     nonortho_cell = onp.concatenate([new_lengths, new_angles])
     atoms.set_cell(nonortho_cell, scale_atoms=True)
     return {
-        "cell": atoms.get_cell()[...],
-        "positions": atoms.get_positions(),
-        "charges": atoms.get_initial_charges(),
+        "cell": jnp.array(atoms.get_cell()[...]),
+        "positions": jnp.array(atoms.get_positions()),
+        "charges": jnp.array(atoms.get_initial_charges()),
     }
 
 
@@ -471,9 +473,9 @@ def test_with_and_without_neighbor_list(fixture_structure, pbc):
 )
 def test_ignore_placeholders(fixture_structure, pbc):
     """Test that placeholder indices in the neighbor list have no effect."""
-    pos = jnp.asarray(fixture_structure["positions"])
-    chg = jnp.asarray(fixture_structure["charges"])
-    cell = jnp.asarray(fixture_structure["cell"])
+    pos = fixture_structure["positions"]
+    chg = fixture_structure["charges"]
+    cell = fixture_structure["cell"]
     cutoff = float(get_max_cutoff_3d(cell))
     kernel_fn = partial(shortrange_quadratic_potential, r_cut=cutoff)
     compute_pair_term_nbl = make_pair_term_fn_with_neighbor_list(
@@ -495,3 +497,49 @@ def test_ignore_placeholders(fixture_structure, pbc):
 
 
 # TODO: turn pbc into a parametrized fixture
+
+
+@pytest.mark.parametrize(
+    "fixture_structure",
+    ["fixture_structure_cubic", "fixture_structure_nonortho"],
+    indirect=True,
+)
+@pytest.mark.parametrize(
+    "pbc",
+    [
+        (True, True, True),
+        (False, False, False),
+        (True, False, True),
+        (False, True, False),
+    ],
+)
+def test_compare_explicit_loop(fixture_structure, pbc):
+    """Test energy and force results against explicit calculation in a loop"""
+    n_particles = 30
+    pos = fixture_structure["positions"][:n_particles]
+    chg = fixture_structure["charges"][:n_particles]
+    cell = fixture_structure["cell"]
+    kernel_fn = partial(
+        shortrange_quadratic_potential, r_cut=get_max_cutoff_3d(cell)
+    )
+    kernel_fn_prime = jax.grad(kernel_fn)
+
+    energy_loop = 0.0
+    forces_loop = onp.zeros((n_particles, 3))
+    for i in range(n_particles):
+        for j in range(i + 1, n_particles):
+            R_ij, _ = get_distances(pos[j], pos[i], cell=cell, pbc=pbc)
+            R_ij = R_ij.reshape((3,))
+            r_ij = onp.linalg.norm(R_ij)
+            qi_qj = chg[i] * chg[j]
+            energy_loop += qi_qj * kernel_fn(r_ij)
+            f_ij = -qi_qj * kernel_fn_prime(r_ij) * (R_ij / r_ij)
+            forces_loop[i] += f_ij
+            forces_loop[j] -= f_ij
+
+    compute_pair_term = make_pair_term_fn(kernel_fn=kernel_fn, pbc=pbc)
+    energy = compute_pair_term(pos, chg, cell)
+    forces = -jax.grad(compute_pair_term)(pos, chg, cell)
+
+    assert onp.isclose(energy, energy_loop)
+    assert onp.allclose(forces, forces_loop)
