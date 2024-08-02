@@ -22,6 +22,12 @@ from ase import Atoms
 path_input_structures = (
     Path(__file__).resolve().parents[2] / "data" / "benchmark" / "structures"
 )
+path_reference_lammps_p3m = (
+    Path(__file__).resolve().parents[2]
+    / "data"
+    / "benchmark"
+    / "results_ref_periodic_lammps_p3m"
+)
 
 
 def get_git_commit_id(repository_path):
@@ -33,12 +39,27 @@ def get_git_commit_id(repository_path):
     return commit_id
 
 
+def get_git_branch(repository_path):
+    proc = subprocess.run(
+        shlex.split(f"git -C {Path(repository_path).resolve()} status"),
+        capture_output=True,
+    )
+    branch_name = proc.stdout.decode("utf8").split()[2]
+    return branch_name
+
+
 def get_repository_info(path):
     try:
         commit_id = get_git_commit_id(path)
-        return {"path": path, "commit_id": commit_id}
+        branch_name = get_git_branch(path)
+        return {"path": path, "branch": branch_name, "commit_id": commit_id}
     except Exception as e:
-        return {"path": path, "commit_id": None, "exception": repr(e)}
+        return {
+            "path": path,
+            "branch": None,
+            "commit_id": None,
+            "exception": repr(e),
+        }
 
 
 def get_metadata(additional_repository_paths: dict = None):
