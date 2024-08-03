@@ -29,7 +29,9 @@ def gen_supercell(
     positions: jax.Array,
     charges: jax.Array,
     cell: jax.Array,
-    supercell_diag: Union[int, Sequence[int]],
+    supercell_diag: Union[
+        int, Sequence[int]
+    ],  # TODO: does the type of `supercell_diag` need to be more specific?
 ):
     """Adapted from NeuralIL
 
@@ -70,6 +72,7 @@ def make_pair_term_fn(
 ):
     # TODO: unit test jitting
     pbc = onp.asarray(pbc)
+    supercell_diag = onp.asarray(supercell_diag)
     if onp.logical_and(~pbc, onp.asarray(supercell_diag) != 1).any():
         raise ValueError(
             "`supercell_diag` must be equal to one along non-periodic axes"
