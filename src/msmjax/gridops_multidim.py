@@ -811,6 +811,7 @@ def create_compute_U_and_f_oneplus_via_potential(
     the grid potential with the interpolation basis functions and their
     gradients, respectively.
     """
+    # TODO: write test for this (compare to a different method of calculating)
     anterpolate_level_one = create_anterpolation_operator(grids[1])
     compute_gridpotential_level_one = create_compute_gridpotential_level_one(
         grids=grids,

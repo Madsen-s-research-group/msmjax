@@ -192,7 +192,11 @@ def find_spacings_and_n_levels_periodic(box_lengths, level_one_spacings):
     # Make sure there is at least one level:
     powers = onp.where(powers >= 1, powers, 1)
     closest_valid_spacings = box_lengths / 2**powers
-    n_levels = max(powers)
+    # Define n_levels as including the highest level (which will be omitted
+    #  in the calculation of the grid part, but still matters to get the
+    #  correct splitting of the kernel, and for the self-interaction term of
+    #  the short-range part)
+    n_levels = max(powers) + 1
 
     return closest_valid_spacings, n_levels
 
@@ -209,6 +213,12 @@ def suggest_msm_params(
     n_levels=None,
     **kwargs,
 ):
+    # TODO: Let `level_one_gridspacing` default to None as well? (in which case
+    #  it would be computed as the average particle spacing from `box_lengths`
+    #  and `n_particles`
+    # TODO: `n_particles` is in fact only needed in non-periodic case (as long
+    #  as we do not need to infer `level_one_gridspacing` from the particle
+    #  density)a
     box_lengths = onp.asarray(box_lengths)
     pbcs = onp.asarray(pbcs)
     if not (onp.all(pbcs) or onp.all(~pbcs)):
@@ -225,6 +235,9 @@ def suggest_msm_params(
     if alpha is None and level_zero_cutoff is not None:
         alpha = level_zero_cutoff / level_one_gridspacing
     elif level_zero_cutoff is None and alpha is not None:
+        # TODO: The cutoff being computed from the grid spacing AFTER the grid
+        #  spacing has been adapted for PBCs may lead to inconsistent or
+        #  surprising results. Is this what we want?
         level_zero_cutoff = alpha * level_one_gridspacing
     else:
         raise ValueError(
