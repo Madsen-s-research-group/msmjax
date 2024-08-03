@@ -80,6 +80,10 @@ def make_pair_term_fn(
     # TODO: check supercell_diag >= 1?
     _compute_distance_vectors = partial(compute_distance_vectors, pbc=pbc)
 
+    # TODO: if no direction is periodic, the returned function does not need
+    #  `cell` as a parameter, and we can skip supercell generation. Would that
+    #  make usage simpler? Or lead to confusion instead?
+
     def compute_pair_term(positions, charges, cell):
         super_positions, super_charges, super_cell = gen_supercell(
             positions=positions,

@@ -235,6 +235,9 @@ def suggest_msm_params(
     if alpha is None and level_zero_cutoff is not None:
         alpha = level_zero_cutoff / level_one_gridspacing
     elif level_zero_cutoff is None and alpha is not None:
+        # TODO: The cutoff being computed from the grid spacing AFTER the grid
+        #  spacing has been adapted for PBCs may lead to inconsistent or
+        #  surprising results. Is this what we want?
         level_zero_cutoff = alpha * level_one_gridspacing
     else:
         raise ValueError(
