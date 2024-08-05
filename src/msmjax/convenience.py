@@ -218,7 +218,7 @@ def suggest_msm_params(
     #  and `n_particles`
     # TODO: `n_particles` is in fact only needed in non-periodic case (as long
     #  as we do not need to infer `level_one_gridspacing` from the particle
-    #  density)a
+    #  density)
     box_lengths = onp.asarray(box_lengths)
     pbcs = onp.asarray(pbcs)
     if not (onp.all(pbcs) or onp.all(~pbcs)):
@@ -226,6 +226,7 @@ def suggest_msm_params(
     periodic = pbcs[0]
 
     if periodic:
+        # FIXME: Return one spacing per direction, not just one value!
         actual_spacings, n_levels = find_spacings_and_n_levels_periodic(
             box_lengths=box_lengths,
             level_one_spacings=[level_one_gridspacing] * len(box_lengths),
