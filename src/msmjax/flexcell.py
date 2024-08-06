@@ -106,21 +106,6 @@ def set_up_grids_unitcube(
     return grids
 
 
-def wrapped_compute_U0_flexcell(positions, charges, cell):
-    def to_unitcube(pos):
-        # TODO: general parallelepipeds
-        return pos / onp.diag(cell)
-
-    # TODO: unnecessarily large stencils could be trimmed
-    compute_U0_unitcube = create_compute_U_oneplus_direct(
-        grids=grids_unitcube,
-        kernel_stencils=construct_kernel_stencils_dynamic(cell),
-    )
-    compute_U0_unitcube = jax.jit(compute_U0_unitcube)
-
-    return compute_U0_unitcube(to_unitcube(positions), charges)
-
-
 def make_flex_cell_U1plus_fn(
     kernel_fns: List[Union[None, Callable]],  # TODO: correct type hint?
     pbc,
