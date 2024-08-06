@@ -701,6 +701,36 @@ def create_compute_gridpotential_level_one(
     return compute_gridpotential_level_one
 
 
+def create_compute_U_oneplus_direct(
+    grids,
+    kernel_stencils,
+    convolution_methods=None,
+) -> Callable:
+    """Create closure for computing grid contribution to the energy.
+
+    This function is one of several ways how this can be done. It computes the
+    energy by directly contracting the grid charge with the grid potential,
+    without reconstructing the particle-level electrostatic potential.
+    """
+    anterpolate_level_one = create_anterpolation_operator(grids[1])
+    compute_gridpotential_level_one = create_compute_gridpotential_level_one(
+        grids=grids,
+        kernel_stencils=kernel_stencils,
+        convolution_methods=convolution_methods,
+    )
+
+    def compute_U_oneplus(
+        positions: jax.Array, charges: jax.Array
+    ) -> jax.Array:
+        gridcharge_level_one = anterpolate_level_one(positions, charges)
+        gridpotential_level_one = compute_gridpotential_level_one(
+            gridcharge_level_one
+        )
+        return 0.5 * (gridcharge_level_one * gridpotential_level_one).sum()
+
+    return compute_U_oneplus
+
+
 def create_compute_U_oneplus_via_potential(
     grids,
     kernel_stencils,
@@ -852,33 +882,3 @@ def create_compute_U_and_f_oneplus_via_potential(
         return energy, forces
 
     return compute_U_and_f_oneplus
-
-
-def create_compute_U_oneplus_direct(
-    grids,
-    kernel_stencils,
-    convolution_methods=None,
-) -> Callable:
-    """Create closure for computing grid contribution to the energy.
-
-    This function is one of several ways how this can be done. It computes the
-    energy by directly contracting the grid charge with the grid potential,
-    without reconstructing the particle-level electrostatic potential.
-    """
-    anterpolate_level_one = create_anterpolation_operator(grids[1])
-    compute_gridpotential_level_one = create_compute_gridpotential_level_one(
-        grids=grids,
-        kernel_stencils=kernel_stencils,
-        convolution_methods=convolution_methods,
-    )
-
-    def compute_U_oneplus(
-        positions: jax.Array, charges: jax.Array
-    ) -> jax.Array:
-        gridcharge_level_one = anterpolate_level_one(positions, charges)
-        gridpotential_level_one = compute_gridpotential_level_one(
-            gridcharge_level_one
-        )
-        return 0.5 * (gridcharge_level_one * gridpotential_level_one).sum()
-
-    return compute_U_oneplus
