@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Callable, Iterable, List, Literal, NamedTuple, Tuple
+from typing import Callable, Iterable, List, Literal, NamedTuple, Tuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -580,9 +580,7 @@ def convolve_scipy_general_pbc(
         )
 
 
-def create_all_grid_to_grid_ops(
-    grids, kernel_stencils, convolution_methods=None
-):
+def create_all_grid_to_grid_ops(grids, convolution_methods=None):
     """Create all necessary functions that map from grids to grids
 
     Args:
@@ -595,43 +593,39 @@ def create_all_grid_to_grid_ops(
     if isinstance(convolution_methods, str):
         convolution_methods = [None] + [convolution_methods] * n_levels
 
-    restriction_funcs = [None] * (n_levels + 1)
+    restriction_fns = [None] * (n_levels + 1)
     for lvl in range(2, n_levels + 1):
         restrict = create_restriction_operator(
             grid_source_fine=grids[lvl - 1], grid_target_coarse=grids[lvl]
         )
-        restriction_funcs[lvl] = restrict
+        restriction_fns[lvl] = restrict
 
-    prolongation_funcs = [None] * (n_levels + 1)
+    prolongation_fns = [None] * (n_levels + 1)
     for lvl in range(1, n_levels):
         prolongate = create_prolongation_operator(
             grid_source_coarse=grids[lvl + 1], grid_target_fine=grids[lvl]
         )
-        prolongation_funcs[lvl] = prolongate
+        prolongation_fns[lvl] = prolongate
 
     # TODO: There might be more efficient ways to compute the convolution on
     #  the highest level for non-periodic cases (where the stencil is always
     #  larger than the grid)
-    interaction_funcs = [None] * (n_levels + 1)
+    interaction_fns = [None] * (n_levels + 1)
     for lvl in range(1, n_levels + 1):
         conv_meth = convolution_methods[lvl]
         # TODO: test that all these convolution methods actually give the
         #  same result
         if conv_meth == "custom-direct":
-            interact = create_interaction_operator_custom(
-                grid=grids[lvl], kernel_stencil=kernel_stencils[lvl]
-            )
+            interact = create_interaction_operator_custom(grid=grids[lvl])
         elif conv_meth == "scipy-direct":
             interact = partial(
                 convolve_scipy_general_pbc,
-                kernel=kernel_stencils[lvl],
                 pbc=grids[lvl].pbc,
                 method="direct",
             )
         elif conv_meth == "scipy-fft":
             interact = partial(
                 convolve_scipy_general_pbc,
-                kernel=kernel_stencils[lvl],
                 pbc=grids[lvl].pbc,
                 method="fft",
             )
@@ -639,27 +633,27 @@ def create_all_grid_to_grid_ops(
             raise ValueError(
                 f"`{conv_meth}` is not a valid convolution method"
             )
-        interaction_funcs[lvl] = interact
+        interaction_fns[lvl] = interact
 
-    return restriction_funcs, prolongation_funcs, interaction_funcs
+    return restriction_fns, prolongation_fns, interaction_fns
 
 
 def create_compute_gridpotential_level_one(
-    grids, kernel_stencils, convolution_methods=None
+    grids, convolution_methods=None
 ) -> Callable:
     """Create closure for computing potential on lowest-level grid"""
     # TODO: check if all grids have same J and p?
     # TODO: check if shape of J is compatible with p?
     (
-        restriction_funcs,
-        prolongation_funcs,
-        interaction_funcs,
-    ) = create_all_grid_to_grid_ops(
-        grids, kernel_stencils, convolution_methods
-    )
+        restriction_fns,
+        prolongation_fns,
+        interaction_fns,
+    ) = create_all_grid_to_grid_ops(grids, convolution_methods)
 
     def compute_gridpotential_level_one(
         gridcharge_level_one: jax.Array,
+        # TODO: correct type hint?
+        kernel_stencils: List[Union[None, Callable]],
     ) -> jax.Array:
         """Compute level-one grid potential from level-one grid charge.
 
@@ -680,21 +674,24 @@ def create_compute_gridpotential_level_one(
 
         # Go up ladder
         for lvl in range(2, n_levels + 1):
-            restrict = restriction_funcs[lvl]
+            restrict = restriction_fns[lvl]
             gridcharge_fine = gridcharges_all_levels[lvl - 1]
             gridcharge_coarse = restrict(gridcharge_fine)
             gridcharges_all_levels[lvl] = gridcharge_coarse
 
         # Apply top-level interaction
         gridcharge_toplevel = gridcharges_all_levels[n_levels]
-        interact_toplevel = interaction_funcs[n_levels]
-        gridpotential = interact_toplevel(gridcharge_toplevel)
+        interact_toplevel = interaction_fns[n_levels]
+        kernel_stencils_toplevel = kernel_stencils[n_levels]
+        gridpotential = interact_toplevel(
+            gridcharge_toplevel, kernel_stencils_toplevel
+        )
 
         # Go down ladder
         for lvl in range(n_levels - 1, 0, -1):
-            gridpotential = interaction_funcs[lvl](
-                gridcharges_all_levels[lvl]
-            ) + prolongation_funcs[lvl](gridpotential)
+            gridpotential = interaction_fns[lvl](
+                gridcharges_all_levels[lvl], kernel_stencils[lvl]
+            ) + prolongation_fns[lvl](gridpotential)
 
         return gridpotential
 
@@ -702,9 +699,7 @@ def create_compute_gridpotential_level_one(
 
 
 def create_compute_U_oneplus_direct(
-    grids,
-    kernel_stencils,
-    convolution_methods=None,
+    grids, convolution_methods=None
 ) -> Callable:
     """Create closure for computing grid contribution to the energy.
 
@@ -715,16 +710,15 @@ def create_compute_U_oneplus_direct(
     anterpolate_level_one = create_anterpolation_operator(grids[1])
     compute_gridpotential_level_one = create_compute_gridpotential_level_one(
         grids=grids,
-        kernel_stencils=kernel_stencils,
         convolution_methods=convolution_methods,
     )
 
     def compute_U_oneplus(
-        positions: jax.Array, charges: jax.Array
+        positions: jax.Array, charges: jax.Array, kernel_stencils: jax.Array
     ) -> jax.Array:
         gridcharge_level_one = anterpolate_level_one(positions, charges)
         gridpotential_level_one = compute_gridpotential_level_one(
-            gridcharge_level_one
+            gridcharge_level_one, kernel_stencils
         )
         return 0.5 * (gridcharge_level_one * gridpotential_level_one).sum()
 
@@ -732,10 +726,7 @@ def create_compute_U_oneplus_direct(
 
 
 def create_compute_U_oneplus_via_potential(
-    grids,
-    kernel_stencils,
-    convolution_methods=None,
-    return_particle_contribs=False,
+    grids, convolution_methods=None, return_particle_contribs=False
 ) -> Callable:
     """Create closure for computing grid contribution to the energy
 
@@ -747,7 +738,6 @@ def create_compute_U_oneplus_via_potential(
     anterpolate_level_one = create_anterpolation_operator(grids[1])
     compute_gridpotential_level_one = create_compute_gridpotential_level_one(
         grids=grids,
-        kernel_stencils=kernel_stencils,
         convolution_methods=convolution_methods,
     )
 
@@ -787,7 +777,7 @@ def create_compute_U_oneplus_via_potential(
 
 
 def create_compute_f_oneplus_via_potential(
-    grids, kernel_stencils, convolution_methods=None
+    grids, convolution_methods=None
 ) -> Callable:
     """Create closure for computing grid contribution to forces
 
@@ -798,13 +788,12 @@ def create_compute_f_oneplus_via_potential(
     anterpolate_level_one = create_anterpolation_operator(grids[1])
     compute_gridpotential_level_one = create_compute_gridpotential_level_one(
         grids=grids,
-        kernel_stencils=kernel_stencils,
         convolution_methods=convolution_methods,
     )
 
     def compute_f_oneplus(
         positions: jax.Array, charges: jax.Array
-    ) -> Tuple[jax.Array, jax.Array]:
+    ) -> jax.Array:
         gridcharge_level_one = anterpolate_level_one(positions, charges)
         gridpotential_level_one = compute_gridpotential_level_one(
             gridcharge_level_one
@@ -831,7 +820,7 @@ def create_compute_f_oneplus_via_potential(
 
 
 def create_compute_U_and_f_oneplus_via_potential(
-    grids, kernel_stencils, convolution_methods=None
+    grids, convolution_methods=None
 ) -> Callable:
     """Create closure for computing grid contribution to energy and forces.
 
@@ -845,7 +834,6 @@ def create_compute_U_and_f_oneplus_via_potential(
     anterpolate_level_one = create_anterpolation_operator(grids[1])
     compute_gridpotential_level_one = create_compute_gridpotential_level_one(
         grids=grids,
-        kernel_stencils=kernel_stencils,
         convolution_methods=convolution_methods,
     )
 

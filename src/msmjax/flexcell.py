@@ -1,5 +1,5 @@
 from copy import copy
-from typing import Callable, List, Sequence, Tuple
+from typing import Callable, List, Sequence, Tuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -24,7 +24,7 @@ def compute_kernel_stencil(values, omega):
 
 
 def make_kernel_stencil_construction_fn(
-    kernel_fns: List[None, Callable],  # TODO: correct type hint?
+    kernel_fns: List[Union[None, Callable]],  # TODO: correct type hint?
     sizes_from_center: Sequence[int],
     reference_cell,
     reference_spacings,
@@ -120,7 +120,7 @@ def wrapped_compute_U0_flexcell(positions, charges, cell):
 
 
 def make_flex_cell_U1plus_fn(
-    kernel_fns: List[None, Callable],  # TODO: correct type hint?
+    kernel_fns: List[Union[None, Callable]],  # TODO: correct type hint?
     pbc,
     reference_cell,
     level_one_gridspacing,  # TODO: "reference" in the name?
@@ -156,11 +156,11 @@ def make_flex_cell_U1plus_fn(
 
     if onp.all(pbc):
         includes_toplevel = False
-        padding = len(omega) // 2
-        sizes_toplevel = tuple(s + padding for s in grids_unit_cube[-1].shape)
+        sizes_toplevel = None
     elif onp.all(~pbc):
         includes_toplevel = True
-        sizes_toplevel = None
+        padding = len(omega) // 2
+        sizes_toplevel = tuple(s + padding for s in grids_unit_cube[-1].shape)
     else:
         raise ValueError("Mixed boundary conditions not supported yet")
 
