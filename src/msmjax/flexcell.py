@@ -10,15 +10,15 @@ from msmjax.convenience import set_up_grids_and_kernels
 from msmjax.gridops_multidim import create_compute_U_oneplus_direct
 
 
-def onedim_convolution_fn(a, v):
-    return jax.scipy.signal.convolve(a, in2=v, mode="same")
+def onedim_convolution_fn(in1, in2):
+    return jax.scipy.signal.convolve(in1, in2, mode="same")
 
 
 def compute_kernel_stencil(values, omega):
     convolved = values
     for i in range(values.ndim):
         convolved = jnp.apply_along_axis(
-            func1d=onedim_convolution_fn, axis=i, arr=convolved, omega=omega
+            func1d=onedim_convolution_fn, axis=i, arr=convolved, in2=omega
         )
     return convolved
 
@@ -57,7 +57,7 @@ def make_kernel_stencil_construction_fn(
         points_cartesian = points_unitcube @ cell
         distances_cartesian = jnp.linalg.norm(points_cartesian, axis=-1)
         fn_vals_at_points = kernel_fns[1](distances_cartesian)
-        stencils.append(compute_kernel_stencil(fn_vals_at_points, omega=omega))
+        stencils.append(compute_kernel_stencil(fn_vals_at_points, omega))
 
         # Intermediate levels
         for lvl in range(2, len(kernel_fns) - 1):
@@ -78,7 +78,9 @@ def make_kernel_stencil_construction_fn(
             fn_vals_at_points_toplevel = kernel_fns[-1](
                 distances_cartesian_toplevel
             )
-            stencils.append(compute_kernel_stencil(fn_vals_at_points_toplevel))
+            stencils.append(
+                compute_kernel_stencil(fn_vals_at_points_toplevel, omega)
+            )
         else:
             stencils.append(0.5 * stencils[-1])
 
@@ -171,6 +173,7 @@ def make_flex_cell_U1plus_fn(
         int(onp.ceil(max_compression_factor * n_points_cutoff_oneside))
     ] * n_dim
 
+    # TODO: trim unnecessarily large stencils (especially: top level for non-periodic)
     construct_kernel_stencils = make_kernel_stencil_construction_fn(
         kernel_fns=kernel_fns,
         sizes_from_center=stencil_sizes_from_center,
