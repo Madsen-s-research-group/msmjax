@@ -123,23 +123,26 @@ def make_flex_cell_U1plus_fn(
     kernel_fns: List[None, Callable],  # TODO: correct type hint?
     pbc,
     reference_cell,
-    max_compression_factor: float,  # TODO: variable name, default value?
     level_one_gridspacing,  # TODO: "reference" in the name?
     level_zero_cutoff,
     p,
     mu,
     n_levels,
+    max_compression_factor: float = 1.25,  # TODO: variable name, default value?
+    convolution_methods=None,
 ):
     # TODO: Allow specifying stencil sizes explicitly as well as via
     #  `max_compression_factor`?
 
     n_dim = len(pbc)
     pbc = onp.asarray(pbc)
-
     # TODO: different spacings along different directions
     reference_spacings = onp.array([level_one_gridspacing] * n_dim)
 
-    grids_unitcube = set_up_grids_unitcube(
+    # TODO: While I'm at it, move this function from msmfornn to msmjax
+    omega, _ = compute_coeffs_withtruncation(p=p, mu=mu)
+
+    grids_unit_cube = set_up_grids_unitcube(
         box_lengths_original=onp.linalg.norm(reference_cell, axis=1),
         pbc=pbc,
         msm_params_original=dict(
@@ -151,13 +154,10 @@ def make_flex_cell_U1plus_fn(
         ),
     )
 
-    # TODO: While I'm at it, move this function from msmfornn to msmjax
-    omega, _ = compute_coeffs_withtruncation(p=p, mu=mu)
-
     if onp.all(pbc):
         includes_toplevel = False
         padding = len(omega) // 2
-        sizes_toplevel = tuple(s + padding for s in grids_unitcube[-1].shape)
+        sizes_toplevel = tuple(s + padding for s in grids_unit_cube[-1].shape)
     elif onp.all(~pbc):
         includes_toplevel = True
         sizes_toplevel = None
@@ -182,3 +182,24 @@ def make_flex_cell_U1plus_fn(
     )
     # TODO: remove jit from here, once the whole function has been made jittable
     construct_kernel_stencils = jax.jit(construct_kernel_stencils)
+
+    def to_unit_cube(positions, cell):
+        # TODO: version for general parallelepipeds with pinv
+        return positions / jnp.diag(cell)
+
+    # TODO: Allow choosing different setup functions for U_oneplus (`create_compute_U_oneplus_via_potential`)
+    #  And what about the same choice for forces?
+    # TODO: Remove `kernel_stencils` parameter from
+    #  `create_compute_U_oneplus_direct` and instead make a parameter of its
+    #  returned function
+    compute_U1plus_unit_cube = create_compute_U_oneplus_direct(
+        grids=grids_unit_cube, convolution_methods=convolution_methods
+    )
+
+    def compute_U1plus_flex_cell(positions, charges, cell):
+        kernel_stencils = construct_kernel_stencils(cell)
+        return compute_U1plus_unit_cube(
+            to_unit_cube(positions, cell), charges, kernel_stencils
+        )
+
+    return compute_U1plus_flex_cell
