@@ -25,16 +25,16 @@ def compute_kernel_stencil(values):
 def make_kernel_stencil_construction_fn(
     kernel_fns: List[Callable],
     stencil_sizes_from_center: Sequence[int],
-    ref_cell,
-    ref_spacings,
-    includes_toplevel=True,
-    sizes_toplevel=None,  # TODO: name
+    reference_cell,
+    reference_spacings,
+    includes_toplevel,
+    sizes_toplevel=None,
 ):
     # TODO: raise error when `includes_toplevel=True`, but sizes not given
 
-    ref_side_lengths = onp.linalg.norm(ref_cell, axis=1)
-    ref_spacings = onp.asarray(ref_spacings)
-    spacings_unitcube = ref_spacings / ref_side_lengths
+    ref_side_lengths = onp.linalg.norm(reference_cell, axis=1)
+    reference_spacings = onp.asarray(reference_spacings)
+    spacings_unitcube = reference_spacings / ref_side_lengths
 
     indices_1d = [onp.arange(-s, s + 1) for s in stencil_sizes_from_center]
     indices = onp.stack(onp.meshgrid(*indices_1d, indexing="ij"), axis=-1)
@@ -109,3 +109,52 @@ def wrapped_compute_U0_flexcell(positions, charges, cell):
     compute_U0_unitcube = jax.jit(compute_U0_unitcube)
 
     return compute_U0_unitcube(to_unitcube(positions), charges)
+
+
+def make_flex_cell_U1plus_fn(
+    kernel_fns,  # TODO: should this be a parameter or generated inside the fn?
+    pbc,
+    reference_cell,
+    level_one_gridspacing,  # TODO: "reference" in the name?
+    level_zero_cutoff,
+    p,
+    mu,
+    n_levels,
+):
+    n_dim = len(pbc)
+    pbc = onp.asarray(pbc)
+
+    # TODO: different spacings along different directions
+    reference_spacings = onp.array([level_one_gridspacing] * n_dim)
+
+    grids_unitcube = set_up_grids_unitcube(
+        box_lengths_original=onp.linalg.norm(reference_cell, axis=1),
+        pbc=pbc,
+        msm_params_original=dict(
+            level_one_gridspacing=level_one_gridspacing,
+            level_zero_cutoff=level_zero_cutoff,
+            p=p,
+            mu=mu,
+            n_levels=n_levels,
+        ),
+    )
+
+    if onp.all(pbc):
+        includes_toplevel = False
+        sizes_toplevel = tuple(s + padding for s in grids_unitcube[-1].shape)
+    elif onp.all(~pbc):
+        includes_toplevel = True
+        sizes_toplevel = None
+    else:
+        raise ValueError("Mixed boundary conditions not supported yet")
+
+    construct_kernel_stencils = make_kernel_stencil_construction_fn(
+        kernel_fns=kernel_fns,
+        stencil_sizes_from_center=stencil_sizes_from_center,
+        reference_cell=reference_cell,
+        reference_spacings=reference_spacings,
+        includes_toplevel=includes_toplevel,
+        sizes_toplevel=sizes_toplevel,
+    )
+    # TODO: remove jit from here, once the whole function has been made jittable
+    construct_kernel_stencils = jax.jit(construct_kernel_stencils)
