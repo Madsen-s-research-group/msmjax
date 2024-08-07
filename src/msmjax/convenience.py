@@ -1,12 +1,7 @@
-import functools
 import math
 
-import jax
-import jax.numpy as jnp
 import numpy as onp
-from neuralil.bessel_descriptors import gen_supercell
 
-from msmjax import wrappers_old_code
 from msmjax.bspline_interpolation.coefficients import compute_J_zeroplus
 from msmjax.gridops_multidim import set_up_grids_all_levels
 from msmjax.kernels import SofteningFunctionOneOverR, split_one_over_r_kernel
@@ -274,7 +269,49 @@ def suggest_msm_params(
     }
 
 
-def set_up_grids_and_kernels(
+def set_up_kernels_grids_and_stencils(
+    box_lengths,
+    pbcs,
+    level_one_gridspacing,
+    level_zero_cutoff,
+    p,
+    mu,
+    n_levels,
+):
+    # We import inside this function to make `msmfornn` only required when
+    # it is actually used
+    # TODO: replace with the new function for computing kernel stencils
+    from msmjax.wrappers_old_code import _construct_kernel_stencils
+
+    n_dim = len(pbcs)
+
+    kernels = split_one_over_r_kernel(
+        max_level=n_levels,
+        level_zero_cutoff=level_zero_cutoff,
+        softening_function=SofteningFunctionOneOverR(p),
+    )
+    grids = set_up_grids_all_levels(
+        box_lengths=box_lengths,
+        level_one_spacings=[level_one_gridspacing] * n_dim,
+        pbcs=pbcs,
+        n_levels=n_levels,
+        p=p,
+        J_zeroplus=compute_J_zeroplus(p),
+    )
+    kernel_stencils = _construct_kernel_stencils(
+        kernels=kernels,
+        box_lengths=box_lengths,
+        level_one_gridspacing=level_one_gridspacing,
+        level_zero_cutoff=level_zero_cutoff,
+        n_levels=n_levels,
+        p=p,
+        mu=mu,
+    )
+
+    return kernels, grids, kernel_stencils
+
+
+def set_up_kernels_and_grids(
     box_lengths,
     pbcs,
     level_one_gridspacing,
@@ -298,14 +335,5 @@ def set_up_grids_and_kernels(
         p=p,
         J_zeroplus=compute_J_zeroplus(p),
     )
-    kernel_stencils = wrappers_old_code._construct_kernel_stencils(
-        kernels=kernels,
-        box_lengths=box_lengths,
-        level_one_gridspacing=level_one_gridspacing,
-        level_zero_cutoff=level_zero_cutoff,
-        n_levels=n_levels,
-        p=p,
-        mu=mu,
-    )
 
-    return kernels, grids, kernel_stencils
+    return kernels, grids
