@@ -4,8 +4,10 @@ from typing import Callable, List, Sequence, Tuple, Union
 import jax
 import jax.numpy as jnp
 import numpy as onp
-from msmfornn.splines.coefficients import compute_coeffs_withtruncation
 
+from msmjax.bspline_interpolation.coefficients import (
+    compute_coeffs_with_truncation,
+)
 from msmjax.convenience import set_up_grids_and_kernels
 from msmjax.gridops_multidim import create_compute_U_oneplus_direct
 
@@ -127,7 +129,7 @@ def make_flex_cell_U1plus_fn(
     reference_spacings = onp.array([level_one_gridspacing] * n_dim)
 
     # TODO: While I'm at it, move this function from msmfornn to msmjax
-    omega, _ = compute_coeffs_withtruncation(p=p, mu=mu)
+    omega, _ = compute_coeffs_with_truncation(p=p, mu=mu)
 
     grids_unit_cube = set_up_grids_unitcube(
         box_lengths_original=onp.linalg.norm(reference_cell, axis=1),
