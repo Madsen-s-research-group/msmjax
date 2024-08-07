@@ -311,6 +311,21 @@ def set_up_kernels_grids_and_stencils(
     return kernels, grids, kernel_stencils
 
 
+def set_up_kernel_fns(
+    level_zero_cutoff,
+    p,
+    n_levels,
+    **unused_kwargs,
+):
+    kernel_fns = split_one_over_r_kernel(
+        max_level=n_levels,
+        level_zero_cutoff=level_zero_cutoff,
+        softening_function=SofteningFunctionOneOverR(p),
+    )
+
+    return kernel_fns
+
+
 def set_up_kernels_and_grids(
     box_lengths,
     pbcs,
