@@ -8,7 +8,7 @@ import numpy as onp
 from msmjax.bspline_interpolation.coefficients import (
     compute_coeffs_with_truncation,
 )
-from msmjax.convenience import set_up_kernels_grids_and_stencils
+from msmjax.convenience import set_up_kernels_and_grids
 from msmjax.gridops_multidim import create_compute_U_oneplus_direct
 
 
@@ -26,7 +26,7 @@ def compute_kernel_stencil(values, omega):
 
 
 def make_kernel_stencil_construction_fn(
-    kernel_fns: List[Union[None, Callable]],  # TODO: correct type hint?
+    kernel_fns: List[Callable],
     sizes_from_center: Sequence[int],
     reference_cell,
     reference_spacings,
@@ -109,7 +109,7 @@ def set_up_grids_unitcube(
     msm_params_unitcube["level_one_gridspacing"] = (
         msm_params_original["level_one_gridspacing"] / box_lengths_original[0]
     )
-    _, grids, _ = set_up_kernels_grids_and_stencils(
+    _, grids = set_up_kernels_and_grids(
         box_lengths=box_lengths_unitcube, pbcs=pbc, **msm_params_unitcube
     )
 

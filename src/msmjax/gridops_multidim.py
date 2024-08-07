@@ -589,6 +589,8 @@ def create_all_grid_to_grid_ops(grids, convolution_methods=None):
     n_levels = len(grids) - 1
 
     if convolution_methods is None:
+        # TODO: Is this the best place to specify the convolution method? Do
+        #  in the default parameters of a higher-level function instead?
         convolution_methods = [None] + ["scipy-fft"] * n_levels
     if isinstance(convolution_methods, str):
         convolution_methods = [None] + [convolution_methods] * n_levels
