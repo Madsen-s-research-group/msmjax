@@ -3,11 +3,41 @@ import itertools
 import numpy as np
 import scipy.linalg as la
 import sympy
-from msmfornn.splines.basisfuncs import calc_Phi
+from scipy.interpolate import BSpline
 from scipy.special import comb
 
 P_INDEX = 6
 MU = 3
+
+
+def old_bspline_basis_equivalent(x, n):
+    """Function with signature of scipy.signal.bspline that works with scipy versions >= 1.13
+
+    For backwards compatibility only - you would not want to use this in any production setting!
+    """
+    knots = np.arange(-(n + 1) / 2, (n + 3) / 2)
+    out = BSpline.basis_element(knots)(x)
+    out[(x < knots[0]) | (x > knots[-1])] = 0.0
+    return out
+
+
+def calc_Phi(p, u):
+    """Evaluate the B-spline denoted by Phi in the article.
+
+    Args:
+        p: The degree of the spline in the convention of the article.
+        u: The value or array or values where the function should be
+            evaluated.
+
+    Returns:
+        The values(s) of Phi(u) at u.
+
+    Raises:
+        ValueError: If p is not a positive, even integer.
+    """
+    if p < 2 or p % 2 != 0:
+        raise ValueError("p must be a positive even integer")
+    return old_bspline_basis_equivalent(u, p - 1)
 
 
 def build_col_of_B(p):
@@ -24,6 +54,8 @@ def build_col_of_B(p):
         A vector of p/2 elements with all the non-zero entries in any column
         of the banded matrix B, starting at and including the main diagonal.
     """
+    # TODO: Change this to the JAX implementation of the B-spline used by the
+    #  the rest of the code?
     return calc_Phi(p, np.arange(0, p // 2, dtype=np.float64))
 
 
