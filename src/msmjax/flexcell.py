@@ -53,6 +53,10 @@ def make_kernel_stencil_construction_fn(
         points_unitcube_toplevel = indices_toplevel * spacings_unitcube
 
     def construct_kernel_stencils(cell):
+        # TODO: This should probably be implemented as a wrapper around some
+        #  lower-level stencil-construction function that can also be used
+        #  to compute static stencils
+
         stencils = [None]
 
         # Level one
@@ -61,7 +65,11 @@ def make_kernel_stencil_construction_fn(
         fn_vals_at_points = kernel_fns[1](distances_cartesian)
         stencils.append(compute_kernel_stencil(fn_vals_at_points, omega))
 
-        # Intermediate levels
+        # Intermediate levels:
+        # For the type of kernel splitting used here, the intermediate-level
+        # kernel values (and thus stencils) can be computed by simply dividing
+        # the one from the previous level by 2. But this need not hold for
+        # other kernels or ways of splitting!
         for lvl in range(2, len(kernel_fns) - 1):
             stencils.append(0.5 * stencils[-1])
 
@@ -95,7 +103,7 @@ def set_up_grids_unitcube(
     box_lengths_original, pbc, msm_params_original: dict
 ):
     # TODO: Pass msm_params as dict or as the individual parameters? (What
-    #  be more consistent with other functions? Probably the latter)
+    #  is more consistent with other functions? Probably the latter)
     box_lengths_unitcube = onp.ones(len(pbc))
     msm_params_unitcube = copy(msm_params_original)
     msm_params_unitcube["level_one_gridspacing"] = (
@@ -128,7 +136,6 @@ def make_flex_cell_U1plus_fn(
     # TODO: different spacings along different directions
     reference_spacings = onp.array([level_one_gridspacing] * n_dim)
 
-    # TODO: While I'm at it, move this function from msmfornn to msmjax
     omega, _ = compute_coeffs_with_truncation(p=p, mu=mu)
 
     grids_unit_cube = set_up_grids_unitcube(
@@ -170,8 +177,6 @@ def make_flex_cell_U1plus_fn(
         includes_toplevel=includes_toplevel,
         sizes_from_center_toplevel=sizes_toplevel,
     )
-    # TODO: remove jit from here, once the whole function has been made jittable
-    construct_kernel_stencils = jax.jit(construct_kernel_stencils)
 
     def to_unit_cube(positions, cell):
         # TODO: version for general parallelepipeds with pinv
@@ -179,9 +184,6 @@ def make_flex_cell_U1plus_fn(
 
     # TODO: Allow choosing different setup functions for U_oneplus (`create_compute_U_oneplus_via_potential`)
     #  And what about the same choice for forces?
-    # TODO: Remove `kernel_stencils` parameter from
-    #  `create_compute_U_oneplus_direct` and instead make a parameter of its
-    #  returned function
     compute_U1plus_unit_cube = create_compute_U_oneplus_direct(
         grids=grids_unit_cube, convolution_methods=convolution_methods
     )
