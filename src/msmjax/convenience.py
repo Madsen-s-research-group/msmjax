@@ -1,4 +1,5 @@
 import math
+from typing import Callable, List
 
 import numpy as onp
 
@@ -312,11 +313,11 @@ def set_up_kernels_grids_and_stencils(
 
 
 def set_up_kernel_fns(
-    level_zero_cutoff,
-    p,
-    n_levels,
+    level_zero_cutoff: float,
+    p: int,
+    n_levels: int,
     **unused_kwargs,
-):
+) -> List[Callable]:
     kernel_fns = split_one_over_r_kernel(
         max_level=n_levels,
         level_zero_cutoff=level_zero_cutoff,
