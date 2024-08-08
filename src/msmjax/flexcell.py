@@ -25,6 +25,43 @@ def compute_kernel_stencil(values, omega):
     return convolved
 
 
+def determine_kernel_stencil_size(cell, spacings, r_cut, padding=1):
+    inverse = onp.linalg.inv(cell)
+
+    # TODO: 2d case
+    phis = onp.linspace(0, 2 * onp.pi, 200)
+    thetas = onp.linspace(0, onp.pi, 200)
+    phis, thetas = onp.meshgrid(phis, thetas)
+    phis = phis.ravel()
+    thetas = thetas.ravel()
+    sphere_points = (
+        r_cut
+        * onp.array(
+            [
+                onp.cos(phis) * onp.sin(thetas),
+                onp.sin(phis) * onp.sin(thetas),
+                onp.cos(thetas),
+            ]
+        ).T
+    )
+    sphere_points_transformed = sphere_points @ inverse
+
+    # TODO: correct transformed spacings?
+    single_grid_cell = (
+        cell
+        / onp.linalg.norm(cell, axis=1)
+        * onp.array(spacings)[:, onp.newaxis]
+    )
+    spacings_transformed = onp.diag(single_grid_cell @ inverse)
+
+    sizes_from_center = onp.floor(
+        sphere_points_transformed.max(axis=0) / spacings_transformed
+    ).astype(int)
+    sizes_from_center += padding
+
+    return sizes_from_center
+
+
 def make_kernel_stencil_construction_fn(
     kernel_fns: List[Callable],
     sizes_from_center: Sequence[int],
@@ -118,7 +155,7 @@ def set_up_grids_unitcube(
 
 
 def make_flex_cell_U1plus_fn(
-    kernel_fns: List[Union[None, Callable]],  # TODO: correct type hint?
+    kernel_fns: List[Callable],
     pbc,
     reference_cell,
     level_one_gridspacing,  # TODO: "reference" in the name?
@@ -126,7 +163,7 @@ def make_flex_cell_U1plus_fn(
     p,
     mu,
     n_levels,
-    max_compression_factor: float = 1.25,  # TODO: variable name, default value?
+    max_compression_factor: float = 1.25,  # TODO: variable name, default value? specify something like `stencil_padding` instead?
     convolution_methods=None,
 ):
     # TODO: Allow specifying stencil sizes explicitly as well as via
