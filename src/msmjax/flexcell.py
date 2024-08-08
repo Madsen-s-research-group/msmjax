@@ -57,6 +57,7 @@ def make_kernel_stencil_construction_fn(
         #  lower-level stencil-construction function that can also be used
         #  to compute static stencils
 
+        # Level zero (where there is no grid)
         stencils = [None]
 
         # Level one
