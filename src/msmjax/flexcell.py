@@ -25,37 +25,55 @@ def compute_kernel_stencil(values, omega):
     return convolved
 
 
-def determine_kernel_stencil_size(cell, spacings, r_cut, padding=1):
+def determine_kernel_stencil_size(cell, spacings, cutoff, padding=1):
+    # TODO: Should the parameter names for spacings and r_cut suggest one
+    #  specific grid level? In principle, if they're given at the same level,
+    #  it does not matter which since both are doubled at each level.
+    #  But OTOH, the risk of inadvertently passing the level-one spacing and
+    #  together with the level-zero cutoff should be avoided
+
+    n_dim = cell.shape[0]
     inverse = onp.linalg.inv(cell)
 
-    # TODO: 2d case
-    phis = onp.linspace(0, 2 * onp.pi, 200)
-    thetas = onp.linspace(0, onp.pi, 200)
-    phis, thetas = onp.meshgrid(phis, thetas)
-    phis = phis.ravel()
-    thetas = thetas.ravel()
-    sphere_points = (
-        r_cut
-        * onp.array(
+    # TODO: Can this be made more generic?
+    if n_dim == 1:
+        # TODO
+        raise ValueError
+    elif n_dim == 2:
+        phis = onp.linspace(0, 2 * onp.pi, 500)
+        points = onp.array([onp.cos(phis), onp.sin(phis)]).T
+    elif n_dim == 3:
+        phis = onp.linspace(0, 2 * onp.pi, 200)
+        thetas = onp.linspace(0, onp.pi, 200)
+        phis, thetas = onp.meshgrid(phis, thetas)
+        phis = phis.ravel()
+        thetas = thetas.ravel()
+        points = onp.array(
             [
                 onp.cos(phis) * onp.sin(thetas),
                 onp.sin(phis) * onp.sin(thetas),
                 onp.cos(thetas),
             ]
         ).T
-    )
-    sphere_points_transformed = sphere_points @ inverse
+    else:
+        raise ValueError
 
-    # TODO: correct transformed spacings?
+    points_at_cutoff = cutoff * points
+    points_at_cutoff_transformed = points_at_cutoff @ inverse
+
+    # TODO: Are these transformed spacings correct?
     single_grid_cell = (
         cell
         / onp.linalg.norm(cell, axis=1)
-        * onp.array(spacings)[:, onp.newaxis]
+        * onp.atleast_1d(spacings)[:, onp.newaxis]
     )
     spacings_transformed = onp.diag(single_grid_cell @ inverse)
 
+    # TODO: this can still lead to one point fewer than expected because the
+    #  precomputed sphere points are an incomplete sampling of the full sphere
+    tol = 1.0e-3
     sizes_from_center = onp.floor(
-        sphere_points_transformed.max(axis=0) / spacings_transformed
+        points_at_cutoff_transformed.max(axis=0) / spacings_transformed + tol
     ).astype(int)
     sizes_from_center += padding
 
