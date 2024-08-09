@@ -4,6 +4,7 @@ from typing import Callable, List, Sequence, Tuple, Union
 import jax
 import jax.numpy as jnp
 import numpy as onp
+import numpy.typing as npt
 
 from msmjax.bspline_interpolation.coefficients import (
     compute_coeffs_with_truncation,
@@ -28,17 +29,18 @@ def compute_kernel_stencil(values, omega):
 def determine_kernel_stencil_size(cell, spacings, cutoff, padding=1):
     # TODO: Should the parameter names for spacings and r_cut suggest one
     #  specific grid level? In principle, if they're given at the same level,
-    #  it does not matter which since both are doubled at each level.
+    #  it does not matter which, since both are doubled at each level.
     #  But OTOH, the risk of inadvertently passing the level-one spacing and
-    #  together with the level-zero cutoff should be avoided
+    #  together with the level-zero cutoff should be minimized
+
+    # TODO: unit test this function
 
     n_dim = cell.shape[0]
     inverse = onp.linalg.inv(cell)
 
-    # TODO: Can this be made more generic?
+    # TODO: Can this be made more generic (same code working for all dimensions)?
     if n_dim == 1:
-        # TODO
-        raise ValueError
+        return tuple([onp.floor(cutoff / spacings).astype(int) + padding])
     elif n_dim == 2:
         phis = onp.linspace(0, 2 * onp.pi, 500)
         points = onp.array([onp.cos(phis), onp.sin(phis)]).T
@@ -69,8 +71,9 @@ def determine_kernel_stencil_size(cell, spacings, cutoff, padding=1):
     )
     spacings_transformed = onp.diag(single_grid_cell @ inverse)
 
-    # TODO: this can still lead to one point fewer than expected because the
-    #  precomputed sphere points are an incomplete sampling of the full sphere
+    # The maximum taken from the precomputed cutoff sphere points may be
+    # slightly too low, because they incompletely sample the cutoff sphere
+    # => use an additional small tolerance
     tol = 1.0e-3
     sizes_from_center = onp.floor(
         points_at_cutoff_transformed.max(axis=0) / spacings_transformed + tol
@@ -91,9 +94,9 @@ def make_kernel_stencil_construction_fn(
 ):
     # TODO: raise error when `includes_toplevel=True`, but sizes not given
 
-    ref_side_lengths = onp.linalg.norm(reference_cell, axis=1)
+    reference_side_lengths = onp.linalg.norm(reference_cell, axis=1)
     reference_spacings = onp.asarray(reference_spacings)
-    spacings_unitcube = reference_spacings / ref_side_lengths
+    spacings_unitcube = reference_spacings / reference_side_lengths
 
     indices_1d = [onp.arange(-s, s + 1) for s in sizes_from_center]
     indices = onp.stack(onp.meshgrid(*indices_1d, indexing="ij"), axis=-1)
@@ -174,18 +177,18 @@ def set_up_grids_unitcube(
 
 def make_flex_cell_U1plus_fn(
     kernel_fns: List[Callable],
-    pbc,
-    reference_cell,
+    pbc: Sequence[bool],
+    reference_cell: npt.ArrayLike,
     level_one_gridspacing,  # TODO: "reference" in the name?
     level_zero_cutoff,
-    p,
-    mu,
-    n_levels,
-    max_compression_factor: float = 1.25,  # TODO: variable name, default value? specify something like `stencil_padding` instead?
+    p: int,
+    mu: int,
+    n_levels: int,
     convolution_methods=None,
+    stencil_padding: Union[int, Sequence[int]] = 1,
 ):
-    # TODO: Allow specifying stencil sizes explicitly as well as via
-    #  `max_compression_factor`?
+    # TODO: In addition to explicit stencil padding, allow specification via
+    #  (something like) `max_compression_factor` as well? (maybe more intuitive)
 
     n_dim = len(pbc)
     pbc = onp.asarray(pbc)
@@ -217,11 +220,12 @@ def make_flex_cell_U1plus_fn(
         raise ValueError("Mixed boundary conditions not supported yet")
 
     cutoff_lvl_1 = 2 * level_zero_cutoff
-    # TODO: variable name
-    n_points_cutoff_oneside = onp.ceil(cutoff_lvl_1 / level_one_gridspacing)
-    stencil_sizes_from_center = [
-        int(onp.ceil(max_compression_factor * n_points_cutoff_oneside))
-    ] * n_dim
+    stencil_sizes_from_center = determine_kernel_stencil_size(
+        cell=reference_cell,
+        spacings=level_one_gridspacing,
+        cutoff=cutoff_lvl_1,
+        padding=stencil_padding,
+    )
 
     # TODO: trim unnecessarily large stencils (especially: top level for non-periodic)
     construct_kernel_stencils = make_kernel_stencil_construction_fn(
