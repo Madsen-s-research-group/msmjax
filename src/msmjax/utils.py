@@ -1,5 +1,6 @@
 import jax
 import jax.numpy as jnp
+from jax import numpy as jnp
 
 
 # TODO: centralize this function in one place (originally taken from bspline_basis)
@@ -37,3 +38,27 @@ def _sqrt_jvp(primals, tangents):
     primal_out = _sqrt(x)
     tangent_out = jnp.where(x == 0.0, 0.0, 0.5 / primal_out) * xdot
     return (primal_out, tangent_out)
+
+
+def get_max_cutoff_3d(cell: jnp.ndarray):
+    """Get the maximum cutoff value that fits into a 3D cell.
+
+    Args:
+        cell: Cell, shape=(3, 3).
+
+    Returns:
+        Cutoff radius
+    """
+    # TODO: move this function to some utils?
+    return jnp.min(
+        jnp.fabs(
+            jnp.linalg.det(cell)
+            / jnp.array(
+                [
+                    jnp.linalg.norm(jnp.cross(i, j))
+                    for i, j in zip(cell, jnp.roll(cell, 1, axis=0))
+                ]
+            )
+        )
+        / 2.0
+    )

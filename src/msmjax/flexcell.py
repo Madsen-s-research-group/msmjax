@@ -1,5 +1,5 @@
 from copy import copy
-from typing import Callable, List, Sequence, Tuple, Union
+from typing import Callable, List, Literal, Sequence, Tuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -190,6 +190,7 @@ def make_flex_cell_U1plus_fn(
     n_levels: int,
     convolution_methods=None,
     stencil_padding: Union[int, Sequence[int]] = 1,
+    flex_mode: Literal["ortho", "triclinic"] = "ortho",
 ):
     # TODO: In addition to explicit stencil padding, allow specification via
     #  (something like) `max_compression_factor` as well? (maybe more intuitive)
@@ -242,9 +243,14 @@ def make_flex_cell_U1plus_fn(
         sizes_from_center_toplevel=sizes_toplevel,
     )
 
-    def to_unit_cube(positions, cell):
-        # TODO: version for general parallelepipeds with pinv
-        return positions / jnp.diag(cell)
+    if flex_mode == "ortho":
+        to_unit_cube = lambda positions, cell: positions / jnp.diag(cell)
+    elif flex_mode == "triclinic":
+        to_unit_cube = lambda positions, cell: positions @ jnp.linalg.pinv(
+            cell
+        )
+    else:
+        raise ValueError("Invalid `flex_mode`.")
 
     # TODO: Allow choosing different setup functions for U_oneplus (`create_compute_U_oneplus_via_potential`)
     #  And what about the same choice for forces?
