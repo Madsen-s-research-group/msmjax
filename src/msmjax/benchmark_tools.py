@@ -147,6 +147,7 @@ kspace_style pppm 1e-5
 
 # 2) System definition
 read_data {filename_data}
+kspace_style pppm 1e-5  # need to reinitialize after reading data to work for triclinic cells
 
 # 3) Simulation settings
 mass 1 1

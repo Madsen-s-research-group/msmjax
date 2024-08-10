@@ -5,6 +5,7 @@ import jax
 import jax.numpy as jnp
 import numpy as onp
 import numpy.typing as npt
+from jax.typing import ArrayLike
 
 from msmjax.bspline_interpolation.coefficients import (
     compute_coeffs_with_truncation,
@@ -13,12 +14,15 @@ from msmjax.convenience import set_up_kernels_and_grids
 from msmjax.gridops_multidim import create_compute_U_oneplus_direct
 
 
-def onedim_convolution_fn(in1, in2):
+def onedim_convolution_fn(in1: ArrayLike, in2: ArrayLike):
+    # TODO: method="fft"?
     return jax.scipy.signal.convolve(in1, in2, mode="same")
 
 
-def compute_kernel_stencil(values, omega):
+def compute_kernel_stencil(values: ArrayLike, omega: ArrayLike):
     convolved = values
+    # TODO: Is this sequential application of 1d convolutions the fastest one
+    #  one can do?
     for i in range(values.ndim):
         convolved = jnp.apply_along_axis(
             func1d=onedim_convolution_fn, axis=i, arr=convolved, in2=omega
