@@ -21,7 +21,7 @@ def onedim_convolution_fn(in1: ArrayLike, in2: ArrayLike):
 
 def compute_kernel_stencil(values: ArrayLike, omega: ArrayLike):
     convolved = values
-    # TODO: Is this sequential application of 1d convolutions the fastest one
+    # TODO: Is this sequential application of 1d convolutions the fastest thing
     #  one can do?
     for i in range(values.ndim):
         convolved = jnp.apply_along_axis(
@@ -43,6 +43,10 @@ def determine_kernel_stencil_size(cell, spacings, cutoff, padding=1):
     inverse = onp.linalg.inv(cell)
 
     # TODO: Can this be made more generic (same code working for all dimensions)?
+    # TODO: Could this be implemented via the usual max-cutoff formula
+    #  (as implemented in `get_max_cutoff_3d`) instead? (Keep enlarging the
+    #  cell passed to `get_max_cutoff_3d` in discrete steps, corresponding to
+    #  adding an additional grid point, until the cutoff fits)
     if n_dim == 1:
         return tuple([onp.floor(cutoff / spacings).astype(int) + padding])
     elif n_dim == 2:
@@ -70,7 +74,7 @@ def determine_kernel_stencil_size(cell, spacings, cutoff, padding=1):
     # TODO: Are these transformed spacings correct?
     single_grid_cell = (
         cell
-        / onp.linalg.norm(cell, axis=1)
+        / onp.linalg.norm(cell, axis=1)  # TODO: does this broadcast correctly?
         * onp.atleast_1d(spacings)[:, onp.newaxis]
     )
     spacings_transformed = onp.diag(single_grid_cell @ inverse)
@@ -192,6 +196,8 @@ def make_flex_cell_U1plus_fn(
     stencil_padding: Union[int, Sequence[int]] = 1,
     flex_mode: Literal["ortho", "triclinic"] = "ortho",
 ):
+    # TODO: Option to return auxiliary information, like the grids?
+
     # TODO: In addition to explicit stencil padding, allow specification via
     #  (something like) `max_compression_factor` as well? (maybe more intuitive)
 
