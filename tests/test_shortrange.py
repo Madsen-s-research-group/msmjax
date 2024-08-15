@@ -71,6 +71,9 @@ def fixture_structure_nonortho(fixture_structure_cubic) -> tuple:
     Returns:
         Stretched/distorted version of the original cubic structure
     """
+    # TODO: Rename to `fixture_structure_triclinic`?
+    # TODO: Add another structure fixture that is orthorhombic with unequal
+    #  side lengths?
     cell_type = "general"
     positions, charges, cell, _ = fixture_structure_cubic
     atoms = Atoms(positions=positions, charges=charges, cell=cell)
@@ -217,6 +220,29 @@ def test_compute_distance_vectors(fixture_structure, fixture_pbc):
     deltas_within_cutoff_ase = deltas_ref[is_within_cutoff]
 
     assert onp.allclose(deltas_within_cutoff, deltas_within_cutoff_ase)
+
+
+def test_compute_distance_vectors_different_cell_types(
+    fixture_structure_cubic, fixture_pbc
+):
+    """Test agreement between different distance wrapping methods if cubic"""
+    pos, chg, cell, _ = fixture_structure_cubic
+    (i, j) = jnp.triu_indices(pos.shape[0], k=1)
+    deltas_ortho = compute_distance_vectors(
+        positions=pos,
+        cell=cell,
+        pair_indices=(i, j),
+        pbc=jnp.array(fixture_pbc),
+        cell_type="ortho",
+    )
+    deltas_general = compute_distance_vectors(
+        positions=pos,
+        cell=cell,
+        pair_indices=(i, j),
+        pbc=jnp.array(fixture_pbc),
+        cell_type="general",
+    )
+    assert onp.allclose(deltas_ortho, deltas_general)
 
 
 @pytest.mark.parametrize(
