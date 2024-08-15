@@ -10,6 +10,7 @@
         Forces for the Simulation of Biomolecules (PhD thesis), University
         of Illinois at Urbana-Champaign, 2006.
 """
+
 import os
 
 from ase.geometry import get_distances
@@ -51,12 +52,13 @@ def fixture_dir_structures() -> Path:
 @pytest.fixture(scope="module")
 def fixture_structure_cubic(fixture_dir_structures) -> tuple:
     """Get a cubic structure by loading from pre-generated ones"""
+    cell_type = "ortho"
     structsfile = fixture_dir_structures / ("structures_500.npz")
     structures = onp.load(structsfile)
     positions = jnp.array(structures["positions"][0].astype(onp.float64))
     charges = jnp.array(structures["charges"][0].astype(onp.float64))
     cell = jnp.array(structures["cells"][0].astype(onp.float64))
-    return positions, charges, cell
+    return positions, charges, cell, cell_type
 
 
 @pytest.fixture(scope="module")
@@ -69,7 +71,8 @@ def fixture_structure_nonortho(fixture_structure_cubic) -> tuple:
     Returns:
         Stretched/distorted version of the original cubic structure
     """
-    positions, charges, cell = fixture_structure_cubic
+    cell_type = "general"
+    positions, charges, cell, _ = fixture_structure_cubic
     atoms = Atoms(positions=positions, charges=charges, cell=cell)
     new_lengths = onp.diag(cell) * (0.8, 1.0, 1.25)
     new_angles = [75, 90, 120]
@@ -78,7 +81,7 @@ def fixture_structure_nonortho(fixture_structure_cubic) -> tuple:
     cell = jnp.array(atoms.get_cell()[...])
     positions = jnp.array(atoms.get_positions())
     charges = jnp.array(atoms.get_initial_charges())
-    return positions, charges, cell
+    return positions, charges, cell, cell_type
 
 
 @pytest.fixture(scope="module")
@@ -120,7 +123,7 @@ def fixture_pbc(request) -> tuple:
 )
 def test_gen_supercell(fixture_structure, supercell_diag):
     """Test cell replication result against `ase.atoms.Atoms.repeat()`"""
-    pos, chg, cell = fixture_structure
+    pos, chg, cell, cell_type = fixture_structure
     super_pos, super_chg, super_cell = gen_supercell(
         positions=pos, charges=chg, cell=cell, supercell_diag=supercell_diag
     )
@@ -135,7 +138,7 @@ def test_gen_supercell(fixture_structure, supercell_diag):
 @pytest.mark.parametrize("supercell_diag", [1, 2, (1, 1), (2, 2), (2, 3)])
 def test_gen_supercell_2d(fixture_structure_cubic, supercell_diag):
     """Test cell replication against `ase.atoms.Atoms.repeat()`, 2-d case"""
-    pos, chg, cell = fixture_structure_cubic
+    pos, chg, cell, cell_type = fixture_structure_cubic
     pos_2d = pos[:, :2]
     cell_2d = cell[:2, :2]
     super_pos_2d, super_chg, super_cell_2d = gen_supercell(
@@ -194,7 +197,7 @@ def test_compute_distance_vectors(fixture_structure, fixture_pbc):
     As a reference to compare to, the result from ase's `get_distances` method
     is used.
     """
-    pos, chg, cell = fixture_structure
+    pos, chg, cell, cell_type = fixture_structure
     max_cutoff = get_max_cutoff_3d(cell)
     (i, j) = jnp.triu_indices(pos.shape[0], k=1)
 
@@ -203,6 +206,7 @@ def test_compute_distance_vectors(fixture_structure, fixture_pbc):
         cell=cell,
         pair_indices=(i, j),
         pbc=jnp.array(fixture_pbc),
+        cell_type=cell_type,
     )
     atoms = Atoms(positions=pos, charges=chg, cell=cell, pbc=fixture_pbc)
     deltas_ref = atoms.get_distances(i, j, mic=True, vector=True)
@@ -232,6 +236,7 @@ def test_error_supercell_nonperiodic(pbc, supercell_diag):
             kernel_fn=partial(shortrange_quadratic_potential, r_cut=1.0),
             pbc=pbc,
             supercell_diag=supercell_diag,
+            cell_type=None,
         )
 
 
@@ -248,15 +253,18 @@ def test_pair_term_with_and_without_supercell(fixture_structure):
         - Energy computed in a supercell, but using only the particles in the
           original cell as centers
     """
-    pos, chg, cell = fixture_structure
+    pos, chg, cell, cell_type = fixture_structure
     pbc = (True, True, True)
     kernel_fn = partial(
         shortrange_quadratic_potential, r_cut=(0.99 * get_max_cutoff_3d(cell))
     )
-    pair_term_fn = make_pair_term_fn(kernel_fn=kernel_fn, pbc=pbc)
+    pair_term_fn = make_pair_term_fn(
+        kernel_fn=kernel_fn, pbc=pbc, cell_type=cell_type
+    )
     pair_term_fn_supercell = make_pair_term_fn(
         kernel_fn=kernel_fn,
         pbc=pbc,
+        cell_type=cell_type,
         supercell_diag=(2, 2, 2),
     )
     assert onp.isclose(
@@ -274,12 +282,14 @@ def test_pair_term_supercell_correct_multiple(
     fixture_structure, supercell_diag
 ):
     """Test energy of whole supercell is right multiple of original cell's"""
-    pos, chg, cell = fixture_structure
+    pos, chg, cell, cell_type = fixture_structure
     pbc = (True, True, True)
     kernel_fn = partial(
         shortrange_quadratic_potential, r_cut=(0.99 * get_max_cutoff_3d(cell))
     )
-    pair_term_fn = make_pair_term_fn(kernel_fn=kernel_fn, pbc=pbc)
+    pair_term_fn = make_pair_term_fn(
+        kernel_fn=kernel_fn, pbc=pbc, cell_type=cell_type
+    )
     super_pos, super_chg, super_cell = gen_supercell(
         pos, chg, cell, supercell_diag
     )
@@ -310,7 +320,7 @@ def test_pair_term_periodic_wrap_vs_replicate(
     """
     # TODO: can this test be written more compactly?
     n_particles = 100
-    pos, chg, cell = fixture_structure
+    pos, chg, cell, cell_type = fixture_structure
     pos = pos[:n_particles]
     chg = chg[:n_particles]
 
@@ -322,7 +332,7 @@ def test_pair_term_periodic_wrap_vs_replicate(
     n_repeats_explicit = (3, 3, 3)
     M = onp.prod(n_repeats_explicit)
     pair_term_fn_explicit_replicate = make_pair_term_fn_with_neighbor_list(
-        kernel_fn=kernel_fn, pbc=(False, False, False)
+        kernel_fn=kernel_fn, pbc=(False, False, False), cell_type=cell_type
     )
     pos_extended, chg_extended, cell_extended = gen_supercell(
         positions=pos,
@@ -351,6 +361,7 @@ def test_pair_term_periodic_wrap_vs_replicate(
         kernel_fn=kernel_fn,
         pbc=(True, True, True),
         supercell_diag=supercell_diag,
+        cell_type=cell_type,
     )
     energy_wrap = pair_term_fn_wrap(pos, chg, cell)
 
@@ -368,12 +379,16 @@ def test_U0_pair_term(fixture_structure, fixture_pbc):
     To do this, all higher-level kernels are set to return a constant value of
     zero. In this case, U0 should equal the result of the pair term alone.
     """
-    pos, chg, cell = fixture_structure
+    pos, chg, cell, cell_type = fixture_structure
     max_cutoff = get_max_cutoff_3d(cell)
     k_0 = partial(shortrange_quadratic_potential, r_cut=0.99 * max_cutoff)
     kernel_fns = [k_0] + [lambda x: 0.0] * 2
-    compute_U0 = make_compute_U0(kernel_fns=kernel_fns, pbc=fixture_pbc)
-    compute_pair_term = make_pair_term_fn(kernel_fn=k_0, pbc=fixture_pbc)
+    compute_U0 = make_compute_U0(
+        kernel_fns=kernel_fns, pbc=fixture_pbc, cell_type=cell_type
+    )
+    compute_pair_term = make_pair_term_fn(
+        kernel_fn=k_0, pbc=fixture_pbc, cell_type=cell_type
+    )
     assert onp.isclose(
         compute_U0(pos, chg, cell), compute_pair_term(pos, chg, cell)
     )
@@ -391,11 +406,13 @@ def test_U0_self_interaction_term(fixture_structure, fixture_pbc):
     higher-level kernels to be constantly one, such that the expected value
     for U0 can be calculated from the charges alone.
     """
-    pos, chg, cell = fixture_structure
+    pos, chg, cell, cell_type = fixture_structure
     k_0 = lambda x: 0.0
     ks_higher = [lambda x: 1.0] * 2
     kernel_fns = [k_0] + ks_higher
-    compute_U0 = make_compute_U0(kernel_fns=kernel_fns, pbc=fixture_pbc)
+    compute_U0 = make_compute_U0(
+        kernel_fns=kernel_fns, pbc=fixture_pbc, cell_type=cell_type
+    )
     ref = -len(ks_higher) * 0.5 * (chg * chg).sum()
     assert onp.isclose(compute_U0(pos, chg, cell), ref)
 
@@ -407,17 +424,17 @@ def test_U0_self_interaction_term(fixture_structure, fixture_pbc):
 )
 def test_with_and_without_neighbor_list(fixture_structure, fixture_pbc):
     """Test equal result with and without neighbor list"""
-    pos, chg, cell = fixture_structure
+    pos, chg, cell, cell_type = fixture_structure
     cutoff = float(get_max_cutoff_3d(cell))
     kernel_fn_no_cutoff = lambda r: 1.0
     kernel_fn_cutoff = lambda r: jnp.where(
         r < cutoff, kernel_fn_no_cutoff(r), 0.0
     )
     compute_pair_term = make_pair_term_fn(
-        kernel_fn=kernel_fn_cutoff, pbc=fixture_pbc
+        kernel_fn=kernel_fn_cutoff, pbc=fixture_pbc, cell_type=cell_type
     )
     compute_pair_term_nbl = make_pair_term_fn_with_neighbor_list(
-        kernel_fn=kernel_fn_no_cutoff, pbc=fixture_pbc
+        kernel_fn=kernel_fn_no_cutoff, pbc=fixture_pbc, cell_type=cell_type
     )
     nbl = neighbour_list(
         "ij", cutoff=cutoff, positions=pos, cell=cell, pbc=fixture_pbc
@@ -435,11 +452,11 @@ def test_with_and_without_neighbor_list(fixture_structure, fixture_pbc):
 )
 def test_ignore_placeholders(fixture_structure, fixture_pbc):
     """Test that placeholder indices in the neighbor list have no effect."""
-    pos, chg, cell = fixture_structure
+    pos, chg, cell, cell_type = fixture_structure
     cutoff = float(get_max_cutoff_3d(cell))
     kernel_fn = partial(shortrange_quadratic_potential, r_cut=cutoff)
     compute_pair_term_nbl = make_pair_term_fn_with_neighbor_list(
-        kernel_fn=kernel_fn, pbc=fixture_pbc
+        kernel_fn=kernel_fn, pbc=fixture_pbc, cell_type=cell_type
     )
     nbl = neighbour_list(
         "ij", cutoff=cutoff, positions=pos, cell=cell, pbc=fixture_pbc
@@ -464,7 +481,7 @@ def test_ignore_placeholders(fixture_structure, fixture_pbc):
 def test_compare_explicit_loop(fixture_structure, fixture_pbc):
     """Test energy and force results against explicit calculation in a loop"""
     n_particles = 30
-    pos, chg, cell = fixture_structure
+    pos, chg, cell, cell_type = fixture_structure
     pos = pos[:n_particles]
     chg = chg[:n_particles]
     kernel_fn = partial(
@@ -485,7 +502,9 @@ def test_compare_explicit_loop(fixture_structure, fixture_pbc):
             forces_loop[i] += f_ij
             forces_loop[j] -= f_ij
 
-    compute_pair_term = make_pair_term_fn(kernel_fn=kernel_fn, pbc=fixture_pbc)
+    compute_pair_term = make_pair_term_fn(
+        kernel_fn=kernel_fn, pbc=fixture_pbc, cell_type=cell_type
+    )
     energy = compute_pair_term(pos, chg, cell)
     forces = -jax.grad(compute_pair_term)(pos, chg, cell)
 

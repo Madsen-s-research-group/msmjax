@@ -82,6 +82,7 @@ def compute_distance_vectors(
 def make_pair_term_fn(
     kernel_fn: Callable,
     pbc: npt.ArrayLike,
+    cell_type,  # TODO: type hint, default value?
     supercell_diag: Union[int, Sequence[int]] = 1,
 ):
     # TODO: unit test jitting
@@ -92,7 +93,9 @@ def make_pair_term_fn(
             "`supercell_diag` must be equal to one along non-periodic axes"
         )
     # TODO: check supercell_diag >= 1?
-    _compute_distance_vectors = partial(compute_distance_vectors, pbc=pbc)
+    _compute_distance_vectors = partial(
+        compute_distance_vectors, pbc=pbc, cell_type=cell_type
+    )
 
     # TODO: if no direction is periodic, the returned function does not need
     #  `cell` as a parameter, and we can skip supercell generation. Would that
@@ -129,9 +132,12 @@ def make_pair_term_fn(
 def make_pair_term_fn_with_neighbor_list(
     kernel_fn: Callable,
     pbc: npt.ArrayLike,
+    cell_type,  # TODO: type hint, default value?
 ):
     pbc = onp.asarray(pbc)
-    _compute_distance_vectors = partial(compute_distance_vectors, pbc=pbc)
+    _compute_distance_vectors = partial(
+        compute_distance_vectors, pbc=pbc, cell_type=cell_type
+    )
 
     # TODO: add `pair_weights` parameter (name of parameter?)
     def compute_pair_term(positions, charges, cell, neighbor_list, weights):
@@ -160,10 +166,14 @@ def make_pair_term_fn_with_neighbor_list(
 def make_compute_U0(
     kernel_fns: List[Callable],
     pbc: npt.ArrayLike,
+    cell_type,  # TODO: type hint, default value?
     supercell_diag: Union[int, Sequence[int]] = 1,
 ):
     compute_pair_term = make_pair_term_fn(
-        kernel_fn=kernel_fns[0], pbc=pbc, supercell_diag=supercell_diag
+        kernel_fn=kernel_fns[0],
+        pbc=pbc,
+        cell_type=cell_type,
+        supercell_diag=supercell_diag,
     )
     sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
 
@@ -184,10 +194,14 @@ def make_compute_U0(
 def make_compute_U0_with_neighbor_list(
     kernel_fns: List[Callable],
     pbc: npt.ArrayLike,
+    cell_type,  # TODO: type hint, default value?
 ):
     # TODO: add tests for this
+    # TODO: Using a neighbor list together with `supercell_diag` could get a
+    #  bit complicated, so this function currently doesn't support
+    #  `supercell_diag`, but it could still be useful.
     compute_pair_term = make_pair_term_fn_with_neighbor_list(
-        kernel_fn=kernel_fns[0], pbc=pbc
+        kernel_fn=kernel_fns[0], pbc=pbc, cell_type=cell_type
     )
     sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
 
