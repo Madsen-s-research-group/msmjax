@@ -10,18 +10,15 @@
         Forces for the Simulation of Biomolecules (PhD thesis), University
         of Illinois at Urbana-Champaign, 2006.
 """
-import itertools
+
 from functools import partial
-from typing import Callable, List, Sequence, Tuple, Union
+from typing import Callable, List, Literal, Optional, Sequence, Tuple, Union
 
 import jax
 import jax.numpy as jnp
 import numpy as onp
 import numpy.typing as npt
-from jaxborlist.neighbor_list import compute_pairwise_deltas
-from tqdm import tqdm
 
-from msmjax.kernels import SofteningFunctionOneOverR, split_one_over_r_kernel
 from msmjax.utils import _sqrt
 
 
@@ -55,14 +52,31 @@ def compute_distance_vectors(
     positions: jax.Array,
     cell: jax.Array,
     pair_indices: jax.Array,
-    pbc: jax.Array,
+    pbc: npt.ArrayLike,
+    cell_type: Optional[Literal["ortho", "general"]] = None,
 ):
     # TODO: Out-of-bounds indexing? If `positions` is given as a regular numpy
     #  array (despite the type hint demanding otherwise), and `pair_indices`
     #  contains placeholders, we get an error -> Is this good or bad?
+
+    pbc = onp.asarray(pbc)
     deltas = positions[pair_indices[1]] - positions[pair_indices[0]]
-    scaled = deltas @ jnp.linalg.pinv(cell)
-    return jnp.where(pbc, (scaled - jnp.rint(scaled)) @ cell, deltas)
+
+    if onp.all(~pbc):
+        return deltas
+
+    if cell_type is None and pbc.any():
+        raise ValueError("`cell_type` argument is required in periodic cases")
+    elif cell_type == "ortho":
+        # TODO: test this
+        sides = jnp.diag(cell)
+        scaled = deltas / sides
+        return jnp.where(pbc, (scaled - jnp.rint(scaled)) * sides, deltas)
+    elif cell_type == "general":
+        scaled = deltas @ jnp.linalg.pinv(cell)
+        return jnp.where(pbc, (scaled - jnp.rint(scaled)) @ cell, deltas)
+    else:
+        raise ValueError("Illegal value for `cell_type`")
 
 
 def make_pair_term_fn(
@@ -178,12 +192,13 @@ def make_compute_U0_with_neighbor_list(
     sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
 
     # TODO: add `pair_weights` parameter (name of parameter?)
-    def compute_U0(positions, charges, cell, neighbor_list):
+    def compute_U0(positions, charges, cell, neighbor_list, weights):
         pair_term = compute_pair_term(
             positions=positions,
             charges=charges,
             cell=cell,
-            indices_pairs=neighbor_list,
+            neighbor_list=neighbor_list,
+            weights=weights,
         )
         self_interaction_term = (
             0.5 * jnp.sum(charges * charges) * sum_of_higher_kernels_at_zero
