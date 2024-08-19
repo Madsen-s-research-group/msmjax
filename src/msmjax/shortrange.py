@@ -18,6 +18,8 @@ import jax
 import jax.numpy as jnp
 import numpy as onp
 import numpy.typing as npt
+from jax_md import space  # TODO
+from jax_md.util import f32  # TODO
 
 from msmjax.utils import _sqrt
 
@@ -53,6 +55,8 @@ def compute_distance_vectors(
     cell: jax.Array,
     pair_indices: jax.Array,
     pbc: npt.ArrayLike,
+    # TODO: `cell_type` is a bad parameter name because
+    #  `ipykernel.pickleutil.cell_type` exists
     cell_type: Optional[Literal["ortho", "general"]] = None,
 ):
     # TODO: Out-of-bounds indexing? If `positions` is given as a regular numpy
@@ -79,10 +83,72 @@ def compute_distance_vectors(
         raise ValueError("Illegal value for `cell_type`")
 
 
+def _nonperiodic_displacement(R_1, R_2, cell):
+    return R_1 - R_2
+
+
+def _periodic_displacement_general(R_1, R_2, cell):
+    # TODO: change to pinv in inverse?
+    inv_cell = space.inverse(cell)
+    R_1 = space.transform(inv_cell, R_1)
+    R_2 = space.transform(inv_cell, R_2)
+    dR = space.periodic_displacement(
+        f32(1.0), space.pairwise_displacement(R_1, R_2)
+    )
+    dR = space.transform(cell, dR)
+    return dR
+
+
+def _periodic_displacement_ortho(R_1, R_2, cell):
+    return _periodic_displacement_general(R_1, R_2, cell=jnp.diag(cell))
+
+
+def select_displacement_fn(pbc, cell_type) -> Callable:
+    if onp.all(~pbc):
+        return _nonperiodic_displacement
+    else:
+        if cell_type == "ortho":
+            periodic_disp = _periodic_displacement_ortho
+        elif cell_type == "general":
+            periodic_disp = _periodic_displacement_general
+        else:
+            # TODO: better error message
+            raise ValueError("Illegal value for `cell_type`")
+    if onp.all(pbc):
+        return periodic_disp
+    else:
+        return lambda R_1, R_2, cell: jnp.where(
+            pbc,
+            periodic_disp(R_1, R_2, cell=cell),
+            _nonperiodic_displacement(R_1, R_2, cell=cell),
+        )
+
+
+def _generalized_diagonal_mask(X):
+    """Set the diagonal of a matrix to zero that may be wider than tall"""
+    if len(X.shape) != 2:
+        raise ValueError("Only two-dimensional arrays are supported.")
+    M, N = X.shape
+    if M > N:
+        raise ValueError(
+            "Input array must be either square, or wider than tall."
+        )
+    X = jnp.nan_to_num(X)
+    mask = f32(1.0) - jnp.eye(M, dtype=X.dtype)
+    mask = jnp.pad(
+        mask,
+        pad_width=((0, 0), (0, N - M)),
+        mode="constant",
+        constant_values=1,
+    )
+    return mask * X
+
+
 def make_pair_term_fn(
     kernel_fn: Callable,
     pbc: npt.ArrayLike,
-    cell_type,  # TODO: type hint, default value?
+    # TODO: Default value for `cell_type`: Is `None` okay?
+    cell_type: Optional[Literal["ortho", "general"]] = None,
     supercell_diag: Union[int, Sequence[int]] = 1,
 ):
     # TODO: unit test jitting
@@ -93,13 +159,8 @@ def make_pair_term_fn(
             "`supercell_diag` must be equal to one along non-periodic axes"
         )
     # TODO: check supercell_diag >= 1?
-    _compute_distance_vectors = partial(
-        compute_distance_vectors, pbc=pbc, cell_type=cell_type
-    )
 
-    # TODO: if no direction is periodic, the returned function does not need
-    #  `cell` as a parameter, and we can skip supercell generation. Would that
-    #  make usage simpler? Or lead to confusion instead?
+    displacement_fn = select_displacement_fn(pbc, cell_type)
 
     def compute_pair_term(positions, charges, cell):
         super_positions, super_charges, super_cell = gen_supercell(
@@ -108,25 +169,67 @@ def make_pair_term_fn(
             cell=cell,
             supercell_diag=supercell_diag,
         )
-        n_centers = positions.shape[0]
-        n_total = super_positions.shape[0]  # TODO: from external constant?
-        indices_trivial_all_pairs = onp.where(
-            onp.arange(n_centers)[:, onp.newaxis] < onp.arange(n_total)
+        metric_fn = partial(space.metric(displacement_fn), cell=super_cell)
+        mapped_metric_fn = space.map_product(metric_fn)
+        dr_ij = mapped_metric_fn(super_positions, positions)
+        qi_qj = charges[:, jnp.newaxis] * super_charges
+        # TODO: diagonal mask must be adapted to non-square matrices
+        #  (to work for supercell_diag > 1)
+        return (
+            0.5 * (_generalized_diagonal_mask(qi_qj * kernel_fn(dr_ij))).sum()
         )
-        (i, j) = indices_trivial_all_pairs
-        weights_pairs = onp.where(j < n_centers, 1.0, 0.5)
-        dR_ij = _compute_distance_vectors(
-            positions=super_positions,
-            cell=super_cell,
-            pair_indices=(i, j),
-        )
-        dr_ij_2 = (dR_ij * dR_ij).sum(axis=1)
-        dr_ij = _sqrt(dr_ij_2)
-        qi_qj = super_charges[i] * super_charges[j]
-
-        return (weights_pairs * qi_qj * kernel_fn(dr_ij)).sum()
 
     return compute_pair_term
+
+
+# def make_pair_term_fn(
+#     kernel_fn: Callable,
+#     pbc: npt.ArrayLike,
+#     cell_type,  # TODO: type hint, default value?
+#     supercell_diag: Union[int, Sequence[int]] = 1,
+# ):
+#     # TODO: unit test jitting
+#     pbc = onp.asarray(pbc)
+#     supercell_diag = onp.asarray(supercell_diag)
+#     if onp.logical_and(~pbc, onp.asarray(supercell_diag) != 1).any():
+#         raise ValueError(
+#             "`supercell_diag` must be equal to one along non-periodic axes"
+#         )
+#     # TODO: check supercell_diag >= 1?
+#     _compute_distance_vectors = partial(
+#         compute_distance_vectors, pbc=pbc, cell_type=cell_type
+#     )
+#
+#     # TODO: if no direction is periodic, the returned function does not need
+#     #  `cell` as a parameter, and we can skip supercell generation. Would that
+#     #  make usage simpler? Or lead to confusion instead?
+#
+#     def compute_pair_term(positions, charges, cell):
+#         super_positions, super_charges, super_cell = gen_supercell(
+#             positions=positions,
+#             charges=charges,
+#             cell=cell,
+#             supercell_diag=supercell_diag,
+#         )
+#         n_centers = positions.shape[0]
+#         n_total = super_positions.shape[0]  # TODO: from external constant?
+#         indices_trivial_all_pairs = onp.where(
+#             onp.arange(n_centers)[:, onp.newaxis] < onp.arange(n_total)
+#         )
+#         (i, j) = indices_trivial_all_pairs
+#         weights_pairs = onp.where(j < n_centers, 1.0, 0.5)
+#         dR_ij = _compute_distance_vectors(
+#             positions=super_positions,
+#             cell=super_cell,
+#             pair_indices=(i, j),
+#         )
+#         dr_ij_2 = (dR_ij * dR_ij).sum(axis=1)
+#         dr_ij = _sqrt(dr_ij_2)
+#         qi_qj = super_charges[i] * super_charges[j]
+#
+#         return (weights_pairs * qi_qj * kernel_fn(dr_ij)).sum()
+#
+#     return compute_pair_term
 
 
 def make_pair_term_fn_with_neighbor_list(
