@@ -293,9 +293,9 @@ def test_pair_term_with_and_without_supercell(fixture_structure):
         cell_type=cell_type,
         supercell_diag=(2, 2, 2),
     )
-    energy = pair_term_fn(pos, chg, cell)
-    energy_supercell = pair_term_fn_supercell(pos, chg, cell)
-    assert onp.isclose(energy, energy_supercell)
+    assert onp.isclose(
+        pair_term_fn(pos, chg, cell), pair_term_fn_supercell(pos, chg, cell)
+    )
 
 
 @pytest.mark.parametrize(

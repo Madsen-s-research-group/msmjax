@@ -88,7 +88,9 @@ def _nonperiodic_displacement(R_1, R_2, cell):
 
 
 def _periodic_displacement_general(R_1, R_2, cell):
-    # TODO: change to pinv in inverse?
+    # Transpose the cell to make it compatible with JAX-MD
+    cell = cell.T
+    # TODO: change inv to pinv in inverse?
     inv_cell = space.inverse(cell)
     R_1 = space.transform(inv_cell, R_1)
     R_2 = space.transform(inv_cell, R_2)
@@ -171,10 +173,9 @@ def make_pair_term_fn(
         )
         metric_fn = partial(space.metric(displacement_fn), cell=super_cell)
         mapped_metric_fn = space.map_product(metric_fn)
+        # TODO: order of arguments to metric?
         dr_ij = mapped_metric_fn(super_positions, positions)
         qi_qj = charges[:, jnp.newaxis] * super_charges
-        # TODO: diagonal mask must be adapted to non-square matrices
-        #  (to work for supercell_diag > 1)
         return (
             0.5 * (_generalized_diagonal_mask(qi_qj * kernel_fn(dr_ij))).sum()
         )
@@ -182,6 +183,7 @@ def make_pair_term_fn(
     return compute_pair_term
 
 
+# TODO: remove
 # def make_pair_term_fn(
 #     kernel_fn: Callable,
 #     pbc: npt.ArrayLike,
