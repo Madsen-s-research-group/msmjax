@@ -50,7 +50,8 @@ def gen_supercell(
     return super_positions, super_charges, super_cell
 
 
-# TODO: remove; adapt tests to test the various displacement functions instead
+# TODO: Adapt the tests to test the various new displacement functions instead,
+#  and remove this function
 def compute_distance_vectors(
     positions: jax.Array,
     cell: jax.Array,

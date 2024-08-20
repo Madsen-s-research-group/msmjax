@@ -36,6 +36,7 @@ from msmjax.shortrange import (
     make_compute_U0,
     make_pair_term_fn,
     make_pair_term_fn_with_neighbor_list,
+    select_displacement_fn,
 )
 
 jax.config.update("jax_enable_x64", True)
@@ -189,6 +190,11 @@ def get_max_cutoff_3d(cell: jnp.ndarray):
     )
 
 
+# TODO: Add tests for the newer displacement functions meant to replace
+#  `compute_distance_vectors`, and remove tests of the latter.
+#  But the new functions don't auto-vectorize -> how to test without writing an
+#  explicit loop or use `space.map_product`/`space.map_bond`, in which case it
+#  wouldn't be a unit test of the displacement functions anymore
 @pytest.mark.parametrize(
     "fixture_structure",
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
@@ -201,18 +207,25 @@ def test_compute_distance_vectors(fixture_structure, fixture_pbc):
     is used.
     """
     pos, chg, cell, cell_type = fixture_structure
+    # TODO: Make sure the particle number is not reduced so much that the
+    #  previously seen mixed-PBC errors are not caught (because the relevant
+    #  pairs would not be included)!
+    pos, chg = pos[:30], chg[:30]  # TODO
     max_cutoff = get_max_cutoff_3d(cell)
     (i, j) = jnp.triu_indices(pos.shape[0], k=1)
 
-    deltas = compute_distance_vectors(
-        positions=pos,
-        cell=cell,
-        pair_indices=(i, j),
-        pbc=jnp.array(fixture_pbc),
-        cell_type=cell_type,
+    displacement_fn = select_displacement_fn(
+        pbc=onp.array(fixture_pbc), cell_type=cell_type
     )
+    deltas = onp.array(
+        [
+            displacement_fn(pos[idx_1], pos[idx_2], cell)
+            for idx_1, idx_2 in zip(i, j)
+        ]
+    )
+
     atoms = Atoms(positions=pos, charges=chg, cell=cell, pbc=fixture_pbc)
-    deltas_ref = atoms.get_distances(i, j, mic=True, vector=True)
+    deltas_ref = atoms.get_distances(j, i, mic=True, vector=True)
 
     distances_ref = onp.linalg.norm(deltas_ref, axis=1)
     is_within_cutoff = distances_ref < max_cutoff
@@ -222,6 +235,8 @@ def test_compute_distance_vectors(fixture_structure, fixture_pbc):
     assert onp.allclose(deltas_within_cutoff, deltas_within_cutoff_ase)
 
 
+# TODO: Add tests for the newer displacement functions meant to replace
+#  `compute_distance_vectors`, and remove tests of the latter.
 def test_compute_distance_vectors_different_cell_types(
     fixture_structure_cubic, fixture_pbc
 ):
