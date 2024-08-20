@@ -50,6 +50,7 @@ def gen_supercell(
     return super_positions, super_charges, super_cell
 
 
+# TODO: remove; adapt tests to test the various displacement functions instead
 def compute_distance_vectors(
     positions: jax.Array,
     cell: jax.Array,
@@ -244,16 +245,13 @@ def make_pair_term_fn_with_neighbor_list(
         compute_distance_vectors, pbc=pbc, cell_type=cell_type
     )
 
-    # TODO: add `pair_weights` parameter (name of parameter?)
+    displacement_fn = select_displacement_fn(pbc, cell_type)
+
     def compute_pair_term(positions, charges, cell, neighbor_list, weights):
         (i, j) = neighbor_list
-        dR_ij = _compute_distance_vectors(
-            positions=positions,
-            pair_indices=(i, j),
-            cell=cell,
-        )
-        dr_ij_2 = (dR_ij * dR_ij).sum(axis=1)
-        dr_ij = _sqrt(dr_ij_2)
+        metric_fn = partial(space.metric(displacement_fn), cell=cell)
+        mapped_metric_fn = space.map_bond(metric_fn)
+        dr_ij = mapped_metric_fn(positions[i], positions[j])
         n_particles = positions.shape[0]
         is_not_placeholder = jnp.logical_and(i < n_particles, j < n_particles)
         # TODO: Should this "safe distance" be a function argument?

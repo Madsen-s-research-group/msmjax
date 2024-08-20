@@ -449,7 +449,7 @@ def test_U0_self_interaction_term(fixture_structure, fixture_pbc):
     indirect=True,
 )
 def test_with_and_without_neighbor_list(fixture_structure, fixture_pbc):
-    """Test equal result with and without neighbor list"""
+    """Test equal result for pair term with and without neighbor list"""
     pos, chg, cell, cell_type = fixture_structure
     cutoff = float(get_max_cutoff_3d(cell))
     kernel_fn_no_cutoff = lambda r: 1.0
