@@ -50,41 +50,6 @@ def gen_supercell(
     return super_positions, super_charges, super_cell
 
 
-# TODO: Adapt the tests to test the various new displacement functions instead,
-#  and remove this function
-def compute_distance_vectors(
-    positions: jax.Array,
-    cell: jax.Array,
-    pair_indices: jax.Array,
-    pbc: npt.ArrayLike,
-    # TODO: `cell_type` is a bad parameter name because
-    #  `ipykernel.pickleutil.cell_type` exists
-    cell_type: Optional[Literal["ortho", "general"]] = None,
-):
-    # TODO: Out-of-bounds indexing? If `positions` is given as a regular numpy
-    #  array (despite the type hint demanding otherwise), and `pair_indices`
-    #  contains placeholders, we get an error -> Is this good or bad?
-
-    pbc = onp.asarray(pbc)
-    deltas = positions[pair_indices[1]] - positions[pair_indices[0]]
-
-    if onp.all(~pbc):
-        return deltas
-
-    if cell_type is None and pbc.any():
-        raise ValueError("`cell_type` argument is required in periodic cases")
-    elif cell_type == "ortho":
-        # TODO: test this
-        sides = jnp.diag(cell)
-        scaled = deltas / sides
-        return jnp.where(pbc, (scaled - jnp.rint(scaled)) * sides, deltas)
-    elif cell_type == "general":
-        scaled = deltas @ jnp.linalg.pinv(cell)
-        return jnp.where(pbc, (scaled - jnp.rint(scaled)) @ cell, deltas)
-    else:
-        raise ValueError("Illegal value for `cell_type`")
-
-
 def _nonperiodic_displacement(R_1, R_2, cell):
     return R_1 - R_2
 
@@ -92,7 +57,7 @@ def _nonperiodic_displacement(R_1, R_2, cell):
 def _periodic_displacement_general(R_1, R_2, cell):
     # Transpose the cell to make it compatible with JAX-MD
     cell = cell.T
-    # TODO: change inv to pinv in inverse?
+    # TODO: change inv to pinv in inverse function?
     inv_cell = space.inverse(cell)
     R_1 = space.transform(inv_cell, R_1)
     R_2 = space.transform(inv_cell, R_2)
@@ -185,67 +150,12 @@ def make_pair_term_fn(
     return compute_pair_term
 
 
-# TODO: remove
-# def make_pair_term_fn(
-#     kernel_fn: Callable,
-#     pbc: npt.ArrayLike,
-#     cell_type,  # TODO: type hint, default value?
-#     supercell_diag: Union[int, Sequence[int]] = 1,
-# ):
-#     # TODO: unit test jitting
-#     pbc = onp.asarray(pbc)
-#     supercell_diag = onp.asarray(supercell_diag)
-#     if onp.logical_and(~pbc, onp.asarray(supercell_diag) != 1).any():
-#         raise ValueError(
-#             "`supercell_diag` must be equal to one along non-periodic axes"
-#         )
-#     # TODO: check supercell_diag >= 1?
-#     _compute_distance_vectors = partial(
-#         compute_distance_vectors, pbc=pbc, cell_type=cell_type
-#     )
-#
-#     # TODO: if no direction is periodic, the returned function does not need
-#     #  `cell` as a parameter, and we can skip supercell generation. Would that
-#     #  make usage simpler? Or lead to confusion instead?
-#
-#     def compute_pair_term(positions, charges, cell):
-#         super_positions, super_charges, super_cell = gen_supercell(
-#             positions=positions,
-#             charges=charges,
-#             cell=cell,
-#             supercell_diag=supercell_diag,
-#         )
-#         n_centers = positions.shape[0]
-#         n_total = super_positions.shape[0]  # TODO: from external constant?
-#         indices_trivial_all_pairs = onp.where(
-#             onp.arange(n_centers)[:, onp.newaxis] < onp.arange(n_total)
-#         )
-#         (i, j) = indices_trivial_all_pairs
-#         weights_pairs = onp.where(j < n_centers, 1.0, 0.5)
-#         dR_ij = _compute_distance_vectors(
-#             positions=super_positions,
-#             cell=super_cell,
-#             pair_indices=(i, j),
-#         )
-#         dr_ij_2 = (dR_ij * dR_ij).sum(axis=1)
-#         dr_ij = _sqrt(dr_ij_2)
-#         qi_qj = super_charges[i] * super_charges[j]
-#
-#         return (weights_pairs * qi_qj * kernel_fn(dr_ij)).sum()
-#
-#     return compute_pair_term
-
-
 def make_pair_term_fn_with_neighbor_list(
     kernel_fn: Callable,
     pbc: npt.ArrayLike,
     cell_type,  # TODO: type hint, default value?
 ):
     pbc = onp.asarray(pbc)
-    _compute_distance_vectors = partial(
-        compute_distance_vectors, pbc=pbc, cell_type=cell_type
-    )
-
     displacement_fn = select_displacement_fn(pbc, cell_type)
 
     def compute_pair_term(positions, charges, cell, neighbor_list, weights):

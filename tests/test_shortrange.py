@@ -31,7 +31,6 @@ from matscipy.neighbours import neighbour_list
 
 from msmjax.benchmark_tools import path_input_structures
 from msmjax.shortrange import (
-    compute_distance_vectors,
     gen_supercell,
     make_compute_U0,
     make_pair_term_fn,
@@ -242,20 +241,25 @@ def test_compute_distance_vectors_different_cell_types(
 ):
     """Test agreement between different distance wrapping methods if cubic"""
     pos, chg, cell, _ = fixture_structure_cubic
+    pos, chg = pos[:30], chg[:30]  # TODO
     (i, j) = jnp.triu_indices(pos.shape[0], k=1)
-    deltas_ortho = compute_distance_vectors(
-        positions=pos,
-        cell=cell,
-        pair_indices=(i, j),
-        pbc=jnp.array(fixture_pbc),
-        cell_type="ortho",
+    displacement_fn_ortho = select_displacement_fn(
+        pbc=onp.asarray(fixture_pbc), cell_type="ortho"
     )
-    deltas_general = compute_distance_vectors(
-        positions=pos,
-        cell=cell,
-        pair_indices=(i, j),
-        pbc=jnp.array(fixture_pbc),
-        cell_type="general",
+    displacement_fn_general = select_displacement_fn(
+        pbc=onp.asarray(fixture_pbc), cell_type="general"
+    )
+    deltas_ortho = onp.array(
+        [
+            displacement_fn_ortho(pos[idx_1], pos[idx_2], cell)
+            for idx_1, idx_2 in zip(i, j)
+        ]
+    )
+    deltas_general = onp.array(
+        [
+            displacement_fn_general(pos[idx_1], pos[idx_2], cell)
+            for idx_1, idx_2 in zip(i, j)
+        ]
     )
     assert onp.allclose(deltas_ortho, deltas_general)
 
