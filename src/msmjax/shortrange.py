@@ -18,8 +18,10 @@ import jax
 import jax.numpy as jnp
 import numpy as onp
 import numpy.typing as npt
-from jax_md import space  # TODO
-from jax_md.util import f32  # TODO
+from jax_md import space  # TODO: copy to standalone module instead of import
+from jax_md.util import (  # # TODO: copy to standalone module instead of import
+    f32,
+)
 
 from msmjax.utils import _sqrt
 
@@ -55,6 +57,10 @@ def _nonperiodic_displacement(R_1, R_2, cell):
 
 
 def _periodic_displacement_general(R_1, R_2, cell):
+    """Adapted from JAX-MD
+
+    # TODO: attribution
+    """
     # Transpose the cell to make it compatible with JAX-MD
     cell = cell.T
     # TODO: change inv to pinv in inverse function?
@@ -132,6 +138,11 @@ def make_pair_term_fn(
     displacement_fn = select_displacement_fn(pbc, cell_type)
 
     def compute_pair_term(positions, charges, cell):
+        """Logic adapted from JAX-MD, but adding supercell_diag option and
+        charges.
+
+        # TODO: attribution
+        """
         super_positions, super_charges, super_cell = gen_supercell(
             positions=positions,
             charges=charges,
@@ -168,6 +179,8 @@ def make_pair_term_fn_with_neighbor_list(
         # TODO: Should this "safe distance" be a function argument?
         # Set distances of placeholder pairs to a value at which the potential
         # can be safely evaluated
+        # TODO: Is the first jnp.where needed at all? Is the one for the
+        #  evaluation of kernel fn sufficient?
         dr_ij = jnp.where(is_not_placeholder, dr_ij, 1.0)
         qi_qj = charges[i] * charges[j]
         return jnp.where(

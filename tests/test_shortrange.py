@@ -189,11 +189,6 @@ def get_max_cutoff_3d(cell: jnp.ndarray):
     )
 
 
-# TODO: Add tests for the newer displacement functions meant to replace
-#  `compute_distance_vectors`, and remove tests of the latter.
-#  But the new functions don't auto-vectorize -> how to test without writing an
-#  explicit loop or use `space.map_product`/`space.map_bond`, in which case it
-#  wouldn't be a unit test of the displacement functions anymore
 @pytest.mark.parametrize(
     "fixture_structure",
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
@@ -206,10 +201,7 @@ def test_compute_distance_vectors(fixture_structure, fixture_pbc):
     is used.
     """
     pos, chg, cell, cell_type = fixture_structure
-    # TODO: Make sure the particle number is not reduced so much that the
-    #  previously seen mixed-PBC errors are not caught (because the relevant
-    #  pairs would not be included)!
-    pos, chg = pos[:30], chg[:30]  # TODO
+    pos, chg = pos[:30], chg[:30]
     max_cutoff = get_max_cutoff_3d(cell)
     (i, j) = jnp.triu_indices(pos.shape[0], k=1)
 
@@ -234,14 +226,12 @@ def test_compute_distance_vectors(fixture_structure, fixture_pbc):
     assert onp.allclose(deltas_within_cutoff, deltas_within_cutoff_ase)
 
 
-# TODO: Add tests for the newer displacement functions meant to replace
-#  `compute_distance_vectors`, and remove tests of the latter.
 def test_compute_distance_vectors_different_cell_types(
     fixture_structure_cubic, fixture_pbc
 ):
     """Test agreement between different distance wrapping methods if cubic"""
     pos, chg, cell, _ = fixture_structure_cubic
-    pos, chg = pos[:30], chg[:30]  # TODO
+    pos, chg = pos[:30], chg[:30]
     (i, j) = jnp.triu_indices(pos.shape[0], k=1)
     displacement_fn_ortho = select_displacement_fn(
         pbc=onp.asarray(fixture_pbc), cell_type="ortho"
@@ -467,8 +457,13 @@ def test_U0_self_interaction_term(fixture_structure, fixture_pbc):
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
     indirect=True,
 )
-def test_with_and_without_neighbor_list(fixture_structure, fixture_pbc):
-    """Test equal result for pair term with and without neighbor list"""
+def test_pair_term_with_and_without_neighbor_list(
+    fixture_structure, fixture_pbc
+):
+    """Test equal result for pair term with and without using neighbor list
+
+    (In the latter case relying on the potential having its cutoff built in.)
+    """
     pos, chg, cell, cell_type = fixture_structure
     cutoff = float(get_max_cutoff_3d(cell))
     kernel_fn_no_cutoff = lambda r: 1.0
@@ -495,7 +490,7 @@ def test_with_and_without_neighbor_list(fixture_structure, fixture_pbc):
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
     indirect=True,
 )
-def test_ignore_placeholders(fixture_structure, fixture_pbc):
+def test_pair_term_ignore_placeholders(fixture_structure, fixture_pbc):
     """Test that placeholder indices in the neighbor list have no effect."""
     pos, chg, cell, cell_type = fixture_structure
     cutoff = float(get_max_cutoff_3d(cell))
@@ -523,7 +518,7 @@ def test_ignore_placeholders(fixture_structure, fixture_pbc):
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
     indirect=True,
 )
-def test_compare_explicit_loop(fixture_structure, fixture_pbc):
+def test_pair_term_compare_explicit_loop(fixture_structure, fixture_pbc):
     """Test energy and force results against explicit calculation in a loop"""
     n_particles = 30
     pos, chg, cell, cell_type = fixture_structure
