@@ -14,28 +14,14 @@ from msmjax.convenience import set_up_kernels_and_grids
 from msmjax.gridops_multidim import create_compute_U_oneplus_direct
 
 
-def onedim_convolution_fn(in1: ArrayLike, in2: ArrayLike):
-    # TODO: method="fft"?
-    return jax.scipy.signal.convolve(in1, in2, mode="same")
-
-
-def compute_kernel_stencil(values: ArrayLike, omega: ArrayLike):
-    convolved = values
-    # TODO: Is this sequential application of 1d convolutions the fastest thing
-    #  one can do?
-    for i in range(values.ndim):
-        convolved = jnp.apply_along_axis(
-            func1d=onedim_convolution_fn, axis=i, arr=convolved, in2=omega
-        )
-    return convolved
-
-
 def determine_kernel_stencil_size(cell, spacings, cutoff, padding=1):
     # TODO: Should the parameter names for spacings and r_cut suggest one
     #  specific grid level? In principle, if they're given at the same level,
     #  it does not matter which, since both are doubled at each level.
     #  But OTOH, the risk of inadvertently passing the level-one spacing and
     #  together with the level-zero cutoff should be minimized
+    # TODO: Should this have a padding argument at all? Should the padding only
+    #  be added by higher-level funcions?
 
     # TODO: unit test this function
 
@@ -88,7 +74,71 @@ def determine_kernel_stencil_size(cell, spacings, cutoff, padding=1):
     ).astype(int)
     sizes_from_center += padding
 
-    return sizes_from_center
+    return tuple(sizes_from_center)
+
+
+def _onedim_convolution_fn(in1: ArrayLike, in2: ArrayLike):
+    # TODO: method="fft"?
+    return jax.scipy.signal.convolve(in1, in2, mode="same")
+
+
+def _compute_kernel_stencil(values: ArrayLike, omega: ArrayLike):
+    convolved = values
+    # TODO: Is this sequential application of 1d convolutions the fastest thing
+    #  one can do?
+    # TODO: exploit symmetry?
+    for i in range(values.ndim):
+        convolved = jnp.apply_along_axis(
+            func1d=_onedim_convolution_fn, axis=i, arr=convolved, in2=omega
+        )
+    return convolved
+
+
+def _construct_all_kernel_stencils(
+    kernel_fns: List[Callable],  # TODO: appropriate type hint?
+    points,  # TODO: pass points or directly the distances?
+    includes_toplevel,
+    points_toplevel,  # TODO: pass points or directly the distances?
+):
+    # TODO: raise error when `includes_toplevel=True`, but sizes not given
+    n_levels = len(kernel_fns)
+
+    # Level zero (where there is no grid)
+    stencils = [None]
+
+    # Level one
+    distances = jnp.linalg.norm(points, axis=-1)
+    fn_vals_at_points = kernel_fns[1](distances)
+    stencils.append(_compute_kernel_stencil(fn_vals_at_points, omega))
+
+    # Intermediate levels:
+    # For the type of kernel splitting used here, the intermediate-level
+    # kernel values (and thus stencils) can be computed by simply dividing
+    # the one from the previous level by 2. But this need not hold for
+    # other kernels or ways of splitting!
+    # TODO: can this be done by a broadcast multiplication?
+    for lvl in range(2, n_levels - 1):
+        stencils.append(0.5 * stencils[-1])
+
+    # Highest included level
+    if includes_toplevel:
+        # TODO: Some possible efficiency gain by precomputing `points_cartesian`
+        #  or `points_cartesian_toplevel`, whichever is larger in shape,
+        #  and then getting the smaller by indexing into the larger
+        # TODO: For the size of the top level stencil chosen sufficiently
+        #  large (I think it needs to be the grid size + half the length of
+        #  omega as padding), constructing it is very costly
+        distances_toplevel = 2 ** (n_levels - 2) * jnp.linalg.norm(
+            points_toplevel, axis=-1
+        )
+        fn_vals_at_points_toplevel = kernel_fns[-1](distances_toplevel)
+        stencils.append(
+            _compute_kernel_stencil(fn_vals_at_points_toplevel, omega)
+        )
+    else:
+        stencils.append(0.5 * stencils[-1])
+
+    return stencils
 
 
 def make_kernel_stencil_construction_fn(
@@ -130,7 +180,7 @@ def make_kernel_stencil_construction_fn(
         points_cartesian = points_unitcube @ cell
         distances_cartesian = jnp.linalg.norm(points_cartesian, axis=-1)
         fn_vals_at_points = kernel_fns[1](distances_cartesian)
-        stencils.append(compute_kernel_stencil(fn_vals_at_points, omega))
+        stencils.append(_compute_kernel_stencil(fn_vals_at_points, omega))
 
         # Intermediate levels:
         # For the type of kernel splitting used here, the intermediate-level
@@ -156,7 +206,7 @@ def make_kernel_stencil_construction_fn(
                 distances_cartesian_toplevel
             )
             stencils.append(
-                compute_kernel_stencil(fn_vals_at_points_toplevel, omega)
+                _compute_kernel_stencil(fn_vals_at_points_toplevel, omega)
             )
         else:
             stencils.append(0.5 * stencils[-1])
@@ -169,6 +219,7 @@ def make_kernel_stencil_construction_fn(
 def set_up_grids_unitcube(
     box_lengths_original, pbc, msm_params_original: dict
 ):
+    # TODO: Change argument to `cell` instead of `box_lengths`
     # TODO: Pass msm_params as dict or as the individual parameters? (What
     #  is more consistent with other functions? Probably the latter)
     box_lengths_unitcube = onp.ones(len(pbc))
