@@ -96,8 +96,9 @@ def _compute_kernel_stencil(values: ArrayLike, omega: ArrayLike):
 
 def _construct_all_kernel_stencils(
     kernel_fns: List[Callable],  # TODO: appropriate type hint?
+    omega,
     points,  # TODO: pass points or directly the distances?
-    includes_toplevel,
+    includes_toplevel: bool,
     points_toplevel,  # TODO: pass points or directly the distances?
 ):
     # TODO: raise error when `includes_toplevel=True`, but sizes not given
@@ -147,7 +148,7 @@ def make_kernel_stencil_construction_fn(
     reference_cell,
     reference_spacings,
     omega,
-    includes_toplevel,
+    includes_toplevel: bool,
     sizes_from_center_toplevel=None,
 ):
     # TODO: raise error when `includes_toplevel=True`, but sizes not given
@@ -169,49 +170,15 @@ def make_kernel_stencil_construction_fn(
         points_unitcube_toplevel = indices_toplevel * spacings_unitcube
 
     def construct_kernel_stencils(cell):
-        # TODO: This should probably be implemented as a wrapper around some
-        #  lower-level stencil-construction function that can also be used
-        #  to compute static stencils
-
-        # Level zero (where there is no grid)
-        stencils = [None]
-
-        # Level one
-        points_cartesian = points_unitcube @ cell
-        distances_cartesian = jnp.linalg.norm(points_cartesian, axis=-1)
-        fn_vals_at_points = kernel_fns[1](distances_cartesian)
-        stencils.append(_compute_kernel_stencil(fn_vals_at_points, omega))
-
-        # Intermediate levels:
-        # For the type of kernel splitting used here, the intermediate-level
-        # kernel values (and thus stencils) can be computed by simply dividing
-        # the one from the previous level by 2. But this need not hold for
-        # other kernels or ways of splitting!
-        for lvl in range(2, len(kernel_fns) - 1):
-            stencils.append(0.5 * stencils[-1])
-
-        # Highest included level
-        if includes_toplevel:
-            # TODO: Some possible efficiency gain by precomputing `points_cartesian`
-            #  or `points_cartesian_toplevel`, whichever is larger in shape,
-            #  and then getting the smaller by indexing into the larger
-            # TODO: For the size of the top level stencil chosen sufficiently
-            #  large (I think it needs to be the grid size + half the length of
-            #  omega as padding), constructing it is very costly
-            points_cartesian_toplevel = points_unitcube_toplevel @ cell
-            distances_cartesian_toplevel = 2 ** (
-                len(kernel_fns) - 2
-            ) * jnp.linalg.norm(points_cartesian_toplevel, axis=-1)
-            fn_vals_at_points_toplevel = kernel_fns[-1](
-                distances_cartesian_toplevel
-            )
-            stencils.append(
-                _compute_kernel_stencil(fn_vals_at_points_toplevel, omega)
-            )
-        else:
-            stencils.append(0.5 * stencils[-1])
-
-        return stencils
+        return _construct_all_kernel_stencils(
+            kernel_fns=kernel_fns,
+            omega=omega,
+            points=points_unitcube @ cell,
+            includes_toplevel=includes_toplevel,
+            points_toplevel=(
+                points_unitcube_toplevel @ cell if includes_toplevel else None
+            ),
+        )
 
     return construct_kernel_stencils
 
@@ -245,7 +212,7 @@ def make_flex_cell_U1plus_fn(
     n_levels: int,
     convolution_methods=None,
     stencil_padding: Union[int, Sequence[int]] = 1,
-    flex_mode: Literal["ortho", "triclinic"] = "ortho",
+    cell_mode: Literal["ortho", "general"] = "ortho",
 ):
     # TODO: Option to return auxiliary information, like the grids?
 
@@ -300,14 +267,14 @@ def make_flex_cell_U1plus_fn(
         sizes_from_center_toplevel=sizes_toplevel,
     )
 
-    if flex_mode == "ortho":
+    if cell_mode == "ortho":
         to_unit_cube = lambda positions, cell: positions / jnp.diag(cell)
-    elif flex_mode == "triclinic":
+    elif cell_mode == "general":
         to_unit_cube = lambda positions, cell: positions @ jnp.linalg.pinv(
             cell
         )
     else:
-        raise ValueError("Invalid `flex_mode`.")
+        raise ValueError("Invalid `cell_mode`.")
 
     # TODO: Allow choosing different setup functions for U_oneplus (`create_compute_U_oneplus_via_potential`)
     #  And what about the same choice for forces?
