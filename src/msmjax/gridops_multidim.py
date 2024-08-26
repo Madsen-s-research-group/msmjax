@@ -209,7 +209,7 @@ def set_up_grids_all_levels(
     # TODO: commented part does not make sense?
     # actual_level_one_spacings = []
     # for length, spacing, periodic in zip(
-    #     box_lengths, level_one_spacings, pbcs
+    #     box_lengths, level_one_spacings, pbc
     # ):
     #     if periodic:
     #         actual_level_one_spacings.append(length / 2 ** (n_levels - 1))

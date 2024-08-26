@@ -62,7 +62,7 @@ def test_calculate_different_ways(
     box_lengths = onp.diag(fixture_structure["cell"])
     msm_params_full = suggest_msm_params(
         box_lengths=box_lengths,
-        pbcs=fixture_pbc,
+        pbc=fixture_pbc,
         n_particles=fixture_structure["positions"].shape[0],
         **fixture_base_msm_params,
     )

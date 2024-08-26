@@ -222,10 +222,12 @@ def make_flex_cell_U1plus_fn(
     n_dim = len(pbc)
     pbc = onp.asarray(pbc)
     # TODO: different spacings along different directions
-    reference_spacings = onp.array([level_one_gridspacing] * n_dim)
+    if onp.isscalar(level_one_gridspacing):
+        reference_spacings = onp.full(n_dim, level_one_gridspacing)
+    else:
+        reference_spacings = onp.asarray(level_one_gridspacing)
 
     omega, _ = compute_coeffs_with_truncation(p=p, mu=mu)
-
     grids_unit_cube = set_up_grids_unitcube(
         box_lengths_original=onp.linalg.norm(reference_cell, axis=1),
         pbc=pbc,

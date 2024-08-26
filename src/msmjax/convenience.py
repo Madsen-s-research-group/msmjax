@@ -1,5 +1,5 @@
 import math
-from typing import Callable, List
+from typing import Callable, List, Sequence
 
 import numpy as onp
 
@@ -108,19 +108,30 @@ def suggest_max_gridlevel_nonPBC(
         ]
     )
 
+    # TODO: change max_pos/min_pos to box_lengths or cell everywhere
+    box_lengths = onp.array(max_pos) - onp.array(min_pos)
+
     # 1. Highest-level grid not coarser than simulation box size
+    #    In mathematical terms, checks the following condition:
+    #    2**(L - 1) * level_one_gridspacing <= box_length
     L_based_on_spacing = (
-        int(onp.log2(boxvolume ** (1.0 / ndim) / level_one_gridspacing)) + 1
-    )
+        onp.log2(box_lengths / level_one_gridspacing)
+    ).astype(int) + 1
+    # TODO: min (spacings along NO direction greater than box size) or
+    #  max (spacings along all but one direction allowed to be greater than
+    #  box size)?
+    L_based_on_spacing = min(L_based_on_spacing)
 
     range_of_Ls = onp.arange(1, L_based_on_spacing + 1)
 
-    gridspacings = 2 ** (range_of_Ls - 1) * level_one_gridspacing
+    gridspacings_all_levels = (2 ** (range_of_Ls - 1))[
+        :, onp.newaxis
+    ] * level_one_gridspacing
     gridshapes = []
-    for spacing in gridspacings:
+    for spacings in gridspacings_all_levels:
         shape = tuple(
-            int(sidelength_box / spacing) + 1 + p
-            for sidelength_box in (max_pos - min_pos)
+            (sidelength / spacings).astype(int) + 1 + p
+            for sidelength in box_lengths
         )
         gridshapes.append(shape)
     nb_gridpoints = onp.array([math.prod(shape) for shape in gridshapes])
@@ -197,7 +208,7 @@ def find_spacings_and_n_levels_periodic(box_lengths, level_one_spacings):
 
 def suggest_msm_params(
     box_lengths,
-    pbcs,
+    pbc,
     n_particles,
     level_one_gridspacing,
     level_zero_cutoff=None,
@@ -214,26 +225,29 @@ def suggest_msm_params(
     #  as we do not need to infer `level_one_gridspacing` from the particle
     #  density)
     box_lengths = onp.asarray(box_lengths)
-    pbcs = onp.asarray(pbcs)
-    if not (onp.all(pbcs) or onp.all(~pbcs)):
+    pbc = onp.asarray(pbc)
+    if not (onp.all(pbc) or onp.all(~pbc)):
         raise ValueError("Mixed boundary conditions currently not supported.")
-    periodic = pbcs[0]
+    periodic = pbc.any()
+    n_dim = len(pbc)
+    if onp.isscalar(level_one_gridspacing):
+        level_one_gridspacing = onp.full(n_dim, level_one_gridspacing)
 
     if periodic:
         # FIXME: Return one spacing per direction, not just one value!
         actual_spacings, n_levels = find_spacings_and_n_levels_periodic(
             box_lengths=box_lengths,
-            level_one_spacings=[level_one_gridspacing] * len(box_lengths),
+            level_one_spacings=level_one_gridspacing,
         )
-        level_one_gridspacing = actual_spacings[0]
+        level_one_gridspacing = actual_spacings
 
     if alpha is None and level_zero_cutoff is not None:
-        alpha = level_zero_cutoff / level_one_gridspacing
+        alpha = max(level_zero_cutoff / level_one_gridspacing)
     elif level_zero_cutoff is None and alpha is not None:
         # TODO: The cutoff being computed from the grid spacing AFTER the grid
         #  spacing has been adapted for PBCs may lead to inconsistent or
         #  surprising results. Is this what we want?
-        level_zero_cutoff = alpha * level_one_gridspacing
+        level_zero_cutoff = max(alpha * level_one_gridspacing)
     else:
         raise ValueError(
             "Either `level_zero_cutoff` or `alpha` is required, "
@@ -261,7 +275,7 @@ def suggest_msm_params(
     #  right place for that?)
 
     return {
-        "level_one_gridspacing": float(level_one_gridspacing),
+        "level_one_gridspacing": level_one_gridspacing.tolist(),
         "level_zero_cutoff": float(level_zero_cutoff),
         "p": int(p),
         "mu": int(mu),
@@ -273,7 +287,7 @@ def suggest_msm_params(
 def set_up_kernels_grids_and_stencils(
     box_lengths,
     pbcs,
-    level_one_gridspacing,
+    level_one_gridspacing: Sequence[float],  # TODO: scalar/sequence?
     level_zero_cutoff,
     p,
     mu,
@@ -293,7 +307,7 @@ def set_up_kernels_grids_and_stencils(
     )
     grids = set_up_grids_all_levels(
         box_lengths=box_lengths,
-        level_one_spacings=[level_one_gridspacing] * n_dim,
+        level_one_spacings=level_one_gridspacing,
         pbcs=pbcs,
         n_levels=n_levels,
         p=p,
@@ -330,7 +344,7 @@ def set_up_kernel_fns(
 def set_up_kernels_and_grids(
     box_lengths,
     pbcs,
-    level_one_gridspacing,
+    level_one_gridspacing: Sequence[float],  # TODO: scalar/sequence?
     level_zero_cutoff,
     p,
     mu,
@@ -345,7 +359,7 @@ def set_up_kernels_and_grids(
     )
     grids = set_up_grids_all_levels(
         box_lengths=box_lengths,
-        level_one_spacings=[level_one_gridspacing] * n_dim,
+        level_one_spacings=level_one_gridspacing,
         pbcs=pbcs,
         n_levels=n_levels,
         p=p,
