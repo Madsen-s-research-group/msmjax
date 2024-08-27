@@ -90,19 +90,20 @@ def get_metadata(additional_repository_paths: dict = None):
     return metadata
 
 
-def time_set_of_structures(structures, pbc, setup_fn, **kwargs):
+def time_set_of_structures(structures, pbc, setup_fn, **setup_fn_kwargs):
     timed_calc, info = setup_fn(
         structures=structures,
         pbc=pbc,
-        **kwargs,
+        **setup_fn_kwargs,
     )
     times_all = []
     for idx_structure in range(len(structures["positions"])):
         pos = jnp.array(structures["positions"][idx_structure])
         chg = jnp.array(structures["charges"][idx_structure])
+        cell = jnp.array(structures["cells"][idx_structure])
         jax.device_put(pos)
         jax.device_put(chg)
-        times_all.append(timed_calc(pos, chg))
+        times_all.append(timed_calc(pos, chg, cell))
 
     output = {
         "times": onp.array(times_all).tolist(),

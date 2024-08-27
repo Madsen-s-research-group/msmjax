@@ -1,4 +1,5 @@
 from copy import copy
+from functools import partial
 from typing import Callable, List, Literal, Sequence, Tuple, Union
 
 import jax
@@ -18,8 +19,8 @@ def determine_kernel_stencil_size(cell, spacings, cutoff, padding=1):
     # TODO: Should the parameter names for spacings and r_cut suggest one
     #  specific grid level? In principle, if they're given at the same level,
     #  it does not matter which, since both are doubled at each level.
-    #  But OTOH, the risk of inadvertently passing the level-one spacing and
-    #  together with the level-zero cutoff should be minimized
+    #  But OTOH, the risk of inadvertently passing the level-ONE spacing and
+    #  together with the level-ZERO cutoff should be minimized
     # TODO: Should this have a padding argument at all? Should the padding only
     #  be added by higher-level funcions?
 
@@ -142,6 +143,7 @@ def _construct_all_kernel_stencils(
     return stencils
 
 
+# TODO: "dynamic" in name?
 def make_kernel_stencil_construction_fn(
     kernel_fns: List[Callable],
     sizes_from_center: Sequence[int],
@@ -216,12 +218,13 @@ def make_flex_cell_U1plus_fn(
 ):
     # TODO: Option to return auxiliary information, like the grids?
 
+    # TODO: allow both stencil padding and stencil size as argument?
+
     # TODO: In addition to explicit stencil padding, allow specification via
     #  (something like) `max_compression_factor` as well? (maybe more intuitive)
 
     n_dim = len(pbc)
     pbc = onp.asarray(pbc)
-    # TODO: different spacings along different directions
     if onp.isscalar(level_one_gridspacing):
         reference_spacings = onp.full(n_dim, level_one_gridspacing)
     else:
@@ -286,6 +289,8 @@ def make_flex_cell_U1plus_fn(
 
     def compute_U1plus_flex_cell(positions, charges, cell):
         kernel_stencils = construct_kernel_stencils(cell)
+        # TODO: if the function computes forces or stresses, those need to be
+        #  transformed back from the unit cube
         return compute_U1plus_unit_cube(
             to_unit_cube(positions, cell), charges, kernel_stencils
         )

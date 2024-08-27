@@ -347,11 +347,9 @@ def set_up_kernels_and_grids(
     level_one_gridspacing: Sequence[float],  # TODO: scalar/sequence?
     level_zero_cutoff,
     p,
-    mu,
     n_levels,
+    **unused_kwargs,
 ):
-    n_dim = len(pbcs)
-
     kernels = split_one_over_r_kernel(
         max_level=n_levels,
         level_zero_cutoff=level_zero_cutoff,
