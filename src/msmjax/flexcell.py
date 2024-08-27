@@ -1,6 +1,5 @@
 from copy import copy
-from functools import partial
-from typing import Callable, List, Literal, Sequence, Tuple, Union
+from typing import Callable, List, Literal, Optional, Sequence, Tuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -15,14 +14,12 @@ from msmjax.convenience import set_up_kernels_and_grids
 from msmjax.gridops_multidim import create_compute_U_oneplus_direct
 
 
-def determine_kernel_stencil_size(cell, spacings, cutoff, padding=1):
+def determine_min_kernel_stencil_size(cell, spacings, cutoff):
     # TODO: Should the parameter names for spacings and r_cut suggest one
     #  specific grid level? In principle, if they're given at the same level,
     #  it does not matter which, since both are doubled at each level.
     #  But OTOH, the risk of inadvertently passing the level-ONE spacing and
     #  together with the level-ZERO cutoff should be minimized
-    # TODO: Should this have a padding argument at all? Should the padding only
-    #  be added by higher-level funcions?
 
     # TODO: unit test this function
 
@@ -35,7 +32,7 @@ def determine_kernel_stencil_size(cell, spacings, cutoff, padding=1):
     #  cell passed to `get_max_cutoff_3d` in discrete steps, corresponding to
     #  adding an additional grid point, until the cutoff fits)
     if n_dim == 1:
-        return tuple([onp.floor(cutoff / spacings).astype(int) + padding])
+        return tuple([onp.floor(cutoff / spacings).astype(int)])
     elif n_dim == 2:
         phis = onp.linspace(0, 2 * onp.pi, 500)
         points = onp.array([onp.cos(phis), onp.sin(phis)]).T
@@ -73,7 +70,6 @@ def determine_kernel_stencil_size(cell, spacings, cutoff, padding=1):
     sizes_from_center = onp.floor(
         points_at_cutoff_transformed.max(axis=0) / spacings_transformed + tol
     ).astype(int)
-    sizes_from_center += padding
 
     return tuple(sizes_from_center)
 
@@ -213,12 +209,14 @@ def make_flex_cell_U1plus_fn(
     mu: int,
     n_levels: int,
     convolution_methods=None,
-    stencil_padding: Union[int, Sequence[int]] = 1,
+    stencil_padding: Optional[Union[int, Sequence[int]]] = None,
     cell_mode: Literal["ortho", "general"] = "ortho",
 ):
-    # TODO: Option to return auxiliary information, like the grids?
+    # TODO: Option to return auxiliary information, like the grids, stencils,
+    #  omega, ...?
 
-    # TODO: allow both stencil padding and stencil size as argument?
+    # TODO: Offer passing both `stencil_padding` and `stencil_size`
+    #  (or `compression_tolerance_factor`)? (not both at the same time)
 
     # TODO: In addition to explicit stencil padding, allow specification via
     #  (something like) `max_compression_factor` as well? (maybe more intuitive)
@@ -229,6 +227,9 @@ def make_flex_cell_U1plus_fn(
         reference_spacings = onp.full(n_dim, level_one_gridspacing)
     else:
         reference_spacings = onp.asarray(level_one_gridspacing)
+
+    if stencil_padding is None:
+        stencil_padding = 0
 
     omega, _ = compute_coeffs_with_truncation(p=p, mu=mu)
     grids_unit_cube = set_up_grids_unitcube(
@@ -243,22 +244,29 @@ def make_flex_cell_U1plus_fn(
         ),
     )
 
+    cutoff_lvl_1 = 2 * level_zero_cutoff
+    stencil_sizes_from_center = determine_min_kernel_stencil_size(
+        cell=reference_cell,
+        spacings=level_one_gridspacing,
+        cutoff=cutoff_lvl_1,
+    )
+
     if onp.all(pbc):
         includes_toplevel = False
         sizes_toplevel = None
     elif onp.all(~pbc):
         includes_toplevel = True
-        padding = len(omega) // 2
-        sizes_toplevel = tuple(s + padding for s in grids_unit_cube[-1].shape)
+        # For no information loss during convolution, we need to add half the
+        # length of omega in padding.
+        sizes_toplevel = tuple(
+            s + len(omega) // 2 for s in grids_unit_cube[-1].shape
+        )
+        sizes_toplevel = tuple(onp.array(sizes_toplevel) + stencil_padding)
     else:
         raise ValueError("Mixed boundary conditions not supported yet")
 
-    cutoff_lvl_1 = 2 * level_zero_cutoff
-    stencil_sizes_from_center = determine_kernel_stencil_size(
-        cell=reference_cell,
-        spacings=level_one_gridspacing,
-        cutoff=cutoff_lvl_1,
-        padding=stencil_padding,
+    stencil_sizes_from_center = tuple(
+        onp.array(stencil_sizes_from_center) + stencil_padding
     )
 
     # TODO: trim unnecessarily large stencils (especially: top level for non-periodic)
