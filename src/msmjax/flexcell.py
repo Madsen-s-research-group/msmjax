@@ -319,7 +319,7 @@ def make_flex_cell_U1plus_fn(
             to_unit_cube(positions, cell), charges, kernel_stencils
         )
         # TODO: How to correctly transform back the forces from the unit cube?
-        backtransform_forces(f, cell)
+        return backtransform_forces(f, cell)
 
     if forces:
         return compute_U1plus_flex_cell, compute_f1plus_flex_cell
