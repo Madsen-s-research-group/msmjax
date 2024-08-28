@@ -744,11 +744,11 @@ def create_compute_U_oneplus_via_potential(
     )
 
     def compute_U_oneplus(
-        positions: jax.Array, charges: jax.Array
+        positions: jax.Array, charges: jax.Array, kernel_stencils: jax.Array
     ) -> jax.Array:
         gridcharge_level_one = anterpolate_level_one(positions, charges)
         gridpotential_level_one = compute_gridpotential_level_one(
-            gridcharge_level_one
+            gridcharge_level_one, kernel_stencils
         )
 
         # TODO: splinevals and indices from anterpolation could, in principle,
@@ -840,11 +840,11 @@ def create_compute_U_and_f_oneplus_via_potential(
     )
 
     def compute_U_and_f_oneplus(
-        positions: jax.Array, charges: jax.Array
+        positions: jax.Array, charges: jax.Array, kernel_stencils: jax.Array
     ) -> Tuple[jax.Array, jax.Array]:
         gridcharge_level_one = anterpolate_level_one(positions, charges)
         gridpotential_level_one = compute_gridpotential_level_one(
-            gridcharge_level_one
+            gridcharge_level_one, kernel_stencils
         )
 
         # TODO: splinevals, splinegrads and indices from anterpolation could,

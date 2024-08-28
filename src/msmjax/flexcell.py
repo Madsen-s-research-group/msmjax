@@ -13,6 +13,7 @@ from msmjax.bspline_interpolation.coefficients import (
 from msmjax.convenience import set_up_kernels_and_grids
 from msmjax.gridops_multidim import (
     create_compute_f_oneplus_via_potential,
+    create_compute_U_and_f_oneplus_via_potential,
     create_compute_U_oneplus_direct,
 )
 
@@ -53,7 +54,7 @@ def determine_min_kernel_stencil_size(cell, spacings, cutoff):
             ]
         ).T
     else:
-        raise ValueError
+        raise ValueError("Spatial dimensions greater than 3 not supported.")
 
     points_at_cutoff = cutoff * points
     points_at_cutoff_transformed = points_at_cutoff @ inverse
@@ -291,13 +292,13 @@ def make_flex_cell_U1plus_fn(
         to_unit_cube = lambda positions, cell: positions @ jnp.linalg.pinv(
             cell
         )
-        # TODO: why do we need to transpose here?
+        # Gradients transform BACK FROM the unit cube with the TRANSPOSE of the
+        # transformation that transforms positions TO the unit cube
         backtransform_forces = lambda f, cell: f @ jnp.linalg.pinv(cell).T
     else:
         raise ValueError("Invalid `cell_mode`.")
 
-    # TODO: Allow choosing different setup functions for U_oneplus (`create_compute_U_oneplus_via_potential`)
-    #  And what about the same choice for forces?
+    # TODO: return U_and_f_oneplus as well?
     compute_U1plus_unitcube_direct = create_compute_U_oneplus_direct(
         grids=grids_unit_cube, convolution_methods=convolution_methods
     )
@@ -306,6 +307,15 @@ def make_flex_cell_U1plus_fn(
             grids=grids_unit_cube, convolution_methods=convolution_methods
         )
     )
+    compute_U_and_f_1plus_via_potential = (
+        create_compute_U_and_f_oneplus_via_potential(
+            grids=grids_unit_cube, convolution_methods=convolution_methods
+        )
+    )
+
+    # TODO: The following functions could perhaps be implemented via a general
+    #  wrapper that takes a "construct_kernel_stencils" fn, a (tuple of?)
+    #  "transform" fn(s), and a "compute" fn
 
     def compute_U1plus_flex_cell(positions, charges, cell):
         kernel_stencils = construct_kernel_stencils(cell)
@@ -318,10 +328,20 @@ def make_flex_cell_U1plus_fn(
         f = compute_f1plus_unitcube_via_potential(
             to_unit_cube(positions, cell), charges, kernel_stencils
         )
-        # TODO: How to correctly transform back the forces from the unit cube?
         return backtransform_forces(f, cell)
 
+    def compute_U_and_f_1plus_flex_cell(positions, charges, cell):
+        kernel_stencils = construct_kernel_stencils(cell)
+        e, f = compute_U_and_f_1plus_via_potential(
+            to_unit_cube(positions, cell), charges, kernel_stencils
+        )
+        return e, backtransform_forces(f, cell)
+
     if forces:
-        return compute_U1plus_flex_cell, compute_f1plus_flex_cell
+        return (
+            compute_U1plus_flex_cell,
+            compute_f1plus_flex_cell,
+            compute_U_and_f_1plus_flex_cell,
+        )
     else:
         return compute_U1plus_flex_cell
