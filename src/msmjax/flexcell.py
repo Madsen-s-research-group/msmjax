@@ -299,15 +299,13 @@ def make_flex_cell_U1plus_fn(
         raise ValueError("Invalid `cell_mode`.")
 
     # TODO: return U_and_f_oneplus as well?
-    compute_U1plus_unitcube_direct = create_compute_U_oneplus_direct(
+    compute_U1plus_unitcube = create_compute_U_oneplus_direct(
         grids=grids_unit_cube, convolution_methods=convolution_methods
     )
-    compute_f1plus_unitcube_via_potential = (
-        create_compute_f_oneplus_via_potential(
-            grids=grids_unit_cube, convolution_methods=convolution_methods
-        )
+    compute_f1plus_unitcube = create_compute_f_oneplus_via_potential(
+        grids=grids_unit_cube, convolution_methods=convolution_methods
     )
-    compute_U_and_f_1plus_via_potential = (
+    compute_U1plus_and_f1plus_unitcube = (
         create_compute_U_and_f_oneplus_via_potential(
             grids=grids_unit_cube, convolution_methods=convolution_methods
         )
@@ -317,31 +315,31 @@ def make_flex_cell_U1plus_fn(
     #  wrapper that takes a "construct_kernel_stencils" fn, a (tuple of?)
     #  "transform" fn(s), and a "compute" fn
 
-    def compute_U1plus_flex_cell(positions, charges, cell):
+    def compute_U1plus_flexcell(positions, charges, cell):
         kernel_stencils = construct_kernel_stencils(cell)
-        return compute_U1plus_unitcube_direct(
+        return compute_U1plus_unitcube(
             to_unit_cube(positions, cell), charges, kernel_stencils
         )
 
-    def compute_f1plus_flex_cell(positions, charges, cell):
+    def compute_f1plus_flexcell(positions, charges, cell):
         kernel_stencils = construct_kernel_stencils(cell)
-        f = compute_f1plus_unitcube_via_potential(
+        f = compute_f1plus_unitcube(
             to_unit_cube(positions, cell), charges, kernel_stencils
         )
         return backtransform_forces(f, cell)
 
-    def compute_U_and_f_1plus_flex_cell(positions, charges, cell):
+    def compute_U1plus_and_f1plus_flexcell(positions, charges, cell):
         kernel_stencils = construct_kernel_stencils(cell)
-        e, f = compute_U_and_f_1plus_via_potential(
+        e, f = compute_U1plus_and_f1plus_unitcube(
             to_unit_cube(positions, cell), charges, kernel_stencils
         )
         return e, backtransform_forces(f, cell)
 
     if forces:
         return (
-            compute_U1plus_flex_cell,
-            compute_f1plus_flex_cell,
-            compute_U_and_f_1plus_flex_cell,
+            compute_U1plus_flexcell,
+            compute_f1plus_flexcell,
+            compute_U1plus_and_f1plus_flexcell,
         )
     else:
-        return compute_U1plus_flex_cell
+        return compute_U1plus_flexcell
