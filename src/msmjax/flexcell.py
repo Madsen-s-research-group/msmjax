@@ -203,6 +203,20 @@ def set_up_grids_unitcube(
     return grids
 
 
+def make_unitcube_transform_fns_ortho(cell):
+    inverse = 1.0 / jnp.diag(cell)
+    transform_pos = lambda x: x * inverse
+    backtransform_grad = lambda x: x * inverse
+    return transform_pos, backtransform_grad
+
+
+def make_unitcube_transform_fns_general(cell):
+    inverse = jnp.linalg.pinv(cell)
+    transform_pos = lambda x: x @ inverse
+    backtransform_grad = lambda dx: dx @ inverse.T
+    return transform_pos, backtransform_grad
+
+
 def make_flex_cell_U1plus_fn(
     kernel_fns: List[Callable],
     pbc: Sequence[bool],
@@ -286,19 +300,12 @@ def make_flex_cell_U1plus_fn(
     )
 
     if cell_mode == "ortho":
-        to_unit_cube = lambda positions, cell: positions / jnp.diag(cell)
-        backtransform_forces = lambda f, cell: f / jnp.diag(cell)
+        make_unitcube_transform_fns = make_unitcube_transform_fns_ortho
     elif cell_mode == "general":
-        to_unit_cube = lambda positions, cell: positions @ jnp.linalg.pinv(
-            cell
-        )
-        # Gradients transform BACK FROM the unit cube with the TRANSPOSE of the
-        # transformation that transforms positions TO the unit cube
-        backtransform_forces = lambda f, cell: f @ jnp.linalg.pinv(cell).T
+        make_unitcube_transform_fns = make_unitcube_transform_fns_general
     else:
         raise ValueError("Invalid `cell_mode`.")
 
-    # TODO: return U_and_f_oneplus as well?
     compute_U1plus_unitcube = create_compute_U_oneplus_direct(
         grids=grids_unit_cube, convolution_methods=convolution_methods
     )
@@ -316,24 +323,27 @@ def make_flex_cell_U1plus_fn(
     #  "transform" fn(s), and a "compute" fn
 
     def compute_U1plus_flexcell(positions, charges, cell):
+        transform_pos, backtransform_grad = make_unitcube_transform_fns(cell)
         kernel_stencils = construct_kernel_stencils(cell)
         return compute_U1plus_unitcube(
-            to_unit_cube(positions, cell), charges, kernel_stencils
+            transform_pos(positions), charges, kernel_stencils
         )
 
     def compute_f1plus_flexcell(positions, charges, cell):
+        transform_pos, backtransform_grad = make_unitcube_transform_fns(cell)
         kernel_stencils = construct_kernel_stencils(cell)
         f = compute_f1plus_unitcube(
-            to_unit_cube(positions, cell), charges, kernel_stencils
+            transform_pos(positions), charges, kernel_stencils
         )
-        return backtransform_forces(f, cell)
+        return backtransform_grad(f)
 
     def compute_U1plus_and_f1plus_flexcell(positions, charges, cell):
+        transform_pos, backtransform_grad = make_unitcube_transform_fns(cell)
         kernel_stencils = construct_kernel_stencils(cell)
         e, f = compute_U1plus_and_f1plus_unitcube(
-            to_unit_cube(positions, cell), charges, kernel_stencils
+            transform_pos(positions), charges, kernel_stencils
         )
-        return e, backtransform_forces(f, cell)
+        return e, backtransform_grad(f)
 
     if forces:
         return (
