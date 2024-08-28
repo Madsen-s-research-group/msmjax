@@ -59,10 +59,9 @@ def determine_min_kernel_stencil_size(cell, spacings, cutoff):
     points_at_cutoff = cutoff * points
     points_at_cutoff_transformed = points_at_cutoff @ inverse
 
-    # TODO: Are these transformed spacings correct?
     single_grid_cell = (
         cell
-        / onp.linalg.norm(cell, axis=1)  # TODO: does this broadcast correctly?
+        / onp.linalg.norm(cell, axis=1)[:, onp.newaxis]
         * onp.atleast_1d(spacings)[:, onp.newaxis]
     )
     spacings_transformed = onp.diag(single_grid_cell @ inverse)
