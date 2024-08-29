@@ -78,17 +78,17 @@ def _periodic_displacement_ortho(R_1, R_2, cell):
     return _periodic_displacement_general(R_1, R_2, cell=jnp.diag(cell))
 
 
-def select_displacement_fn(pbc, cell_type) -> Callable:
+def select_displacement_fn(pbc, cell_mode) -> Callable:
     if onp.all(~pbc):
         return _nonperiodic_displacement
     else:
-        if cell_type == "ortho":
+        if cell_mode == "ortho":
             periodic_disp = _periodic_displacement_ortho
-        elif cell_type == "general":
+        elif cell_mode == "general":
             periodic_disp = _periodic_displacement_general
         else:
             # TODO: better error message
-            raise ValueError("Illegal value for `cell_type`")
+            raise ValueError("Illegal value for `cell_mode`")
     if onp.all(pbc):
         return periodic_disp
     else:
@@ -122,8 +122,8 @@ def _generalized_diagonal_mask(X):
 def make_pair_term_fn(
     kernel_fn: Callable,
     pbc: npt.ArrayLike,
-    # TODO: Default value for `cell_type`: Is `None` okay?
-    cell_type: Optional[Literal["ortho", "general"]] = None,
+    # TODO: Default value for `cell_mode`: Is `None` okay?
+    cell_mode: Optional[Literal["ortho", "general"]] = None,
     supercell_diag: Union[int, Sequence[int]] = 1,
 ):
     # TODO: unit test jitting
@@ -135,7 +135,7 @@ def make_pair_term_fn(
         )
     # TODO: check supercell_diag >= 1?
 
-    displacement_fn = select_displacement_fn(pbc, cell_type)
+    displacement_fn = select_displacement_fn(pbc, cell_mode)
 
     def compute_pair_term(positions, charges, cell):
         """Logic adapted from JAX-MD, but adding supercell_diag option and
@@ -164,10 +164,10 @@ def make_pair_term_fn(
 def make_pair_term_fn_with_neighbor_list(
     kernel_fn: Callable,
     pbc: npt.ArrayLike,
-    cell_type,  # TODO: type hint, default value?
+    cell_mode,  # TODO: type hint, default value?
 ):
     pbc = onp.asarray(pbc)
-    displacement_fn = select_displacement_fn(pbc, cell_type)
+    displacement_fn = select_displacement_fn(pbc, cell_mode)
 
     def compute_pair_term(positions, charges, cell, neighbor_list, weights):
         (i, j) = neighbor_list
@@ -193,13 +193,13 @@ def make_pair_term_fn_with_neighbor_list(
 def make_compute_U0(
     kernel_fns: List[Callable],
     pbc: npt.ArrayLike,
-    cell_type,  # TODO: type hint, default value?
+    cell_mode,  # TODO: type hint, default value?
     supercell_diag: Union[int, Sequence[int]] = 1,
 ):
     compute_pair_term = make_pair_term_fn(
         kernel_fn=kernel_fns[0],
         pbc=pbc,
-        cell_type=cell_type,
+        cell_mode=cell_mode,
         supercell_diag=supercell_diag,
     )
     sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
@@ -221,14 +221,14 @@ def make_compute_U0(
 def make_compute_U0_with_neighbor_list(
     kernel_fns: List[Callable],
     pbc: npt.ArrayLike,
-    cell_type,  # TODO: type hint, default value?
+    cell_mode,  # TODO: type hint, default value?
 ):
     # TODO: add tests for this
     # TODO: Using a neighbor list together with `supercell_diag` could get a
     #  bit complicated, so this function currently doesn't support
     #  `supercell_diag`, but it could still be useful.
     compute_pair_term = make_pair_term_fn_with_neighbor_list(
-        kernel_fn=kernel_fns[0], pbc=pbc, cell_type=cell_type
+        kernel_fn=kernel_fns[0], pbc=pbc, cell_mode=cell_mode
     )
     sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
 
