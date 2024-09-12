@@ -52,6 +52,27 @@ def gen_supercell(
     return super_positions, super_charges, super_cell
 
 
+def _inverse(box):
+    """Compute the inverse of an affine transformation.
+
+    Adapted from JAX-MD. Uses pinv instead of inv.
+    TODO: attribution
+    """
+    # TODO: do we want to support the scalar case?
+    if jnp.isscalar(box) or box.size == 1:
+        return 1 / box
+    elif box.ndim == 1:
+        return 1 / box
+    elif box.ndim == 2:
+        return jnp.linalg.pinv(box)
+    raise ValueError(
+        (
+            "Box must be either: a scalar, a vector, or a matrix. "
+            f"Found {box}."
+        )
+    )
+
+
 def _nonperiodic_displacement(R_1, R_2, cell):
     return R_1 - R_2
 
@@ -64,7 +85,7 @@ def _periodic_displacement_general(R_1, R_2, cell):
     # Transpose the cell to make it compatible with JAX-MD
     cell = cell.T
     # TODO: change inv to pinv in inverse function?
-    inv_cell = space.inverse(cell)
+    inv_cell = _inverse(cell)
     R_1 = space.transform(inv_cell, R_1)
     R_2 = space.transform(inv_cell, R_2)
     dR = space.periodic_displacement(
@@ -79,24 +100,25 @@ def _periodic_displacement_ortho(R_1, R_2, cell):
 
 
 def select_displacement_fn(pbc, cell_mode) -> Callable:
-    if onp.all(~pbc):
+    if jnp.all(~pbc):
         return _nonperiodic_displacement
+
+    if cell_mode == "ortho":
+        periodic_disp = _periodic_displacement_ortho
+    elif cell_mode == "general":
+        periodic_disp = _periodic_displacement_general
     else:
-        if cell_mode == "ortho":
-            periodic_disp = _periodic_displacement_ortho
-        elif cell_mode == "general":
-            periodic_disp = _periodic_displacement_general
-        else:
-            # TODO: better error message
-            raise ValueError("Illegal value for `cell_mode`")
-    if onp.all(pbc):
+        # TODO: better error message
+        raise ValueError("Illegal value for `cell_mode`")
+
+    if jnp.all(pbc):
         return periodic_disp
-    else:
-        return lambda R_1, R_2, cell: jnp.where(
-            pbc,
-            periodic_disp(R_1, R_2, cell=cell),
-            _nonperiodic_displacement(R_1, R_2, cell=cell),
-        )
+
+    return lambda R_1, R_2, cell: jnp.where(
+        pbc,
+        periodic_disp(R_1, R_2, cell=cell),
+        _nonperiodic_displacement(R_1, R_2, cell=cell),
+    )
 
 
 def _generalized_diagonal_mask(X):
