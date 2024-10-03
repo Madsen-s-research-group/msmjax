@@ -193,7 +193,7 @@ def set_up_grids_unitcube(
     box_lengths_unitcube = onp.ones(len(pbc))
     msm_params_unitcube = copy(msm_params_original)
     msm_params_unitcube["level_one_gridspacing"] = (
-        msm_params_original["level_one_gridspacing"] / box_lengths_original[0]
+        msm_params_original["level_one_gridspacing"] / box_lengths_original
     )
     _, grids = set_up_kernels_and_grids(
         box_lengths=box_lengths_unitcube, pbcs=pbc, **msm_params_unitcube
