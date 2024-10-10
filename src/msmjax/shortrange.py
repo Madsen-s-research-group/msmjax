@@ -23,7 +23,7 @@ from jax_md.util import (  # # TODO: copy to standalone module instead of import
     f32,
 )
 
-from msmjax.utils import _sqrt
+from msmjax.utils import _divide_zero_safe, _sqrt
 
 
 def gen_supercell(
@@ -100,29 +100,39 @@ def _periodic_displacement_ortho(R_1, R_2, cell):
 
 
 def select_displacement_fn(pbc, cell_mode) -> Callable:
-    if jnp.all(~pbc):
+    if not jnp.any(pbc):
         return _nonperiodic_displacement
 
+    def mixed_periodic_displacement_ortho(R_1, R_2, cell):
+        side_lengths = jnp.diag(cell) * pbc
+        delta = R_1 - R_2
+        return (
+            delta
+            - jnp.round(_divide_zero_safe(delta, side_lengths)) * side_lengths
+        )
+
+    def mixed_periodic_displacement_general(R_1, R_2, cell):
+        # TODO: Why is this is much slower than the jax_md equivalent?
+        cell_processed_for_pbc = cell * pbc[:, jnp.newaxis]
+        delta = R_1 - R_2
+        return (
+            delta
+            - jnp.round(delta @ jnp.linalg.pinv(cell_processed_for_pbc))
+            @ cell_processed_for_pbc
+        )
+
     if cell_mode == "ortho":
-        periodic_disp = _periodic_displacement_ortho
-    elif cell_mode == "general":
-        periodic_disp = _periodic_displacement_general
-    else:
-        # TODO: better error message
-        raise ValueError("Illegal value for `cell_mode`")
-
-    if jnp.all(pbc):
-        return periodic_disp
-
-    return lambda R_1, R_2, cell: jnp.where(
-        pbc,
-        periodic_disp(R_1, R_2, cell=cell),
-        _nonperiodic_displacement(R_1, R_2, cell=cell),
-    )
+        return mixed_periodic_displacement_ortho
+    if cell_mode == "general":
+        return mixed_periodic_displacement_general
 
 
 def _generalized_diagonal_mask(X):
-    """Set the diagonal of a matrix to zero that may be wider than tall"""
+    """Set the diagonal of a matrix to zero that may be wider than tall
+
+    Adapted from JAX-MD
+    # TODO: attribution
+    """
     if len(X.shape) != 2:
         raise ValueError("Only two-dimensional arrays are supported.")
     M, N = X.shape
@@ -130,6 +140,8 @@ def _generalized_diagonal_mask(X):
         raise ValueError(
             "Input array must be either square, or wider than tall."
         )
+    # TODO: Is this okay? (See the note in the original `_diagonal_mask`
+    #  function of jax_md)
     X = jnp.nan_to_num(X)
     mask = f32(1.0) - jnp.eye(M, dtype=X.dtype)
     mask = jnp.pad(
