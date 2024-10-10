@@ -16,6 +16,7 @@ from msmjax.gridops_multidim import (
     create_compute_U_and_f_oneplus_via_potential,
     create_compute_U_oneplus_direct,
 )
+from msmjax.utils import _sqrt
 
 
 def determine_min_kernel_stencil_size(cell, spacings, cutoff):
@@ -108,7 +109,7 @@ def _construct_all_kernel_stencils(
     stencils = [None]
 
     # Level one
-    distances = jnp.linalg.norm(points, axis=-1)
+    distances = _sqrt((points * points).sum(axis=-1))
     fn_vals_at_points = kernel_fns[1](distances)
     stencils.append(_compute_kernel_stencil(fn_vals_at_points, omega))
 
@@ -129,6 +130,8 @@ def _construct_all_kernel_stencils(
         # TODO: For the size of the top level stencil chosen sufficiently
         #  large (I think it needs to be the grid size + half the length of
         #  omega as padding), constructing it is very costly
+        # TODO: The use `linalg.norm` instead of custom `_sqrt` might lead
+        #  to problems.
         distances_toplevel = 2 ** (n_levels - 2) * jnp.linalg.norm(
             points_toplevel, axis=-1
         )
