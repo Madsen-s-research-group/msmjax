@@ -295,6 +295,7 @@ def set_up_grids_and_kernels(
     )
     grids = set_up_grids_all_levels(
         box_lengths=box_lengths,
+        # TODO: allow separate values for each axis
         level_one_spacings=[level_one_gridspacing] * n_dim,
         pbcs=pbcs,
         n_levels=n_levels,
@@ -304,6 +305,9 @@ def set_up_grids_and_kernels(
     kernel_stencils = wrappers_old_code._construct_kernel_stencils(
         kernels=kernels,
         box_lengths=box_lengths,
+        # TODO: allow separate values for each axis (but ultimately, the
+        #  kernel stencil construction should be handled by the code
+        #  currently on the `flexible_cell_dev` branch)
         level_one_gridspacing=level_one_gridspacing,
         level_zero_cutoff=level_zero_cutoff,
         n_levels=n_levels,
