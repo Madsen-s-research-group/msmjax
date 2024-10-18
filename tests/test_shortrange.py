@@ -216,6 +216,46 @@ def test_compute_distance_vectors(fixture_structure, fixture_pbc):
     assert onp.allclose(deltas_within_cutoff, deltas_within_cutoff_ase)
 
 
+@pytest.mark.parametrize(
+    "fixture_structure",
+    ["fixture_structure_cubic", "fixture_structure_nonortho"],
+    indirect=True,
+)
+@pytest.mark.parametrize("shift", [(0, 0, 1), (1, 2, 3), (-3, 2, -1)])
+def test_compute_distance_vectors_outside_cell(
+    fixture_structure, fixture_pbc, shift
+):
+    pos, chg, cell, cell_mode = fixture_structure
+    pos, chg = pos[:30], chg[:30]
+    max_cutoff = get_max_cutoff_3d(cell)
+    (i, j) = jnp.triu_indices(pos.shape[0], k=1)
+
+    displacement_fn = select_displacement_fn(
+        pbc=onp.array(fixture_pbc), cell_mode=cell_mode
+    )
+    deltas = onp.array(
+        [
+            displacement_fn(pos[idx_1], pos[idx_2], cell)
+            for idx_1, idx_2 in zip(i, j)
+        ]
+    )
+    deltas_shifted = onp.array(
+        [
+            displacement_fn(
+                pos[idx_1] + (onp.array(shift) * fixture_pbc) @ cell,
+                pos[idx_2],
+                cell,
+            )
+            for idx_1, idx_2 in zip(i, j)
+        ]
+    )
+
+    is_within_cutoff = onp.linalg.norm(deltas, axis=1) < max_cutoff
+    assert onp.allclose(
+        deltas[is_within_cutoff], deltas_shifted[is_within_cutoff]
+    )
+
+
 def test_compute_distance_vectors_different_cell_types(
     fixture_structure_cubic, fixture_pbc
 ):
