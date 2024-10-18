@@ -112,14 +112,22 @@ def select_displacement_fn(pbc, cell_mode) -> Callable:
         )
 
     def mixed_periodic_displacement_general(R_1, R_2, cell):
-        # TODO: Why is this is much slower than the jax_md equivalent?
-        cell_processed_for_pbc = cell * pbc[:, jnp.newaxis]
-        delta = R_1 - R_2
-        return (
-            delta
-            - jnp.round(delta @ jnp.linalg.pinv(cell_processed_for_pbc))
-            @ cell_processed_for_pbc
-        )
+        # # TODO: Why is this is much slower than the jax_md equivalent?
+        # cell_processed_for_pbc = cell * pbc[:, jnp.newaxis]
+        # delta = R_1 - R_2
+        # return (
+        #     delta
+        #     - jnp.round(delta @ jnp.linalg.pinv(cell_processed_for_pbc))
+        #     @ cell_processed_for_pbc
+        # )
+        inv_cell = jnp.linalg.pinv(cell)  # TODO: `_inverse` function?
+        # TODO
+        R_1 = R_1 @ inv_cell
+        R_2 = R_2 @ inv_cell
+        dR = R_1 - R_2
+        dR = jnp.where(pbc, space.periodic_displacement(f32(1.0), dR), dR)
+        dR = dR @ cell
+        return dR
 
     if cell_mode == "ortho":
         return mixed_periodic_displacement_ortho
