@@ -13,13 +13,10 @@
 
 import os
 
-from ase.geometry import get_distances
-
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 
 from functools import partial
 from pathlib import Path
-from typing import Callable, List
 
 import jax
 import jax.config
@@ -27,6 +24,7 @@ import jax.numpy as jnp
 import numpy as onp
 import pytest
 from ase.atoms import Atoms
+from ase.geometry import get_distances
 from matscipy.neighbours import neighbour_list
 
 from msmjax.benchmark_tools import path_input_structures
@@ -38,6 +36,8 @@ from msmjax.shortrange import (
     select_displacement_fn,
 )
 
+# TODO: this and preallocate should both be handled in the same way
+#  (EITHER via os.environ OR via jax.config.update)
 jax.config.update("jax_enable_x64", True)
 
 
@@ -98,18 +98,8 @@ def fixture_structure(request):
     params=[
         (False, False, False),
         (True, True, True),
-        pytest.param(
-            (False, True, False),
-            marks=pytest.mark.xfail(
-                reason="some problem with distance computation for mixed BCs?"
-            ),
-        ),
-        pytest.param(
-            (True, False, True),
-            marks=pytest.mark.xfail(
-                reason="some problem with distance computation for mixed BCs?"
-            ),
-        ),
+        (False, True, False),
+        (True, False, True),
     ],
 )
 def fixture_pbc(request) -> tuple:
