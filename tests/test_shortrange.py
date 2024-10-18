@@ -225,31 +225,23 @@ def test_compute_distance_vectors(fixture_structure, fixture_pbc):
 def test_compute_distance_vectors_outside_cell(
     fixture_structure, fixture_pbc, shift
 ):
+    """Test pair distance computation when particles shifted by lattice vector.
+
+    Should be the same as when particles all located in the central unit cell.
+    """
     pos, chg, cell, cell_mode = fixture_structure
-    pos, chg = pos[:30], chg[:30]
+    pos, chg = pos[:50], chg[:50]
     max_cutoff = get_max_cutoff_3d(cell)
     (i, j) = jnp.triu_indices(pos.shape[0], k=1)
-
     displacement_fn = select_displacement_fn(
         pbc=onp.array(fixture_pbc), cell_mode=cell_mode
     )
-    deltas = onp.array(
-        [
-            displacement_fn(pos[idx_1], pos[idx_2], cell)
-            for idx_1, idx_2 in zip(i, j)
-        ]
+    deltas = jax.vmap(displacement_fn, in_axes=(0, 0, None))(
+        pos[i], pos[j], cell
     )
-    deltas_shifted = onp.array(
-        [
-            displacement_fn(
-                pos[idx_1] + (onp.array(shift) * fixture_pbc) @ cell,
-                pos[idx_2],
-                cell,
-            )
-            for idx_1, idx_2 in zip(i, j)
-        ]
+    deltas_shifted = jax.vmap(displacement_fn, in_axes=(0, 0, None))(
+        pos[i] + (onp.array(shift) * fixture_pbc) @ cell, pos[j], cell
     )
-
     is_within_cutoff = onp.linalg.norm(deltas, axis=1) < max_cutoff
     assert onp.allclose(
         deltas[is_within_cutoff], deltas_shifted[is_within_cutoff]
