@@ -52,51 +52,8 @@ def gen_supercell(
     return super_positions, super_charges, super_cell
 
 
-def _inverse(box):
-    """Compute the inverse of an affine transformation.
-
-    Adapted from JAX-MD. Uses pinv instead of inv.
-    TODO: attribution
-    """
-    # TODO: do we want to support the scalar case?
-    if jnp.isscalar(box) or box.size == 1:
-        return 1 / box
-    elif box.ndim == 1:
-        return 1 / box
-    elif box.ndim == 2:
-        return jnp.linalg.pinv(box)
-    raise ValueError(
-        (
-            "Box must be either: a scalar, a vector, or a matrix. "
-            f"Found {box}."
-        )
-    )
-
-
 def _nonperiodic_displacement(R_1, R_2, cell):
     return R_1 - R_2
-
-
-def _periodic_displacement_general(R_1, R_2, cell):
-    """Adapted from JAX-MD
-
-    # TODO: attribution
-    """
-    # Transpose the cell to make it compatible with JAX-MD
-    cell = cell.T
-    # TODO: change inv to pinv in inverse function?
-    inv_cell = _inverse(cell)
-    R_1 = space.transform(inv_cell, R_1)
-    R_2 = space.transform(inv_cell, R_2)
-    dR = space.periodic_displacement(
-        f32(1.0), space.pairwise_displacement(R_1, R_2)
-    )
-    dR = space.transform(cell, dR)
-    return dR
-
-
-def _periodic_displacement_ortho(R_1, R_2, cell):
-    return _periodic_displacement_general(R_1, R_2, cell=jnp.diag(cell))
 
 
 def select_displacement_fn(pbc, cell_mode) -> Callable:
@@ -112,22 +69,13 @@ def select_displacement_fn(pbc, cell_mode) -> Callable:
         )
 
     def mixed_periodic_displacement_general(R_1, R_2, cell):
-        # # TODO: Why is this is much slower than the jax_md equivalent?
-        # cell_processed_for_pbc = cell * pbc[:, jnp.newaxis]
-        # delta = R_1 - R_2
-        # return (
-        #     delta
-        #     - jnp.round(delta @ jnp.linalg.pinv(cell_processed_for_pbc))
-        #     @ cell_processed_for_pbc
-        # )
-        inv_cell = jnp.linalg.pinv(cell)  # TODO: `_inverse` function?
-        # TODO
-        R_1 = R_1 @ inv_cell
-        R_2 = R_2 @ inv_cell
         dR = R_1 - R_2
-        dR = jnp.where(pbc, space.periodic_displacement(f32(1.0), dR), dR)
-        dR = dR @ cell
-        return dR
+        cell_processed_for_pbc = cell * pbc[:, jnp.newaxis]
+        inv_cell = jnp.linalg.pinv(cell_processed_for_pbc)
+        R_1_transf = R_1 @ inv_cell
+        R_2_transf = R_2 @ inv_cell
+        dR_transformed = R_1_transf - R_2_transf
+        return dR - jnp.round(dR_transformed) @ cell_processed_for_pbc
 
     if cell_mode == "ortho":
         return mixed_periodic_displacement_ortho
