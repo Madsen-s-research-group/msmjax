@@ -198,11 +198,8 @@ def test_compute_distance_vectors(fixture_structure, fixture_pbc):
     displacement_fn = select_displacement_fn(
         pbc=onp.array(fixture_pbc), cell_mode=cell_mode
     )
-    deltas = onp.array(
-        [
-            displacement_fn(pos[idx_1], pos[idx_2], cell)
-            for idx_1, idx_2 in zip(i, j)
-        ]
+    deltas = jax.vmap(displacement_fn, in_axes=(0, 0, None))(
+        pos[i], pos[j], cell
     )
 
     atoms = Atoms(positions=pos, charges=chg, cell=cell, pbc=fixture_pbc)
@@ -261,17 +258,11 @@ def test_compute_distance_vectors_different_cell_types(
     displacement_fn_general = select_displacement_fn(
         pbc=onp.asarray(fixture_pbc), cell_mode="general"
     )
-    deltas_ortho = onp.array(
-        [
-            displacement_fn_ortho(pos[idx_1], pos[idx_2], cell)
-            for idx_1, idx_2 in zip(i, j)
-        ]
+    deltas_ortho = jax.vmap(displacement_fn_ortho, in_axes=(0, 0, None))(
+        pos[i], pos[j], cell
     )
-    deltas_general = onp.array(
-        [
-            displacement_fn_general(pos[idx_1], pos[idx_2], cell)
-            for idx_1, idx_2 in zip(i, j)
-        ]
+    deltas_general = jax.vmap(displacement_fn_general, in_axes=(0, 0, None))(
+        pos[i], pos[j], cell
     )
     assert onp.allclose(deltas_ortho, deltas_general)
 
