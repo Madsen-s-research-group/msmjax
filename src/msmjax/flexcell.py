@@ -38,14 +38,14 @@ def determine_min_kernel_stencil_size(cell, spacings, cutoff):
         return tuple([onp.floor(cutoff / spacings).astype(int)])
     elif n_dim == 2:
         phis = onp.linspace(0, 2 * onp.pi, 500)
-        points = onp.array([onp.cos(phis), onp.sin(phis)]).T
+        points_unitsphere = onp.array([onp.cos(phis), onp.sin(phis)]).T
     elif n_dim == 3:
         phis = onp.linspace(0, 2 * onp.pi, 200)
         thetas = onp.linspace(0, onp.pi, 200)
         phis, thetas = onp.meshgrid(phis, thetas)
         phis = phis.ravel()
         thetas = thetas.ravel()
-        points = onp.array(
+        points_unitsphere = onp.array(
             [
                 onp.cos(phis) * onp.sin(thetas),
                 onp.sin(phis) * onp.sin(thetas),
@@ -55,7 +55,7 @@ def determine_min_kernel_stencil_size(cell, spacings, cutoff):
     else:
         raise ValueError("Spatial dimensions greater than 3 not supported.")
 
-    points_at_cutoff = cutoff * points
+    points_at_cutoff = cutoff * points_unitsphere
     points_at_cutoff_transformed = points_at_cutoff @ inverse
 
     single_grid_cell = (
@@ -215,24 +215,21 @@ def make_flex_cell_U1plus_fn(
 
     def compute_U1plus_flexcell(positions, charges, cell):
         transform_pos, backtransform_grad = make_unitcube_transform_fns(cell)
-        kernel_stencils = construct_kernel_stencils(cell)
         return compute_U1plus_unitcube(
-            transform_pos(positions), charges, kernel_stencils
+            transform_pos(positions), charges, construct_kernel_stencils(cell)
         )
 
     def compute_f1plus_flexcell(positions, charges, cell):
         transform_pos, backtransform_grad = make_unitcube_transform_fns(cell)
-        kernel_stencils = construct_kernel_stencils(cell)
         f = compute_f1plus_unitcube(
-            transform_pos(positions), charges, kernel_stencils
+            transform_pos(positions), charges, construct_kernel_stencils(cell)
         )
         return backtransform_grad(f)
 
     def compute_U1plus_and_f1plus_flexcell(positions, charges, cell):
         transform_pos, backtransform_grad = make_unitcube_transform_fns(cell)
-        kernel_stencils = construct_kernel_stencils(cell)
         e, f = compute_U1plus_and_f1plus_unitcube(
-            transform_pos(positions), charges, kernel_stencils
+            transform_pos(positions), charges, construct_kernel_stencils(cell)
         )
         return e, backtransform_grad(f)
 

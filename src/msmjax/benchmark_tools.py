@@ -98,11 +98,12 @@ def time_set_of_structures(structures, pbc, setup_fn, **setup_fn_kwargs):
     )
     times_all = []
     for idx_structure in range(len(structures["positions"])):
-        pos = jnp.array(structures["positions"][idx_structure])
-        chg = jnp.array(structures["charges"][idx_structure])
-        cell = jnp.array(structures["cells"][idx_structure])
-        jax.device_put(pos)
-        jax.device_put(chg)
+        pos = structures["positions"][idx_structure]
+        chg = structures["charges"][idx_structure]
+        cell = structures["cells"][idx_structure]
+        pos = jax.device_put(pos)
+        chg = jax.device_put(chg)
+        cell = jax.device_put(cell)
         times_all.append(timed_calc(pos, chg, cell))
 
     output = {
