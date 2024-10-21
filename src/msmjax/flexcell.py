@@ -1,11 +1,9 @@
 from copy import copy
-from typing import Callable, List, Literal, Optional, Sequence, Tuple, Union
+from typing import Callable, List, Literal, Optional, Sequence, Union
 
-import jax
 import jax.numpy as jnp
 import numpy as onp
 import numpy.typing as npt
-from jax.typing import ArrayLike
 
 from msmjax.bspline_interpolation.coefficients import (
     compute_coeffs_with_truncation,
@@ -16,7 +14,7 @@ from msmjax.gridops_multidim import (
     create_compute_U_and_f_oneplus_via_potential,
     create_compute_U_oneplus_direct,
 )
-from msmjax.utils import _sqrt
+from msmjax.kernels import make_kernel_stencil_construction_fn
 
 
 def determine_min_kernel_stencil_size(cell, spacings, cutoff):
@@ -76,115 +74,6 @@ def determine_min_kernel_stencil_size(cell, spacings, cutoff):
     ).astype(int)
 
     return tuple(sizes_from_center)
-
-
-def _onedim_convolution_fn(in1: ArrayLike, in2: ArrayLike):
-    # TODO: method="fft"?
-    return jax.scipy.signal.convolve(in1, in2, mode="same")
-
-
-def _compute_kernel_stencil(values: ArrayLike, omega: ArrayLike):
-    convolved = values
-    # TODO: Is this sequential application of 1d convolutions the fastest thing
-    #  one can do?
-    # TODO: exploit symmetry?
-    for i in range(values.ndim):
-        convolved = jnp.apply_along_axis(
-            func1d=_onedim_convolution_fn, axis=i, arr=convolved, in2=omega
-        )
-    return convolved
-
-
-def _construct_all_kernel_stencils(
-    kernel_fns: List[Callable],  # TODO: appropriate type hint?
-    omega,
-    points,  # TODO: pass points or directly the distances?
-    includes_toplevel: bool,
-    points_toplevel,  # TODO: pass points or directly the distances?
-):
-    # TODO: raise error when `includes_toplevel=True`, but sizes not given
-    n_levels = len(kernel_fns)
-
-    # Level zero (where there is no grid)
-    stencils = [None]
-
-    # Level one
-    distances = _sqrt((points * points).sum(axis=-1))
-    fn_vals_at_points = kernel_fns[1](distances)
-    stencils.append(_compute_kernel_stencil(fn_vals_at_points, omega))
-
-    # Intermediate levels:
-    # For the type of kernel splitting used here, the intermediate-level
-    # kernel values (and thus stencils) can be computed by simply dividing
-    # the one from the previous level by 2. But this need not hold for
-    # other kernels or ways of splitting!
-    # TODO: can this be done by a broadcast multiplication?
-    for lvl in range(2, n_levels - 1):
-        stencils.append(0.5 * stencils[-1])
-
-    # Highest included level
-    if includes_toplevel:
-        # TODO: Some possible efficiency gain by precomputing `points_cartesian`
-        #  or `points_cartesian_toplevel`, whichever is larger in shape,
-        #  and then getting the smaller by indexing into the larger
-        # TODO: For the size of the top level stencil chosen sufficiently
-        #  large (I think it needs to be the grid size + half the length of
-        #  omega as padding), constructing it is very costly
-        # TODO: The use `linalg.norm` instead of custom `_sqrt` might lead
-        #  to problems.
-        distances_toplevel = 2 ** (n_levels - 2) * jnp.linalg.norm(
-            points_toplevel, axis=-1
-        )
-        fn_vals_at_points_toplevel = kernel_fns[-1](distances_toplevel)
-        stencils.append(
-            _compute_kernel_stencil(fn_vals_at_points_toplevel, omega)
-        )
-    else:
-        stencils.append(0.5 * stencils[-1])
-
-    return stencils
-
-
-# TODO: "dynamic" in name?
-def make_kernel_stencil_construction_fn(
-    kernel_fns: List[Callable],
-    sizes_from_center: Sequence[int],
-    reference_cell,
-    reference_spacings,
-    omega,
-    includes_toplevel: bool,
-    sizes_from_center_toplevel=None,
-):
-    # TODO: raise error when `includes_toplevel=True`, but sizes not given
-
-    reference_side_lengths = onp.linalg.norm(reference_cell, axis=1)
-    reference_spacings = onp.asarray(reference_spacings)
-    spacings_unitcube = reference_spacings / reference_side_lengths
-
-    indices_1d = [onp.arange(-s, s + 1) for s in sizes_from_center]
-    indices = onp.stack(onp.meshgrid(*indices_1d, indexing="ij"), axis=-1)
-    points_unitcube = indices * spacings_unitcube
-    if includes_toplevel:
-        indices_1d_toplevel = [
-            onp.arange(-s, s + 1) for s in sizes_from_center_toplevel
-        ]
-        indices_toplevel = onp.stack(
-            onp.meshgrid(*indices_1d_toplevel, indexing="ij"), axis=-1
-        )
-        points_unitcube_toplevel = indices_toplevel * spacings_unitcube
-
-    def construct_kernel_stencils(cell):
-        return _construct_all_kernel_stencils(
-            kernel_fns=kernel_fns,
-            omega=omega,
-            points=points_unitcube @ cell,
-            includes_toplevel=includes_toplevel,
-            points_toplevel=(
-                points_unitcube_toplevel @ cell if includes_toplevel else None
-            ),
-        )
-
-    return construct_kernel_stencils
 
 
 def set_up_grids_unitcube(

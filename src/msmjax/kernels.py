@@ -11,13 +11,14 @@
         of Illinois at Urbana-Champaign, 2006.
 """
 
-from typing import Callable
+from typing import Callable, List, Sequence
 
 import jax
 import jax.numpy as jnp
 import numpy as onp
+from jax._src.basearray import ArrayLike
 
-from msmjax.utils import _divide_zero_safe
+from msmjax.utils import _divide_zero_safe, _sqrt
 
 
 class SofteningFunctionOneOverR:
@@ -120,64 +121,110 @@ def split_one_over_r_kernel(
     return nruter
 
 
-if __name__ == "__main__":
-    import os
+def make_kernel_stencil_construction_fn(
+    kernel_fns: List[Callable],
+    sizes_from_center: Sequence[int],
+    reference_cell,
+    reference_spacings,
+    omega,
+    includes_toplevel: bool,
+    sizes_from_center_toplevel=None,
+):
+    # TODO: "dynamic" in name?
+    # TODO: raise error when `includes_toplevel=True`, but sizes not given
 
-    os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
+    reference_side_lengths = onp.linalg.norm(reference_cell, axis=1)
+    reference_spacings = onp.asarray(reference_spacings)
+    spacings_unitcube = reference_spacings / reference_side_lengths
 
-    import matplotlib.pyplot as plt
+    indices_1d = [onp.arange(-s, s + 1) for s in sizes_from_center]
+    indices = onp.stack(onp.meshgrid(*indices_1d, indexing="ij"), axis=-1)
+    points_unitcube = indices * spacings_unitcube
+    if includes_toplevel:
+        indices_1d_toplevel = [
+            onp.arange(-s, s + 1) for s in sizes_from_center_toplevel
+        ]
+        indices_toplevel = onp.stack(
+            onp.meshgrid(*indices_1d_toplevel, indexing="ij"), axis=-1
+        )
+        points_unitcube_toplevel = indices_toplevel * spacings_unitcube
 
-    softening_function = SofteningFunctionOneOverR(4)
-    softening_function_jitted = jax.jit(softening_function)
-    softening_function_vmapped = jax.jit(jax.vmap(softening_function))
+    def construct_kernel_stencils(cell):
+        return _construct_all_kernel_stencils(
+            kernel_fns=kernel_fns,
+            omega=omega,
+            points=points_unitcube @ cell,
+            includes_toplevel=includes_toplevel,
+            points_toplevel=(
+                points_unitcube_toplevel @ cell if includes_toplevel else None
+            ),
+        )
 
-    dgamma = jax.grad(softening_function)
+    return construct_kernel_stencils
 
-    print(dgamma(1.0e-8))
-    print(dgamma(1.0))
 
-    fig, ax = plt.subplots()
-    rhos = onp.linspace(0, 5, 501)
-    ax.plot(rhos, softening_function(rhos))
-    ax.plot(rhos, 1.0 / rhos, linestyle="--")
-    ax.axvline(1, linestyle=":", color="gray")
-    ax.set_ylim((0.0, softening_function(rhos).max() + 0.25))
-    plt.show()
+def _construct_all_kernel_stencils(
+    kernel_fns: List[Callable],  # TODO: appropriate type hint?
+    omega,
+    points,  # TODO: pass points or directly the distances?
+    includes_toplevel: bool,
+    points_toplevel,  # TODO: pass points or directly the distances?
+):
+    # TODO: raise error when `includes_toplevel=True`, but sizes not given
+    n_levels = len(kernel_fns)
 
-    print("coeffs:")
-    print(softening_function.coeffs)
-    print()
+    # Level zero (at which there is no grid)
+    stencils = [None]
 
-    kernels = split_one_over_r_kernel(
-        max_level=1,
-        level_zero_cutoff=3.0,
-        softening_function=softening_function,
-    )
-    print("len(kernels):")
-    print(len(kernels))
-    print()
+    # Level one
+    distances = _sqrt((points * points).sum(axis=-1))
+    fn_vals_at_points = kernel_fns[1](distances)
+    stencils.append(_compute_kernel_stencil(fn_vals_at_points, omega))
 
-    # print("- brute force:")
-    # t1 = time.time()
-    # for x in jnp.linspace(0.5, 1.0, 5001):
-    #     _ = fixture_softening_function(x).block_until_ready()
-    # t2 = time.time()
-    # print(t2 - t1)
-    # print()
-    #
-    # print("- jit:")
-    # t1 = time.time()
-    # for x in jnp.linspace(0.5, 1.0, 5001):
-    #     _ = softening_function_jitted(x).block_until_ready()
-    # print(_)
-    # t2 = time.time()
-    # print(t2 - t1)
-    # print()
-    #
-    # print("- vmap+jit:")
-    # t1 = time.time()
-    # x = jnp.linspace(0.5, 1.0, 5001)
-    # results = softening_function_vmapped(x)
-    # print(results)
-    # t2 = time.time()
-    # print(t2 - t1)
+    # Intermediate levels:
+    # For the type of kernel splitting used here, the intermediate-level
+    # kernel values (and thus stencils) can be computed by simply dividing
+    # the one from the previous level by 2. But this need not hold for
+    # other kernels or ways of splitting!
+    # TODO: can this be done by a broadcast multiplication?
+    for lvl in range(2, n_levels - 1):
+        stencils.append(0.5 * stencils[-1])
+
+    # Highest included level
+    if includes_toplevel:
+        # TODO: Some possible efficiency gain by precomputing `points_cartesian`
+        #  or `points_cartesian_toplevel`, whichever is larger in shape,
+        #  and then getting the smaller by indexing into the larger
+        # TODO: For the size of the top level stencil chosen sufficiently
+        #  large (I think it needs to be the grid size + half the length of
+        #  omega as padding), constructing it is very costly
+        # TODO: The use of `linalg.norm` instead of custom `_sqrt` might lead
+        #  to problems.
+        distances_toplevel = 2 ** (n_levels - 2) * jnp.linalg.norm(
+            points_toplevel, axis=-1
+        )
+        fn_vals_at_points_toplevel = kernel_fns[-1](distances_toplevel)
+        stencils.append(
+            _compute_kernel_stencil(fn_vals_at_points_toplevel, omega)
+        )
+    else:
+        stencils.append(0.5 * stencils[-1])
+
+    return stencils
+
+
+def _compute_kernel_stencil(values: ArrayLike, omega: ArrayLike):
+    def _onedim_convolution_fn(in1: ArrayLike, in2: ArrayLike):
+        # TODO: method="fft"?
+        return jax.scipy.signal.convolve(in1, in2, mode="same")
+
+    convolved = values
+    # TODO: exploit symmetry?
+    # TODO: Is this sequential application of 1d convolutions the fastest thing
+    #  one can do? Might it be faster to do it as a single 3D convolution
+    #  (especially if the stencil size can be significantly reduced by symmetry?
+    for i in range(values.ndim):
+        convolved = jnp.apply_along_axis(
+            func1d=_onedim_convolution_fn, axis=i, arr=convolved, in2=omega
+        )
+    return convolved
