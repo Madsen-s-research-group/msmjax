@@ -186,7 +186,7 @@ def make_flex_cell_U1plus_fn(
         reference_cell=reference_cell,
         reference_spacings=reference_spacings,
         omega=omega,
-        includes_toplevel=includes_toplevel,
+        kernels_include_toplevel=includes_toplevel,
         sizes_from_center_toplevel=sizes_toplevel,
     )
 

@@ -296,7 +296,9 @@ def set_up_kernels_grids_and_stencils(
     # We import inside this function to make `msmfornn` only required when
     # it is actually used
     # TODO: replace with the new function for computing kernel stencils
-    from msmjax.wrappers_old_code import _construct_kernel_stencils
+    from msmjax.wrappers_old_code import (
+        _construct_kernel_stencils as old_kernel_stencil_fn,
+    )
 
     n_dim = len(pbcs)
 
@@ -313,10 +315,10 @@ def set_up_kernels_grids_and_stencils(
         p=p,
         J_zeroplus=compute_J_zeroplus(p),
     )
-    kernel_stencils = _construct_kernel_stencils(
+    kernel_stencils = old_kernel_stencil_fn(
         kernels=kernels,
         box_lengths=box_lengths,
-        level_one_gridspacing=level_one_gridspacing,
+        level_one_gridspacing=level_one_gridspacing[0],  # TODO
         level_zero_cutoff=level_zero_cutoff,
         n_levels=n_levels,
         p=p,

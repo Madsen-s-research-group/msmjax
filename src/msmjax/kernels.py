@@ -127,11 +127,11 @@ def make_kernel_stencil_construction_fn(
     reference_cell,
     reference_spacings,
     omega,
-    includes_toplevel: bool,
+    kernels_include_toplevel: bool,
     sizes_from_center_toplevel=None,
 ):
     # TODO: "dynamic" in name?
-    # TODO: raise error when `includes_toplevel=True`, but sizes not given
+    # TODO: raise error when `kernels_include_toplevel=True`, but sizes not given
 
     reference_side_lengths = onp.linalg.norm(reference_cell, axis=1)
     reference_spacings = onp.asarray(reference_spacings)
@@ -140,7 +140,7 @@ def make_kernel_stencil_construction_fn(
     indices_1d = [onp.arange(-s, s + 1) for s in sizes_from_center]
     indices = onp.stack(onp.meshgrid(*indices_1d, indexing="ij"), axis=-1)
     points_unitcube = indices * spacings_unitcube
-    if includes_toplevel:
+    if kernels_include_toplevel:
         indices_1d_toplevel = [
             onp.arange(-s, s + 1) for s in sizes_from_center_toplevel
         ]
@@ -154,9 +154,11 @@ def make_kernel_stencil_construction_fn(
             kernel_fns=kernel_fns,
             omega=omega,
             points=points_unitcube @ cell,
-            includes_toplevel=includes_toplevel,
+            kernels_include_toplevel=kernels_include_toplevel,
             points_toplevel=(
-                points_unitcube_toplevel @ cell if includes_toplevel else None
+                points_unitcube_toplevel @ cell
+                if kernels_include_toplevel
+                else None
             ),
         )
 
@@ -167,11 +169,11 @@ def _construct_all_kernel_stencils(
     kernel_fns: List[Callable],  # TODO: appropriate type hint?
     omega,
     points,  # TODO: pass points or directly the distances?
-    includes_toplevel: bool,
+    kernels_include_toplevel: bool,
     points_toplevel,  # TODO: pass points or directly the distances?
 ):
-    # TODO: raise error when `includes_toplevel=True`, but sizes not given
-    n_levels = len(kernel_fns)
+    # TODO: raise error when `kernels_include_toplevel=True`, but sizes not given
+    highest_included_level = len(kernel_fns) - 1
 
     # Level zero (at which there is no grid)
     stencils = [None]
@@ -187,11 +189,11 @@ def _construct_all_kernel_stencils(
     # the one from the previous level by 2. But this need not hold for
     # other kernels or ways of splitting!
     # TODO: can this be done by a broadcast multiplication?
-    for lvl in range(2, n_levels - 1):
+    for lvl in range(2, highest_included_level):
         stencils.append(0.5 * stencils[-1])
 
     # Highest included level
-    if includes_toplevel:
+    if kernels_include_toplevel:
         # TODO: Some possible efficiency gain by precomputing `points_cartesian`
         #  or `points_cartesian_toplevel`, whichever is larger in shape,
         #  and then getting the smaller by indexing into the larger
@@ -200,9 +202,9 @@ def _construct_all_kernel_stencils(
         #  omega as padding), constructing it is very costly
         # TODO: The use of `linalg.norm` instead of custom `_sqrt` might lead
         #  to problems.
-        distances_toplevel = 2 ** (n_levels - 2) * jnp.linalg.norm(
-            points_toplevel, axis=-1
-        )
+        distances_toplevel = 2 ** (
+            highest_included_level - 2
+        ) * jnp.linalg.norm(points_toplevel, axis=-1)
         fn_vals_at_points_toplevel = kernel_fns[-1](distances_toplevel)
         stencils.append(
             _compute_kernel_stencil(fn_vals_at_points_toplevel, omega)
