@@ -14,7 +14,7 @@ from msmjax.gridops_multidim import (
     create_compute_U_and_f_oneplus_via_potential,
     create_compute_U_oneplus_direct,
 )
-from msmjax.kernels import make_kernel_stencil_construction_fn
+from msmjax.kernels import make_dynamic_kernel_stencil_construction_fn
 
 
 def determine_min_kernel_stencil_size(cell, spacings, cutoff):
@@ -162,12 +162,13 @@ def make_flex_cell_U1plus_fn(
     )
 
     if onp.all(pbc):
-        includes_toplevel = False
+        kernels_include_toplevel = False
         sizes_toplevel = None
     elif onp.all(~pbc):
-        includes_toplevel = True
+        kernels_include_toplevel = True
         # For no information loss during convolution, we need to add half the
         # length of omega in padding.
+        # TODO: Check if this is really necessary
         sizes_toplevel = tuple(
             s + len(omega) // 2 for s in grids_unit_cube[-1].shape
         )
@@ -180,13 +181,13 @@ def make_flex_cell_U1plus_fn(
     )
 
     # TODO: trim unnecessarily large stencils (especially: top level for non-periodic)
-    construct_kernel_stencils = make_kernel_stencil_construction_fn(
+    construct_kernel_stencils = make_dynamic_kernel_stencil_construction_fn(
         kernel_fns=kernel_fns,
         sizes_from_center=stencil_sizes_from_center,
         reference_cell=reference_cell,
         reference_spacings=reference_spacings,
         omega=omega,
-        kernels_include_toplevel=includes_toplevel,
+        kernels_include_toplevel=kernels_include_toplevel,
         sizes_from_center_toplevel=sizes_toplevel,
     )
 

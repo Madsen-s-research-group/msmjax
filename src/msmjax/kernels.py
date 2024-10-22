@@ -121,7 +121,76 @@ def split_one_over_r_kernel(
     return nruter
 
 
-def make_kernel_stencil_construction_fn(
+def _compute_kernel_stencil(values: ArrayLike, omega: ArrayLike):
+    def _onedim_convolution_fn(in1: ArrayLike, in2: ArrayLike):
+        # TODO: method="fft"?
+        return jax.scipy.signal.convolve(in1, in2, mode="same")
+
+    convolved = values
+    # TODO: exploit symmetry?
+    # TODO: Is this sequential application of 1d convolutions the fastest thing
+    #  one can do? Might it be faster to do it as a single 3D convolution
+    #  (especially if the stencil size can be significantly reduced by symmetry?
+    for i in range(values.ndim):
+        convolved = jnp.apply_along_axis(
+            func1d=_onedim_convolution_fn, axis=i, arr=convolved, in2=omega
+        )
+    return convolved
+
+
+def _construct_all_kernel_stencils(
+    kernel_fns: List[Callable],  # TODO: appropriate type hint?
+    omega,
+    points,  # TODO: pass points or directly the distances?
+    kernels_include_toplevel: bool,
+    points_toplevel,  # TODO: pass points or directly the distances?
+):
+    # TODO: raise error when `kernels_include_toplevel=True`, but sizes not given
+    highest_included_level = len(kernel_fns) - 1
+
+    # Level zero (at which there is no grid)
+    stencils = [None]
+
+    # Level one
+    distances = _sqrt((points * points).sum(axis=-1))
+    fn_vals_at_points = kernel_fns[1](distances)
+    stencils.append(_compute_kernel_stencil(fn_vals_at_points, omega))
+
+    # Intermediate levels:
+    # For the type of kernel splitting used here, the intermediate-level
+    # kernel values (and thus stencils) can be computed by simply dividing
+    # the one from the previous level by 2. But this need not hold for
+    # other kernels or ways of splitting!
+    # TODO: Can this be done faster by a broadcast multiplication? So far, it
+    #  looks like there is not much to be gained here. The stencil calculation
+    #  appears to be not much of a bottleneck.
+    for lvl in range(2, highest_included_level):
+        stencils.append(0.5 * stencils[-1])
+
+    # Highest included level
+    if kernels_include_toplevel:
+        # TODO: Some possible efficiency gain by precomputing `points_cartesian`
+        #  or `points_cartesian_toplevel`, whichever is larger in shape,
+        #  and then getting the smaller by indexing into the larger
+        # TODO: For the size of the top level stencil chosen sufficiently
+        #  large (I think it needs to be the grid size + half the length of
+        #  omega as padding), constructing it is very costly
+        # TODO: The use of `linalg.norm` instead of custom `_sqrt` might lead
+        #  to problems.
+        distances_toplevel = 2 ** (
+            highest_included_level - 2
+        ) * jnp.linalg.norm(points_toplevel, axis=-1)
+        fn_vals_at_points_toplevel = kernel_fns[-1](distances_toplevel)
+        stencils.append(
+            _compute_kernel_stencil(fn_vals_at_points_toplevel, omega)
+        )
+    else:
+        stencils.append(0.5 * stencils[-1])
+
+    return stencils
+
+
+def make_dynamic_kernel_stencil_construction_fn(
     kernel_fns: List[Callable],
     sizes_from_center: Sequence[int],
     reference_cell,
@@ -163,70 +232,3 @@ def make_kernel_stencil_construction_fn(
         )
 
     return construct_kernel_stencils
-
-
-def _construct_all_kernel_stencils(
-    kernel_fns: List[Callable],  # TODO: appropriate type hint?
-    omega,
-    points,  # TODO: pass points or directly the distances?
-    kernels_include_toplevel: bool,
-    points_toplevel,  # TODO: pass points or directly the distances?
-):
-    # TODO: raise error when `kernels_include_toplevel=True`, but sizes not given
-    highest_included_level = len(kernel_fns) - 1
-
-    # Level zero (at which there is no grid)
-    stencils = [None]
-
-    # Level one
-    distances = _sqrt((points * points).sum(axis=-1))
-    fn_vals_at_points = kernel_fns[1](distances)
-    stencils.append(_compute_kernel_stencil(fn_vals_at_points, omega))
-
-    # Intermediate levels:
-    # For the type of kernel splitting used here, the intermediate-level
-    # kernel values (and thus stencils) can be computed by simply dividing
-    # the one from the previous level by 2. But this need not hold for
-    # other kernels or ways of splitting!
-    # TODO: can this be done by a broadcast multiplication?
-    for lvl in range(2, highest_included_level):
-        stencils.append(0.5 * stencils[-1])
-
-    # Highest included level
-    if kernels_include_toplevel:
-        # TODO: Some possible efficiency gain by precomputing `points_cartesian`
-        #  or `points_cartesian_toplevel`, whichever is larger in shape,
-        #  and then getting the smaller by indexing into the larger
-        # TODO: For the size of the top level stencil chosen sufficiently
-        #  large (I think it needs to be the grid size + half the length of
-        #  omega as padding), constructing it is very costly
-        # TODO: The use of `linalg.norm` instead of custom `_sqrt` might lead
-        #  to problems.
-        distances_toplevel = 2 ** (
-            highest_included_level - 2
-        ) * jnp.linalg.norm(points_toplevel, axis=-1)
-        fn_vals_at_points_toplevel = kernel_fns[-1](distances_toplevel)
-        stencils.append(
-            _compute_kernel_stencil(fn_vals_at_points_toplevel, omega)
-        )
-    else:
-        stencils.append(0.5 * stencils[-1])
-
-    return stencils
-
-
-def _compute_kernel_stencil(values: ArrayLike, omega: ArrayLike):
-    def _onedim_convolution_fn(in1: ArrayLike, in2: ArrayLike):
-        # TODO: method="fft"?
-        return jax.scipy.signal.convolve(in1, in2, mode="same")
-
-    convolved = values
-    # TODO: exploit symmetry?
-    # TODO: Is this sequential application of 1d convolutions the fastest thing
-    #  one can do? Might it be faster to do it as a single 3D convolution
-    #  (especially if the stencil size can be significantly reduced by symmetry?
-    for i in range(values.ndim):
-        convolved = jnp.apply_along_axis(
-            func1d=_onedim_convolution_fn, axis=i, arr=convolved, in2=omega
-        )
-    return convolved
