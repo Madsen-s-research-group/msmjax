@@ -47,6 +47,7 @@ def set_up_grid_axis(
         n_total = n_domain
     else:
         # TODO: Is this determination of the number of grid points numerically robust?
+        #  OTOH, is it really a concern? (Is +1 actually necessary?)
         n_domain = int(onp.ceil(length / h)) + 1
         n_total = n_domain + p
 

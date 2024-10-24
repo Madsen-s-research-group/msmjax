@@ -84,6 +84,9 @@ def split_one_over_r_kernel(
     Raises:
         ValueError: If the arguments do not make sense.
     """
+    # TODO: Name of `max_level` parameter should be consistent with the rest
+    #  of the code (also make sure that the correct variable name is used in
+    #  docstring)
     if not isinstance(max_level, (int, onp.integer, jnp.integer)):
         raise ValueError("'max_level' must be an integer.")
     if max_level < 1:
