@@ -13,6 +13,16 @@
 
 import os
 
+from msmjax.bspline_interpolation.coefficients import (
+    compute_coeffs_with_truncation,
+    compute_J_zeroplus,
+)
+from msmjax.gridops_multidim import set_up_grids_all_levels
+from msmjax.kernels import (
+    _construct_all_kernel_stencils,
+    make_dynamic_kernel_stencil_construction_fn,
+)
+
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 
 from typing import Callable, List
@@ -23,6 +33,9 @@ import numpy as onp
 import pytest
 
 from msmjax.kernels import SofteningFunctionOneOverR, split_one_over_r_kernel
+from msmjax.wrappers_old_code import (
+    _construct_kernel_stencils as old_kernel_stencil_fn,
+)
 
 
 @pytest.fixture
@@ -214,3 +227,61 @@ def test_partial_kernels_cutoffs(
         assert (k(r_below) > 0.0).all()
         r_above = jnp.arange(cutoff, 2 * cutoff, 0.01)
         assert jnp.allclose(k(r_above), 0.0)
+
+
+# @pytest.mark.skip(reason="Test not written yet")
+@pytest.mark.parametrize("p", [4, 6])
+def test_new_vs_old_stencil_construction_fn(
+    fixture_partial_kernels, fixture_level_zero_cutoff, p
+):
+    # TODO: Remove/replace this test in the long run. It is only meant to
+    #  ensure we don't break anything while transitioning from the old (static,
+    #  only one spacing value for all directions) to the new (dynamic,
+    #  different spacings allowed) kernel stencil construction function.
+    # TODO: Test with and without inclusion of top level -> in fact, the old
+    #  function assumes that the top level is always included
+    spacing_scalar = 1.0
+    alpha = fixture_level_zero_cutoff / spacing_scalar
+    mu = max(int(4 * alpha + p // 2), 3 * p // 2)
+    box_lengths = onp.array([10.0, 10.0, 10.0])  # TODO
+    n_levels = len(fixture_partial_kernels) - 1  # TODO
+
+    stencils_old = old_kernel_stencil_fn(
+        kernels=fixture_partial_kernels,
+        box_lengths=box_lengths,
+        level_one_gridspacing=spacing_scalar,
+        level_zero_cutoff=fixture_level_zero_cutoff,
+        n_levels=n_levels,
+        p=p,
+        mu=mu,
+    )
+
+    omega, _ = compute_coeffs_with_truncation(p=p, mu=mu)
+    cell = jnp.diag(box_lengths)
+    spacings_one_per_axis = onp.full_like(box_lengths, spacing_scalar)
+    sizes_from_center = onp.full_like(
+        box_lengths, 2 * int(alpha) + 2, dtype=int
+    )
+    grids_new = set_up_grids_all_levels(
+        box_lengths=box_lengths,
+        level_one_spacings=spacings_one_per_axis,
+        pbcs=(False, False, False),
+        n_levels=n_levels,
+        p=p,
+        J_zeroplus=compute_J_zeroplus(p),
+    )
+    stencil_construction_fn_new = make_dynamic_kernel_stencil_construction_fn(
+        kernel_fns=fixture_partial_kernels,
+        sizes_from_center=sizes_from_center,
+        reference_cell=cell,
+        reference_spacings=spacings_one_per_axis,
+        omega=omega,
+        kernels_include_toplevel=True,
+        sizes_from_center_toplevel=tuple(
+            s + len(omega) // 2 for s in grids_new[-1].shape
+        ),
+    )
+    stencils_new = stencil_construction_fn_new(cell)
+
+    for s_new, s_old in zip(stencils_new[1:], stencils_old[1:]):
+        assert onp.allclose(s_new, s_old)
