@@ -5,11 +5,6 @@ from msmfornn.grid_to_grid_mapping import (
 )
 from msmfornn.gridtools import construct_grids_all_levels
 from msmfornn.splines.coefficients import compute_coeffs_withtruncation
-from msmfornn.splines.nesting import compute_J_zeroplus
-
-
-def _compute_J_zeroplus(p):
-    return compute_J_zeroplus(p)
 
 
 def _construct_kernel_stencils(

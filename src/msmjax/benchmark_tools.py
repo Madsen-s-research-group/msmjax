@@ -90,19 +90,21 @@ def get_metadata(additional_repository_paths: dict = None):
     return metadata
 
 
-def time_set_of_structures(structures, pbc, setup_fn, **kwargs):
+def time_set_of_structures(structures, pbc, setup_fn, **setup_fn_kwargs):
     timed_calc, info = setup_fn(
         structures=structures,
         pbc=pbc,
-        **kwargs,
+        **setup_fn_kwargs,
     )
     times_all = []
     for idx_structure in range(len(structures["positions"])):
-        pos = jnp.array(structures["positions"][idx_structure])
-        chg = jnp.array(structures["charges"][idx_structure])
-        jax.device_put(pos)
-        jax.device_put(chg)
-        times_all.append(timed_calc(pos, chg))
+        pos = structures["positions"][idx_structure]
+        chg = structures["charges"][idx_structure]
+        cell = structures["cells"][idx_structure]
+        pos = jax.device_put(pos)
+        chg = jax.device_put(chg)
+        cell = jax.device_put(cell)
+        times_all.append(timed_calc(pos, chg, cell))
 
     output = {
         "times": onp.array(times_all).tolist(),
@@ -147,6 +149,7 @@ kspace_style pppm 1e-5
 
 # 2) System definition
 read_data {filename_data}
+kspace_style pppm 1e-5  # need to reinitialize after reading data to work for triclinic cells
 
 # 3) Simulation settings
 mass 1 1

@@ -6,7 +6,10 @@ import numpy as onp
 import pytest
 
 from msmjax.benchmark_tools import path_input_structures
-from msmjax.convenience import set_up_grids_and_kernels, suggest_msm_params
+from msmjax.convenience import (
+    set_up_kernels_grids_and_stencils,
+    suggest_msm_params,
+)
 from msmjax.gridops_multidim import (
     create_compute_f_oneplus_via_potential,
     create_compute_U_oneplus_direct,
@@ -59,12 +62,12 @@ def test_calculate_different_ways(
     box_lengths = onp.diag(fixture_structure["cell"])
     msm_params_full = suggest_msm_params(
         box_lengths=box_lengths,
-        pbcs=fixture_pbc,
+        pbc=fixture_pbc,
         n_particles=fixture_structure["positions"].shape[0],
         **fixture_base_msm_params,
     )
-    kernels, grids, kernel_stencils = set_up_grids_and_kernels(
-        box_lengths=box_lengths, pbcs=fixture_pbc, **msm_params_full
+    kernels, grids, kernel_stencils = set_up_kernels_grids_and_stencils(
+        box_lengths=box_lengths, pbc=fixture_pbc, **msm_params_full
     )
     setup_params = {
         "grids": grids,

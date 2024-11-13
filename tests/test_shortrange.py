@@ -10,15 +10,17 @@
         Forces for the Simulation of Biomolecules (PhD thesis), University
         of Illinois at Urbana-Champaign, 2006.
 """
+
 import os
 
 from ase.geometry import get_distances
+
+from msmjax.utils import get_max_cutoff_3d
 
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 
 from functools import partial
 from pathlib import Path
-from typing import Callable, List
 
 import jax
 import jax.config
@@ -157,30 +159,6 @@ def test_gen_supercell_2d(fixture_structure_cubic, supercell_diag):
 
 def shortrange_quadratic_potential(r, r_cut):
     return jnp.where(r < r_cut, (r - r_cut) ** 2, 0.0)
-
-
-def get_max_cutoff_3d(cell: jnp.ndarray):
-    """Get the maximum cutoff value that fits into a 3D cell.
-
-    Args:
-        cell: Cell, shape=(3, 3).
-
-    Returns:
-        Cutoff radius
-    """
-    # TODO: move this function to some utils?
-    return jnp.min(
-        jnp.fabs(
-            jnp.linalg.det(cell)
-            / jnp.array(
-                [
-                    jnp.linalg.norm(jnp.cross(i, j))
-                    for i, j in zip(cell, jnp.roll(cell, 1, axis=0))
-                ]
-            )
-        )
-        / 2.0
-    )
 
 
 @pytest.mark.parametrize(

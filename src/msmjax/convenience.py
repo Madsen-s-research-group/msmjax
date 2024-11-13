@@ -1,17 +1,18 @@
-import functools
 import math
+from typing import Callable, List, Sequence
 
-import jax
-import jax.numpy as jnp
 import numpy as onp
-from neuralil.bessel_descriptors import gen_supercell
 
-from msmjax import wrappers_old_code
-from msmjax.gridops_multidim import (
-    create_compute_U_oneplus_via_potential,
-    set_up_grids_all_levels,
+from msmjax.bspline_interpolation.coefficients import (
+    compute_coeffs_with_truncation,
+    compute_J_zeroplus,
 )
-from msmjax.kernels import SofteningFunctionOneOverR, split_one_over_r_kernel
+from msmjax.gridops_multidim import set_up_grids_all_levels
+from msmjax.kernels import (
+    SofteningFunctionOneOverR,
+    make_dynamic_kernel_stencil_construction_fn,
+    split_one_over_r_kernel,
+)
 
 
 def suggest_p(alpha):
@@ -114,19 +115,30 @@ def suggest_max_gridlevel_nonPBC(
         ]
     )
 
+    # TODO: change max_pos/min_pos to box_lengths or cell everywhere
+    box_lengths = onp.array(max_pos) - onp.array(min_pos)
+
     # 1. Highest-level grid not coarser than simulation box size
+    #    In mathematical terms, checks the following condition:
+    #    2**(L - 1) * level_one_gridspacing <= box_length
     L_based_on_spacing = (
-        int(onp.log2(boxvolume ** (1.0 / ndim) / level_one_gridspacing)) + 1
-    )
+        onp.log2(box_lengths / level_one_gridspacing)
+    ).astype(int) + 1
+    # TODO: min (spacings along NO direction greater than box size) or
+    #  max (spacings along all but one direction allowed to be greater than
+    #  box size)?
+    L_based_on_spacing = min(L_based_on_spacing)
 
     range_of_Ls = onp.arange(1, L_based_on_spacing + 1)
 
-    gridspacings = 2 ** (range_of_Ls - 1) * level_one_gridspacing
+    gridspacings_all_levels = (2 ** (range_of_Ls - 1))[
+        :, onp.newaxis
+    ] * level_one_gridspacing
     gridshapes = []
-    for spacing in gridspacings:
+    for spacings in gridspacings_all_levels:
         shape = tuple(
-            int(sidelength_box / spacing) + 1 + p
-            for sidelength_box in (max_pos - min_pos)
+            (sidelength / spacings).astype(int) + 1 + p
+            for sidelength in box_lengths
         )
         gridshapes.append(shape)
     nb_gridpoints = onp.array([math.prod(shape) for shape in gridshapes])
@@ -203,7 +215,7 @@ def find_spacings_and_n_levels_periodic(box_lengths, level_one_spacings):
 
 def suggest_msm_params(
     box_lengths,
-    pbcs,
+    pbc,
     n_particles,
     level_one_gridspacing,
     level_zero_cutoff=None,
@@ -218,27 +230,31 @@ def suggest_msm_params(
     #  and `n_particles`
     # TODO: `n_particles` is in fact only needed in non-periodic case (as long
     #  as we do not need to infer `level_one_gridspacing` from the particle
-    #  density)a
+    #  density)
     box_lengths = onp.asarray(box_lengths)
-    pbcs = onp.asarray(pbcs)
-    if not (onp.all(pbcs) or onp.all(~pbcs)):
+    pbc = onp.asarray(pbc)
+    if not (onp.all(pbc) or onp.all(~pbc)):
         raise ValueError("Mixed boundary conditions currently not supported.")
-    periodic = pbcs[0]
+    periodic = pbc.any()
+    n_dim = len(pbc)
+    if onp.isscalar(level_one_gridspacing):
+        level_one_gridspacing = onp.full(n_dim, level_one_gridspacing)
 
     if periodic:
+        # FIXME: Return one spacing per direction, not just one value!
         actual_spacings, n_levels = find_spacings_and_n_levels_periodic(
             box_lengths=box_lengths,
-            level_one_spacings=[level_one_gridspacing] * len(box_lengths),
+            level_one_spacings=level_one_gridspacing,
         )
-        level_one_gridspacing = actual_spacings[0]
+        level_one_gridspacing = actual_spacings
 
     if alpha is None and level_zero_cutoff is not None:
-        alpha = level_zero_cutoff / level_one_gridspacing
+        alpha = max(level_zero_cutoff / level_one_gridspacing)
     elif level_zero_cutoff is None and alpha is not None:
         # TODO: The cutoff being computed from the grid spacing AFTER the grid
         #  spacing has been adapted for PBCs may lead to inconsistent or
         #  surprising results. Is this what we want?
-        level_zero_cutoff = alpha * level_one_gridspacing
+        level_zero_cutoff = max(alpha * level_one_gridspacing)
     else:
         raise ValueError(
             "Either `level_zero_cutoff` or `alpha` is required, "
@@ -265,10 +281,8 @@ def suggest_msm_params(
     # TODO: check that n_levels is at least one (or is this function not the
     #  right place for that?)
 
-    # TODO: Convert all return values to native Python types?
-    #  (for easy json-serialization etc.)
     return {
-        "level_one_gridspacing": float(level_one_gridspacing),
+        "level_one_gridspacing": level_one_gridspacing.tolist(),
         "level_zero_cutoff": float(level_zero_cutoff),
         "p": int(p),
         "mu": int(mu),
@@ -277,16 +291,18 @@ def suggest_msm_params(
     }
 
 
-def set_up_grids_and_kernels(
+def set_up_kernels_grids_and_stencils(
     box_lengths,
-    pbcs,
-    level_one_gridspacing,
+    pbc,
+    level_one_gridspacing: Sequence[float],
     level_zero_cutoff,
     p,
     mu,
     n_levels,
 ):
-    n_dim = len(pbcs)
+    pbc = onp.asarray(pbc)
+    level_one_gridspacing = onp.asarray(level_one_gridspacing)
+    omega, _ = compute_coeffs_with_truncation(p, mu)
 
     kernels = split_one_over_r_kernel(
         max_level=n_levels,
@@ -295,173 +311,78 @@ def set_up_grids_and_kernels(
     )
     grids = set_up_grids_all_levels(
         box_lengths=box_lengths,
-        level_one_spacings=[level_one_gridspacing] * n_dim,
-        pbcs=pbcs,
+        level_one_spacings=level_one_gridspacing,
+        pbcs=pbc,
         n_levels=n_levels,
         p=p,
-        J_zeroplus=wrappers_old_code._compute_J_zeroplus(p),
-    )
-    kernel_stencils = wrappers_old_code._construct_kernel_stencils(
-        kernels=kernels,
-        box_lengths=box_lengths,
-        level_one_gridspacing=level_one_gridspacing,
-        level_zero_cutoff=level_zero_cutoff,
-        n_levels=n_levels,
-        p=p,
-        mu=mu,
+        J_zeroplus=compute_J_zeroplus(p),
     )
 
+    # For simplicity, we always include the top level in the kernel stencil
+    # calculation. If it needs to be omitted due to periodic boundary
+    # conditions, this can still be done later.
+    # TODO: Trim the top level to the shape of the highest grid?
+    kernels_include_toplevel = True
+    sizes_toplevel = tuple(s + len(omega) // 2 for s in grids[-1].shape)
+
+    alpha = int((level_zero_cutoff / level_one_gridspacing).max())
+    # TODO: Does it need to be +2 or is +1 enough?
+    sizes_from_center = onp.full_like(box_lengths, 2 * alpha + 2, dtype=int)
+    kernel_stencil_construction_fn = (
+        make_dynamic_kernel_stencil_construction_fn(
+            kernel_fns=kernels,
+            sizes_from_center=sizes_from_center,
+            reference_cell=onp.diag(box_lengths),
+            reference_spacings=level_one_gridspacing,
+            omega=omega,
+            kernels_include_toplevel=kernels_include_toplevel,
+            sizes_from_center_toplevel=sizes_toplevel,
+        )
+    )
+    kernel_stencils = kernel_stencil_construction_fn(onp.diag(box_lengths))
+
+    # TODO: Remove elements corresponding to the last level if periodic?
+    #  And at what point in the code would this need to be done in order to be
+    #  consistent?
     return kernels, grids, kernel_stencils
 
 
-def remove_diag(x):
-    """Remove diagonal of a 2-d array in a jit-compatible way.
-
-    This feels more complicated than it should be.
-    """
-    inds_triu = jnp.triu_indices(n=x.shape[0], m=x.shape[1], k=1)
-    inds_tril = jnp.tril_indices(n=x.shape[0], m=x.shape[1], k=-1)
-    i_without_diag = jnp.concatenate([inds_triu[0], inds_tril[0]])
-    j_without_diag = jnp.concatenate([inds_triu[1], inds_tril[1]])
-    shape_without_diag = (x.shape[0], x.shape[1] - 1, *x.shape[2:])
-    sorted = jnp.lexsort((j_without_diag, i_without_diag))
-    x_without_diag = x[
-        (i_without_diag[sorted], j_without_diag[sorted])
-    ].reshape(shape_without_diag)
-
-    return x_without_diag
-
-
-def make_compute_shortrange_periodic(
-    pair_potential, cutoff, box_lengths, return_particle_contribs=False
-):
-    box_lengths = onp.asarray(box_lengths)
-    sc_a, sc_b, sc_c = onp.floor(2 * cutoff / box_lengths).astype(int) + 1
-    replicate_system = functools.partial(
-        gen_supercell, sc_a=sc_a, sc_b=sc_b, sc_c=sc_c
-    )
-    # call once with mostly dummy arguments to get the replicated box lengths
-    _, _, super_cell = replicate_system(
-        coordinates=jnp.zeros((1, 3)),
-        types=jnp.zeros(1),
-        cell=jnp.diag(box_lengths),
-    )
-    super_box_lengths = onp.diag(super_cell)
-
-    if cutoff > 0.5 * min(super_box_lengths):
-        raise ValueError(
-            "Cutoff does not fit. There might be a bug in the supercell size determination."
-        )
-
-    def compute_shortrange_periodic(positions, charges):
-        positions_extended, charges_extended, _ = replicate_system(
-            coordinates=positions,
-            types=charges,
-            cell=jnp.diag(box_lengths),
-        )
-        R_ij = positions[:, jnp.newaxis, :] - positions_extended
-        R_ij -= jnp.rint(R_ij / super_box_lengths) * super_box_lengths
-        R_ij = remove_diag(R_ij)
-        r_ij = jnp.linalg.norm(R_ij, axis=2)
-        qi_qj = charges[:, jnp.newaxis] * charges_extended
-        qi_qj = remove_diag(qi_qj)
-        particle_contribs = (qi_qj * jax.vmap(pair_potential)(r_ij)).sum(
-            axis=1
-        )
-        # TODO: factor 1/2 here or include in particle contributions?
-        energy = 0.5 * particle_contribs.sum()
-
-        if return_particle_contribs:
-            return energy, particle_contribs
-        else:
-            return energy
-
-    return compute_shortrange_periodic
-
-
-def make_compute_U_zero_periodic_no_nbl(
-    kernels, cutoff, box_lengths, return_particle_contribs
-):
-    compute_pair_term = make_compute_shortrange_periodic(
-        pair_potential=kernels[0],
-        cutoff=cutoff,
-        box_lengths=box_lengths,
-        return_particle_contribs=return_particle_contribs,
+def set_up_kernel_fns(
+    level_zero_cutoff: float,
+    p: int,
+    n_levels: int,
+    **unused_kwargs,
+) -> List[Callable]:
+    kernel_fns = split_one_over_r_kernel(
+        max_level=n_levels,
+        level_zero_cutoff=level_zero_cutoff,
+        softening_function=SofteningFunctionOneOverR(p),
     )
 
-    sum_of_higher_kernels_at_zero = jnp.sum(
-        jnp.asarray([k(0.0) for k in kernels[1:]])
-    )
-
-    def compute_U_zero(positions, charges):
-        result_pairs = compute_pair_term(positions, charges)
-        result_self_energy = (
-            0.5 * (charges**2).sum() * sum_of_higher_kernels_at_zero
-        )
-        if return_particle_contribs:
-            energy = result_pairs[0] - result_self_energy
-            particle_contribs = (
-                result_pairs[1] - 2 * result_self_energy / positions.shape[0]
-            )
-            return energy, particle_contribs
-        else:
-            return result_pairs - result_self_energy
-
-    return compute_U_zero
+    return kernel_fns
 
 
-def set_up_msm_components_periodic_no_nbl(
+def set_up_kernels_and_grids(
     box_lengths,
-    level_one_gridspacing,
+    pbcs,
+    level_one_gridspacing: Sequence[float],  # TODO: scalar/sequence?
     level_zero_cutoff,
     p,
-    mu,
     n_levels,
-    conv_meth,
-    return_aux=False,
-    return_particle_contribs=False,
+    **unused_kwargs,
 ):
-    n_levels_incl_omitted_top = n_levels + 1
-
-    if conv_meth is None:
-        convolution_methods = None
-    else:
-        convolution_methods = [None] + [conv_meth] * n_levels_incl_omitted_top
-
-    kernels, grids, kernel_stencils = set_up_grids_and_kernels(
-        box_lengths=box_lengths,
-        pbcs=[True] * len(box_lengths),
-        level_one_gridspacing=level_one_gridspacing,
+    kernels = split_one_over_r_kernel(
+        max_level=n_levels,
         level_zero_cutoff=level_zero_cutoff,
-        p=p,
-        mu=mu,
-        n_levels=n_levels_incl_omitted_top,
+        softening_function=SofteningFunctionOneOverR(p),
     )
-
-    if grids[-1].size != 1:
-        raise ValueError("Highest grid level should have only one point.")
-
-    compute_U_zero = make_compute_U_zero_periodic_no_nbl(
-        kernels=kernels,  # TODO: should this include the highest kernel?
-        cutoff=level_zero_cutoff,
+    grids = set_up_grids_all_levels(
         box_lengths=box_lengths,
-        return_particle_contribs=return_particle_contribs,
-    )
-    compute_U_oneplus = create_compute_U_oneplus_via_potential(
-        grids=grids[:-1],
-        kernel_stencils=kernel_stencils[:-1],
-        convolution_methods=convolution_methods[:-1],
-        return_particle_contribs=return_particle_contribs,
+        level_one_spacings=level_one_gridspacing,
+        pbcs=pbcs,
+        n_levels=n_levels,
+        p=p,
+        J_zeroplus=compute_J_zeroplus(p),
     )
 
-    if return_aux:
-        return (
-            compute_U_zero,
-            compute_U_oneplus,
-            (kernels, grids, kernel_stencils),
-        )
-    else:
-        return (
-            compute_U_zero,
-            compute_U_oneplus,
-        )
+    return kernels, grids
