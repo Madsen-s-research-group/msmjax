@@ -17,6 +17,7 @@ from msmjax.bspline_interpolation.coefficients import (
     compute_coeffs_with_truncation,
     compute_J_zeroplus,
 )
+from msmjax.convenience import set_up_kernels_grids_and_stencils
 from msmjax.gridops_multidim import set_up_grids_all_levels
 from msmjax.kernels import (
     _construct_all_kernel_stencils,
@@ -42,17 +43,22 @@ from msmjax.wrappers_old_code import (
 jax.config.update("jax_enable_x64", True)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def fixture_level_zero_cutoff() -> float:
     return 2.5
 
 
-@pytest.fixture(params=[2, 4, 6])
-def fixture_softening_function(request) -> SofteningFunctionOneOverR:
-    return SofteningFunctionOneOverR(order=request.param)
+@pytest.fixture(params=[2, 4, 6], scope="module")
+def fixture_p(request) -> int:
+    return request.param
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
+def fixture_softening_function(fixture_p) -> SofteningFunctionOneOverR:
+    return SofteningFunctionOneOverR(order=fixture_p)
+
+
+@pytest.fixture(scope="module")
 def fixture_softening_function_derivatives(
     fixture_softening_function,
 ) -> List[Callable]:
@@ -233,7 +239,7 @@ def test_partial_kernels_cutoffs(
         assert jnp.allclose(k(r_above), 0.0)
 
 
-@pytest.mark.parametrize("p", [4, 6])
+# @pytest.mark.parametrize("p", [4, 6])
 @pytest.mark.parametrize(
     "box_lengths",
     [
@@ -243,12 +249,17 @@ def test_partial_kernels_cutoffs(
     ],
 )
 def test_new_vs_old_stencil_construction_fn(
-    fixture_partial_kernels, fixture_level_zero_cutoff, box_lengths, p
+    fixture_p,
+    fixture_partial_kernels,
+    fixture_level_zero_cutoff,
+    box_lengths,
 ):
     if len(fixture_partial_kernels) == 2:
         pytest.xfail(
-            "The kernel stencil fns incorrectly the case of a single grid level"
+            "The old kernel stencil fns incorrectly treat the case of a single grid level"
         )
+    if fixture_p < 4:
+        pytest.xfail("p >= 4 required for calculation of omega")
 
     # TODO: Remove/replace this test in the long run. It is only meant to
     #  ensure we don't break anything while transitioning from the old (static,
@@ -258,7 +269,7 @@ def test_new_vs_old_stencil_construction_fn(
     #  function assumes that the top level is always included
     spacing_scalar = 1.0
     alpha = fixture_level_zero_cutoff / spacing_scalar
-    mu = max(int(4 * alpha + p // 2), 3 * p // 2)
+    mu = max(int(4 * alpha + fixture_p // 2), 3 * fixture_p // 2)
     n_levels = len(fixture_partial_kernels) - 1
 
     stencils_old = old_kernel_stencil_fn(
@@ -267,11 +278,11 @@ def test_new_vs_old_stencil_construction_fn(
         level_one_gridspacing=spacing_scalar,
         level_zero_cutoff=fixture_level_zero_cutoff,
         n_levels=n_levels,
-        p=p,
+        p=fixture_p,
         mu=mu,
     )
 
-    omega, _ = compute_coeffs_with_truncation(p=p, mu=mu)
+    omega, _ = compute_coeffs_with_truncation(p=fixture_p, mu=mu)
     cell = jnp.diag(box_lengths)
     spacings_one_per_axis = onp.full_like(box_lengths, spacing_scalar)
     sizes_from_center = onp.full_like(
@@ -282,8 +293,8 @@ def test_new_vs_old_stencil_construction_fn(
         level_one_spacings=spacings_one_per_axis,
         pbcs=(False,) * len(box_lengths),
         n_levels=n_levels,
-        p=p,
-        J_zeroplus=compute_J_zeroplus(p),
+        p=fixture_p,
+        J_zeroplus=compute_J_zeroplus(fixture_p),
     )
     stencil_construction_fn_new = make_dynamic_kernel_stencil_construction_fn(
         kernel_fns=fixture_partial_kernels,
@@ -317,3 +328,25 @@ def test_new_vs_old_stencil_construction_fn(
         tuple(slice(s, -s) for s in excess_sizes)
     ]
     assert onp.allclose(stencil_toplevel_new_trimmed, stencil_toplevel_old)
+
+    # Repeat the above check, except not using the "raw" new stencil
+    # construction fn, but the wrapper around it from `convenience.py` (to
+    # make sure it was correctly integrated therein)
+    _, _, stencils_convenience = set_up_kernels_grids_and_stencils(
+        box_lengths=box_lengths,
+        pbc=(False,) * len(box_lengths),
+        level_one_gridspacing=spacings_one_per_axis,
+        level_zero_cutoff=fixture_level_zero_cutoff,
+        p=fixture_p,
+        mu=mu,
+        n_levels=n_levels,
+    )
+    assert len(stencils_convenience) == len(stencils_old)
+    for s_1, s_2 in zip(stencils_convenience[1:-1], stencils_old[1:-1]):
+        assert onp.allclose(s_1, s_2)
+    stencil_toplevel_convenience_trimmed = stencils_convenience[-1][
+        tuple(slice(s, -s) for s in excess_sizes)
+    ]
+    assert onp.allclose(
+        stencil_toplevel_convenience_trimmed, stencil_toplevel_old
+    )
