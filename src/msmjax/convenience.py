@@ -3,9 +3,16 @@ from typing import Callable, List, Sequence
 
 import numpy as onp
 
-from msmjax.bspline_interpolation.coefficients import compute_J_zeroplus
+from msmjax.bspline_interpolation.coefficients import (
+    compute_coeffs_with_truncation,
+    compute_J_zeroplus,
+)
 from msmjax.gridops_multidim import set_up_grids_all_levels
-from msmjax.kernels import SofteningFunctionOneOverR, split_one_over_r_kernel
+from msmjax.kernels import (
+    SofteningFunctionOneOverR,
+    make_dynamic_kernel_stencil_construction_fn,
+    split_one_over_r_kernel,
+)
 
 
 def suggest_p(alpha):
@@ -286,21 +293,15 @@ def suggest_msm_params(
 
 def set_up_kernels_grids_and_stencils(
     box_lengths,
-    pbcs,
-    level_one_gridspacing: Sequence[float],  # TODO: scalar/sequence?
+    pbc,
+    level_one_gridspacing: Sequence[float],
     level_zero_cutoff,
     p,
     mu,
     n_levels,
 ):
-    # We import inside this function to make `msmfornn` only required when
-    # it is actually used
-    # TODO: replace with the new function for computing kernel stencils
-    from msmjax.wrappers_old_code import (
-        _construct_kernel_stencils as old_kernel_stencil_fn,
-    )
-
-    n_dim = len(pbcs)
+    pbc = onp.asarray(pbc)
+    omega, _ = compute_coeffs_with_truncation(p, mu)
 
     kernels = split_one_over_r_kernel(
         max_level=n_levels,
@@ -310,21 +311,37 @@ def set_up_kernels_grids_and_stencils(
     grids = set_up_grids_all_levels(
         box_lengths=box_lengths,
         level_one_spacings=level_one_gridspacing,
-        pbcs=pbcs,
+        pbcs=pbc,
         n_levels=n_levels,
         p=p,
         J_zeroplus=compute_J_zeroplus(p),
     )
-    kernel_stencils = old_kernel_stencil_fn(
-        kernels=kernels,
-        box_lengths=box_lengths,
-        level_one_gridspacing=level_one_gridspacing[0],  # TODO
-        level_zero_cutoff=level_zero_cutoff,
-        n_levels=n_levels,
-        p=p,
-        mu=mu,
-    )
 
+    # For simplicity, we always include the top level in the kernel stencil
+    # calculation. If it needs to be omitted due to periodic boundary
+    # conditions, this can still be done later.
+    kernels_include_toplevel = True
+    sizes_toplevel = tuple(s + len(omega) // 2 for s in grids[-1].shape)
+
+    alpha = int((level_zero_cutoff / level_one_gridspacing).max())
+    # TODO: Does it need to be +2 or is +1 enough?
+    sizes_from_center = onp.full_like(box_lengths, 2 * alpha + 2, dtype=int)
+    kernel_stencil_construction_fn = (
+        make_dynamic_kernel_stencil_construction_fn(
+            kernel_fns=kernels,
+            sizes_from_center=sizes_from_center,
+            reference_cell=onp.diag(box_lengths),
+            reference_spacings=level_one_gridspacing,
+            omega=omega,
+            kernels_include_toplevel=kernels_include_toplevel,
+            sizes_from_center_toplevel=sizes_toplevel,
+        )
+    )
+    kernel_stencils = kernel_stencil_construction_fn(onp.diag(box_lengths))
+
+    # TODO: Remove elements corresponding to the last level if periodic?
+    #  And at what point in the code would this need to be done in order to be
+    #  consistent?
     return kernels, grids, kernel_stencils
 
 

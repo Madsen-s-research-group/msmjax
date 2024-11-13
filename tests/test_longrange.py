@@ -67,7 +67,7 @@ def test_calculate_different_ways(
         **fixture_base_msm_params,
     )
     kernels, grids, kernel_stencils = set_up_kernels_grids_and_stencils(
-        box_lengths=box_lengths, pbcs=fixture_pbc, **msm_params_full
+        box_lengths=box_lengths, pbc=fixture_pbc, **msm_params_full
     )
     setup_params = {
         "grids": grids,
