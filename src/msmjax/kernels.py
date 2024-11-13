@@ -185,8 +185,6 @@ def _construct_all_kernel_stencils(
         # TODO: For the size of the top level stencil chosen sufficiently
         #  large (I think it needs to be the grid size + half the length of
         #  omega as padding), constructing it is very costly
-        # TODO: The use of `linalg.norm` instead of custom `_sqrt` might lead
-        #  to problems.
         # TODO: highest_included_level -1 or -2? (I think -2 might be a remnant
         #  from when highest_included_level was defined differently)
         #  ...but should this scaling be done inside this function at all,
