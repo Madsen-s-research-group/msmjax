@@ -191,9 +191,9 @@ def _construct_all_kernel_stencils(
         #  from when highest_included_level was defined differently)
         #  ...but should this scaling be done inside this function at all,
         #  maybe it should receive the correct distances from outside?
-        distances_toplevel = 2 ** (
-            highest_included_level - 1
-        ) * jnp.linalg.norm(points_toplevel, axis=-1)
+        distances_toplevel = 2 ** (highest_included_level - 1) * _sqrt(
+            (points_toplevel * points_toplevel).sum(axis=-1)
+        )
         fn_vals_at_points_toplevel = kernel_fns[-1](distances_toplevel)
         stencils.append(
             _compute_kernel_stencil(fn_vals_at_points_toplevel, omega)
