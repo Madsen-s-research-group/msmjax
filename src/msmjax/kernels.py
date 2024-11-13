@@ -154,6 +154,13 @@ def _construct_all_kernel_stencils(
     # Level zero (at which there is no grid)
     stencils = [None]
 
+    # TODO: If there is only one level (i.e. kernel_fns has length 2, with
+    #  `None` as the first element), the top-level treatment in this
+    #  function is wrong! Level one is always computed, and the
+    #  `if kernels_include_toplevel: ... else:` always adds another level!
+    #  The old (static) kernel stencil construction fn suffers from the same
+    #  problem.
+
     # Level one
     distances = _sqrt((points * points).sum(axis=-1))
     fn_vals_at_points = kernel_fns[1](distances)
@@ -180,8 +187,12 @@ def _construct_all_kernel_stencils(
         #  omega as padding), constructing it is very costly
         # TODO: The use of `linalg.norm` instead of custom `_sqrt` might lead
         #  to problems.
+        # TODO: highest_included_level -1 or -2? (I think -2 might be a remnant
+        #  from when highest_included_level was defined differently)
+        #  ...but should this scaling be done inside this function at all,
+        #  maybe it should receive the correct distances from outside?
         distances_toplevel = 2 ** (
-            highest_included_level - 2
+            highest_included_level - 1
         ) * jnp.linalg.norm(points_toplevel, axis=-1)
         fn_vals_at_points_toplevel = kernel_fns[-1](distances_toplevel)
         stencils.append(

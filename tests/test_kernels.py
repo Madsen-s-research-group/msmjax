@@ -37,6 +37,10 @@ from msmjax.wrappers_old_code import (
     _construct_kernel_stencils as old_kernel_stencil_fn,
 )
 
+# TODO: Set this and no preallocate in a consistent way (either both via
+#  environment variable, or both via jax.config.update)
+jax.config.update("jax_enable_x64", True)
+
 
 @pytest.fixture
 def fixture_level_zero_cutoff() -> float:
@@ -229,11 +233,23 @@ def test_partial_kernels_cutoffs(
         assert jnp.allclose(k(r_above), 0.0)
 
 
-# @pytest.mark.skip(reason="Test not written yet")
 @pytest.mark.parametrize("p", [4, 6])
+@pytest.mark.parametrize(
+    "box_lengths",
+    [
+        onp.array([10.0]),
+        onp.array([10.0, 12]),
+        onp.array([10.0, 12.0, 15.0]),
+    ],
+)
 def test_new_vs_old_stencil_construction_fn(
-    fixture_partial_kernels, fixture_level_zero_cutoff, p
+    fixture_partial_kernels, fixture_level_zero_cutoff, box_lengths, p
 ):
+    if len(fixture_partial_kernels) == 2:
+        pytest.xfail(
+            "The kernel stencil fns incorrectly the case of a single grid level"
+        )
+
     # TODO: Remove/replace this test in the long run. It is only meant to
     #  ensure we don't break anything while transitioning from the old (static,
     #  only one spacing value for all directions) to the new (dynamic,
@@ -243,8 +259,7 @@ def test_new_vs_old_stencil_construction_fn(
     spacing_scalar = 1.0
     alpha = fixture_level_zero_cutoff / spacing_scalar
     mu = max(int(4 * alpha + p // 2), 3 * p // 2)
-    box_lengths = onp.array([10.0, 10.0, 10.0])  # TODO
-    n_levels = len(fixture_partial_kernels) - 1  # TODO
+    n_levels = len(fixture_partial_kernels) - 1
 
     stencils_old = old_kernel_stencil_fn(
         kernels=fixture_partial_kernels,
@@ -265,7 +280,7 @@ def test_new_vs_old_stencil_construction_fn(
     grids_new = set_up_grids_all_levels(
         box_lengths=box_lengths,
         level_one_spacings=spacings_one_per_axis,
-        pbcs=(False, False, False),
+        pbcs=(False,) * len(box_lengths),
         n_levels=n_levels,
         p=p,
         J_zeroplus=compute_J_zeroplus(p),
@@ -276,12 +291,27 @@ def test_new_vs_old_stencil_construction_fn(
         reference_cell=cell,
         reference_spacings=spacings_one_per_axis,
         omega=omega,
-        kernels_include_toplevel=True,
+        kernels_include_toplevel=True,  # because non-periodic
         sizes_from_center_toplevel=tuple(
             s + len(omega) // 2 for s in grids_new[-1].shape
         ),
     )
     stencils_new = stencil_construction_fn_new(cell)
 
-    for s_new, s_old in zip(stencils_new[1:], stencils_old[1:]):
+    # Levels below top level
+    for s_new, s_old in zip(stencils_new[1:-1], stencils_old[1:-1]):
         assert onp.allclose(s_new, s_old)
+
+    # Top level: The new calculation does not automatically trim the top level
+    # stencil to the grid size (in the future this should change), so we need
+    # to do it manually for comparison.
+    stencil_toplevel_old = stencils_old[-1]
+    stencil_toplevel_new = stencils_new[-1]
+    shape_diff = onp.array(stencil_toplevel_new.shape) - onp.array(
+        stencil_toplevel_old.shape
+    )
+    excess_sizes = shape_diff // 2
+    stencil_toplevel_new_trimmed = stencil_toplevel_new[
+        tuple(slice(s, -s) for s in excess_sizes)
+    ]
+    assert onp.allclose(stencil_toplevel_new_trimmed, stencil_toplevel_old)
