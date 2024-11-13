@@ -148,19 +148,26 @@ def _construct_all_kernel_stencils(
     kernels_include_toplevel: bool,
     points_toplevel,  # TODO: pass points or directly the distances?
 ):
-    # TODO: raise error when `kernels_include_toplevel=True`, but sizes not given
+    # TODO: raise error when `kernels_include_toplevel=True`, but sizes not
+    #  given
+    # TODO: When there is only one grid level (=kernel splitting into two
+    #  terms), `points` and `points_toplevel` actually mean the same thing.
+    #  How should this be handled in terms of default argument values?
+    #  (Not that the case of exactly one grid level is very relevant, but we
+    #  should still support it)
+
     # TODO: better variable names for highest/intermediate levels?
     highest_included_level = len(kernel_fns) - 1
     if kernels_include_toplevel:
-        number_of_intermediate_levels = highest_included_level - 1
+        number_of_intermediate_kernels = highest_included_level - 1
     else:
-        number_of_intermediate_levels = highest_included_level
+        number_of_intermediate_kernels = highest_included_level
 
     # Level zero (at which there is no grid)
     stencils = [None]
 
     # Intermediate levels:
-    if number_of_intermediate_levels > 0:
+    if number_of_intermediate_kernels > 0:
         distances = _sqrt((points * points).sum(axis=-1))
         fn_vals_at_points = kernel_fns[1](distances)
         stencils.append(_compute_kernel_stencil(fn_vals_at_points, omega))
@@ -171,7 +178,7 @@ def _construct_all_kernel_stencils(
         # TODO: Can this be done faster by a broadcast multiplication? So far, it
         #  looks like there is not much to be gained here. The stencil calculation
         #  appears to be not much of a bottleneck.
-        for lvl in range(number_of_intermediate_levels - 1):
+        for lvl in range(number_of_intermediate_kernels - 1):
             stencils.append(0.5 * stencils[-1])
 
     # Top level with the long-range tail (if included)
