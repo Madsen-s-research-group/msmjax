@@ -301,6 +301,7 @@ def set_up_kernels_grids_and_stencils(
     n_levels,
 ):
     pbc = onp.asarray(pbc)
+    level_one_gridspacing = onp.asarray(level_one_gridspacing)
     omega, _ = compute_coeffs_with_truncation(p, mu)
 
     kernels = split_one_over_r_kernel(
@@ -320,6 +321,7 @@ def set_up_kernels_grids_and_stencils(
     # For simplicity, we always include the top level in the kernel stencil
     # calculation. If it needs to be omitted due to periodic boundary
     # conditions, this can still be done later.
+    # TODO: Trim the top level to the shape of the highest grid?
     kernels_include_toplevel = True
     sizes_toplevel = tuple(s + len(omega) // 2 for s in grids[-1].shape)
 
