@@ -149,35 +149,32 @@ def _construct_all_kernel_stencils(
     points_toplevel,  # TODO: pass points or directly the distances?
 ):
     # TODO: raise error when `kernels_include_toplevel=True`, but sizes not given
+    # TODO: better variable names for highest/intermediate levels?
     highest_included_level = len(kernel_fns) - 1
+    if kernels_include_toplevel:
+        number_of_intermediate_levels = highest_included_level - 1
+    else:
+        number_of_intermediate_levels = highest_included_level
 
     # Level zero (at which there is no grid)
     stencils = [None]
 
-    # TODO: If there is only one level (i.e. kernel_fns has length 2, with
-    #  `None` as the first element), the top-level treatment in this
-    #  function is wrong! Level one is always computed, and the
-    #  `if kernels_include_toplevel: ... else:` always adds another level!
-    #  The old (static) kernel stencil construction fn suffers from the same
-    #  problem.
-
-    # Level one
-    distances = _sqrt((points * points).sum(axis=-1))
-    fn_vals_at_points = kernel_fns[1](distances)
-    stencils.append(_compute_kernel_stencil(fn_vals_at_points, omega))
-
     # Intermediate levels:
-    # For the type of kernel splitting used here, the intermediate-level
-    # kernel values (and thus stencils) can be computed by simply dividing
-    # the one from the previous level by 2. But this need not hold for
-    # other kernels or ways of splitting!
-    # TODO: Can this be done faster by a broadcast multiplication? So far, it
-    #  looks like there is not much to be gained here. The stencil calculation
-    #  appears to be not much of a bottleneck.
-    for lvl in range(2, highest_included_level):
-        stencils.append(0.5 * stencils[-1])
+    if number_of_intermediate_levels > 0:
+        distances = _sqrt((points * points).sum(axis=-1))
+        fn_vals_at_points = kernel_fns[1](distances)
+        stencils.append(_compute_kernel_stencil(fn_vals_at_points, omega))
+        # For the type of kernel splitting used, the kernel (and thus stencil)
+        # values at the remaining intermediate levels can be computed simply
+        # by dividing the level-one result by powers of two.
+        # This need not hold for other kernels or ways of splitting.
+        # TODO: Can this be done faster by a broadcast multiplication? So far, it
+        #  looks like there is not much to be gained here. The stencil calculation
+        #  appears to be not much of a bottleneck.
+        for lvl in range(number_of_intermediate_levels - 1):
+            stencils.append(0.5 * stencils[-1])
 
-    # Highest included level
+    # Top level with the long-range tail (if included)
     if kernels_include_toplevel:
         # TODO: Some possible efficiency gain by precomputing `points_cartesian`
         #  or `points_cartesian_toplevel`, whichever is larger in shape,
@@ -185,10 +182,9 @@ def _construct_all_kernel_stencils(
         # TODO: For the size of the top level stencil chosen sufficiently
         #  large (I think it needs to be the grid size + half the length of
         #  omega as padding), constructing it is very costly
-        # TODO: highest_included_level -1 or -2? (I think -2 might be a remnant
-        #  from when highest_included_level was defined differently)
-        #  ...but should this scaling be done inside this function at all,
-        #  maybe it should receive the correct distances from outside?
+        # TODO: Should the scaling of distances by the appropriate power of two
+        #  (`2 ** (highest_included_level - 1)`) be done inside this function?
+        #  Perhaps it should rather receive the correct distances from outside?
         distances_toplevel = 2 ** (highest_included_level - 1) * _sqrt(
             (points_toplevel * points_toplevel).sum(axis=-1)
         )
@@ -196,8 +192,6 @@ def _construct_all_kernel_stencils(
         stencils.append(
             _compute_kernel_stencil(fn_vals_at_points_toplevel, omega)
         )
-    else:
-        stencils.append(0.5 * stencils[-1])
 
     return stencils
 

@@ -298,6 +298,8 @@ def test_new_vs_old_stencil_construction_fn(
     )
     stencils_new = stencil_construction_fn_new(cell)
 
+    assert len(stencils_new) == len(stencils_old)
+
     # Levels below top level
     for s_new, s_old in zip(stencils_new[1:-1], stencils_old[1:-1]):
         assert onp.allclose(s_new, s_old)
