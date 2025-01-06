@@ -29,11 +29,11 @@ from matscipy.neighbours import neighbour_list
 
 from msmjax.benchmark_tools import path_input_structures
 from msmjax.shortrange import (
-    gen_supercell,
+    _concretize_displacement_fn,
+    _gen_supercell,
     make_compute_U0,
     make_pair_term_fn,
     make_pair_term_fn_with_neighbor_list,
-    select_displacement_fn,
 )
 
 # TODO: this and preallocate should both be handled in the same way
@@ -117,7 +117,7 @@ def fixture_pbc(request) -> tuple:
 def test_gen_supercell(fixture_structure, supercell_diag):
     """Test cell replication result against `ase.atoms.Atoms.repeat()`"""
     pos, chg, cell, cell_mode = fixture_structure
-    super_pos, super_chg, super_cell = gen_supercell(
+    super_pos, super_chg, super_cell = _gen_supercell(
         positions=pos, charges=chg, cell=cell, supercell_diag=supercell_diag
     )
     atoms = Atoms(positions=pos, charges=chg, cell=cell)
@@ -134,7 +134,7 @@ def test_gen_supercell_2d(fixture_structure_cubic, supercell_diag):
     pos, chg, cell, cell_mode = fixture_structure_cubic
     pos_2d = pos[:, :2]
     cell_2d = cell[:2, :2]
-    super_pos_2d, super_chg, super_cell_2d = gen_supercell(
+    super_pos_2d, super_chg, super_cell_2d = _gen_supercell(
         positions=pos_2d,
         charges=chg,
         cell=cell_2d,
@@ -195,7 +195,7 @@ def test_compute_distance_vectors(fixture_structure, fixture_pbc):
     max_cutoff = get_max_cutoff_3d(cell)
     (i, j) = jnp.triu_indices(pos.shape[0], k=1)
 
-    displacement_fn = select_displacement_fn(
+    displacement_fn = _concretize_displacement_fn(
         pbc=onp.array(fixture_pbc), cell_mode=cell_mode
     )
     deltas = jax.vmap(displacement_fn, in_axes=(0, 0, None))(
@@ -230,7 +230,7 @@ def test_compute_distance_vectors_outside_cell(
     pos, chg = pos[:50], chg[:50]
     max_cutoff = get_max_cutoff_3d(cell)
     (i, j) = jnp.triu_indices(pos.shape[0], k=1)
-    displacement_fn = select_displacement_fn(
+    displacement_fn = _concretize_displacement_fn(
         pbc=onp.array(fixture_pbc), cell_mode=cell_mode
     )
     deltas = jax.vmap(displacement_fn, in_axes=(0, 0, None))(
@@ -252,10 +252,10 @@ def test_compute_distance_vectors_different_cell_types(
     pos, chg, cell, _ = fixture_structure_cubic
     pos, chg = pos[:30], chg[:30]
     (i, j) = jnp.triu_indices(pos.shape[0], k=1)
-    displacement_fn_ortho = select_displacement_fn(
+    displacement_fn_ortho = _concretize_displacement_fn(
         pbc=onp.asarray(fixture_pbc), cell_mode="ortho"
     )
-    displacement_fn_general = select_displacement_fn(
+    displacement_fn_general = _concretize_displacement_fn(
         pbc=onp.asarray(fixture_pbc), cell_mode="general"
     )
     deltas_ortho = jax.vmap(displacement_fn_ortho, in_axes=(0, 0, None))(
@@ -338,7 +338,7 @@ def test_pair_term_supercell_correct_multiple(
     pair_term_fn = make_pair_term_fn(
         kernel_fn=kernel_fn, pbc=pbc, cell_mode=cell_mode
     )
-    super_pos, super_chg, super_cell = gen_supercell(
+    super_pos, super_chg, super_cell = _gen_supercell(
         pos, chg, cell, supercell_diag
     )
     energy = pair_term_fn(pos, chg, cell)
@@ -382,7 +382,7 @@ def test_pair_term_periodic_wrap_vs_replicate(
     pair_term_fn_explicit_replicate = make_pair_term_fn_with_neighbor_list(
         kernel_fn=kernel_fn, pbc=(False, False, False), cell_mode=cell_mode
     )
-    pos_extended, chg_extended, cell_extended = gen_supercell(
+    pos_extended, chg_extended, cell_extended = _gen_supercell(
         positions=pos,
         charges=chg,
         cell=cell,

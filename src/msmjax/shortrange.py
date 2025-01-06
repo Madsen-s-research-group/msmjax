@@ -18,6 +18,7 @@ import jax
 import jax.numpy as jnp
 import numpy as onp
 import numpy.typing as npt
+from jax.typing import ArrayLike
 from jax_md import space  # TODO: copy to standalone module instead of import
 from jax_md.util import (  # # TODO: copy to standalone module instead of import
     f32,
@@ -26,7 +27,7 @@ from jax_md.util import (  # # TODO: copy to standalone module instead of import
 from msmjax.utils import _divide_zero_safe, _sqrt
 
 
-def gen_supercell(
+def _gen_supercell(
     positions: jax.Array,
     charges: jax.Array,
     cell: jax.Array,
@@ -52,35 +53,67 @@ def gen_supercell(
     return super_positions, super_charges, super_cell
 
 
-def _nonperiodic_displacement(R_1, R_2, cell):
+def _displacement_free(R_1, R_2):
+    # TODO: unit test this on its own?
     return R_1 - R_2
 
 
-def select_displacement_fn(pbc, cell_mode) -> Callable:
-    if not jnp.any(pbc):
-        return _nonperiodic_displacement
+def _displacement_ortho(R_1, R_2, side_lengths):
+    # TODO: unit test this on its own?
+    delta = R_1 - R_2
+    return (
+        delta
+        - jnp.round(_divide_zero_safe(delta, side_lengths)) * side_lengths
+    )
 
-    def mixed_periodic_displacement_ortho(R_1, R_2, cell):
-        side_lengths = jnp.diag(cell) * pbc
-        delta = R_1 - R_2
-        return (
-            delta
-            - jnp.round(_divide_zero_safe(delta, side_lengths)) * side_lengths
+
+def _displacement_general(R_1, R_2, cell):
+    # TODO: unit test this on its own?
+    dR = R_1 - R_2
+    inv_cell = jnp.linalg.pinv(cell)
+    R_1_transf = R_1 @ inv_cell
+    R_2_transf = R_2 @ inv_cell
+    dR_transformed = R_1_transf - R_2_transf
+    return dR - jnp.round(dR_transformed) @ cell
+
+
+def _concretize_displacement_fn(pbc: ArrayLike, cell_mode=None) -> Callable:
+    # TODO: type hint for pbc?
+    # TODO: type hint for cell_mode (in all places where it's used)
+    if jnp.any(pbc) and cell_mode is None:
+        # TODO: write test for this check
+        raise ValueError(
+            "If at least one direction is periodic, "
+            "you must specify cell_mode."
         )
 
-    def mixed_periodic_displacement_general(R_1, R_2, cell):
-        dR = R_1 - R_2
-        cell_processed_for_pbc = cell * pbc[:, jnp.newaxis]
-        inv_cell = jnp.linalg.pinv(cell_processed_for_pbc)
-        R_1_transf = R_1 @ inv_cell
-        R_2_transf = R_2 @ inv_cell
-        dR_transformed = R_1_transf - R_2_transf
-        return dR - jnp.round(dR_transformed) @ cell_processed_for_pbc
+    if not jnp.any(pbc):
+
+        def displacement_fn(R_1, R_2, cell=None):
+            return _displacement_free(R_1, R_2)
+
+        return displacement_fn
 
     if cell_mode == "ortho":
-        return mixed_periodic_displacement_ortho
-    if cell_mode == "general":
-        return mixed_periodic_displacement_general
+
+        def displacement_fn(R_1, R_2, cell):
+            side_lengths_processed_for_pbc = jnp.diag(cell) * pbc
+            return _displacement_ortho(
+                R_1, R_2, side_lengths_processed_for_pbc
+            )
+
+        return displacement_fn
+
+    elif cell_mode == "general":
+
+        def displacement_fn(R_1, R_2, cell):
+            cell_processed_for_pbc = cell * pbc[:, jnp.newaxis]
+            return _displacement_general(R_1, R_2, cell_processed_for_pbc)
+
+        return displacement_fn
+
+    else:
+        raise ValueError("Invalid cell_mode.")
 
 
 def _generalized_diagonal_mask(X):
@@ -114,8 +147,10 @@ def make_pair_term_fn(
     pbc: npt.ArrayLike,
     # TODO: Default value for `cell_mode`: Is `None` okay?
     cell_mode: Optional[Literal["ortho", "general"]] = None,
-    supercell_diag: Union[int, Sequence[int]] = 1,
+    supercell_diag: Union[int, Sequence[int]] = 1,  # TODO: Default: 1? None?
 ):
+    # TODO: Raise error if periodic, but `cell_mode` not given. Or should this
+    #  be done inside `_concretize_displacement_fn`?
     # TODO: unit test jitting
     pbc = onp.asarray(pbc)
     supercell_diag = onp.asarray(supercell_diag)
@@ -125,7 +160,7 @@ def make_pair_term_fn(
         )
     # TODO: check supercell_diag >= 1?
 
-    displacement_fn = select_displacement_fn(pbc, cell_mode)
+    displacement_fn = _concretize_displacement_fn(pbc, cell_mode)
 
     def compute_pair_term(positions, charges, cell):
         """Logic adapted from JAX-MD, but adding supercell_diag option and
@@ -133,7 +168,7 @@ def make_pair_term_fn(
 
         # TODO: attribution
         """
-        super_positions, super_charges, super_cell = gen_supercell(
+        super_positions, super_charges, super_cell = _gen_supercell(
             positions=positions,
             charges=charges,
             cell=cell,
@@ -141,7 +176,6 @@ def make_pair_term_fn(
         )
         metric_fn = partial(space.metric(displacement_fn), cell=super_cell)
         mapped_metric_fn = space.map_product(metric_fn)
-        # TODO: order of arguments to metric?
         dr_ij = mapped_metric_fn(super_positions, positions)
         qi_qj = charges[:, jnp.newaxis] * super_charges
         return (
@@ -156,10 +190,13 @@ def make_pair_term_fn_with_neighbor_list(
     pbc: npt.ArrayLike,
     cell_mode,  # TODO: type hint, default value?
 ):
+    # TODO: Raise error if periodic, but `cell_mode` not given.
+
     pbc = onp.asarray(pbc)
-    displacement_fn = select_displacement_fn(pbc, cell_mode)
+    displacement_fn = _concretize_displacement_fn(pbc, cell_mode)
 
     def compute_pair_term(positions, charges, cell, neighbor_list, weights):
+        # TODO: Should weights default to 1.0?
         (i, j) = neighbor_list
         metric_fn = partial(space.metric(displacement_fn), cell=cell)
         mapped_metric_fn = space.map_bond(metric_fn)
@@ -170,7 +207,8 @@ def make_pair_term_fn_with_neighbor_list(
         # Set distances of placeholder pairs to a value at which the potential
         # can be safely evaluated
         # TODO: Is the first jnp.where needed at all? Is the one for the
-        #  evaluation of kernel fn sufficient?
+        #  evaluation of kernel fn sufficient? If it's not needed, we wouldn't
+        #  need the "safe distance" either.
         dr_ij = jnp.where(is_not_placeholder, dr_ij, 1.0)
         qi_qj = charges[i] * charges[j]
         return jnp.where(
@@ -186,6 +224,7 @@ def make_compute_U0(
     cell_mode,  # TODO: type hint, default value?
     supercell_diag: Union[int, Sequence[int]] = 1,
 ):
+    # TODO: particle contributions?
     compute_pair_term = make_pair_term_fn(
         kernel_fn=kernel_fns[0],
         pbc=pbc,
@@ -217,12 +256,14 @@ def make_compute_U0_with_neighbor_list(
     # TODO: Using a neighbor list together with `supercell_diag` could get a
     #  bit complicated, so this function currently doesn't support
     #  `supercell_diag`, but it could still be useful.
+    # TODO: particle contributions?
     compute_pair_term = make_pair_term_fn_with_neighbor_list(
         kernel_fn=kernel_fns[0], pbc=pbc, cell_mode=cell_mode
     )
     sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
 
     # TODO: add `pair_weights` parameter (name of parameter?)
+    # TODO: Should weights default to 1.0?
     def compute_U0(positions, charges, cell, neighbor_list, weights):
         pair_term = compute_pair_term(
             positions=positions,
