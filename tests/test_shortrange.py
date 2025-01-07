@@ -111,9 +111,7 @@ def fixture_pbc(request) -> tuple:
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
     indirect=True,
 )
-@pytest.mark.parametrize(
-    "supercell_diag", [1, 2, (1, 1, 1), (2, 2, 2), (1, 2, 3)]
-)
+@pytest.mark.parametrize("supercell_diag", [(1, 1, 1), (2, 2, 2), (1, 2, 3)])
 def test_gen_supercell(fixture_structure, supercell_diag):
     """Test cell replication result against `ase.atoms.Atoms.repeat()`"""
     pos, chg, cell, cell_mode = fixture_structure
@@ -128,7 +126,7 @@ def test_gen_supercell(fixture_structure, supercell_diag):
     assert onp.allclose(super_cell, atoms.cell[...])
 
 
-@pytest.mark.parametrize("supercell_diag", [1, 2, (1, 1), (2, 2), (2, 3)])
+@pytest.mark.parametrize("supercell_diag", [(1, 1), (2, 2), (2, 3)])
 def test_gen_supercell_2d(fixture_structure_cubic, supercell_diag):
     """Test cell replication against `ase.atoms.Atoms.repeat()`, 2-d case"""
     pos, chg, cell, cell_mode = fixture_structure_cubic
@@ -141,10 +139,7 @@ def test_gen_supercell_2d(fixture_structure_cubic, supercell_diag):
         supercell_diag=supercell_diag,
     )
     atoms = Atoms(positions=pos, charges=chg, cell=cell)
-    if onp.ndim(supercell_diag) == 0:
-        atoms = atoms.repeat((supercell_diag, supercell_diag, 1))
-    else:
-        atoms = atoms.repeat(supercell_diag + (1,))
+    atoms = atoms.repeat(supercell_diag + (1,))
 
     assert onp.allclose(super_pos_2d, atoms.get_positions()[:, :2])
     assert onp.allclose(super_chg, atoms.get_initial_charges())
@@ -352,7 +347,7 @@ def test_pair_term_supercell_correct_multiple(
     indirect=True,
 )
 @pytest.mark.parametrize(
-    "cutoff_multiplier, supercell_diag", [(0.99, 1), (1.99, 2)]
+    "cutoff_multiplier, supercell_diag", [(0.99, (1, 1, 1)), (1.99, (2, 2, 2))]
 )
 def test_pair_term_periodic_wrap_vs_replicate(
     fixture_structure, cutoff_multiplier, supercell_diag

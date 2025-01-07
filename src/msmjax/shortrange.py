@@ -31,9 +31,7 @@ def _gen_supercell(
     positions: jax.Array,
     charges: jax.Array,
     cell: jax.Array,
-    supercell_diag: Union[
-        int, Sequence[int]
-    ],  # TODO: does the type of `supercell_diag` need to be more specific?
+    supercell_diag: Sequence[int],
 ):
     """Adapted from NeuralIL
 
@@ -42,8 +40,6 @@ def _gen_supercell(
     # TODO: Type of supercell_diag: allow only jax.typing.ArrayLike??
     # TODO: Do we really want to support non-sequence ints for `supercell_diag`?
     n_particles, n_dim = positions.shape
-    if onp.ndim(supercell_diag) == 0:
-        supercell_diag = (supercell_diag,) * n_dim
     M = onp.prod(supercell_diag)
     tile_positions = jnp.tile(positions, (M, 1))
     super_charges = jnp.tile(charges, M)
@@ -172,14 +168,15 @@ def make_pair_term_fn(
             original, non-replicated, cell.
 
     Returns:
-        A function that takes arrays of positions and charges, and the unit
-        cell, as parameters and computes the energy for the whole system of
-        particles.
+        A function that takes arrays of particle positions and charges,
+        and the unit cell, as arguments and computes the energy for the
+        whole system of particles.
     """
     # TODO: function name maybe not ideal
     # TODO: unit test jitting
     pbc = onp.asarray(pbc)
-    supercell_diag = onp.asarray(supercell_diag)
+    if supercell_diag is None:
+        supercell_diag = onp.ones_like(pbc, dtype=int)
     if onp.logical_and(~pbc, onp.asarray(supercell_diag) != 1).any():
         raise ValueError(
             "`supercell_diag` must be equal to one along non-periodic axes"
@@ -188,12 +185,13 @@ def make_pair_term_fn(
 
     displacement_fn = _concretize_displacement_fn(pbc, cell_mode)
 
-    def compute_pair_term(positions, charges, cell):
+    def compute_pair_term(positions, charges, cell=None):
         """Logic adapted from JAX-MD, but adding supercell_diag option and
         charges.
 
         # TODO: attribution
         """
+        # TODO: test calling without `cell` argument in non-periodic case
         # TODO: Can/should we make `cell_param` optional and skip supercell
         #  generation in case of no periodicity?
         if pbc.any():
@@ -258,7 +256,7 @@ def make_compute_U0(
     kernel_fns: List[Callable],
     pbc: npt.ArrayLike,
     cell_mode,  # TODO: type hint, default value?
-    supercell_diag: Union[int, Sequence[int]] = 1,
+    supercell_diag: Sequence[int] = None,
 ):
     # TODO: particle contributions?
     compute_pair_term = make_pair_term_fn(
