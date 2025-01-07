@@ -24,7 +24,7 @@ from jax_md.util import (  # # TODO: copy to standalone module instead of import
     f32,
 )
 
-from msmjax.utils import _divide_zero_safe, _sqrt
+from msmjax.utils import _divide_zero_safe
 
 
 def _gen_supercell(
@@ -39,6 +39,8 @@ def _gen_supercell(
 
     TODO: proper attribution
     """
+    # TODO: Type of supercell_diag: allow only jax.typing.ArrayLike??
+    # TODO: Do we really want to support non-sequence ints for `supercell_diag`?
     n_particles, n_dim = positions.shape
     if onp.ndim(supercell_diag) == 0:
         supercell_diag = (supercell_diag,) * n_dim
@@ -51,6 +53,32 @@ def _gen_supercell(
     super_positions = tile_positions + tile_translations
     super_cell = cell * jnp.array(supercell_diag)[:, jnp.newaxis]
     return super_positions, super_charges, super_cell
+
+
+def _generalized_diagonal_mask(X):
+    """Set the diagonal of a matrix to zero that may be wider than tall
+
+    Adapted from JAX-MD
+    # TODO: attribution
+    """
+    if len(X.shape) != 2:
+        raise ValueError("Only two-dimensional arrays are supported.")
+    M, N = X.shape
+    if M > N:
+        raise ValueError(
+            "Input array must be either square, or wider than tall."
+        )
+    # TODO: Is this okay? (See the note in the original `_diagonal_mask`
+    #  function of jax_md)
+    X = jnp.nan_to_num(X)
+    mask = f32(1.0) - jnp.eye(M, dtype=X.dtype)
+    mask = jnp.pad(
+        mask,
+        pad_width=((0, 0), (0, N - M)),
+        mode="constant",
+        constant_values=1,
+    )
+    return mask * X
 
 
 def _displacement_free(R_1, R_2):
@@ -116,41 +144,39 @@ def _concretize_displacement_fn(pbc: ArrayLike, cell_mode=None) -> Callable:
         raise ValueError("Invalid cell_mode.")
 
 
-def _generalized_diagonal_mask(X):
-    """Set the diagonal of a matrix to zero that may be wider than tall
-
-    Adapted from JAX-MD
-    # TODO: attribution
-    """
-    if len(X.shape) != 2:
-        raise ValueError("Only two-dimensional arrays are supported.")
-    M, N = X.shape
-    if M > N:
-        raise ValueError(
-            "Input array must be either square, or wider than tall."
-        )
-    # TODO: Is this okay? (See the note in the original `_diagonal_mask`
-    #  function of jax_md)
-    X = jnp.nan_to_num(X)
-    mask = f32(1.0) - jnp.eye(M, dtype=X.dtype)
-    mask = jnp.pad(
-        mask,
-        pad_width=((0, 0), (0, N - M)),
-        mode="constant",
-        constant_values=1,
-    )
-    return mask * X
-
-
 def make_pair_term_fn(
     kernel_fn: Callable,
-    pbc: npt.ArrayLike,
+    pbc: Sequence[bool],
     # TODO: Default value for `cell_mode`: Is `None` okay?
     cell_mode: Optional[Literal["ortho", "general"]] = None,
-    supercell_diag: Union[int, Sequence[int]] = 1,  # TODO: Default: 1? None?
+    supercell_diag: Optional[Sequence[int]] = None,
 ):
-    # TODO: Raise error if periodic, but `cell_mode` not given. Or should this
-    #  be done inside `_concretize_displacement_fn`?
+    """Transform interaction kernel into function acting on a particle system.
+
+    In other words, transform a function that computes :math:`k(r)` into one
+    that computes :math:`\sum_i \sum_{j \neq i} q_i q_j k(r_{ij})`.
+
+    Args:
+        kernel_fn: A function of a single scalar distance argument that
+            computes the distance-dependent factor in the energy of one pair
+            of particles.   # TODO: better explanation (formula above?)
+        pbc: One boolean per direction signaling periodicity.
+        cell_mode: May be omitted (and is ignored) if no direction is periodic. # TODO: finish
+        supercell_diag: An optional sequence of positive integers, one per
+            direction. If supplied, pairwise interactions are computed
+            between the particles in the original cell and all particles in
+            a supercell created by repeating the cell the given number of
+            times along each direction. This can be used to ensure that all
+            interactions with neighbors are taken into account in cases
+            where the cutoff of `kernel_fn` is too large for the
+            original, non-replicated, cell.
+
+    Returns:
+        A function that takes arrays of positions and charges, and the unit
+        cell, as parameters and computes the energy for the whole system of
+        particles.
+    """
+    # TODO: function name maybe not ideal
     # TODO: unit test jitting
     pbc = onp.asarray(pbc)
     supercell_diag = onp.asarray(supercell_diag)
@@ -168,13 +194,24 @@ def make_pair_term_fn(
 
         # TODO: attribution
         """
-        super_positions, super_charges, super_cell = _gen_supercell(
-            positions=positions,
-            charges=charges,
-            cell=cell,
-            supercell_diag=supercell_diag,
-        )
-        metric_fn = partial(space.metric(displacement_fn), cell=super_cell)
+        # TODO: Can/should we make `cell_param` optional and skip supercell
+        #  generation in case of no periodicity?
+        if pbc.any():
+            if cell is None:
+                raise ValueError(
+                    "If at least one direction is periodic, "
+                    "cell argument is required."
+                )
+            super_positions, super_charges, super_cell = _gen_supercell(
+                positions=positions,
+                charges=charges,
+                cell=cell,
+                supercell_diag=supercell_diag,
+            )
+            metric_fn = partial(space.metric(displacement_fn), cell=super_cell)
+        else:
+            super_positions, super_charges = positions, charges
+            metric_fn = partial(space.metric(displacement_fn))
         mapped_metric_fn = space.map_product(metric_fn)
         dr_ij = mapped_metric_fn(super_positions, positions)
         qi_qj = charges[:, jnp.newaxis] * super_charges
@@ -190,8 +227,7 @@ def make_pair_term_fn_with_neighbor_list(
     pbc: npt.ArrayLike,
     cell_mode,  # TODO: type hint, default value?
 ):
-    # TODO: Raise error if periodic, but `cell_mode` not given.
-
+    # TODO: function name maybe not ideal
     pbc = onp.asarray(pbc)
     displacement_fn = _concretize_displacement_fn(pbc, cell_mode)
 
@@ -252,10 +288,8 @@ def make_compute_U0_with_neighbor_list(
     pbc: npt.ArrayLike,
     cell_mode,  # TODO: type hint, default value?
 ):
+    # TODO: Doesn't this function duplicate a lot of code from `make_compute_U0`???
     # TODO: add tests for this
-    # TODO: Using a neighbor list together with `supercell_diag` could get a
-    #  bit complicated, so this function currently doesn't support
-    #  `supercell_diag`, but it could still be useful.
     # TODO: particle contributions?
     compute_pair_term = make_pair_term_fn_with_neighbor_list(
         kernel_fn=kernel_fns[0], pbc=pbc, cell_mode=cell_mode
