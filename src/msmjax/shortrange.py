@@ -148,13 +148,14 @@ def make_pair_term_fn(
 ):
     """Transform interaction kernel into function acting on a particle system.
 
-    In other words, transform a function that computes :math:`k(r)` into one
-    that computes :math:`\sum_i \sum_{j \neq i} q_i q_j k(r_{ij})`.
+    In other words, given a distance-dependent interaction kernel :math:`k(r)`,
+    construct another function that computes the total system energy,
+    :math:`\\frac{1}{2} \\sum_i \\sum_{j \\neq i} q_i q_j k(r_{ij})`, by mapping
+    :math:`k(r)` over all particle pairs.
 
     Args:
-        kernel_fn: A function of a single scalar distance argument that
-            computes the distance-dependent factor in the energy of one pair
-            of particles.   # TODO: better explanation (formula above?)
+        kernel_fn: A function of a single scalar distance argument,
+            corresponding to :math:`k(r)` in the above formula.
         pbc: One boolean per direction signaling periodicity.
         cell_mode: May be omitted (and is ignored) if no direction is periodic. # TODO: finish
         supercell_diag: An optional sequence of positive integers, one per
@@ -230,15 +231,21 @@ def make_pair_term_fn_with_neighbor_list(
     cell_mode: Optional[
         Literal["ortho", "general"]
     ] = None,  # TODO: define the allowed values globally
+    safe_eval_distance: float = 1.0,  # TODO: test? (how?)
 ):
     """Transform interaction kernel into function acting on a particle system.
 
-    Like `make_pair_term_fn`, but uses a neighbor list.
+    Like `make_pair_term_fn`, but with a neighbor list.
 
     Args:
         kernel_fn:
         pbc: One boolean per direction signaling periodicity.
         cell_mode:
+        safe_eval_distance: A value for which `kernel_fn` evaluates to a
+            result that is not `nan` or `inf`. Apart from this, it may be
+            arbitrary and its exact value is of no consequence. Used
+            internally in safely ignoring placeholder pairs contained in the
+            neighbor list in a jit- and autodiff-compatible way.
 
     Returns:
         A function that takes arrays of particle positions and charges,
@@ -290,10 +297,9 @@ def make_pair_term_fn_with_neighbor_list(
         dr_ij = mapped_metric_fn(positions[i], positions[j])
         n_particles = positions.shape[0]
         is_not_placeholder = jnp.logical_and(i < n_particles, j < n_particles)
-        # TODO: Should this "safe distance" be a function argument?
         # Set distances of placeholder pairs to a value at which the potential
         # can be safely evaluated
-        dr_ij = jnp.where(is_not_placeholder, dr_ij, 1.0)
+        dr_ij = jnp.where(is_not_placeholder, dr_ij, safe_eval_distance)
         qi_qj = charges[i] * charges[j]
         return jnp.where(
             is_not_placeholder, weights * qi_qj * kernel_fn(dr_ij), 0.0
