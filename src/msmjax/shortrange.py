@@ -37,8 +37,6 @@ def _gen_supercell(
 
     TODO: proper attribution
     """
-    # TODO: Type of supercell_diag: allow only jax.typing.ArrayLike??
-    # TODO: Do we really want to support non-sequence ints for `supercell_diag`?
     n_particles, n_dim = positions.shape
     M = onp.prod(supercell_diag)
     tile_positions = jnp.tile(positions, (M, 1))
@@ -143,8 +141,9 @@ def _concretize_displacement_fn(pbc: ArrayLike, cell_mode=None) -> Callable:
 def make_pair_term_fn(
     kernel_fn: Callable,
     pbc: Sequence[bool],
-    # TODO: Default value for `cell_mode`: Is `None` okay?
-    cell_mode: Optional[Literal["ortho", "general"]] = None,
+    cell_mode: Optional[
+        Literal["ortho", "general"]
+    ] = None,  # TODO: define the allowed values globally
     supercell_diag: Optional[Sequence[int]] = None,
 ):
     """Transform interaction kernel into function acting on a particle system.
@@ -173,7 +172,6 @@ def make_pair_term_fn(
         whole system of particles.
     """
     # TODO: function name maybe not ideal
-    # TODO: unit test jitting
     pbc = onp.asarray(pbc)
     if supercell_diag is None:
         supercell_diag = onp.ones_like(pbc, dtype=int)
@@ -185,20 +183,26 @@ def make_pair_term_fn(
 
     displacement_fn = _concretize_displacement_fn(pbc, cell_mode)
 
-    def compute_pair_term(positions, charges, cell=None):
-        """Logic adapted from JAX-MD, but adding supercell_diag option and
-        charges.
+    def compute_pair_term(
+        positions: jax.Array, charges: jax.Array, cell: jax.Array = None
+    ) -> jax.Array:
+        """Evaluate pair potential for entire system of charged particles.
 
-        # TODO: attribution
+        Args:
+            positions: Array of positions, shape `(n_particles, n_dim)`.
+            charges: Array of charges, shape `(n_particles,)`.
+            cell: Array representing unit cell, shape `(n_dim, n_dim)`.
+
+        Returns:
+            Total system energy.
         """
+        # TODO: JAX-MD attribution
         # TODO: test calling without `cell` argument in non-periodic case
-        # TODO: Can/should we make `cell_param` optional and skip supercell
-        #  generation in case of no periodicity?
         if pbc.any():
             if cell is None:
                 raise ValueError(
                     "If at least one direction is periodic, "
-                    "cell argument is required."
+                    "the cell argument is required."
                 )
             super_positions, super_charges, super_cell = _gen_supercell(
                 positions=positions,
@@ -222,15 +226,64 @@ def make_pair_term_fn(
 
 def make_pair_term_fn_with_neighbor_list(
     kernel_fn: Callable,
-    pbc: npt.ArrayLike,
-    cell_mode,  # TODO: type hint, default value?
+    pbc: Sequence[bool],
+    cell_mode: Optional[
+        Literal["ortho", "general"]
+    ] = None,  # TODO: define the allowed values globally
 ):
+    """Transform interaction kernel into function acting on a particle system.
+
+    Like `make_pair_term_fn`, but uses a neighbor list.
+
+    Args:
+        kernel_fn:
+        pbc: One boolean per direction signaling periodicity.
+        cell_mode:
+
+    Returns:
+        A function that takes arrays of particle positions and charges,
+        and the unit cell, and additionally a neighbor list and pairwise
+        weights, as arguments and computes the energy for the whole system
+        of particles.
+    """
     # TODO: function name maybe not ideal
     pbc = onp.asarray(pbc)
     displacement_fn = _concretize_displacement_fn(pbc, cell_mode)
 
-    def compute_pair_term(positions, charges, cell, neighbor_list, weights):
-        # TODO: Should weights default to 1.0?
+    def compute_pair_term(
+        positions: jax.Array,
+        charges: jax.Array,
+        cell: jax.Array,
+        neighbor_list: Tuple[jax.Array, jax.Array],
+        weights: jax.Array,
+    ):
+        """Evaluate pair potential over an entire system, using neighbor list.
+
+        Args:
+            positions: Array of positions, shape `(n_particles, n_dim)`.
+            charges: Array of charges, shape `(n_particles,)`.
+            cell: Array representing unit cell, shape `(n_dim, n_dim)`.
+            neighbor_list: Tuple of two 1-d integer arrays of the same shape.
+                For example, `([0, ..., 26, ...], [91, ..., 5, ...])` would
+                mean that particle `91` is a neighbor of particle `0`,
+                and particle `5` is a neighbor of particle `26`. Entries `>=
+                n_particles` are considered placeholder pairs and do not
+                contribute to the energy. They can be used to satisfy the
+                static shape requirement in jit-compiled functions.
+            weights: Either a scalar or an array of the same shape as each
+                component array of `neighbor_list`, representing an extra
+                multiplicative weight to be applied to every pairwise energy
+                contribution. This can be used to correct for how different
+                neighbor list formats may differently handle duplicate
+                particle pairs, or even to include something like fudge
+                factors for close-together atoms.
+
+        Returns:
+            Total system energy.
+        """
+        # TODO: Support matrix neighbor list format? (would be required for
+        #  evaluating the electrostatic potential). Docstring and signature
+        #  would need to be adapted.
         (i, j) = neighbor_list
         metric_fn = partial(space.metric(displacement_fn), cell=cell)
         mapped_metric_fn = space.map_bond(metric_fn)
@@ -240,9 +293,6 @@ def make_pair_term_fn_with_neighbor_list(
         # TODO: Should this "safe distance" be a function argument?
         # Set distances of placeholder pairs to a value at which the potential
         # can be safely evaluated
-        # TODO: Is the first jnp.where needed at all? Is the one for the
-        #  evaluation of kernel fn sufficient? If it's not needed, we wouldn't
-        #  need the "safe distance" either.
         dr_ij = jnp.where(is_not_placeholder, dr_ij, 1.0)
         qi_qj = charges[i] * charges[j]
         return jnp.where(
