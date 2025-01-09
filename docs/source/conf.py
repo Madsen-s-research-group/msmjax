@@ -24,6 +24,11 @@ extensions = [
     "sphinx_autodoc_typehints",
 ]
 autodoc_typehints = "description"
+autodoc_default_options = {
+    "members": True,
+    "undoc-members": True,
+    "private-members": True,
+}
 
 
 def custom_typehints_formatter(annotation, config):
