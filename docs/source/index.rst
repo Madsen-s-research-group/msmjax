@@ -6,13 +6,11 @@
 Welcome to msmJAX's documentation!
 ==================================
 
-.. automodule:: msmjax.shortrange
-   :members:
-
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :caption: Contents:
 
+   structure
 
 
 Indices and tables
