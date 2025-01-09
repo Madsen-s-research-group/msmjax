@@ -18,7 +18,7 @@ import jax
 import jax.numpy as jnp
 import numpy as onp
 import numpy.typing as npt
-from jax.typing import ArrayLike
+from jax.typing import Array, ArrayLike
 from jax_md import space  # TODO: copy to standalone module instead of import
 from jax_md.util import (  # # TODO: copy to standalone module instead of import
     f32,
@@ -33,9 +33,20 @@ def _gen_supercell(
     cell: jax.Array,
     supercell_diag: Sequence[int],
 ):
-    """Adapted from NeuralIL
+    """Replicate unit cell and contained particles along its axes.
 
-    TODO: proper attribution
+    Args:
+        positions: Array of positions, shape `(n_particles, n_dim)`.
+        charges: Array of charges, shape `(n_particles,)`.
+        cell: Array representing unit cell, shape `(n_dim, n_dim)`.
+        supercell_diag: Sequence of positive integers, one for each direction,
+            indicating the number of times to replicate the system.
+
+    Returns:
+        Tuple containing
+            - array of positions after replication,
+            - array of charges after replication,
+            - unit cell after replication.
     """
     n_particles, n_dim = positions.shape
     M = onp.prod(supercell_diag)
@@ -50,10 +61,9 @@ def _gen_supercell(
 
 
 def _generalized_diagonal_mask(X):
-    """Set the diagonal of a matrix to zero that may be wider than tall
+    """Set the diagonal of a, possibly wider than tall, matrix to zero.
 
-    Adapted from JAX-MD
-    # TODO: attribution
+    Adapted from JAX-MD. # TODO: JAX-MD attribution
     """
     if len(X.shape) != 2:
         raise ValueError("Only two-dimensional arrays are supported.")
@@ -62,8 +72,6 @@ def _generalized_diagonal_mask(X):
         raise ValueError(
             "Input array must be either square, or wider than tall."
         )
-    # TODO: Is this okay? (See the note in the original `_diagonal_mask`
-    #  function of jax_md)
     X = jnp.nan_to_num(X)
     mask = f32(1.0) - jnp.eye(M, dtype=X.dtype)
     mask = jnp.pad(
@@ -99,8 +107,26 @@ def _displacement_general(R_1, R_2, cell):
     return dR - jnp.round(dR_transformed) @ cell
 
 
-def _concretize_displacement_fn(pbc: ArrayLike, cell_mode=None) -> Callable:
-    # TODO: type hint for pbc?
+def _concretize_displacement_fn(
+    pbc: Sequence[bool],
+    cell_mode: Optional[
+        Literal["ortho", "general"]
+    ] = None,  # TODO: define the allowed values globally
+):
+    """Select/construct displacement fn based on PBCs, unit cell constraints.
+
+    Wraps lower-level displacement functions and transforms them into ones
+    with a choice of periodic boundary conditions built-in already, and with
+    a consistent signature.
+
+    Args:
+        pbc: One boolean per direction signaling periodicity.
+        cell_mode: # TODO
+
+    Returns:
+        A function of two position vector arguments and, (optionally, depending
+        on PBCs) a unit cell, that computes the distance.
+    """
     # TODO: type hint for cell_mode (in all places where it's used)
     if jnp.any(pbc) and cell_mode is None:
         # TODO: write test for this check
@@ -152,6 +178,8 @@ def make_pair_term_fn(
     construct another function that computes the total system energy,
     :math:`\\frac{1}{2} \\sum_i \\sum_{j \\neq i} q_i q_j k(r_{ij})`, by mapping
     :math:`k(r)` over all particle pairs.
+
+    # TODO: Mention MIC limitations here? (maybe format as warning)
 
     Args:
         kernel_fn: A function of a single scalar distance argument,
@@ -238,9 +266,10 @@ def make_pair_term_fn_with_neighbor_list(
     Like `make_pair_term_fn`, but with a neighbor list.
 
     Args:
-        kernel_fn:
+        kernel_fn: A function of a single scalar distance argument,
+            see documentation of :func:`make_pair_term_fn`.
         pbc: One boolean per direction signaling periodicity.
-        cell_mode:
+        cell_mode: # TODO
         safe_eval_distance: A value for which ``kernel_fn`` evaluates to a
             result that is not `nan` or `inf`. Apart from this, it may be
             arbitrary and its exact value is of no consequence. Used
