@@ -1,4 +1,4 @@
-msmjax.gridops\_multidim
+﻿msmjax.gridops\_multidim
 ========================
 
 .. currentmodule:: msmjax

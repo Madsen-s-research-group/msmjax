@@ -1,6 +1,6 @@
 ﻿msmjax.convenience
 ==================
 
-.. currentmodule:: msmjax
+.. currentmodule:: msmjax.convenience
 
-.. automodule:: convenience
+.. automodule:: msmjax.convenience

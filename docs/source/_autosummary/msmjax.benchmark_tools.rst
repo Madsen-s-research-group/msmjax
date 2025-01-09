@@ -1,6 +1,6 @@
 ﻿msmjax.benchmark\_tools
 =======================
 
-.. currentmodule:: msmjax.benchmark_tools
+.. currentmodule:: msmjax
 
-.. automodule:: msmjax.benchmark_tools
+.. automodule:: benchmark_tools

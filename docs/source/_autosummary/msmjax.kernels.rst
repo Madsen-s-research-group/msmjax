@@ -1,4 +1,4 @@
-msmjax.kernels
+﻿msmjax.kernels
 ==============
 
 .. currentmodule:: msmjax

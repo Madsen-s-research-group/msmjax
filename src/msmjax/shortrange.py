@@ -164,7 +164,7 @@ def make_pair_term_fn(
             a supercell created by repeating the cell the given number of
             times along each direction. This can be used to ensure that all
             interactions with neighbors are taken into account in cases
-            where the cutoff of `kernel_fn` is too large for the
+            where the cutoff of ``kernel_fn`` is too large for the
             original, non-replicated, cell.
 
     Returns:
@@ -241,7 +241,7 @@ def make_pair_term_fn_with_neighbor_list(
         kernel_fn:
         pbc: One boolean per direction signaling periodicity.
         cell_mode:
-        safe_eval_distance: A value for which `kernel_fn` evaluates to a
+        safe_eval_distance: A value for which ``kernel_fn`` evaluates to a
             result that is not `nan` or `inf`. Apart from this, it may be
             arbitrary and its exact value is of no consequence. Used
             internally in safely ignoring placeholder pairs contained in the
