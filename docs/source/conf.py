@@ -6,6 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import jax.typing as jpt
 import numpy.typing as npt
 
 project = "msmJAX"
@@ -37,6 +38,8 @@ def custom_typehints_formatter(annotation, config):
     # available for aliases (that works with typehints).
     if annotation == npt.ArrayLike:
         return ":py:class:`numpy.typing.ArrayLike`"
+    if annotation == jpt.ArrayLike:
+        return ":py:class:`jax.typing.ArrayLike`"
     return None
 
 

@@ -18,7 +18,8 @@ import jax
 import jax.numpy as jnp
 import numpy as onp
 import numpy.typing as npt
-from jax.typing import Array, ArrayLike
+from jax import Array
+from jax.typing import ArrayLike
 from jax_md import space  # TODO: copy to standalone module instead of import
 from jax_md.util import (  # # TODO: copy to standalone module instead of import
     f32,
@@ -28,9 +29,9 @@ from msmjax.utils import _divide_zero_safe
 
 
 def _gen_supercell(
-    positions: jax.Array,
-    charges: jax.Array,
-    cell: jax.Array,
+    positions: ArrayLike,
+    charges: ArrayLike,
+    cell: ArrayLike,
     supercell_diag: Sequence[int],
 ):
     """Replicate unit cell and contained particles along its axes.
@@ -60,7 +61,7 @@ def _gen_supercell(
     return super_positions, super_charges, super_cell
 
 
-def _generalized_diagonal_mask(X):
+def _generalized_diagonal_mask(X: ArrayLike) -> Array:
     """Set the diagonal of a, possibly wider than tall, matrix to zero.
 
     Adapted from JAX-MD. # TODO: JAX-MD attribution
@@ -213,8 +214,8 @@ def make_pair_term_fn(
     displacement_fn = _concretize_displacement_fn(pbc, cell_mode)
 
     def compute_pair_term(
-        positions: jax.Array, charges: jax.Array, cell: jax.Array = None
-    ) -> jax.Array:
+        positions: ArrayLike, charges: ArrayLike, cell: ArrayLike = None
+    ) -> Array:
         """Evaluate pair potential for entire system of charged particles.
 
         Args:
@@ -287,12 +288,12 @@ def make_pair_term_fn_with_neighbor_list(
     displacement_fn = _concretize_displacement_fn(pbc, cell_mode)
 
     def compute_pair_term(
-        positions: jax.Array,
-        charges: jax.Array,
-        cell: jax.Array,
-        neighbor_list: Tuple[jax.Array, jax.Array],
-        weights: jax.Array,
-    ):
+        positions: ArrayLike,
+        charges: ArrayLike,
+        cell: ArrayLike,
+        neighbor_list: Tuple[ArrayLike, ArrayLike],
+        weights: ArrayLike,
+    ) -> Array:
         """Evaluate pair potential over an entire system, using neighbor list.
 
         Args:
