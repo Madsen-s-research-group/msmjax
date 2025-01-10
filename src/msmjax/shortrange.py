@@ -318,6 +318,7 @@ def make_pair_term_fn_with_neighbor_list(
         Returns:
             Total system energy.
         """
+        # TODO: Should weights default to 1?
         # TODO: Support matrix neighbor list format? (would be required for
         #  evaluating the electrostatic potential). Docstring and signature
         #  would need to be adapted.
@@ -340,55 +341,14 @@ def make_pair_term_fn_with_neighbor_list(
 
 def make_compute_U0(
     kernel_fns: List[Callable],
-    pbc: npt.ArrayLike,
-    cell_mode,  # TODO: type hint, default value?
-    supercell_diag: Sequence[int] = None,
+    pair_map_fn: Callable,
 ):
-    # TODO: particle contributions?
-    compute_pair_term = make_pair_term_fn(
-        kernel_fn=kernel_fns[0],
-        pbc=pbc,
-        cell_mode=cell_mode,
-        supercell_diag=supercell_diag,
-    )
+    compute_pair_term = pair_map_fn(kernel_fns[0])
     sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
 
-    def compute_U0(positions, charges, cell):
+    def compute_U0(positions, charges, cell, **kwargs):
         pair_term = compute_pair_term(
-            positions=positions,
-            charges=charges,
-            cell=cell,
-        )
-        self_interaction_term = (
-            0.5 * jnp.sum(charges * charges) * sum_of_higher_kernels_at_zero
-        )
-        return pair_term - self_interaction_term
-
-    return compute_U0
-
-
-def make_compute_U0_with_neighbor_list(
-    kernel_fns: List[Callable],
-    pbc: npt.ArrayLike,
-    cell_mode,  # TODO: type hint, default value?
-):
-    # TODO: Doesn't this function duplicate a lot of code from `make_compute_U0`???
-    # TODO: add tests for this
-    # TODO: particle contributions?
-    compute_pair_term = make_pair_term_fn_with_neighbor_list(
-        kernel_fn=kernel_fns[0], pbc=pbc, cell_mode=cell_mode
-    )
-    sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
-
-    # TODO: add `pair_weights` parameter (name of parameter?)
-    # TODO: Should weights default to 1.0?
-    def compute_U0(positions, charges, cell, neighbor_list, weights):
-        pair_term = compute_pair_term(
-            positions=positions,
-            charges=charges,
-            cell=cell,
-            neighbor_list=neighbor_list,
-            weights=weights,
+            positions=positions, charges=charges, cell=cell, **kwargs
         )
         self_interaction_term = (
             0.5 * jnp.sum(charges * charges) * sum_of_higher_kernels_at_zero

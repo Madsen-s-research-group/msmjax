@@ -416,55 +416,6 @@ def test_pair_term_periodic_wrap_vs_replicate(
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
     indirect=True,
 )
-def test_U0_pair_term(fixture_structure, fixture_pbc):
-    """Test the pair term contribution to U0
-
-    To do this, all higher-level kernels are set to return a constant value of
-    zero. In this case, U0 should equal the result of the pair term alone.
-    """
-    pos, chg, cell, cell_mode = fixture_structure
-    max_cutoff = get_max_cutoff_3d(cell)
-    k_0 = partial(shortrange_quadratic_potential, r_cut=0.99 * max_cutoff)
-    kernel_fns = [k_0] + [lambda x: 0.0] * 2
-    compute_U0 = make_compute_U0(
-        kernel_fns=kernel_fns, pbc=fixture_pbc, cell_mode=cell_mode
-    )
-    compute_pair_term = make_pair_term_fn(
-        kernel_fn=k_0, pbc=fixture_pbc, cell_mode=cell_mode
-    )
-    assert onp.isclose(
-        compute_U0(pos, chg, cell), compute_pair_term(pos, chg, cell)
-    )
-
-
-@pytest.mark.parametrize(
-    "fixture_structure",
-    ["fixture_structure_cubic", "fixture_structure_nonortho"],
-    indirect=True,
-)
-def test_U0_self_interaction_term(fixture_structure, fixture_pbc):
-    """Test the self interaction term contribution to U0
-
-    To do this, the level-zero kernel is defined to be constantly zero, and the
-    higher-level kernels to be constantly one, such that the expected value
-    for U0 can be calculated from the charges alone.
-    """
-    pos, chg, cell, cell_mode = fixture_structure
-    k_0 = lambda x: 0.0
-    ks_higher = [lambda x: 1.0] * 2
-    kernel_fns = [k_0] + ks_higher
-    compute_U0 = make_compute_U0(
-        kernel_fns=kernel_fns, pbc=fixture_pbc, cell_mode=cell_mode
-    )
-    ref = -len(ks_higher) * 0.5 * (chg * chg).sum()
-    assert onp.isclose(compute_U0(pos, chg, cell), ref)
-
-
-@pytest.mark.parametrize(
-    "fixture_structure",
-    ["fixture_structure_cubic", "fixture_structure_nonortho"],
-    indirect=True,
-)
 def test_pair_term_with_and_without_neighbor_list(
     fixture_structure, fixture_pbc
 ):
@@ -558,3 +509,56 @@ def test_pair_term_compare_explicit_loop(fixture_structure, fixture_pbc):
 
     assert onp.isclose(energy, energy_loop)
     assert onp.allclose(forces, forces_loop)
+
+
+@pytest.mark.parametrize(
+    "fixture_structure",
+    ["fixture_structure_cubic", "fixture_structure_nonortho"],
+    indirect=True,
+)
+def test_U0_pair_term(fixture_structure, fixture_pbc):
+    """Test the pair term contribution to U0
+
+    To do this, all higher-level kernels are set to return a constant value of
+    zero. In this case, U0 should equal the result of the pair term alone.
+    """
+    pos, chg, cell, cell_mode = fixture_structure
+    max_cutoff = get_max_cutoff_3d(cell)
+    k_0 = partial(shortrange_quadratic_potential, r_cut=0.99 * max_cutoff)
+    kernel_fns = [k_0] + [lambda x: 0.0] * 2
+    pair_map_fn = partial(
+        make_pair_term_fn, pbc=fixture_pbc, cell_mode=cell_mode
+    )
+    compute_pair_term = pair_map_fn(kernel_fns[0])
+    compute_U0 = make_compute_U0(
+        kernel_fns=kernel_fns, pair_map_fn=pair_map_fn
+    )
+    assert onp.isclose(
+        compute_U0(pos, chg, cell), compute_pair_term(pos, chg, cell)
+    )
+
+
+@pytest.mark.parametrize(
+    "fixture_structure",
+    ["fixture_structure_cubic", "fixture_structure_nonortho"],
+    indirect=True,
+)
+def test_U0_self_interaction_term(fixture_structure, fixture_pbc):
+    """Test the self interaction term contribution to U0
+
+    To do this, the level-zero kernel is defined to be constantly zero, and the
+    higher-level kernels to be constantly one, such that the expected value
+    for U0 can be calculated from the charges alone.
+    """
+    pos, chg, cell, cell_mode = fixture_structure
+    k_0 = lambda x: 0.0
+    ks_higher = [lambda x: 1.0] * 2
+    kernel_fns = [k_0] + ks_higher
+    compute_U0 = make_compute_U0(
+        kernel_fns=kernel_fns,
+        pair_map_fn=partial(
+            make_pair_term_fn, pbc=fixture_pbc, cell_mode=cell_mode
+        ),
+    )
+    ref = -len(ks_higher) * 0.5 * (chg * chg).sum()
+    assert onp.isclose(compute_U0(pos, chg, cell), ref)
