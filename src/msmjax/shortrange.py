@@ -343,6 +343,7 @@ def make_compute_U0(
     kernel_fns: List[Callable],
     pair_map_fn: Callable,
 ):
+    # TODO: lowercase function name?
     compute_pair_term = pair_map_fn(kernel_fns[0])
     sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
 

@@ -562,3 +562,46 @@ def test_U0_self_interaction_term(fixture_structure, fixture_pbc):
     )
     ref = -len(ks_higher) * 0.5 * (chg * chg).sum()
     assert onp.isclose(compute_U0(pos, chg, cell), ref)
+
+
+@pytest.mark.parametrize(
+    "fixture_structure",
+    ["fixture_structure_cubic", "fixture_structure_nonortho"],
+    indirect=True,
+)
+def test_U0_with_and_without_neighbor_list(fixture_structure, fixture_pbc):
+    """Test equal result for pair term with and without using neighbor list
+
+    (In the latter case relying on the potential having its cutoff built in.)
+    """
+    pos, chg, cell, cell_mode = fixture_structure
+    cutoff = 0.75 * float(get_max_cutoff_3d(cell))
+
+    kernel_fns_no_cutoff = [lambda r: 1.0, lambda r: 0.5, lambda r: 0.25]
+    pair_map_fn_nbl = partial(
+        make_pair_term_fn_with_neighbor_list,
+        pbc=fixture_pbc,
+        cell_mode=cell_mode,
+    )
+    compute_U0_nbl = make_compute_U0(
+        kernel_fns=kernel_fns_no_cutoff, pair_map_fn=pair_map_fn_nbl
+    )
+
+    kernel_fns_builtin_cutoff = [
+        (lambda r, k=k_l: jnp.where(r < cutoff, k(r), 0.0))
+        for k_l in kernel_fns_no_cutoff
+    ]
+    pair_map_fn = partial(
+        make_pair_term_fn, pbc=fixture_pbc, cell_mode=cell_mode
+    )
+    compute_U0 = make_compute_U0(
+        kernel_fns=kernel_fns_builtin_cutoff, pair_map_fn=pair_map_fn
+    )
+
+    nbl = neighbour_list(
+        "ij", cutoff=cutoff, positions=pos, cell=cell, pbc=fixture_pbc
+    )
+    assert onp.isclose(
+        compute_U0(pos, chg, cell),
+        compute_U0_nbl(pos, chg, cell, neighbor_list=nbl, weights=0.5),
+    )
