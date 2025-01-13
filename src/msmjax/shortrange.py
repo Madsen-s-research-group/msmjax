@@ -65,6 +65,12 @@ def _generalized_diagonal_mask(X: ArrayLike) -> Array:
     """Set the diagonal of a, possibly wider than tall, matrix to zero.
 
     Adapted from JAX-MD. # TODO: JAX-MD attribution
+
+    Args:
+        X: Original matrix.
+
+    Returns:
+        The matrix with diagonal set to zero.
     """
     if len(X.shape) != 2:
         raise ValueError("Only two-dimensional arrays are supported.")
@@ -126,7 +132,7 @@ def _concretize_displacement_fn(
 
     Returns:
         A function of two position vector arguments and, (optionally, depending
-        on PBCs) a unit cell, that computes the distance.
+        on PBCs) a unit cell, that computes the distance between them.
     """
     # TODO: type hint for cell_mode (in all places where it's used)
     if jnp.any(pbc) and cell_mode is None:
@@ -264,7 +270,7 @@ def make_pair_term_fn_with_neighbor_list(
 ):
     """Transform interaction kernel into function acting on a particle system.
 
-    Like `make_pair_term_fn`, but with a neighbor list.
+    Like :func:`make_pair_term_fn`, but with a neighbor list.
 
     Args:
         kernel_fn: A function of a single scalar distance argument,
@@ -272,7 +278,7 @@ def make_pair_term_fn_with_neighbor_list(
         pbc: One boolean per direction signaling periodicity.
         cell_mode: # TODO
         safe_eval_distance: A value for which ``kernel_fn`` evaluates to a
-            result that is not `nan` or `inf`. Apart from this, it may be
+            result that is not `nan` or `inf`. Apart from this, it can be
             arbitrary and its exact value is of no consequence. Used
             internally in safely ignoring placeholder pairs contained in the
             neighbor list in a jit- and autodiff-compatible way.
@@ -318,7 +324,6 @@ def make_pair_term_fn_with_neighbor_list(
         Returns:
             Total system energy.
         """
-        # TODO: Should weights default to 1?
         # TODO: Support matrix neighbor list format? (would be required for
         #  evaluating the electrostatic potential). Docstring and signature
         #  would need to be adapted.
@@ -341,13 +346,48 @@ def make_pair_term_fn_with_neighbor_list(
 
 def make_compute_U0(
     kernel_fns: List[Callable],
-    pair_map_fn: Callable,
+    pair_map_fn: Callable[[Callable], Callable],
 ):
+    """Create a function that computes the MSM short-range energy contribution.
+
+    # TODO: formula?
+
+    .. code-block:: python
+
+        compute_pair_term = pair_map_fn(kernel_fns[0])
+
+    Args:
+        kernel_fns: List of functions of a single scalar distance argument,
+            one for each MSM level, corresponding to the different partial
+            kernels into which the full interaction kernel is split.
+        pair_map_fn: A function of one argument that transforms an interaction
+            kernel function like :math:`k(r)` into a function that evaluates it
+            pairwise for a whole system of charged particles.  # TODO
+            This gets applied to the 0-th element of ``kernel_fns``.
+
+    Returns:
+        A function that takes arrays of particle positions and charges,
+        and the unit cell, as arguments and computes :math:`U^0` for the
+        whole system of particles.
+    """
     # TODO: lowercase function name?
     compute_pair_term = pair_map_fn(kernel_fns[0])
     sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
 
     def compute_U0(positions, charges, cell, **kwargs):
+        """Compute the short-range energy contribution :math:`U^0` of the MSM.
+
+        Args:
+            positions: Array of positions, shape `(n_particles, n_dim)`.
+            charges: Array of charges, shape `(n_particles,)`.
+            cell: Array representing unit cell, shape `(n_dim, n_dim)`.
+            **kwargs: Optional additional keyword arguments passed to the
+                function returned by ``pair_map_fn``. A natural use case would
+                be a neighbor list.
+
+        Returns:
+
+        """
         pair_term = compute_pair_term(
             positions=positions, charges=charges, cell=cell, **kwargs
         )
