@@ -24,6 +24,10 @@ from jax.typing import ArrayLike
 from msmjax.jax_md import space
 from msmjax.utils import _divide_zero_safe
 
+# TODO: This should be defined elsewhere, since the longrange part will likely
+#  also use it
+CellMode = Literal["ortho", "general"]
+
 
 def _gen_supercell(
     positions: ArrayLike,
@@ -113,9 +117,7 @@ def _displacement_general(R_1, R_2, cell):
 
 def _concretize_displacement_fn(
     pbc: Sequence[bool],
-    cell_mode: Optional[
-        Literal["ortho", "general"]
-    ] = None,  # TODO: define the allowed values globally
+    cell_mode: Optional[CellMode] = None,
 ):
     """Select/construct displacement fn based on PBCs, unit cell constraints.
 
@@ -125,21 +127,25 @@ def _concretize_displacement_fn(
 
     Args:
         pbc: One boolean per direction signaling periodicity.
-        cell_mode: # TODO
+        cell_mode: A string specifying assumptions on the shape of the
+            unit cell. Either the cell is assumed orthorhombic and
+            axis-aligned, in which case only its diagonal is considered,
+            reducing computational cost, or a general triclinic one. May be
+            omitted (and is ignored) if no direction is periodic.
 
     Returns:
         A function of two position vector arguments and, (optionally, depending
         on PBCs) a unit cell, that computes the distance between them.
     """
     # TODO: type hint for cell_mode (in all places where it's used)
-    if jnp.any(pbc) and cell_mode is None:
+    if onp.any(pbc) and cell_mode is None:
         # TODO: write test for this check
         raise ValueError(
             "If at least one direction is periodic, "
             "you must specify cell_mode."
         )
 
-    if not jnp.any(pbc):
+    if not onp.any(pbc):
 
         def displacement_fn(R_1, R_2, cell=None):
             return _displacement_free(R_1, R_2)
@@ -171,9 +177,7 @@ def _concretize_displacement_fn(
 def make_pair_term_fn(
     kernel_fn: Callable,
     pbc: Sequence[bool],
-    cell_mode: Optional[
-        Literal["ortho", "general"]
-    ] = None,  # TODO: define the allowed values globally
+    cell_mode: Optional[CellMode] = None,
     supercell_diag: Optional[Sequence[int]] = None,
 ):
     """Transform interaction kernel into function acting on a particle system.
@@ -189,7 +193,11 @@ def make_pair_term_fn(
         kernel_fn: A function of a single scalar distance argument,
             corresponding to :math:`k(r)` in the above formula.
         pbc: One boolean per direction signaling periodicity.
-        cell_mode: May be omitted (and is ignored) if no direction is periodic. # TODO: finish
+        cell_mode: A string specifying assumptions on the shape of the
+            unit cell. Either the cell is assumed orthorhombic and
+            axis-aligned, in which case only its diagonal is considered,
+            reducing computational cost, or a general triclinic one. May be
+            omitted (and is ignored) if no direction is periodic.
         supercell_diag: An optional sequence of positive integers, one per
             direction. If supplied, pairwise interactions are computed
             between the particles in the original cell and all particles in
@@ -260,9 +268,7 @@ def make_pair_term_fn(
 def make_pair_term_fn_with_neighbor_list(
     kernel_fn: Callable,
     pbc: Sequence[bool],
-    cell_mode: Optional[
-        Literal["ortho", "general"]
-    ] = None,  # TODO: define the allowed values globally
+    cell_mode: Optional[CellMode] = None,
     safe_eval_distance: float = 1.0,  # TODO: test? (how?)
 ):
     """Transform interaction kernel into function acting on a particle system.
@@ -273,7 +279,11 @@ def make_pair_term_fn_with_neighbor_list(
         kernel_fn: A function of a single scalar distance argument,
             see documentation of :func:`make_pair_term_fn`.
         pbc: One boolean per direction signaling periodicity.
-        cell_mode: # TODO
+        cell_mode: A string specifying assumptions on the shape of the
+            unit cell. Either the cell is assumed orthorhombic and
+            axis-aligned, in which case only its diagonal is considered,
+            reducing computational cost, or a general triclinic one. May be
+            omitted (and is ignored) if no direction is periodic.
         safe_eval_distance: A value for which ``kernel_fn`` evaluates to a
             result that is not `nan` or `inf`. Apart from this, it can be
             arbitrary and its exact value is of no consequence. Used
