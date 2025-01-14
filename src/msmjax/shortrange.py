@@ -20,11 +20,8 @@ import numpy as onp
 import numpy.typing as npt
 from jax import Array
 from jax.typing import ArrayLike
-from jax_md import space  # TODO: copy to standalone module instead of import
-from jax_md.util import (  # # TODO: copy to standalone module instead of import
-    f32,
-)
 
+from msmjax.jax_md import space
 from msmjax.utils import _divide_zero_safe
 
 
@@ -80,7 +77,7 @@ def _generalized_diagonal_mask(X: ArrayLike) -> Array:
             "Input array must be either square, or wider than tall."
         )
     X = jnp.nan_to_num(X)
-    mask = f32(1.0) - jnp.eye(M, dtype=X.dtype)
+    mask = 1.0 - jnp.eye(M, dtype=X.dtype)
     mask = jnp.pad(
         mask,
         pad_width=((0, 0), (0, N - M)),

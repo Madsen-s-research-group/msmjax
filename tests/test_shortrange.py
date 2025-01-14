@@ -19,7 +19,6 @@ from functools import partial
 from pathlib import Path
 
 import jax
-import jax.config
 import jax.numpy as jnp
 import numpy as onp
 import pytest
