@@ -183,8 +183,8 @@ def make_pair_term_fn(
 
     In other words, given a distance-dependent interaction kernel :math:`k(r)`,
     construct another function that computes the total system energy,
-    :math:`\\frac{1}{2} \\sum_i \\sum_{j \\neq i} q_i q_j k(r_{ij})`, by mapping
-    :math:`k(r)` over all particle pairs.
+    :math:`\\frac{1}{2} \\sum_i \\sum_{j \\neq i} q_i q_j k(r_{ij})`,
+    by mapping :math:`k(r)` over all particle pairs.
 
     # TODO: Mention MIC limitations here? (maybe format as warning)
 
@@ -347,10 +347,24 @@ def make_pair_term_fn_with_neighbor_list(
 def make_compute_U0(
     kernel_fns: List[Callable],
     pair_map_fn: Callable[[Callable], Callable],
-):
+) -> Callable[[Array, Array, Array], Array]:
     """Create a function that computes the MSM short-range energy contribution.
 
-    # TODO: formula?
+    # TODO: reference to paper
+
+    That is, the quantity
+
+    .. math::
+
+        U^0 =   \\frac{1}{2} \\sum_i \\sum_{j \\neq i} q_i q_j k_0(r_{ij})
+              - \\frac{1}{2} \\sum_{l=1}^L \\sum_i q_i^2 k_{l}(r)\\big\\rvert_{r=0} \, ,
+
+    consisting of the pair interaction term for level zero, and
+    correction term for self-interaction at the higher levels.
+
+    This function is a high-level convenience wrapper for (1) constructing the
+    all-pairs evaluation function out of the interaction kernel :math:`k(r)`,
+    and (2) subtracting the self-interaction-correction term.
 
     .. code-block:: python
 
@@ -362,13 +376,14 @@ def make_compute_U0(
             kernels into which the full interaction kernel is split.
         pair_map_fn: A function of one argument that transforms an interaction
             kernel function like :math:`k(r)` into a function that evaluates it
-            pairwise for a whole system of charged particles.  # TODO
-            This gets applied to the 0-th element of ``kernel_fns``.
+            pairwise across a system of charged particles.  # TODO
+            This gets applied to the 0-th element of the ``kernel_fns``
+            argument.
+            # TODO: Mention that pbc-awareness is expected to be built into this function.
 
     Returns:
-        A function that takes arrays of particle positions and charges,
-        and the unit cell, as arguments and computes :math:`U^0` for the
-        whole system of particles.
+        A function with the same signature as the one returned by
+        ``pair_map_fn(kernel_fns[0])``, that computes :math:`U^0`.
     """
     # TODO: lowercase function name?
     compute_pair_term = pair_map_fn(kernel_fns[0])
@@ -382,11 +397,11 @@ def make_compute_U0(
             charges: Array of charges, shape `(n_particles,)`.
             cell: Array representing unit cell, shape `(n_dim, n_dim)`.
             **kwargs: Optional additional keyword arguments passed to the
-                function returned by ``pair_map_fn``. A natural use case would
-                be a neighbor list.
+                function returned by ``pair_map_fn``. One natural use case
+                would be a neighbor list.
 
         Returns:
-
+            A scalar that is the short-range energy contribution.
         """
         pair_term = compute_pair_term(
             positions=positions, charges=charges, cell=cell, **kwargs
