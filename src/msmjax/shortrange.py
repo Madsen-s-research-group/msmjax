@@ -351,7 +351,7 @@ def make_pair_term_fn_with_neighbor_list(
     return compute_pair_term
 
 
-def make_compute_U0(
+def make_compute_u_zero(
     kernel_fns: List[Callable],
     pair_map_fn: Callable[[Callable], Callable],
 ) -> Callable[[Array, Array, Array], Array]:
@@ -415,7 +415,7 @@ def make_compute_U0(
     compute_pair_term = pair_map_fn(kernel_fns[0])
     sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
 
-    def compute_U0(positions, charges, cell, **kwargs):
+    def compute_u_zero(positions, charges, cell, **kwargs):
         """Compute the short-range energy contribution :math:`U^0` of the MSM.
 
         Args:
@@ -437,4 +437,4 @@ def make_compute_U0(
         )
         return pair_term - self_interaction_term
 
-    return compute_U0
+    return compute_u_zero

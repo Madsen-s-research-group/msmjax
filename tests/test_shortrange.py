@@ -30,7 +30,7 @@ from msmjax.benchmark_tools import path_input_structures
 from msmjax.shortrange import (
     _concretize_displacement_fn,
     _gen_supercell,
-    make_compute_U0,
+    make_compute_u_zero,
     make_pair_term_fn,
     make_pair_term_fn_with_neighbor_list,
 )
@@ -515,7 +515,7 @@ def test_pair_term_compare_explicit_loop(fixture_structure, fixture_pbc):
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
     indirect=True,
 )
-def test_U0_pair_term(fixture_structure, fixture_pbc):
+def test_u_zero_pair_term(fixture_structure, fixture_pbc):
     """Test the pair term contribution to U0
 
     To do this, all higher-level kernels are set to return a constant value of
@@ -529,11 +529,11 @@ def test_U0_pair_term(fixture_structure, fixture_pbc):
         make_pair_term_fn, pbc=fixture_pbc, cell_mode=cell_mode
     )
     compute_pair_term = pair_map_fn(kernel_fns[0])
-    compute_U0 = make_compute_U0(
+    compute_u_zero = make_compute_u_zero(
         kernel_fns=kernel_fns, pair_map_fn=pair_map_fn
     )
     assert onp.isclose(
-        compute_U0(pos, chg, cell), compute_pair_term(pos, chg, cell)
+        compute_u_zero(pos, chg, cell), compute_pair_term(pos, chg, cell)
     )
 
 
@@ -542,7 +542,7 @@ def test_U0_pair_term(fixture_structure, fixture_pbc):
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
     indirect=True,
 )
-def test_U0_self_interaction_term(fixture_structure, fixture_pbc):
+def test_u_zero_self_interaction_term(fixture_structure, fixture_pbc):
     """Test the self interaction term contribution to U0
 
     To do this, the level-zero kernel is defined to be constantly zero, and the
@@ -553,14 +553,14 @@ def test_U0_self_interaction_term(fixture_structure, fixture_pbc):
     k_0 = lambda x: 0.0
     ks_higher = [lambda x: 1.0] * 2
     kernel_fns = [k_0] + ks_higher
-    compute_U0 = make_compute_U0(
+    compute_u_zero = make_compute_u_zero(
         kernel_fns=kernel_fns,
         pair_map_fn=partial(
             make_pair_term_fn, pbc=fixture_pbc, cell_mode=cell_mode
         ),
     )
     ref = -len(ks_higher) * 0.5 * (chg * chg).sum()
-    assert onp.isclose(compute_U0(pos, chg, cell), ref)
+    assert onp.isclose(compute_u_zero(pos, chg, cell), ref)
 
 
 @pytest.mark.parametrize(
@@ -568,7 +568,7 @@ def test_U0_self_interaction_term(fixture_structure, fixture_pbc):
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
     indirect=True,
 )
-def test_U0_with_and_without_neighbor_list(fixture_structure, fixture_pbc):
+def test_u_zero_with_and_without_neighbor_list(fixture_structure, fixture_pbc):
     """Test equal result for pair term with and without using neighbor list
 
     (In the latter case relying on the potential having its cutoff built in.)
@@ -582,7 +582,7 @@ def test_U0_with_and_without_neighbor_list(fixture_structure, fixture_pbc):
         pbc=fixture_pbc,
         cell_mode=cell_mode,
     )
-    compute_U0_nbl = make_compute_U0(
+    compute_u_zero_nbl = make_compute_u_zero(
         kernel_fns=kernel_fns_no_cutoff, pair_map_fn=pair_map_fn_nbl
     )
 
@@ -593,7 +593,7 @@ def test_U0_with_and_without_neighbor_list(fixture_structure, fixture_pbc):
     pair_map_fn = partial(
         make_pair_term_fn, pbc=fixture_pbc, cell_mode=cell_mode
     )
-    compute_U0 = make_compute_U0(
+    compute_u_zero = make_compute_u_zero(
         kernel_fns=kernel_fns_builtin_cutoff, pair_map_fn=pair_map_fn
     )
 
@@ -601,6 +601,6 @@ def test_U0_with_and_without_neighbor_list(fixture_structure, fixture_pbc):
         "ij", cutoff=cutoff, positions=pos, cell=cell, pbc=fixture_pbc
     )
     assert onp.isclose(
-        compute_U0(pos, chg, cell),
-        compute_U0_nbl(pos, chg, cell, neighbor_list=nbl, weights=0.5),
+        compute_u_zero(pos, chg, cell),
+        compute_u_zero_nbl(pos, chg, cell, neighbor_list=nbl, weights=0.5),
     )
