@@ -369,6 +369,13 @@ def make_compute_U0(
 
     # TODO: reference to paper
 
+    This function is a high-level wrapper that constructs the evaluation
+    function for :math:`U^0` from two ingredients: The kernel functions
+    :math:`k_l(r)` at all levels, and a function that takes care of pair
+    distance computation (this includes accounting for periodic boundary
+    conditions) and evaluation of such a kernel function over all pairs of
+    particles of a charged system.
+
     Args:
         kernel_fns: List of functions of a single scalar distance argument,
             one for each MSM level, corresponding to the different partial
@@ -376,20 +383,29 @@ def make_compute_U0(
         pair_map_fn: A function of a single argument that transforms a
             distance-dependent interaction kernel into a pairwise evaluation
             function that acts across a system of charged particles.
+            Notably, the way that periodic boundary conditions are handled
+            is by an appropriate definition of this function.
 
-            - The input is a single-argument distance-dependent function.
+            - The input to ``pair_map_fn`` should be a single-argument
+              function of a scalar distance argument.
 
-            - The return value is a function that computes the first term in
-              the formula.
-              It takes two arrays (positions, shape `(n_particles, n_dim)`,
-              and charges, shape `(n_particles,)`), plus optionally
+            - The return value of ``pair_map_fn`` should be a function that
+              computes the first term in the formula above.
+              It takes two arrays (positions of shape `(n_particles, n_dim)`,
+              and charges of shape `(n_particles,)`), plus optionally
               additional keyword arguments. Natural use cases for parameters
               passed through keyword arguments would be a unit cell in
               systems with periodicity, or a neighbor list.
 
             ``pair_map_fn`` gets applied to the zeroth element of the
-            ``kernel_fns`` argument: ``compute_pair_term = pair_map_fn(kernel_fns[0])``.
-            # TODO: Mention that pbc-awareness is expected to be built into this function.
+            ``kernel_fns`` argument:
+            ``compute_pair_term = pair_map_fn(kernel_fns[0])``.
+
+            The most convenient way to obtain a ``pair_map_fn`` with
+            appropriate signature is by closing :func:`make_pair_term_fn` or
+            :func:`make_pair_term_fn_with_neighbor_list` over their extra
+            arguments, e.g.
+            ``pair_map_fn = functools.partial(make_pair_term_fn, pbc=(True, True, False))``.
 
     Returns:
         A function with the same signature as the one returned by
