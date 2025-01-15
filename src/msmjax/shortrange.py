@@ -357,35 +357,38 @@ def make_compute_U0(
 ) -> Callable[[Array, Array, Array], Array]:
     """Create a function that computes the MSM short-range energy contribution.
 
-    # TODO: reference to paper
-
-    That is, the quantity
+    The precise quantity being computed is
 
     .. math::
 
         U^0 =   \\frac{1}{2} \\sum_i \\sum_{j \\neq i} q_i q_j k_0(r_{ij})
               - \\frac{1}{2} \\sum_{l=1}^L \\sum_i q_i^2 k_{l}(r)\\big\\rvert_{r=0} \, ,
 
-    consisting of the pair interaction term for level zero, and
+    which consists of the pair interaction term for level zero, and a
     correction term for self-interaction at the higher levels.
 
-    This function is a high-level convenience wrapper for (1) constructing the
-    all-pairs evaluation function out of the interaction kernel :math:`k(r)`,
-    and (2) subtracting the self-interaction-correction term.
-
-    .. code-block:: python
-
-        compute_pair_term = pair_map_fn(kernel_fns[0])
+    # TODO: reference to paper
 
     Args:
         kernel_fns: List of functions of a single scalar distance argument,
             one for each MSM level, corresponding to the different partial
             kernels into which the full interaction kernel is split.
-        pair_map_fn: A function of one argument that transforms an interaction
-            kernel function like :math:`k(r)` into a function that evaluates it
-            pairwise across a system of charged particles.  # TODO
-            This gets applied to the 0-th element of the ``kernel_fns``
-            argument.
+        pair_map_fn: A function of a single argument that transforms a
+            distance-dependent interaction kernel into a pairwise evaluation
+            function that acts across a system of charged particles.
+
+            - The input is a single-argument distance-dependent function.
+
+            - The return value is a function that computes the first term in
+              the formula.
+              It takes two arrays (positions, shape `(n_particles, n_dim)`,
+              and charges, shape `(n_particles,)`), plus optionally
+              additional keyword arguments. Natural use cases for parameters
+              passed through keyword arguments would be a unit cell in
+              systems with periodicity, or a neighbor list.
+
+            ``pair_map_fn`` gets applied to the zeroth element of the
+            ``kernel_fns`` argument: ``compute_pair_term = pair_map_fn(kernel_fns[0])``.
             # TODO: Mention that pbc-awareness is expected to be built into this function.
 
     Returns:
