@@ -12,7 +12,7 @@
 """
 
 from functools import partial
-from typing import Callable, List, Literal, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Literal, Optional, Protocol, Sequence
 
 import jax
 import jax.numpy as jnp
@@ -27,6 +27,7 @@ from msmjax.utils import _divide_zero_safe
 # TODO: This should be defined elsewhere, since the longrange part will likely
 #  also use it
 CellMode = Literal["ortho", "general"]
+KernelFn = Callable[[ArrayLike], Array]  # TODO: float or Array?
 
 
 def _gen_supercell(
@@ -175,7 +176,7 @@ def _concretize_displacement_fn(
 
 
 def make_pair_term_fn(
-    kernel_fn: Callable,
+    kernel_fn: KernelFn,
     pbc: Sequence[bool],
     cell_mode: Optional[CellMode] = None,
     supercell_diag: Optional[Sequence[int]] = None,
@@ -266,7 +267,7 @@ def make_pair_term_fn(
 
 
 def make_pair_term_fn_with_neighbor_list(
-    kernel_fn: Callable,
+    kernel_fn: KernelFn,
     pbc: Sequence[bool],
     cell_mode: Optional[CellMode] = None,
     safe_eval_distance: float = 1.0,  # TODO: test? (how?)
@@ -304,7 +305,7 @@ def make_pair_term_fn_with_neighbor_list(
         positions: ArrayLike,
         charges: ArrayLike,
         cell: ArrayLike,
-        neighbor_list: Tuple[ArrayLike, ArrayLike],
+        neighbor_list: tuple[ArrayLike, ArrayLike],
         weights: ArrayLike,
     ) -> Array:
         """Evaluate pair potential over an entire system, using neighbor list.
@@ -352,9 +353,12 @@ def make_pair_term_fn_with_neighbor_list(
 
 
 def make_compute_u_zero(
-    kernel_fns: List[Callable],
-    pair_map_fn: Callable[[Callable], Callable],
-) -> Callable[[Array, Array, Array], Array]:
+    kernel_fns: Sequence[KernelFn],
+    pair_map_fn: Callable[
+        [KernelFn],
+        Callable[[ArrayLike, ArrayLike, ArrayLike, Any], Array],
+    ],
+) -> Callable[[ArrayLike, ArrayLike, ArrayLike, Any], Array]:
     """Create a function that computes the MSM short-range energy contribution.
 
     The precise quantity being computed is
@@ -415,7 +419,12 @@ def make_compute_u_zero(
     compute_pair_term = pair_map_fn(kernel_fns[0])
     sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
 
-    def compute_u_zero(positions, charges, cell, **kwargs):
+    def compute_u_zero(
+        positions: ArrayLike,
+        charges: ArrayLike,
+        cell: ArrayLike,
+        **kwargs,
+    ) -> Array:
         """Compute the short-range energy contribution :math:`U^0` of the MSM.
 
         Args:
@@ -427,11 +436,9 @@ def make_compute_u_zero(
                 would be a neighbor list.
 
         Returns:
-            A scalar that is the short-range energy contribution.
+            The short-range energy contribution :math:`U^0`.
         """
-        pair_term = compute_pair_term(
-            positions=positions, charges=charges, cell=cell, **kwargs
-        )
+        pair_term = compute_pair_term(positions, charges, cell, **kwargs)
         self_interaction_term = (
             0.5 * jnp.sum(charges * charges) * sum_of_higher_kernels_at_zero
         )
