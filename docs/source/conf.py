@@ -6,6 +6,8 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+from typing import Optional
+
 import jax.typing as jpt
 import numpy.typing as npt
 
@@ -38,8 +40,12 @@ def custom_typehints_formatter(annotation, config):
     # available for aliases (that works with typehints).
     if annotation == npt.ArrayLike:
         return ":py:class:`numpy.typing.ArrayLike`"
+    if annotation == Optional[npt.ArrayLike]:
+        return ":py:class:`Optional` [:py:class:`numpy.typing.ArrayLike`]"
     if annotation == jpt.ArrayLike:
         return ":py:class:`jax.typing.ArrayLike`"
+    if annotation == Optional[jpt.ArrayLike]:
+        return ":py:class:`Optional` [:py:class:`jax.typing.ArrayLike`]"
     return None
 
 

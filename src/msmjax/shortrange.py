@@ -35,7 +35,7 @@ def _gen_supercell(
     charges: ArrayLike,
     cell: ArrayLike,
     supercell_diag: Sequence[int],
-):
+) -> tuple[Array, Array, Array]:
     """Replicate unit cell and contained particles along its axes.
 
     Args:
@@ -69,13 +69,14 @@ def _generalized_diagonal_mask(X: ArrayLike) -> Array:
     Adapted from JAX-MD. # TODO: JAX-MD attribution
 
     .. warning::
-       Any NaN or infinite entries, including ones off the diagonal, will be
-       silently replaced by this function! For the diagonal, this is usually
-       reasonable and desired. That is because in the case for which this
-       function is designed, diagonal elements of the input corresponds to
-       artifactual interactions of particles with themselves, which may be
-       undefined. When off-diagonal elements are replaced this way, however,
-       it may obscure the origin of bugs that caused them to be invalid.
+       Any NaN or infinite entries (including ones off the diagonal!) will
+       be silently replaced by this function. For the diagonal, this is
+       usually reasonable and desired. That is because in the case for which
+       this function is designed, diagonal elements of the input correspond
+       to interactions of particles with themselves, which are usually
+       considered artifactual and which may be undefined. When off-diagonal
+       elements are replaced this way, however, this may obscure the origin
+       of bugs that caused them to be invalid.
 
     Args:
         X: Original matrix.
@@ -101,12 +102,14 @@ def _generalized_diagonal_mask(X: ArrayLike) -> Array:
     return mask * X
 
 
-def _displacement_free(R_1, R_2):
+def _displacement_free(R_1: ArrayLike, R_2: ArrayLike) -> Array:
     # TODO: unit test this on its own?
     return R_1 - R_2
 
 
-def _displacement_ortho(R_1, R_2, side_lengths):
+def _displacement_ortho(
+    R_1: ArrayLike, R_2: ArrayLike, side_lengths: ArrayLike
+) -> Array:
     # TODO: unit test this on its own?
     delta = R_1 - R_2
     return (
@@ -115,7 +118,9 @@ def _displacement_ortho(R_1, R_2, side_lengths):
     )
 
 
-def _displacement_general(R_1, R_2, cell):
+def _displacement_general(
+    R_1: ArrayLike, R_2: ArrayLike, cell: ArrayLike
+) -> Array:
     # TODO: unit test this on its own?
     dR = R_1 - R_2
     inv_cell = jnp.linalg.pinv(cell)
@@ -128,7 +133,7 @@ def _displacement_general(R_1, R_2, cell):
 def _concretize_displacement_fn(
     pbc: Sequence[bool],
     cell_mode: Optional[CellMode] = None,
-):
+) -> Callable[[ArrayLike, ArrayLike, Optional[ArrayLike]], Array]:
     """Select/construct displacement fn based on PBCs, unit cell constraints.
 
     Wraps lower-level displacement functions and transforms them into ones
@@ -144,8 +149,8 @@ def _concretize_displacement_fn(
             omitted (and is ignored) if no direction is periodic.
 
     Returns:
-        A function of two position vector arguments and, (optionally, depending
-        on PBCs) a unit cell, that computes the distance between them.
+        A function of two position vector arguments and (optionally, depending
+        on PBCs) a unit cell, that computes the distance vector between them.
     """
     # TODO: type hint for cell_mode (in all places where it's used)
     if onp.any(pbc) and cell_mode is None:
@@ -189,7 +194,7 @@ def make_pair_term_fn(
     pbc: Sequence[bool],
     cell_mode: Optional[CellMode] = None,
     supercell_diag: Optional[Sequence[int]] = None,
-):
+) -> Callable[[ArrayLike, ArrayLike, Optional[ArrayLike]], Array]:
     """Transform interaction kernel into function acting on a particle system.
 
     In other words, given a distance-dependent interaction kernel :math:`k(r)`,
@@ -280,7 +285,16 @@ def make_pair_term_fn_with_neighbor_list(
     pbc: Sequence[bool],
     cell_mode: Optional[CellMode] = None,
     safe_eval_distance: float = 1.0,  # TODO: test? (how?)
-):
+) -> Callable[
+    [
+        ArrayLike,
+        ArrayLike,
+        tuple[ArrayLike, ArrayLike],
+        ArrayLike,
+        Optional[ArrayLike],
+    ],
+    Array,
+]:
     """Transform interaction kernel into function acting on a particle system.
 
     Like :func:`make_pair_term_fn`, but with a neighbor list.
@@ -313,16 +327,15 @@ def make_pair_term_fn_with_neighbor_list(
     def compute_pair_term(
         positions: ArrayLike,
         charges: ArrayLike,
-        cell: ArrayLike,
         neighbor_list: tuple[ArrayLike, ArrayLike],
         weights: ArrayLike,
+        cell: ArrayLike = None,
     ) -> Array:
         """Evaluate pair potential over an entire system, using neighbor list.
 
         Args:
             positions: Array of positions, shape `(n_particles, n_dim)`.
             charges: Array of charges, shape `(n_particles,)`.
-            cell: Array representing unit cell, shape `(n_dim, n_dim)`.
             neighbor_list: Tuple of two 1-d integer arrays of the same shape.
                 For example, `([0, ..., 26, ...], [91, ..., 5, ...])` would
                 mean that particle `91` is a neighbor of particle `0`,
@@ -337,6 +350,7 @@ def make_pair_term_fn_with_neighbor_list(
                 neighbor list formats may differently handle duplicate
                 particle pairs, or even to include something like fudge
                 factors for close-together atoms.
+            cell: Array representing unit cell, shape `(n_dim, n_dim)`.
 
         Returns:
             Total system energy.
@@ -344,6 +358,13 @@ def make_pair_term_fn_with_neighbor_list(
         # TODO: Support matrix neighbor list format? (would be required for
         #  evaluating the electrostatic potential). Docstring and signature
         #  would need to be adapted.
+        # TODO: test calling without `cell` argument in non-periodic case
+        if pbc.any():
+            if cell is None:
+                raise ValueError(
+                    "If at least one direction is periodic, "
+                    "the cell argument is required."
+                )
         (i, j) = neighbor_list
         metric_fn = partial(space.metric(displacement_fn), cell=cell)
         mapped_metric_fn = space.map_bond(metric_fn)
@@ -400,8 +421,6 @@ def make_compute_u_zero(
         pair_map_fn: A function of a single argument that transforms a
             distance-dependent interaction kernel into a pairwise evaluation
             function that acts across a system of charged particles.
-            Notably, the way that periodic boundary conditions are handled
-            is by an appropriate definition of this function.
 
             - The input to ``pair_map_fn`` should be a single-argument
               function of a scalar distance argument.
@@ -413,6 +432,10 @@ def make_compute_u_zero(
               additional keyword arguments. Natural use cases for parameters
               passed through keyword arguments would be a unit cell in
               systems with periodicity, or a neighbor list.
+
+            .. note::
+               The way that periodic boundary conditions are handled
+               is by an appropriate definition of ``pair_map_fn``.
 
             ``pair_map_fn`` gets applied to the zeroth element of the
             ``kernel_fns`` argument:
@@ -426,7 +449,8 @@ def make_compute_u_zero(
 
     Returns:
         A function with the same signature as the one returned by
-        ``pair_map_fn(kernel_fns[0])``, that computes :math:`U^0`.
+        ``pair_map_fn(kernel_fns[0])``, that computes :math:`U^0` from
+        positions, charges, and optional additional keyword arguments.
     """
     compute_pair_term = pair_map_fn(kernel_fns[0])
     sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])

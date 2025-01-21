@@ -394,7 +394,7 @@ def test_pair_term_periodic_wrap_vs_replicate(
     energy_explicit_replicate = pair_term_fn_explicit_replicate(
         pos_extended,
         chg_extended,
-        cell_extended,
+        cell=cell_extended,
         neighbor_list=pair_inds_explicit_replicate,
         weights=pair_weights_explicit_replicate,
     )
@@ -439,7 +439,9 @@ def test_pair_term_with_and_without_neighbor_list(
     )
     assert onp.isclose(
         compute_pair_term(pos, chg, cell),
-        compute_pair_term_nbl(pos, chg, cell, neighbor_list=nbl, weights=0.5),
+        compute_pair_term_nbl(
+            pos, chg, cell=cell, neighbor_list=nbl, weights=0.5
+        ),
     )
 
 
@@ -464,9 +466,15 @@ def test_pair_term_ignore_placeholders(fixture_structure, fixture_pbc):
         onp.concatenate([inds, placeholder_inds]) for inds in nbl
     )
     assert onp.isclose(
-        compute_pair_term_nbl(pos, chg, cell, neighbor_list=nbl, weights=0.5),
         compute_pair_term_nbl(
-            pos, chg, cell, neighbor_list=nbl_with_placeholders, weights=0.5
+            pos, chg, cell=cell, neighbor_list=nbl, weights=0.5
+        ),
+        compute_pair_term_nbl(
+            pos,
+            chg,
+            cell=cell,
+            neighbor_list=nbl_with_placeholders,
+            weights=0.5,
         ),
     )
 
