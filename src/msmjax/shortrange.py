@@ -295,7 +295,7 @@ def make_pair_term_fn_with_neighbor_list(
             reducing computational cost, or a general triclinic one. May be
             omitted (and is ignored) if no direction is periodic.
         safe_eval_distance: A value for which ``kernel_fn`` evaluates to a
-            result that is not `nan` or `inf`. Apart from this, it can be
+            result that is not NaN or infinite. Apart from this, it can be
             arbitrary and its exact value is of no consequence. Used
             internally in safely ignoring placeholder pairs contained in the
             neighbor list in a jit- and autodiff-compatible way.
@@ -364,24 +364,34 @@ def make_pair_term_fn_with_neighbor_list(
 # TODO: Is the protocol thing needed?
 
 
-class ReturnFn(Protocol):
-    def __call__(
-        self,
-        positions: ArrayLike,
-        charges: ArrayLike,
-        cell: ArrayLike = None,
-        **kwargs,
-    ) -> Array:
-        ...
+# class SystemEvalFn(Protocol):
+#     def __call__(
+#         self,
+#         positions: ArrayLike,
+#         charges: ArrayLike,
+#         cell: ArrayLike = None,
+#         **kwargs,
+#     ) -> Array: ...
+
+
+from typing import Concatenate, ParamSpec, ParamSpecKwargs, TypeVar
+
+P = ParamSpec("P")  # TODO
+# R = TypeVar("R")
+# P = ParamSpecKwargs("P")
+
+# SystemEvalFn = Callable[Concatenate[ArrayLike, ArrayLike, P], Array]  # TODO
+SystemEvalFn = Callable[Concatenate[ArrayLike, ArrayLike, P], Array]  # TODO
+# SystemEvalFn = Callable[[ArrayLike, ArrayLike], Array]  # TODO
 
 
 def make_compute_u_zero(
     kernel_fns: Sequence[KernelFn],
     pair_map_fn: Callable[
         [KernelFn],
-        ReturnFn,
+        SystemEvalFn,
     ],
-) -> ReturnFn:
+) -> SystemEvalFn:
     """Create a function that computes the MSM short-range energy contribution.
 
     The precise quantity being computed is
@@ -394,7 +404,7 @@ def make_compute_u_zero(
     which consists of the pair interaction term for level zero, and a
     correction term for self-interaction at the higher levels.
 
-    # TODO: reference to paper
+    # TODO: Reference to paper?
 
     This function is a high-level wrapper that constructs the evaluation
     function for :math:`U^0` from two ingredients: The kernel functions
@@ -445,23 +455,22 @@ def make_compute_u_zero(
     def compute_u_zero(
         positions: ArrayLike,
         charges: ArrayLike,
-        cell: ArrayLike = None,
-        **kwargs,
+        *unused_args: P.args,  # TODO
+        **kwargs: P.kwargs,  # TODO
     ) -> Array:
         """Compute the short-range energy contribution :math:`U^0` of the MSM.
 
         Args:
             positions: Array of positions, shape `(n_particles, n_dim)`.
             charges: Array of charges, shape `(n_particles,)`.
-            cell: Array representing unit cell, shape `(n_dim, n_dim)`.
             **kwargs: Optional additional keyword arguments passed to the
                 function returned by ``pair_map_fn``. One natural use case
-                would be a neighbor list.
+                would be a neighbor list. # TODO: cell through kwargs? If yes, mention here.
 
         Returns:
             The short-range energy contribution :math:`U^0`.
         """
-        pair_term = compute_pair_term(positions, charges, cell, **kwargs)
+        pair_term = compute_pair_term(positions, charges, **kwargs)
         self_interaction_term = (
             0.5 * jnp.sum(charges * charges) * sum_of_higher_kernels_at_zero
         )

@@ -533,7 +533,7 @@ def test_u_zero_pair_term(fixture_structure, fixture_pbc):
         kernel_fns=kernel_fns, pair_map_fn=pair_map_fn
     )
     assert onp.isclose(
-        compute_u_zero(pos, chg, cell), compute_pair_term(pos, chg, cell)
+        compute_u_zero(pos, chg, cell=cell), compute_pair_term(pos, chg, cell)
     )
 
 
@@ -560,7 +560,7 @@ def test_u_zero_self_interaction_term(fixture_structure, fixture_pbc):
         ),
     )
     ref = -len(ks_higher) * 0.5 * (chg * chg).sum()
-    assert onp.isclose(compute_u_zero(pos, chg, cell), ref)
+    assert onp.isclose(compute_u_zero(pos, chg, cell=cell), ref)
 
 
 @pytest.mark.parametrize(
@@ -601,6 +601,8 @@ def test_u_zero_with_and_without_neighbor_list(fixture_structure, fixture_pbc):
         "ij", cutoff=cutoff, positions=pos, cell=cell, pbc=fixture_pbc
     )
     assert onp.isclose(
-        compute_u_zero(pos, chg, cell),
-        compute_u_zero_nbl(pos, chg, cell, neighbor_list=nbl, weights=0.5),
+        compute_u_zero(pos, chg, cell=cell),
+        compute_u_zero_nbl(
+            pos, chg, cell=cell, neighbor_list=nbl, weights=0.5
+        ),
     )
