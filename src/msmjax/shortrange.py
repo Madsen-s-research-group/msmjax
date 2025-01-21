@@ -12,7 +12,7 @@
 """
 
 from functools import partial
-from typing import Any, Callable, Literal, Optional, Protocol, Sequence
+from typing import Callable, Literal, Optional, ParamSpec, Sequence
 
 import jax
 import jax.numpy as jnp
@@ -361,37 +361,16 @@ def make_pair_term_fn_with_neighbor_list(
     return compute_pair_term
 
 
-# TODO: Is the protocol thing needed?
-
-
-# class SystemEvalFn(Protocol):
-#     def __call__(
-#         self,
-#         positions: ArrayLike,
-#         charges: ArrayLike,
-#         cell: ArrayLike = None,
-#         **kwargs,
-#     ) -> Array: ...
-
-
-from typing import Concatenate, ParamSpec, ParamSpecKwargs, TypeVar
-
-P = ParamSpec("P")  # TODO
-# R = TypeVar("R")
-# P = ParamSpecKwargs("P")
-
-# SystemEvalFn = Callable[Concatenate[ArrayLike, ArrayLike, P], Array]  # TODO
-SystemEvalFn = Callable[Concatenate[ArrayLike, ArrayLike, P], Array]  # TODO
-# SystemEvalFn = Callable[[ArrayLike, ArrayLike], Array]  # TODO
+P = ParamSpec("P")
 
 
 def make_compute_u_zero(
     kernel_fns: Sequence[KernelFn],
     pair_map_fn: Callable[
         [KernelFn],
-        SystemEvalFn,
+        Callable[[ArrayLike, ArrayLike, P], Array],
     ],
-) -> SystemEvalFn:
+) -> Callable[[ArrayLike, ArrayLike, P], Array]:
     """Create a function that computes the MSM short-range energy contribution.
 
     The precise quantity being computed is
@@ -455,8 +434,7 @@ def make_compute_u_zero(
     def compute_u_zero(
         positions: ArrayLike,
         charges: ArrayLike,
-        *unused_args: P.args,  # TODO
-        **kwargs: P.kwargs,  # TODO
+        **kwargs: P.kwargs,
     ) -> Array:
         """Compute the short-range energy contribution :math:`U^0` of the MSM.
 
@@ -464,8 +442,8 @@ def make_compute_u_zero(
             positions: Array of positions, shape `(n_particles, n_dim)`.
             charges: Array of charges, shape `(n_particles,)`.
             **kwargs: Optional additional keyword arguments passed to the
-                function returned by ``pair_map_fn``. One natural use case
-                would be a neighbor list. # TODO: cell through kwargs? If yes, mention here.
+                function returned by ``pair_map_fn``. Natural use cases
+                would be a unit cell or a neighbor list.
 
         Returns:
             The short-range energy contribution :math:`U^0`.
