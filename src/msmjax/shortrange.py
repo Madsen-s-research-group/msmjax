@@ -68,6 +68,15 @@ def _generalized_diagonal_mask(X: ArrayLike) -> Array:
 
     Adapted from JAX-MD. # TODO: JAX-MD attribution
 
+    .. warning::
+       Any NaN or infinite entries, including ones off the diagonal, will be
+       silently replaced by this function! For the diagonal, this is usually
+       reasonable and desired. That is because in the case for which this
+       function is designed, diagonal elements of the input corresponds to
+       artifactual interactions of particles with themselves, which may be
+       undefined. When off-diagonal elements are replaced this way, however,
+       it may obscure the origin of bugs that caused them to be invalid.
+
     Args:
         X: Original matrix.
 
@@ -352,13 +361,27 @@ def make_pair_term_fn_with_neighbor_list(
     return compute_pair_term
 
 
+# TODO: Is the protocol thing needed?
+
+
+class ReturnFn(Protocol):
+    def __call__(
+        self,
+        positions: ArrayLike,
+        charges: ArrayLike,
+        cell: ArrayLike = None,
+        **kwargs,
+    ) -> Array:
+        ...
+
+
 def make_compute_u_zero(
     kernel_fns: Sequence[KernelFn],
     pair_map_fn: Callable[
         [KernelFn],
-        Callable[[ArrayLike, ArrayLike, ArrayLike, Any], Array],
+        ReturnFn,
     ],
-) -> Callable[[ArrayLike, ArrayLike, ArrayLike, Any], Array]:
+) -> ReturnFn:
     """Create a function that computes the MSM short-range energy contribution.
 
     The precise quantity being computed is
@@ -384,6 +407,7 @@ def make_compute_u_zero(
         kernel_fns: List of functions of a single scalar distance argument,
             one for each MSM level, corresponding to the different partial
             kernels into which the full interaction kernel is split.
+            They are expected to be natively broadcastable over array inputs.
         pair_map_fn: A function of a single argument that transforms a
             distance-dependent interaction kernel into a pairwise evaluation
             function that acts across a system of charged particles.
@@ -415,14 +439,13 @@ def make_compute_u_zero(
         A function with the same signature as the one returned by
         ``pair_map_fn(kernel_fns[0])``, that computes :math:`U^0`.
     """
-    # TODO: lowercase function name?
     compute_pair_term = pair_map_fn(kernel_fns[0])
     sum_of_higher_kernels_at_zero = onp.sum([k(0.0) for k in kernel_fns[1:]])
 
     def compute_u_zero(
         positions: ArrayLike,
         charges: ArrayLike,
-        cell: ArrayLike,
+        cell: ArrayLike = None,
         **kwargs,
     ) -> Array:
         """Compute the short-range energy contribution :math:`U^0` of the MSM.
