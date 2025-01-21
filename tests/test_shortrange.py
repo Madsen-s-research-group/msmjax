@@ -31,8 +31,8 @@ from msmjax.shortrange import (
     _concretize_displacement_fn,
     _gen_supercell,
     make_compute_u_zero,
-    make_pair_term_fn,
-    make_pair_term_fn_with_neighbor_list,
+    make_eval_pair_pot,
+    make_eval_pair_pot_with_neighbor_list,
 )
 
 # TODO: this and preallocate should both be handled in the same way
@@ -274,7 +274,7 @@ def test_compute_distance_vectors_different_cell_types(
 def test_error_supercell_nonperiodic(pbc, supercell_diag):
     """Test if error when cell replication along non-periodic axis requested"""
     with pytest.raises(ValueError, match=r"along non-periodic axes"):
-        make_pair_term_fn(
+        make_eval_pair_pot(
             kernel_fn=partial(shortrange_quadratic_potential, r_cut=1.0),
             pbc=pbc,
             supercell_diag=supercell_diag,
@@ -300,10 +300,10 @@ def test_pair_term_with_and_without_supercell(fixture_structure):
     kernel_fn = partial(
         shortrange_quadratic_potential, r_cut=(0.99 * get_max_cutoff_3d(cell))
     )
-    pair_term_fn = make_pair_term_fn(
+    pair_term_fn = make_eval_pair_pot(
         kernel_fn=kernel_fn, pbc=pbc, cell_mode=cell_mode
     )
-    pair_term_fn_supercell = make_pair_term_fn(
+    pair_term_fn_supercell = make_eval_pair_pot(
         kernel_fn=kernel_fn,
         pbc=pbc,
         cell_mode=cell_mode,
@@ -329,7 +329,7 @@ def test_pair_term_supercell_correct_multiple(
     kernel_fn = partial(
         shortrange_quadratic_potential, r_cut=(0.99 * get_max_cutoff_3d(cell))
     )
-    pair_term_fn = make_pair_term_fn(
+    pair_term_fn = make_eval_pair_pot(
         kernel_fn=kernel_fn, pbc=pbc, cell_mode=cell_mode
     )
     super_pos, super_chg, super_cell = _gen_supercell(
@@ -373,7 +373,7 @@ def test_pair_term_periodic_wrap_vs_replicate(
 
     n_repeats_explicit = (3, 3, 3)
     M = onp.prod(n_repeats_explicit)
-    pair_term_fn_explicit_replicate = make_pair_term_fn_with_neighbor_list(
+    pair_term_fn_explicit_replicate = make_eval_pair_pot_with_neighbor_list(
         kernel_fn=kernel_fn, pbc=(False, False, False), cell_mode=cell_mode
     )
     pos_extended, chg_extended, cell_extended = _gen_supercell(
@@ -399,7 +399,7 @@ def test_pair_term_periodic_wrap_vs_replicate(
         weights=pair_weights_explicit_replicate,
     )
 
-    pair_term_fn_wrap = make_pair_term_fn(
+    pair_term_fn_wrap = make_eval_pair_pot(
         kernel_fn=kernel_fn,
         pbc=(True, True, True),
         supercell_diag=supercell_diag,
@@ -428,10 +428,10 @@ def test_pair_term_with_and_without_neighbor_list(
     kernel_fn_cutoff = lambda r: jnp.where(
         r < cutoff, kernel_fn_no_cutoff(r), 0.0
     )
-    compute_pair_term = make_pair_term_fn(
+    compute_pair_term = make_eval_pair_pot(
         kernel_fn=kernel_fn_cutoff, pbc=fixture_pbc, cell_mode=cell_mode
     )
-    compute_pair_term_nbl = make_pair_term_fn_with_neighbor_list(
+    compute_pair_term_nbl = make_eval_pair_pot_with_neighbor_list(
         kernel_fn=kernel_fn_no_cutoff, pbc=fixture_pbc, cell_mode=cell_mode
     )
     nbl = neighbour_list(
@@ -455,7 +455,7 @@ def test_pair_term_ignore_placeholders(fixture_structure, fixture_pbc):
     pos, chg, cell, cell_mode = fixture_structure
     cutoff = float(get_max_cutoff_3d(cell))
     kernel_fn = partial(shortrange_quadratic_potential, r_cut=cutoff)
-    compute_pair_term_nbl = make_pair_term_fn_with_neighbor_list(
+    compute_pair_term_nbl = make_eval_pair_pot_with_neighbor_list(
         kernel_fn=kernel_fn, pbc=fixture_pbc, cell_mode=cell_mode
     )
     nbl = neighbour_list(
@@ -508,7 +508,7 @@ def test_pair_term_compare_explicit_loop(fixture_structure, fixture_pbc):
             forces_loop[i] += f_ij
             forces_loop[j] -= f_ij
 
-    compute_pair_term = make_pair_term_fn(
+    compute_pair_term = make_eval_pair_pot(
         kernel_fn=kernel_fn, pbc=fixture_pbc, cell_mode=cell_mode
     )
     energy = compute_pair_term(pos, chg, cell)
@@ -534,7 +534,7 @@ def test_u_zero_pair_term(fixture_structure, fixture_pbc):
     k_0 = partial(shortrange_quadratic_potential, r_cut=0.99 * max_cutoff)
     kernel_fns = [k_0] + [lambda x: 0.0] * 2
     pair_map_fn = partial(
-        make_pair_term_fn, pbc=fixture_pbc, cell_mode=cell_mode
+        make_eval_pair_pot, pbc=fixture_pbc, cell_mode=cell_mode
     )
     compute_pair_term = pair_map_fn(kernel_fns[0])
     compute_u_zero = make_compute_u_zero(
@@ -564,7 +564,7 @@ def test_u_zero_self_interaction_term(fixture_structure, fixture_pbc):
     compute_u_zero = make_compute_u_zero(
         kernel_fns=kernel_fns,
         pair_map_fn=partial(
-            make_pair_term_fn, pbc=fixture_pbc, cell_mode=cell_mode
+            make_eval_pair_pot, pbc=fixture_pbc, cell_mode=cell_mode
         ),
     )
     ref = -len(ks_higher) * 0.5 * (chg * chg).sum()
@@ -586,7 +586,7 @@ def test_u_zero_with_and_without_neighbor_list(fixture_structure, fixture_pbc):
 
     kernel_fns_no_cutoff = [lambda r: 1.0, lambda r: 0.5, lambda r: 0.25]
     pair_map_fn_nbl = partial(
-        make_pair_term_fn_with_neighbor_list,
+        make_eval_pair_pot_with_neighbor_list,
         pbc=fixture_pbc,
         cell_mode=cell_mode,
     )
@@ -599,7 +599,7 @@ def test_u_zero_with_and_without_neighbor_list(fixture_structure, fixture_pbc):
         for k_l in kernel_fns_no_cutoff
     ]
     pair_map_fn = partial(
-        make_pair_term_fn, pbc=fixture_pbc, cell_mode=cell_mode
+        make_eval_pair_pot, pbc=fixture_pbc, cell_mode=cell_mode
     )
     compute_u_zero = make_compute_u_zero(
         kernel_fns=kernel_fns_builtin_cutoff, pair_map_fn=pair_map_fn

@@ -103,6 +103,7 @@ def _generalized_diagonal_mask(X: ArrayLike) -> Array:
 
 
 def _displacement_free(R_1: ArrayLike, R_2: ArrayLike) -> Array:
+    """Compute distance vector between two points in free space"""
     # TODO: unit test this on its own?
     return R_1 - R_2
 
@@ -110,6 +111,13 @@ def _displacement_free(R_1: ArrayLike, R_2: ArrayLike) -> Array:
 def _displacement_ortho(
     R_1: ArrayLike, R_2: ArrayLike, side_lengths: ArrayLike
 ) -> Array:
+    """Compute distance vector between two points in orthorhombic cell.
+
+    Handles mixed periodicity: To indicate that specific directions lack
+    periodicity, set the corresponding elements of ``side_lengths`` to zero.
+    Periodicity is accounted for by means of the minimum image convention,
+    with all the known limitations entailed by this.
+    """
     # TODO: unit test this on its own?
     delta = R_1 - R_2
     return (
@@ -121,6 +129,12 @@ def _displacement_ortho(
 def _displacement_general(
     R_1: ArrayLike, R_2: ArrayLike, cell: ArrayLike
 ) -> Array:
+    """Compute distance vector between two points in general triclinic cell.
+
+    Handles mixed periodicity: To indicate that specific directions lack
+    periodicity, set the corresponding rows of ``cell`` to zero.
+    Periodicity is accounted for by means of the minimum image convention,
+    with all the known limitations entailed by this."""
     # TODO: unit test this on its own?
     dR = R_1 - R_2
     inv_cell = jnp.linalg.pinv(cell)
@@ -189,7 +203,7 @@ def _concretize_displacement_fn(
         raise ValueError("Invalid cell_mode.")
 
 
-def make_pair_term_fn(
+def make_eval_pair_pot(
     kernel_fn: KernelFn,
     pbc: Sequence[bool],
     cell_mode: Optional[CellMode] = None,
@@ -239,7 +253,7 @@ def make_pair_term_fn(
 
     displacement_fn = _concretize_displacement_fn(pbc, cell_mode)
 
-    def compute_pair_term(
+    def compute_energy(
         positions: ArrayLike, charges: ArrayLike, cell: ArrayLike = None
     ) -> Array:
         """Evaluate pair potential for entire system of charged particles.
@@ -277,10 +291,10 @@ def make_pair_term_fn(
             0.5 * (_generalized_diagonal_mask(qi_qj * kernel_fn(dr_ij))).sum()
         )
 
-    return compute_pair_term
+    return compute_energy
 
 
-def make_pair_term_fn_with_neighbor_list(
+def make_eval_pair_pot_with_neighbor_list(
     kernel_fn: KernelFn,
     pbc: Sequence[bool],
     cell_mode: Optional[CellMode] = None,
@@ -297,11 +311,11 @@ def make_pair_term_fn_with_neighbor_list(
 ]:
     """Transform interaction kernel into function acting on a particle system.
 
-    Like :func:`make_pair_term_fn`, but with a neighbor list.
+    Like :func:`make_eval_pair_pot`, but with a neighbor list.
 
     Args:
         kernel_fn: A function of a single scalar distance argument,
-            see documentation of :func:`make_pair_term_fn`.
+            see documentation of :func:`make_eval_pair_pot`.
         pbc: One boolean per direction signaling periodicity.
         cell_mode: A string specifying assumptions on the shape of the
             unit cell. Either the cell is assumed orthorhombic and
@@ -442,10 +456,11 @@ def make_compute_u_zero(
             ``compute_pair_term = pair_map_fn(kernel_fns[0])``.
 
             The most convenient way to obtain a ``pair_map_fn`` with
-            appropriate signature is by closing :func:`make_pair_term_fn` or
-            :func:`make_pair_term_fn_with_neighbor_list` over their extra
-            arguments, e.g.
-            ``pair_map_fn = functools.partial(make_pair_term_fn, pbc=(True, True, False))``.
+            appropriate signature is by closing
+            :func:`make_eval_pair_pot` or
+            :func:`make_eval_pair_pot_with_neighbor_list` over their extra
+            arguments, e.g. ``pair_map_fn = functools.partial(
+            make_eval_pair_pot, pbc=(True, True, False))``.
 
     Returns:
         A function with the same signature as the one returned by
