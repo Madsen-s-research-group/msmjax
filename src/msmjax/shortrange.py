@@ -103,7 +103,15 @@ def _generalized_diagonal_mask(X: ArrayLike) -> Array:
 
 
 def _displacement_free(R_1: ArrayLike, R_2: ArrayLike) -> Array:
-    """Compute distance vector between two points in free space"""
+    """Compute distance vector between two points in free space
+
+    Args:
+        R_1: First point
+        R_2: Second point
+
+    Returns:
+        Distance vector.
+    """
     # TODO: unit test this on its own?
     return R_1 - R_2
 
@@ -117,6 +125,14 @@ def _displacement_ortho(
     periodicity, set the corresponding elements of ``side_lengths`` to zero.
     Periodicity is accounted for by means of the minimum image convention,
     with all the known limitations entailed by this.
+
+    Args:
+        R_1: First point
+        R_2: Second point
+        side_lengths: 1-d array of side lengths (one per direction)
+
+    Returns:
+        Distance vector.
     """
     # TODO: unit test this on its own?
     delta = R_1 - R_2
@@ -134,7 +150,16 @@ def _displacement_general(
     Handles mixed periodicity: To indicate that specific directions lack
     periodicity, set the corresponding rows of ``cell`` to zero.
     Periodicity is accounted for by means of the minimum image convention,
-    with all the known limitations entailed by this."""
+    with all the known limitations entailed by this.
+
+    Args:
+        R_1: First point
+        R_2: Second point
+        cell: Array representing unit cell, shape `(n_dim, n_dim)`.
+
+    Returns:
+        Distance vector.
+    """
     # TODO: unit test this on its own?
     dR = R_1 - R_2
     inv_cell = jnp.linalg.pinv(cell)
@@ -166,7 +191,6 @@ def _concretize_displacement_fn(
         A function of two position vector arguments and (optionally, depending
         on PBCs) a unit cell, that computes the distance vector between them.
     """
-    # TODO: type hint for cell_mode (in all places where it's used)
     if onp.any(pbc) and cell_mode is None:
         # TODO: write test for this check
         raise ValueError(
@@ -216,7 +240,15 @@ def make_eval_pair_pot(
     :math:`\\frac{1}{2} \\sum_i \\sum_{j \\neq i} q_i q_j k(r_{ij})`,
     by mapping :math:`k(r)` over all particle pairs.
 
-    # TODO: Mention MIC limitations here? (maybe format as warning)
+    # TODO: Include the formula for maximum allowed cutoff (and reference)?
+
+    .. warning::
+       Distance computations under periodic boundary conditions are handled
+       by means of the minimum image convention, with the known limitations
+       this entails. If the cutoff radius of ``kernel_fn`` is too large for
+       the unit cell, or the unit cell is too deformed, results will be
+       incorrect. If you know beforehand that this is an issue, you can
+       remedy it by using the ``supercell_diag`` parameter (see below).
 
     Args:
         kernel_fn: A function of a single scalar distance argument,
@@ -241,7 +273,6 @@ def make_eval_pair_pot(
         and the unit cell, as arguments and computes the energy for the
         whole system of particles.
     """
-    # TODO: function name maybe not ideal
     pbc = onp.asarray(pbc)
     if supercell_diag is None:
         supercell_diag = onp.ones_like(pbc, dtype=int)
@@ -313,6 +344,16 @@ def make_eval_pair_pot_with_neighbor_list(
 
     Like :func:`make_eval_pair_pot`, but with a neighbor list.
 
+    # TODO: Include the formula for maximum allowed cutoff (and reference)?
+
+    .. warning::
+       Distance computations under periodic boundary conditions are handled
+       by means of the minimum image convention, with the known limitations
+       this entails. If the cutoff radius of ``kernel_fn`` is too large for
+       the unit cell, or the unit cell is too deformed, results will be
+       incorrect. Unlike :func:`make_eval_pair_pot`, this neighbor-list
+       version does not have a built-in supercell generation feature.
+
     Args:
         kernel_fn: A function of a single scalar distance argument,
             see documentation of :func:`make_eval_pair_pot`.
@@ -334,7 +375,6 @@ def make_eval_pair_pot_with_neighbor_list(
         weights, as arguments and computes the energy for the whole system
         of particles.
     """
-    # TODO: function name maybe not ideal
     pbc = onp.asarray(pbc)
     displacement_fn = _concretize_displacement_fn(pbc, cell_mode)
 
