@@ -408,4 +408,7 @@ tags
 .history
 .ionide
 
+# Sphinx documentation
+docs/build/
+
 # End of https://www.toptal.com/developers/gitignore/api/vim,macos,emacs,python,visualstudiocode,intellij
