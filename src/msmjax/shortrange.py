@@ -378,7 +378,7 @@ def make_eval_pair_pot_with_neighbor_list(
     pbc = onp.asarray(pbc)
     displacement_fn = _concretize_displacement_fn(pbc, cell_mode)
 
-    def compute_pair_term(
+    def compute_energy(
         positions: ArrayLike,
         charges: ArrayLike,
         neighbor_list: tuple[ArrayLike, ArrayLike],
@@ -433,7 +433,7 @@ def make_eval_pair_pot_with_neighbor_list(
             is_not_placeholder, weights * qi_qj * kernel_fn(dr_ij), 0.0
         ).sum()
 
-    return compute_pair_term
+    return compute_energy
 
 
 P = ParamSpec("P")
