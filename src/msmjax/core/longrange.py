@@ -102,12 +102,39 @@ def make_compute_longrange(
     return compute_longrange
 
 
-def make_potential_interpolation_fn(basis_eval_fn):
-    pass  # TODO
+def _interpolate_potential():
+    # TODO: Do we want to provide this?
+    pass
 
 
-def make_potential_grad_interpolation_fn(basis_eval_fn):
-    pass  # TODO
+def _interpolate_energy(
+    gridpotential: ArrayLike,
+    basis_vals: ArrayLike,
+    indices: ArrayLike,
+    charges: ArrayLike,
+):
+    # TODO: Do we need to use a fill value with `take` here?
+    #  (it shouldn't be possible for indices returned by the spline eval
+    #  functions to be out of bounds)
+    energy = 0.5 * jnp.sum(
+        charges * (gridpotential.take(indices) * basis_vals).sum(axis=1)
+    )
+    return energy
+
+
+def _interpolate_forces(
+    gridpotential: ArrayLike,
+    basis_grads: ArrayLike,
+    indices: ArrayLike,
+    charges: ArrayLike,
+):
+    # TODO: Do we need to use a fill value with `take` here?
+    #  (it shouldn't be possible for indices returned by the spline eval
+    #  functions to be out of bounds)
+    forces = -charges[:, jnp.newaxis] * jnp.sum(
+        gridpotential.take(indices)[..., jnp.newaxis] * basis_grads, axis=1
+    )
+    return forces
 
 
 def make_energy_interpolation_fn(basis_eval_fn):
@@ -115,13 +142,7 @@ def make_energy_interpolation_fn(basis_eval_fn):
         gridpotential: ArrayLike, positions: ArrayLike, charges: ArrayLike
     ):
         basis_vals, indices = basis_eval_fn(positions)
-        # TODO: Do we need to use a fill value with `take` here?
-        #  (it shouldn't be possible for indices returned by the spline eval
-        #  functions to be out of bounds)
-        energy = 0.5 * jnp.sum(
-            charges * (gridpotential.take(indices) * basis_vals).sum(axis=1)
-        )
-        return energy
+        return _interpolate_energy(gridpotential, basis_vals, indices, charges)
 
     return compute
 
@@ -131,13 +152,28 @@ def make_forces_interpolation_fn(basis_grad_fn):
         gridpotential: ArrayLike, positions: ArrayLike, charges: ArrayLike
     ):
         basis_grads, indices = basis_grad_fn(positions)
-        # TODO: Do we need to use a fill value with `take` here?
-        #  (it shouldn't be possible for indices returned by the spline eval
-        #  functions to be out of bounds)
-        forces = -charges[:, jnp.newaxis] * jnp.sum(
-            gridpotential.take(indices)[..., jnp.newaxis] * basis_grads, axis=1
+        return _interpolate_forces(
+            gridpotential, basis_grads, indices, charges
         )
-        return forces
+
+    return compute
+
+
+def make_energy_and_forces_interpolation_fn(basis_val_and_grad_fn):
+    def compute(
+        gridpotential: ArrayLike, positions: ArrayLike, charges: ArrayLike
+    ):
+        # TODO: Make sure that the expected structure of the return value of
+        #  basis_val_and_grad_fn is properly documented and correctly used
+        #  elsewhere.
+        (basis_vals, indices), basis_grads = basis_val_and_grad_fn(positions)
+        energy = _interpolate_energy(
+            gridpotential, basis_vals, indices, charges
+        )
+        forces = _interpolate_forces(
+            gridpotential, basis_grads, indices, charges
+        )
+        return energy, forces
 
     return compute
 
