@@ -11,7 +11,7 @@
         of Illinois at Urbana-Champaign, 2006.
 """
 
-from typing import Callable, Literal, Optional, ParamSpec, Sequence
+from typing import Any, Callable, Literal, Optional, ParamSpec, Sequence
 
 import jax
 import jax.numpy as jnp
@@ -28,6 +28,7 @@ def make_grid_pass(
     prolongation_fns: Sequence[Callable],
     interaction_fns: Sequence[Callable],  # TODO: name
 ) -> Callable[[ArrayLike], Array]:
+    # TODO: function name?
     pass
 
 
@@ -35,5 +36,40 @@ def make_anterpolation_fn():
     pass
 
 
-def make_full_pass():
-    pass
+P = ParamSpec("P")
+
+
+def make_compute_longrange(
+    anterpolation_fn: Callable[[ArrayLike, ArrayLike, P], Array],
+    grid_pass_fn: Callable[[ArrayLike, P], Array],
+    interpolation_fn: Callable[[ArrayLike, ArrayLike, ArrayLike, P], Array],
+) -> Callable[[ArrayLike, ArrayLike, P], Any]:
+    def compute_longrange(
+        positions: ArrayLike, charges: ArrayLike, **kwargs: P.kwargs
+    ) -> Any:
+        # TODO: cell, kwargs?
+        gridcharge_lvl_one = anterpolation_fn(positions, charges, **kwargs)
+        gridpotential_lvl_one = grid_pass_fn(gridcharge_lvl_one, **kwargs)
+        result = interpolation_fn(
+            gridpotential_lvl_one, positions, charges, **kwargs
+        )
+        return result
+
+    return compute_longrange
+
+
+def make_energy_interpolation_fn(basis_eval_fn):
+    def compute(
+        gridpotential: ArrayLike, positions: ArrayLike, charges: ArrayLike
+    ):
+        basis_vals, indices = basis_eval_fn(positions)
+        # TODO: Do we need to use a fill value with `take` here?
+        #  (it shouldn't be possible for indices returned by the spline eval
+        #  functions to be out of bounds)
+        particle_contribs = charges * (
+            gridpotential.take(indices) * basis_vals
+        ).sum(axis=1)
+        energy = 0.5 * jnp.sum(particle_contribs)
+        return energy
+
+    return compute
