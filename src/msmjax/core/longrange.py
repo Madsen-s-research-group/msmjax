@@ -11,16 +11,60 @@
         of Illinois at Urbana-Champaign, 2006.
 """
 
+from functools import partial
 from typing import Any, Callable, Literal, Optional, ParamSpec, Sequence
 
 import jax
 import jax.numpy as jnp
+import numpy as onp
 from jax import Array
 from jax.typing import ArrayLike
 
-# TODO: This should be defined elsewhere, since the shortrange part also uses it
-CellMode = Literal["ortho", "general"]
-KernelFn = Callable[[ArrayLike], Array]  # TODO: float or Array?
+
+@partial(jax.jit, static_argnames=["pbc", "method"])
+def convolve_scipy_general_pbc(
+    data: ArrayLike,
+    kernel: ArrayLike,
+    pbc: Sequence[bool],
+    method: Literal["direct", "fft"],  # TODO: centralize definition?
+) -> Array:
+    # TODO: Make this a protected function (_convolve_scipy_general_pbc)?
+
+    pbc = onp.asarray(pbc)
+
+    if pbc.any():
+        size_kernel = onp.array(kernel.shape)
+        size_kernel_below_middle = size_kernel // 2
+        size_kernel_above_middle = size_kernel - size_kernel_below_middle - 1
+        pad_width = tuple(
+            (int(s_b), int(s_a))
+            for s_b, s_a in zip(
+                size_kernel_below_middle, size_kernel_above_middle
+            )
+        )
+        pad_width = tuple(
+            pw if periodic else (0, 0) for pw, periodic in zip(pad_width, pbc)
+        )
+        inds_reconstruct_unpadded = []
+        for pw, periodic in zip(pad_width, pbc):
+            if periodic:
+                inds_reconstruct_unpadded.append(slice(pw[0], -pw[1]))
+            else:
+                inds_reconstruct_unpadded.append(slice(None))
+        inds_reconstruct_unpadded = tuple(inds_reconstruct_unpadded)
+        data_extended = jnp.pad(
+            data,
+            pad_width=pad_width,
+            mode="wrap",
+        )
+        nruter = jax.scipy.signal.convolve(
+            data_extended, kernel, mode="same", method=method
+        )
+        return nruter[inds_reconstruct_unpadded]
+    else:
+        return jax.scipy.signal.convolve(
+            data, kernel, mode="same", method=method
+        )
 
 
 def make_grid_pass(
