@@ -27,7 +27,7 @@ from ase.geometry import get_distances
 from matscipy.neighbours import neighbour_list
 
 from msmjax.benchmark_tools import path_input_structures
-from msmjax.shortrange import (
+from msmjax.core.shortrange import (
     _concretize_displacement_fn,
     _gen_supercell,
     make_compute_u_zero,
