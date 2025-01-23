@@ -58,6 +58,14 @@ def make_compute_longrange(
     return compute_longrange
 
 
+def make_potential_interpolation_fn(basis_eval_fn):
+    pass  # TODO
+
+
+def make_potential_grad_interpolation_fn(basis_eval_fn):
+    pass  # TODO
+
+
 def make_energy_interpolation_fn(basis_eval_fn):
     def compute(
         gridpotential: ArrayLike, positions: ArrayLike, charges: ArrayLike
@@ -66,10 +74,39 @@ def make_energy_interpolation_fn(basis_eval_fn):
         # TODO: Do we need to use a fill value with `take` here?
         #  (it shouldn't be possible for indices returned by the spline eval
         #  functions to be out of bounds)
-        particle_contribs = charges * (
-            gridpotential.take(indices) * basis_vals
-        ).sum(axis=1)
-        energy = 0.5 * jnp.sum(particle_contribs)
+        energy = 0.5 * jnp.sum(
+            charges * (gridpotential.take(indices) * basis_vals).sum(axis=1)
+        )
         return energy
 
     return compute
+
+
+def make_forces_interpolation_fn(basis_grad_fn):
+    def compute(
+        gridpotential: ArrayLike, positions: ArrayLike, charges: ArrayLike
+    ):
+        basis_grads, indices = basis_grad_fn(positions)
+        # TODO: Do we need to use a fill value with `take` here?
+        #  (it shouldn't be possible for indices returned by the spline eval
+        #  functions to be out of bounds)
+        forces = -charges[:, jnp.newaxis] * jnp.sum(
+            gridpotential.take(indices)[..., jnp.newaxis] * basis_grads, axis=1
+        )
+        return forces
+
+    return compute
+
+
+def make_unitcube_transform_fns_ortho(cell):
+    inverse = 1.0 / jnp.diag(cell)
+    transform_pos = lambda x: x * inverse
+    backtransform_grad = lambda x: x * inverse
+    return transform_pos, backtransform_grad
+
+
+def make_unitcube_transform_fns_general(cell):
+    inverse = jnp.linalg.pinv(cell)
+    transform_pos = lambda x: x @ inverse
+    backtransform_grad = lambda dx: dx @ inverse.T
+    return transform_pos, backtransform_grad
