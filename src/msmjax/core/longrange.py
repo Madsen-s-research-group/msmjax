@@ -67,19 +67,6 @@ def convolve_scipy_general_pbc(
         )
 
 
-def make_grid_pass(
-    restriction_fns: Sequence[Callable],
-    prolongation_fns: Sequence[Callable],
-    interaction_fns: Sequence[Callable],  # TODO: name
-) -> Callable[[ArrayLike], Array]:
-    # TODO: function name?
-    pass
-
-
-def make_anterpolation_fn():
-    pass
-
-
 P = ParamSpec("P")
 
 
@@ -100,6 +87,22 @@ def make_compute_longrange(
         return result
 
     return compute_longrange
+
+
+def make_anterpolation_fn(basis_eval_fn):
+    def anterpolate(positions: ArrayLike, charges: ArrayLike) -> Array:
+        """Anterpolate charge from particles to grid"""
+        # TODO: Where to take size, shape from? (Are they even really needed?)
+        # TODO: flat vs. multidim? It seems that `indices` is expected to be
+        #  flat, but should this really be the case universally?
+        basis_vals, indices = basis_eval_fn(positions)
+        gridcharge_flat = jnp.zeros(grid.size)
+        gridcharge_flat = gridcharge_flat.at[indices].add(
+            charges[:, jnp.newaxis] * basis_vals
+        )
+        return gridcharge_flat.reshape(grid.shape)
+
+    return anterpolate
 
 
 def _interpolate_potential():
@@ -164,7 +167,7 @@ def make_energy_and_forces_interpolation_fn(basis_val_and_grad_fn):
         gridpotential: ArrayLike, positions: ArrayLike, charges: ArrayLike
     ):
         # TODO: Make sure that the expected structure of the return value of
-        #  basis_val_and_grad_fn is properly documented and correctly used
+        #  basis_val_and_grad_fn is properly documented, and correctly used
         #  elsewhere.
         (basis_vals, indices), basis_grads = basis_val_and_grad_fn(positions)
         energy = _interpolate_energy(
@@ -178,15 +181,28 @@ def make_energy_and_forces_interpolation_fn(basis_val_and_grad_fn):
     return compute
 
 
-def make_unitcube_transform_fns_ortho(cell):
+def make_unitcube_transform_fns_ortho(
+    cell: ArrayLike,
+) -> tuple[Callable[[ArrayLike], Array], Callable[[ArrayLike], Array]]:
     inverse = 1.0 / jnp.diag(cell)
     transform_pos = lambda x: x * inverse
-    backtransform_grad = lambda x: x * inverse
+    backtransform_grad = lambda dx: dx * inverse
     return transform_pos, backtransform_grad
 
 
-def make_unitcube_transform_fns_general(cell):
+def make_unitcube_transform_fns_general(
+    cell: ArrayLike,
+) -> tuple[Callable[[ArrayLike], Array], Callable[[ArrayLike], Array]]:
     inverse = jnp.linalg.pinv(cell)
     transform_pos = lambda x: x @ inverse
     backtransform_grad = lambda dx: dx @ inverse.T
     return transform_pos, backtransform_grad
+
+
+def make_grid_pass(
+    restriction_fns: Sequence[Callable],
+    prolongation_fns: Sequence[Callable],
+    interaction_fns: Sequence[Callable],  # TODO: name
+) -> Callable[[ArrayLike], Array]:
+    # TODO: function name?
+    pass
