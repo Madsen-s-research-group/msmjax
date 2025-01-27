@@ -89,18 +89,20 @@ def make_compute_longrange(
     return compute_longrange
 
 
-def make_anterpolation_fn(basis_eval_fn):
+def make_anterpolation_fn(basis_eval_fn, grid_shape: tuple[int, ...]):
+    grid_size = int(onp.prod(grid_shape))
+
     def anterpolate(positions: ArrayLike, charges: ArrayLike) -> Array:
         """Anterpolate charge from particles to grid"""
         # TODO: Where to take size, shape from? (Are they even really needed?)
         # TODO: flat vs. multidim? It seems that `indices` is expected to be
         #  flat, but should this really be the case universally?
         basis_vals, indices = basis_eval_fn(positions)
-        gridcharge_flat = jnp.zeros(grid.size)
+        gridcharge_flat = jnp.zeros(grid_size)
         gridcharge_flat = gridcharge_flat.at[indices].add(
             charges[:, jnp.newaxis] * basis_vals
         )
-        return gridcharge_flat.reshape(grid.shape)
+        return gridcharge_flat.reshape(grid_shape)
 
     return anterpolate
 
