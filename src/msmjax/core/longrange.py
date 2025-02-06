@@ -204,7 +204,63 @@ def make_unitcube_transform_fns_general(
 def make_grid_pass(
     restriction_fns: Sequence[Callable],
     prolongation_fns: Sequence[Callable],
-    interaction_fns: Sequence[Callable],  # TODO: name
-) -> Callable[[ArrayLike], Array]:
-    # TODO: function name?
-    pass
+    interaction_fns: Sequence[Callable],  # TODO: name (everywhere)
+) -> Callable[[ArrayLike, Sequence[ArrayLike]], Array]:
+    # TODO: In fact it's questionable, whether a separate interaction_fn for
+    #  each level is needed at all. `convolve_scipy_general_pbc` should work
+    #  for all levels, shouldn't it?
+    #  Do we still want to offer separate functions for increased flexibility?
+    #  Even for restriction and prolongation a single function might be sufficient?
+    if (
+        not len(restriction_fns)
+        == len(prolongation_fns)
+        == len(interaction_fns)
+    ):
+        raise ValueError(
+            "restriction_fns, prolongation_fns, interaction_fns "
+            "must all have same length."
+        )
+    n_levels = len(restriction_fns) - 1
+
+    # TODO: Name of the returned function?
+    def grid_pass(
+        gridcharge_lvl_one: ArrayLike, kernel_stencils: Sequence[ArrayLike]
+    ) -> Array:
+        if not len(kernel_stencils) == n_levels + 1:
+            raise ValueError(
+                "Wrong number of kernel stencils. "
+                "Expected {} (including a placeholder at level zero), "
+                "got {}.".format(n_levels + 1, len(kernel_stencils))
+            )
+        # TODO: list instead of dict?
+        gridcharges_all_levels = {1: gridcharge_lvl_one}
+
+        # TODO: More efficient to do the pass in the following order instead?
+        #  1. Iteratively go up (compute grid charges at all levels)
+        #  2. Apply interactions at all levels (possibly via `tree_map`)
+        #  3. Iteratively go back down.
+
+        # Go up ladder
+        for lvl in range(2, n_levels + 1):
+            restrict = restriction_fns[lvl]
+            gridcharge_fine = gridcharges_all_levels[lvl - 1]
+            gridcharge_coarse = restrict(gridcharge_fine)
+            gridcharges_all_levels[lvl] = gridcharge_coarse
+
+        # Apply top-level interaction
+        gridcharge_toplevel = gridcharges_all_levels[n_levels]
+        interact_toplevel = interaction_fns[n_levels]
+        kernel_stencils_toplevel = kernel_stencils[n_levels]
+        gridpotential = interact_toplevel(
+            gridcharge_toplevel, kernel_stencils_toplevel
+        )
+
+        # Go down ladder
+        for lvl in range(n_levels - 1, 0, -1):
+            gridpotential = interaction_fns[lvl](
+                gridcharges_all_levels[lvl], kernel_stencils[lvl]
+            ) + prolongation_fns[lvl](gridpotential)
+
+        return gridpotential
+
+    return grid_pass
