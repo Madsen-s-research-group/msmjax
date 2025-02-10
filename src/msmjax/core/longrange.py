@@ -70,25 +70,6 @@ def convolve_scipy_general_pbc(
 P = ParamSpec("P")
 
 
-def make_compute_longrange(
-    anterpolation_fn: Callable[[ArrayLike, ArrayLike, P], Array],
-    grid_pass_fn: Callable[[ArrayLike, P], Array],
-    interpolation_fn: Callable[[ArrayLike, ArrayLike, ArrayLike, P], Array],
-) -> Callable[[ArrayLike, ArrayLike, P], Any]:
-    def compute_longrange(
-        positions: ArrayLike, charges: ArrayLike, **kwargs: P.kwargs
-    ) -> Any:
-        # TODO: cell, kwargs?
-        gridcharge_lvl_one = anterpolation_fn(positions, charges, **kwargs)
-        gridpotential_lvl_one = grid_pass_fn(gridcharge_lvl_one, **kwargs)
-        result = interpolation_fn(
-            gridpotential_lvl_one, positions, charges, **kwargs
-        )
-        return result
-
-    return compute_longrange
-
-
 def make_anterpolation_fn(basis_eval_fn, grid_shape: tuple[int, ...]):
     grid_size = int(onp.prod(grid_shape))
 
@@ -264,3 +245,45 @@ def make_grid_pass(
         return gridpotential
 
     return grid_pass
+
+
+# TODO: Also add function for the calculation of energy by direct
+#  contraction of grid charges with grid potential (without going the route
+#  of reconstructing electrostatic potential by interpolation)
+
+
+def make_compute_longrange(
+    anterpolation_fn: Callable[[ArrayLike, ArrayLike], Array],
+    grid_pass_fn: Callable[[ArrayLike, Sequence[ArrayLike]], Array],
+    interpolation_fn: Callable[[ArrayLike, ArrayLike, ArrayLike], Array],
+    kernel_stencils: Sequence[ArrayLike] = None,
+    kernel_stencil_construction_fn: Callable[
+        [ArrayLike], Sequence[Array]
+    ] = None,
+) -> Callable[[ArrayLike, ArrayLike], Any]:
+    # TODO: Is it really necessary/smart to require one of the two? If the
+    #  stencils are not dynamic (corresponding to the `kernel_stencils` case),
+    #  they might as well be built into `grid_pass_fn` from the start.
+    kernel_stencil_args = (kernel_stencils, kernel_stencil_construction_fn)
+    if sum(arg is None for arg in kernel_stencil_args) != 1:
+        raise ValueError(
+            "You must specify exactly one of `kernel_stencils`, "
+            "`kernel_stencil_construction_fn`"
+        )
+
+    def compute_longrange(
+        positions: ArrayLike, charges: ArrayLike, cell: ArrayLike = None
+    ) -> Any:
+        # TODO: cell, kwargs?
+
+        if kernel_stencils is None:
+            stencils = kernel_stencil_construction_fn(cell)
+        elif kernel_stencil_construction_fn is None:
+            stencils = kernel_stencils
+
+        gridcharge_lvl_one = anterpolation_fn(positions, charges)
+        gridpotential_lvl_one = grid_pass_fn(gridcharge_lvl_one, stencils)
+        result = interpolation_fn(gridpotential_lvl_one, positions, charges)
+        return result
+
+    return compute_longrange
