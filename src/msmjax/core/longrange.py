@@ -254,36 +254,37 @@ def make_grid_pass(
 
 def make_compute_longrange(
     anterpolation_fn: Callable[[ArrayLike, ArrayLike], Array],
-    grid_pass_fn: Callable[[ArrayLike, Sequence[ArrayLike]], Array],
+    grid_pass_fn: Callable[[ArrayLike, Optional[Sequence[ArrayLike]]], Array],
     interpolation_fn: Callable[[ArrayLike, ArrayLike, ArrayLike], Array],
     kernel_stencils: Sequence[ArrayLike] = None,
     kernel_stencil_construction_fn: Callable[
         [ArrayLike], Sequence[Array]
     ] = None,
-) -> Callable[[ArrayLike, ArrayLike], Any]:
-    # TODO: Is it really necessary/smart to require one of the two? If the
-    #  stencils are not dynamic (corresponding to the `kernel_stencils` case),
-    #  they might as well be built into `grid_pass_fn` from the start.
+) -> Callable[[ArrayLike, ArrayLike, Optional[ArrayLike]], Any]:
+    # TODO: variable name
     kernel_stencil_args = (kernel_stencils, kernel_stencil_construction_fn)
-    if sum(arg is None for arg in kernel_stencil_args) != 1:
+    if sum(arg is None for arg in kernel_stencil_args) > 1:
         raise ValueError(
-            "You must specify exactly one of `kernel_stencils`, "
+            "You may specify at most one of `kernel_stencils`, "
             "`kernel_stencil_construction_fn`"
         )
 
     def compute_longrange(
-        positions: ArrayLike, charges: ArrayLike, cell: ArrayLike = None
+        positions: ArrayLike, charges: ArrayLike, cell: ArrayLike | None = None
     ) -> Any:
         # TODO: cell, kwargs?
 
-        if kernel_stencils is None:
-            stencils = kernel_stencil_construction_fn(cell)
-        elif kernel_stencil_construction_fn is None:
-            stencils = kernel_stencils
+        if kernel_stencils is None and kernel_stencil_construction_fn is None:
+            stncl_args = []  # TODO: variable name
+        elif kernel_stencils is None:
+            stncl_args = [kernel_stencil_construction_fn(cell)]
+        else:
+            stncl_args = [kernel_stencils]
 
         gridcharge_lvl_one = anterpolation_fn(positions, charges)
-        gridpotential_lvl_one = grid_pass_fn(gridcharge_lvl_one, stencils)
+        gridpotential_lvl_one = grid_pass_fn(gridcharge_lvl_one, *stncl_args)
         result = interpolation_fn(gridpotential_lvl_one, positions, charges)
+
         return result
 
     return compute_longrange
