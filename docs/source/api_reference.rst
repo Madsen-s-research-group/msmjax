@@ -4,6 +4,6 @@ API reference
 .. toctree::
    :maxdepth: 4
 
-   msmjax.shortrange
+   msmjax.core
    msmjax.gridops_multidim
    msmjax.kernels
