@@ -12,7 +12,7 @@
 """
 
 from functools import partial
-from typing import Any, Callable, Literal, Optional, ParamSpec, Sequence
+from typing import Callable, Literal, Optional, Sequence
 
 import jax
 import jax.numpy as jnp
@@ -65,9 +65,6 @@ def convolve_scipy_general_pbc(
         return jax.scipy.signal.convolve(
             data, kernel, mode="same", method=method
         )
-
-
-P = ParamSpec("P")
 
 
 def make_anterpolation_fn(basis_eval_fn, grid_shape: tuple[int, ...]):
@@ -258,10 +255,10 @@ def make_compute_longrange(
     anterpolation_fn: Callable[[ArrayLike, ArrayLike], Array],
     grid_pass_fn: Callable[[ArrayLike, Optional[Sequence[ArrayLike]]], Array],
     interpolation_fn: Callable[[ArrayLike, ArrayLike, ArrayLike], Array],
-    kernel_stencil_construction_fn: Callable[[P], Sequence[Array]] = None,
-) -> Callable[[ArrayLike, ArrayLike, P], Array]:
+    kernel_stencil_construction_fn: Callable[[...], Sequence[Array]] = None,
+) -> Callable[[ArrayLike, ArrayLike, ...], Array]:
     def compute_longrange(
-        positions: ArrayLike, charges: ArrayLike, **kwargs: P.kwargs
+        positions: ArrayLike, charges: ArrayLike, **kwargs: ...
     ) -> Array:
         # TODO: Should this rather be a lower-level function
         #  (`_make_compute_longrange`?, other name?) that takes

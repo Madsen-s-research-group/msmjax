@@ -12,7 +12,7 @@
 """
 
 from functools import partial
-from typing import Callable, Literal, Optional, ParamSpec, Sequence
+from typing import Callable, Literal, Optional, Sequence
 
 import jax
 import jax.numpy as jnp
@@ -436,16 +436,13 @@ def make_eval_pair_pot_with_neighbor_list(
     return compute_energy
 
 
-P = ParamSpec("P")
-
-
 def make_compute_u_zero(
     kernel_fns: Sequence[KernelFn],
     pair_map_fn: Callable[
         [KernelFn],
-        Callable[[ArrayLike, ArrayLike, P], Array],
+        Callable[[ArrayLike, ArrayLike, ...], Array],
     ],
-) -> Callable[[ArrayLike, ArrayLike, P], Array]:
+) -> Callable[[ArrayLike, ArrayLike, ...], Array]:
     """Create a function that computes the MSM short-range energy contribution.
 
     The precise quantity being computed is
@@ -513,7 +510,7 @@ def make_compute_u_zero(
     def compute_u_zero(
         positions: ArrayLike,
         charges: ArrayLike,
-        **kwargs: P.kwargs,
+        **kwargs: ...,
     ) -> Array:
         """Compute the short-range energy contribution :math:`U^0` of the MSM.
 
