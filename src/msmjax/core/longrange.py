@@ -263,6 +263,10 @@ def make_compute_longrange(
     def compute_longrange(
         positions: ArrayLike, charges: ArrayLike, **kwargs: P.kwargs
     ) -> Array:
+        # TODO: Should this rather be a lower-level function
+        #  (`_make_compute_longrange`?, other name?) that takes
+        #  positions, charges, kernel_stencils?
+        #  (In which case: `static` in name?)
         gridcharge_lvl_one = anterpolation_fn(positions, charges)
         if kernel_stencil_construction_fn is None:
             gridpotential_lvl_one = grid_pass_fn(gridcharge_lvl_one)
@@ -275,3 +279,42 @@ def make_compute_longrange(
         return result
 
     return compute_longrange
+
+
+def make_compute_u_oneplus(
+    basis_eval_fn,  # TODO: `unitcube` in name? `lvl_one` in name?
+    grid_pass_fn,  # TODO: `unitcube` in name?
+    kernel_stencil_construction_fn,
+    cell_mode,
+):
+    # TODO: dynamic_cell (or similar) in name? (only if that's what the
+    #  function actually ends up doing, though (see below))
+    # TODO: Mutually exclusive arguments `kernel_stencils` (indicating
+    #  static-cell version) and `kernel_stencil_construction_fn` (indicating
+    #  dynamic-cell version)?
+    # TODO: `cell_mode=None` for no unitcube transform?
+
+    if cell_mode == "ortho":
+        make_unitcube_transform_fns = make_unitcube_transform_fns_ortho
+    elif cell_mode == "general":
+        make_unitcube_transform_fns = make_unitcube_transform_fns_general
+    else:
+        raise ValueError("Invalid `cell_mode`.")
+
+    anterpolation_fn = make_anterpolation_fn(basis_eval_fn, grid_shape)
+    interpolation_fn = make_energy_interpolation_fn(basis_eval_fn)
+    compute_unitcube = make_compute_longrange(
+        anterpolation_fn=anterpolation_fn,
+        grid_pass_fn=grid_pass_fn,
+        interpolation_fn=interpolation_fn,
+    )
+
+    def compute(positions, charges, cell):
+        transform_pos, backtransform_grad = make_unitcube_transform_fns(cell)
+        return compute_unitcube(
+            transform_pos(positions),
+            charges,
+            kernel_stencil_construction_fn(cell),
+        )
+
+    return compute
