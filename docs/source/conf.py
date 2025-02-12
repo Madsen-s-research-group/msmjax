@@ -37,7 +37,7 @@ autodoc_default_options = {
 def custom_typehints_formatter(annotation, config):
     """Small custom formatter taking care of npt.ArrayLike"""
     # TODO: Remove this quick hack as soon as a better solution is
-    # available for aliases (that works with typehints).
+    #  available for aliases (that works with typehints).
     if annotation == npt.ArrayLike:
         return ":py:class:`numpy.typing.ArrayLike`"
     if annotation == Optional[npt.ArrayLike]:
