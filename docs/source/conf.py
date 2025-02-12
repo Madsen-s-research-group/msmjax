@@ -50,6 +50,8 @@ def custom_typehints_formatter(annotation, config):
 
 
 typehints_formatter = custom_typehints_formatter
+# Suppress warnings about inability to cache custom_typehints_formatter:
+suppress_warnings = ["config.cache"]
 
 
 templates_path = ["_templates"]
