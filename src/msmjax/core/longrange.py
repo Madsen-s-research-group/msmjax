@@ -30,34 +30,42 @@ def special_periodic_convolve(
 ) -> Array:
     """Perform a specialized case of convolution with optional wrapping.
 
+    TODO: Show the formula of what this is meant for (convolving grid charge
+        with interaction kernel coefficient stencil)?
+
     Implemented as a wrapper around :func:`jax.scipy.signal.convolve`
-    with application of appropriate padding to the input arrays:
+    with, depending on periodicity, appropriate padding of the input arrays:
 
         - If no direction is periodic, this function is equivalent to calling
           :func:`jax.scipy.signal.convolve` with `mode='same'`.
         - Along any periodic direction, the ``data`` array is first
           periodically replicated as much as needed for the ``kernel`` array
-          to not extend beyond the edges. The convolution is then performed
+          to not extend beyond the edges. Then, the convolution is performed
           with :func:`jax.scipy.signal.convolve`, before trimming the result
-          back to the size of the original ``data``.
+          back to the original size of ``data``.
 
     Args:
-        data: First input. N-dimensional array.
-        kernel: Second input. Should have the same number of dimensions as ``data``.
-            # TODO: mention that number of points along each direction should be odd?
+        data: First input. Represents some data on a real-space grid.
+            If a direction is periodic, it corresponds to the values contained
+            within the unit cell along that direction.
+        kernel: Second input. Should have the same number of dimensions as
+            ``data``. Represents a finite-size kernel or filter. In the
+            original intended use case, always has an odd number of points
+            along each dimension (i.e., can be centered w.r.t. the points of
+            ``data``).
         pbc: One boolean per direction signaling periodicity.
-        method: String indicating the method used for calculating the
+        method: String indicating the method to use for calculating the
             convolution. Either 'direct' or 'fft'. Passed on to
             :func:`jax.scipy.signal.convolve`.
 
     Returns:
-        An array of the same shape as `data` containing the convolution of the
-        two arrays.
+        An array of the same shape as ``data`` containing the convolution of
+        the two arrays.
     """
-    # TODO: Make this a protected function (_convolve_scipy_general_pbc)?
     # TODO: Name of this function? `convolve_scipy_general_pbc` is a remnant
-    #  from when there existed a hand-written, non-scipy alternative. But
-    #  perhaps scipy really should be part of the name?
+    #  from when there existed a hand-written, non-scipy alternative. But in
+    #  the interest of distinguishing it from other substitute functions that
+    #  people may write, perhaps scipy should still be part of the name?
 
     pbc = onp.asarray(pbc)
 
