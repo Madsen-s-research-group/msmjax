@@ -22,13 +22,42 @@ from jax.typing import ArrayLike
 
 
 @partial(jax.jit, static_argnames=["pbc", "method"])
-def convolve_scipy_general_pbc(
+def special_periodic_convolve(
     data: ArrayLike,
     kernel: ArrayLike,
     pbc: Sequence[bool],
-    method: Literal["direct", "fft"],  # TODO: centralize definition?
+    method: Literal["direct", "fft"],  # TODO: centralize definition? default?
 ) -> Array:
+    """Perform a specialized case of convolution with optional wrapping.
+
+    Implemented as a wrapper around :func:`jax.scipy.signal.convolve`
+    with application of appropriate padding to the input arrays:
+
+        - If no direction is periodic, this function is equivalent to calling
+          :func:`jax.scipy.signal.convolve` with `mode='same'`.
+        - Along any periodic direction, the ``data`` array is first
+          periodically replicated as much as needed for the ``kernel`` array
+          to not extend beyond the edges. The convolution is then performed
+          with :func:`jax.scipy.signal.convolve`, before trimming the result
+          back to the size of the original ``data``.
+
+    Args:
+        data: First input. N-dimensional array.
+        kernel: Second input. Should have the same number of dimensions as ``data``.
+            # TODO: mention that number of points along each direction should be odd?
+        pbc: One boolean per direction signaling periodicity.
+        method: String indicating the method used for calculating the
+            convolution. Either 'direct' or 'fft'. Passed on to
+            :func:`jax.scipy.signal.convolve`.
+
+    Returns:
+        An array of the same shape as `data` containing the convolution of the
+        two arrays.
+    """
     # TODO: Make this a protected function (_convolve_scipy_general_pbc)?
+    # TODO: Name of this function? `convolve_scipy_general_pbc` is a remnant
+    #  from when there existed a hand-written, non-scipy alternative. But
+    #  perhaps scipy really should be part of the name?
 
     pbc = onp.asarray(pbc)
 
@@ -187,7 +216,7 @@ def make_grid_pass(
     interaction_fns: Sequence[Callable],  # TODO: name (everywhere)
 ) -> Callable[[ArrayLike, Sequence[ArrayLike]], Array]:
     # TODO: In fact it's questionable, whether a separate interaction_fn for
-    #  each level is needed at all. `convolve_scipy_general_pbc` should work
+    #  each level is needed at all. `special_periodic_convolve` should work
     #  for all levels, shouldn't it?
     #  Do we still want to offer separate functions for increased flexibility?
     #  Even for restriction and prolongation a single function might be sufficient?
