@@ -62,11 +62,6 @@ def special_periodic_convolve(
         An array of the same shape as ``data`` containing the convolution of
         the two arrays.
     """
-    # TODO: Name of this function? `convolve_scipy_general_pbc` is a remnant
-    #  from when there existed a hand-written, non-scipy alternative. But in
-    #  the interest of distinguishing it from other substitute functions that
-    #  people may write, perhaps scipy should still be part of the name?
-
     pbc = onp.asarray(pbc)
 
     if pbc.any():
@@ -104,7 +99,31 @@ def special_periodic_convolve(
         )
 
 
-def make_anterpolation_fn(basis_eval_fn, grid_shape: tuple[int, ...]):
+def make_anterpolation_fn(
+    basis_eval_fn: Callable[[ArrayLike], tuple[Array, Array]],
+    grid_shape: tuple[int, ...],
+) -> Callable[[ArrayLike, ArrayLike], Array]:
+    """
+
+    Args:
+        basis_eval_fn: A function that, for each particle, evaluates the
+            basis functions on all grid points sufficiently close to that
+            particle to include it in the basis functions' support.
+            In other words, for each particle :math:`i`, evaluates
+            :math:`\\varphi_{\\mathbf{m}}(\\mathbf{r}_i), \, \\forall \\ \\mathbf{m} \\in \\{ \\mathbf{m} : \\varphi_{\\mathbf{m}}(\\mathbf{r}_i) \\neq 0 \\}`
+
+            It takes an array of particle positions and returns two arrays:
+
+                - values, shape `(n_particles, support_size)`
+                - indices, same shape as values
+        grid_shape: Tuple of integers indicating the shape of the grid to
+            which to anterpolate the particle charges (= on which to
+            calculate the grid charges).
+
+    Returns:
+        A function that takes arrays of particle positions and charges and
+        returns the array of grid charge.
+    """
     grid_size = int(onp.prod(grid_shape))
 
     def anterpolate(positions: ArrayLike, charges: ArrayLike) -> Array:
