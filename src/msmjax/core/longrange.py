@@ -20,6 +20,11 @@ import numpy as onp
 from jax import Array
 from jax.typing import ArrayLike
 
+# TODO: Define in some global typedef or utils module?
+BasisEvalFn = Callable[[ArrayLike], tuple[Array, Array]]
+BasisGradFn = Callable[[ArrayLike], tuple[Array, Array]]
+BasisValAndGradFn = Callable[[ArrayLike], tuple[tuple[Array, Array], Array]]
+
 
 @partial(jax.jit, static_argnames=["pbc", "method"])
 def special_periodic_convolve(
@@ -100,7 +105,7 @@ def special_periodic_convolve(
 
 
 def make_anterpolation_fn(
-    basis_eval_fn: Callable[[ArrayLike], tuple[Array, Array]],
+    basis_eval_fn: BasisEvalFn,
     grid_shape: tuple[int, ...],
 ) -> Callable[[ArrayLike, ArrayLike], Array]:
     """
@@ -214,20 +219,24 @@ def _interpolate_forces(
     return forces
 
 
-def make_energy_interpolation_fn(basis_eval_fn):
+def make_energy_interpolation_fn(
+    basis_eval_fn: BasisEvalFn,
+) -> Callable[[ArrayLike, ArrayLike, ArrayLike], Array]:
     def compute(
         gridpotential: ArrayLike, positions: ArrayLike, charges: ArrayLike
-    ):
+    ) -> Array:
         basis_vals, indices = basis_eval_fn(positions)
         return _interpolate_energy(gridpotential, basis_vals, indices, charges)
 
     return compute
 
 
-def make_forces_interpolation_fn(basis_grad_fn):
+def make_forces_interpolation_fn(
+    basis_grad_fn: BasisGradFn,
+) -> Callable[[ArrayLike, ArrayLike, ArrayLike], Array]:
     def compute(
         gridpotential: ArrayLike, positions: ArrayLike, charges: ArrayLike
-    ):
+    ) -> Array:
         basis_grads, indices = basis_grad_fn(positions)
         return _interpolate_forces(
             gridpotential, basis_grads, indices, charges
@@ -236,10 +245,12 @@ def make_forces_interpolation_fn(basis_grad_fn):
     return compute
 
 
-def make_energy_and_forces_interpolation_fn(basis_val_and_grad_fn):
+def make_energy_and_forces_interpolation_fn(
+    basis_val_and_grad_fn: BasisValAndGradFn,
+) -> Callable[[ArrayLike, ArrayLike, ArrayLike], tuple[Array, Array]]:
     def compute(
         gridpotential: ArrayLike, positions: ArrayLike, charges: ArrayLike
-    ):
+    ) -> tuple[Array, Array]:
         # TODO: Make sure that the expected structure of the return value of
         #  basis_val_and_grad_fn is properly documented, and correctly used
         #  elsewhere.
@@ -373,7 +384,7 @@ def make_compute_longrange(
 
 
 def make_compute_u_oneplus(
-    basis_eval_fn,  # TODO: `unitcube` in name? `lvl_one` in name?
+    basis_eval_fn: BasisEvalFn,  # TODO: `unitcube` in name? `lvl_one` in name?
     grid_pass_fn,  # TODO: `unitcube` in name?
     kernel_stencil_construction_fn,
     cell_mode,
