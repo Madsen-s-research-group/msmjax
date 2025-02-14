@@ -142,9 +142,9 @@ def make_anterpolation_fn(
 
     def anterpolate(positions: ArrayLike, charges: ArrayLike) -> Array:
         """Anterpolate charge from particles to grid"""
-        # TODO: Where to take size, shape from? (Are they even really needed?)
-        # TODO: flat vs. multidim? It seems that `indices` is expected to be
-        #  flat, but should this really be the case universally?
+        # TODO: Indicate by variable names that indices are expected to be flat?
+        # TODO: Behavior when basis_eval_fn returns out-of-bounds indices?
+        #  Are there reasonable cases in which this may occur? Warning in docstring?
         basis_vals, indices = basis_eval_fn(positions)
         gridcharge_flat = jnp.zeros(grid_size)
         gridcharge_flat = gridcharge_flat.at[indices].add(
@@ -165,7 +165,19 @@ def _interpolate_energy(
     basis_vals: ArrayLike,
     indices: ArrayLike,
     charges: ArrayLike,
-):
+) -> Array:
+    """Low-level function for calculating energy from grid potential.
+
+    Args:
+        gridpotential: Array of grid potential (:math:`e^{l+}` in the language
+            of the reference).
+        basis_vals: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_basis_vals`?)
+        indices: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_inds`?)
+        charges: Array of particle charges, shape `(n_particles,)`.
+
+    Returns:
+        Scalar electrostatic energy.
+    """
     # TODO: Do we need to use a fill value with `take` here?
     #  (it shouldn't be possible for indices returned by the spline eval
     #  functions to be out of bounds)
@@ -180,7 +192,19 @@ def _interpolate_forces(
     basis_grads: ArrayLike,
     indices: ArrayLike,
     charges: ArrayLike,
-):
+) -> Array:
+    """Low-level function for calculating forces from grid potential.
+
+    Args:
+        gridpotential: Array of grid potential (:math:`e^{l+}` in the language
+            of the reference).
+        basis_grads: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_basis_grads`?)
+        indices: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_inds`?)
+        charges: Array of particle charges, shape `(n_particles,)`.
+
+    Returns:
+        Array of forces on particles, shape `(n_particles, n_dim)`.
+    """
     # TODO: Do we need to use a fill value with `take` here?
     #  (it shouldn't be possible for indices returned by the spline eval
     #  functions to be out of bounds)
