@@ -106,23 +106,37 @@ def make_anterpolation_fn(
     """
 
     Args:
-        basis_eval_fn: A function that, for each particle, evaluates the
-            basis functions on all grid points sufficiently close to that
-            particle to include it in the basis functions' support.
-            In other words, for each particle :math:`i`, evaluates
-            :math:`\\varphi_{\\mathbf{m}}(\\mathbf{r}_i), \, \\forall \\ \\mathbf{m} \\in \\{ \\mathbf{m} : \\varphi_{\\mathbf{m}}(\\mathbf{r}_i) \\neq 0 \\}`
+        basis_eval_fn: A function that, for each particle, evaluates all
+            basis functions that are sufficiently close for the particle to
+            lie inside their support.
+            In other words, for each particle :math:`i` located at position
+            :math:`\\mathbf{r}_i`, evaluates
+            :math:`\\varphi_{\\mathbf{m}}(\\mathbf{r}_i)`
+            for all grid points
+            :math:`\\mathbf{m} \\in
+            \\{
+            \\mathbf{m} : \\varphi_{\\mathbf{m}}(\\mathbf{r}_i) \\neq 0
+            \\} \\,`.
 
-            It takes an array of particle positions and returns two arrays:
+                - The input to ``basis_eval_fn`` should be a 2-d array of
+                  particle positions, shape `(n_particles, n_dim)`.
 
-                - values, shape `(n_particles, support_size)`
-                - indices, same shape as values
-        grid_shape: Tuple of integers indicating the shape of the grid to
-            which to anterpolate the particle charges (= on which to
-            calculate the grid charges).
+                - The output of ``basis_eval_fn`` should be a tuple of two
+                  2-d arrays of shape `(n_particles, support_size)`,
+                  where `support_size` designates the fixed number of
+                  non-zero basis functions around each particle.
+                  Their first axes run over particles, and the second over
+                  grid points.
+                  The first of the two arrays contains the values of the basis
+                  functions for each particle, and the second array contains
+                  the `flat` (!) indices of the corresponding grid points.
+
+        grid_shape: Tuple of integers indicating the shape of the target grid
+            to which to anterpolate the particle charges.
 
     Returns:
         A function that takes arrays of particle positions and charges and
-        returns the array of grid charge.
+        returns array of grid charge.
     """
     grid_size = int(onp.prod(grid_shape))
 
