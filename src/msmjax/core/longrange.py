@@ -111,31 +111,10 @@ def make_anterpolation_fn(
     """
 
     Args:
-        basis_eval_fn: A function that, for each particle, evaluates all
-            basis functions that are sufficiently close for the particle to
-            lie inside their support.
-            In other words, for each particle :math:`i` located at position
-            :math:`\\mathbf{r}_i`, evaluates
-            :math:`\\varphi_{\\mathbf{m}}(\\mathbf{r}_i)`
-            for all grid points
-            :math:`\\mathbf{m} \\in
-            \\{
-            \\mathbf{m} : \\varphi_{\\mathbf{m}}(\\mathbf{r}_i) \\neq 0
-            \\} \\,`.
-
-                - The input to ``basis_eval_fn`` should be a 2-d array of
-                  particle positions, shape `(n_particles, n_dim)`.
-
-                - The output of ``basis_eval_fn`` should be a tuple of two
-                  2-d arrays of shape `(n_particles, support_size)`,
-                  where `support_size` designates the fixed number of
-                  non-zero basis functions around each particle.
-                  Their first axes run over particles, and the second over
-                  grid points.
-                  The first of the two arrays contains the values of the basis
-                  functions for each particle, and the second array contains
-                  the `flat` (!) indices of the corresponding grid points.
-
+        basis_eval_fn: A function that, for all particles, identifies those
+            grid points with non-zero basis function values, and evaluates
+            them. See :func:`make_energy_interpolation_fn` for details of
+            signature and meaning of return values.
         grid_shape: Tuple of integers indicating the shape of the target grid
             to which to anterpolate the particle charges.
 
@@ -222,6 +201,47 @@ def _interpolate_forces(
 def make_energy_interpolation_fn(
     basis_eval_fn: BasisEvalFn,
 ) -> Callable[[ArrayLike, ArrayLike, ArrayLike], Array]:
+    """Create a function that computes the energy by interpolating potential.
+
+    Args:
+        basis_eval_fn: A function that, for each particle,
+
+                1) identifies all grid points that are sufficiently close for the
+                   particle's position to be contained within the support of the
+                   associated basis functions, and
+
+                2) evaluates the basis functions.
+
+            In other words, for each particle :math:`i` located at position
+            :math:`\\mathbf{r}_i`,
+
+                1) finds the set of grid points
+                   :math:`M = \\{
+                   \\mathbf{m} : \\varphi_{\\mathbf{m}}(\\mathbf{r}_i) \\neq 0
+                   \\} \\,`,
+                2) evaluates :math:`\\varphi_{\\mathbf{m}}(\\mathbf{r}_i)` for all
+                   :math:`\mathbf{m} \in M \\,`.
+
+            Inputs and outputs:
+
+                - The input to ``basis_eval_fn`` should be a 2-d array of
+                  particle positions, shape `(n_particles, n_dim)`.
+
+                - The output of ``basis_eval_fn`` should be a tuple of two
+                  2-d arrays of shape `(n_particles, support_size)`,
+                  where `support_size` designates the fixed number of
+                  non-zero basis functions around each particle.
+                  Their first axes run over particles, and the second over
+                  grid points.
+                  The first of the two arrays contains the values of the basis
+                  functions for each particle, and the second array contains
+                  the `flat` (!) indices of the corresponding grid points.
+
+    Returns:
+        A function of three array arguments (grid potential, particle
+        positions, particle charges) that calculates the energy.
+    """
+
     def compute(
         gridpotential: ArrayLike, positions: ArrayLike, charges: ArrayLike
     ) -> Array:
@@ -234,6 +254,16 @@ def make_energy_interpolation_fn(
 def make_forces_interpolation_fn(
     basis_grad_fn: BasisGradFn,
 ) -> Callable[[ArrayLike, ArrayLike, ArrayLike], Array]:
+    """Create a function that computes the forces by interpolating potential.
+
+    Args:
+        basis_grad_fn: TODO: How to document? Unlike for `basis_eval_fn`, there is no other place where this is used, that could be referenced.
+
+    Returns:
+        A function of three array arguments (grid potential, particle
+        positions, particle charges) that calculates the forces.
+    """
+
     def compute(
         gridpotential: ArrayLike, positions: ArrayLike, charges: ArrayLike
     ) -> Array:
@@ -248,6 +278,16 @@ def make_forces_interpolation_fn(
 def make_energy_and_forces_interpolation_fn(
     basis_val_and_grad_fn: BasisValAndGradFn,
 ) -> Callable[[ArrayLike, ArrayLike, ArrayLike], tuple[Array, Array]]:
+    """Create function that computes energy, forces by interpolating potential.
+
+    Args:
+        basis_val_and_grad_fn: TODO: How to document? Unlike for `basis_eval_fn`, there is no other place where this is used, that could be referenced.
+
+    Returns:
+        A function of three array arguments (grid potential, particle
+        positions, particle charges) that calculates the energy and forces.
+    """
+
     def compute(
         gridpotential: ArrayLike, positions: ArrayLike, charges: ArrayLike
     ) -> tuple[Array, Array]:
