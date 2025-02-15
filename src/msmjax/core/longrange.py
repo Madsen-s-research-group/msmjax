@@ -207,20 +207,18 @@ def make_energy_interpolation_fn(
         basis_eval_fn: A function that, for each particle,
 
                 1) identifies all grid points that are sufficiently close for the
-                   particle's position to be contained within the support of the
-                   associated basis functions, and
-
-                2) evaluates the basis functions.
-
-            In other words, for each particle :math:`i` located at position
-            :math:`\\mathbf{r}_i`,
-
-                1) finds the set of grid points
+                   particle's position to be contained within the support of
+                   the associated basis functions, i.e., finds the set of
+                   grid points
                    :math:`M = \\{
                    \\mathbf{m} : \\varphi_{\\mathbf{m}}(\\mathbf{r}_i) \\neq 0
                    \\} \\,`,
-                2) evaluates :math:`\\varphi_{\\mathbf{m}}(\\mathbf{r}_i)` for all
-                   :math:`\mathbf{m} \in M \\,`.
+                   (where :math:`\\mathbf{r}_i` denotes the position of
+                   particle :math:`i`),
+
+                2) evaluates the corresponding basis functions, i.e.
+                   computes :math:`\\varphi_{\\mathbf{m}}(\\mathbf{r}_i)`
+                   for all :math:`\mathbf{m} \in M \\,`.
 
             Inputs and outputs:
 
@@ -230,7 +228,8 @@ def make_energy_interpolation_fn(
                 - The output of ``basis_eval_fn`` should be a tuple of two
                   2-d arrays of shape `(n_particles, support_size)`,
                   where `support_size` designates the fixed number of
-                  non-zero basis functions around each particle.
+                  non-zero basis functions around each particle (= the
+                  cardinality of :math:`M` from above).
                   Their first axes run over particles, and the second over
                   grid points.
                   The first of the two arrays contains the values of the basis
@@ -257,7 +256,7 @@ def make_forces_interpolation_fn(
     """Create a function that computes the forces by interpolating potential.
 
     Args:
-        basis_grad_fn: TODO: How to document? Unlike for `basis_eval_fn`, there is no other place where this is used, that could be referenced.
+        basis_grad_fn: TODO
 
     Returns:
         A function of three array arguments (grid potential, particle
@@ -394,6 +393,9 @@ def make_grid_pass(
 # TODO: Also add function for the calculation of energy by direct
 #  contraction of grid charges with grid potential (without going the route
 #  of reconstructing electrostatic potential by interpolation)
+
+# TODO: Also add function for calculating gradient w.r.t. charge without
+#  autodiffing the whole energy function?
 
 
 def make_compute_longrange(
