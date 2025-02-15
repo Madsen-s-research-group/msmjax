@@ -199,7 +199,7 @@ def _interpolate_forces(
 
 
 def make_energy_interpolation_fn(
-    basis_eval_fn: BasisEvalFn,
+    basis_eval_fn: BasisEvalFn,  # TODO: name? "per_particle"? (also change in docstrings everywhere)
 ) -> Callable[[ArrayLike, ArrayLike, ArrayLike], Array]:
     """Create a function that computes the energy by interpolating potential.
 
@@ -222,10 +222,10 @@ def make_energy_interpolation_fn(
 
             Inputs and outputs:
 
-                - The input to ``basis_eval_fn`` should be a 2-d array of
+                - Input to ``basis_eval_fn`` should be a 2-d array of
                   particle positions, shape `(n_particles, n_dim)`.
 
-                - The output of ``basis_eval_fn`` should be a tuple of two
+                - Output of ``basis_eval_fn`` should be a tuple of two
                   2-d arrays of shape `(n_particles, support_size)`,
                   where `support_size` designates the fixed number of
                   non-zero basis functions around each particle (= the
@@ -251,12 +251,24 @@ def make_energy_interpolation_fn(
 
 
 def make_forces_interpolation_fn(
-    basis_grad_fn: BasisGradFn,
+    basis_grad_fn: BasisGradFn,  # TODO: name? "per_particle"? (also change in docstrings)
 ) -> Callable[[ArrayLike, ArrayLike, ArrayLike], Array]:
     """Create a function that computes the forces by interpolating potential.
 
     Args:
-        basis_grad_fn: TODO
+        basis_grad_fn: A function like the ``basis_eval_fn`` passed to
+            :func:`make_energy_interpolation_fn` (see there for details),
+            except it evaluates the gradients of the basis functions w.r.t.
+            to particle positions,
+            :math:`\\nabla_{\\mathbf{r}_i} \\,
+            \\varphi_{\\mathbf{m}}(\\mathbf{r}_i), \\,
+            \mathbf{m} \\in M`.
+
+            Consequently, the shape of the two output arrays, for the values
+            of the gradient and the indices of the non-zero grid points
+            around each particle, should be
+            `(n_particles, support_size, n_dim)` and
+            `(n_particles, support_size)`.
 
     Returns:
         A function of three array arguments (grid potential, particle
