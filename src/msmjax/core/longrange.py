@@ -21,6 +21,7 @@ from jax import Array
 from jax.typing import ArrayLike
 
 # TODO: Define in some global typedef or utils module?
+CellMode = Literal["ortho", "general"]
 BasisEvalFn = Callable[[ArrayLike], tuple[Array, Array]]
 BasisGradFn = Callable[[ArrayLike], tuple[Array, Array]]
 BasisValAndGradFn = Callable[[ArrayLike], tuple[tuple[Array, Array], Array]]
@@ -354,7 +355,7 @@ def make_unitcube_transform_fns_general(
 
 
 def _make_unitcube_transform_fns(
-    cell: ArrayLike, transform_mode: Literal["ortho", "general"] | None
+    cell: ArrayLike | None, transform_mode: CellMode | None
 ) -> tuple[Callable[[ArrayLike], Array], Callable[[ArrayLike], Array]]:
     if transform_mode is None:
         transform_pos = lambda x: x
@@ -393,6 +394,9 @@ def make_grid_pass(
             "restriction_fns, prolongation_fns, interaction_fns "
             "must all have same length."
         )
+    # TODO: Variable naming: Is `n_levels` appropriate here? We generally need
+    #  to distinguish the highest splitting level and the highest level
+    #  included in evaluation
     n_levels = len(restriction_fns) - 1
 
     # TODO: Name of the returned function?
@@ -448,15 +452,13 @@ def make_grid_pass(
 
 
 def make_compute_longrange_energy(
-    per_particle_basis_fn,
-    grid_shape_lvl_one,
-    grid_pass_fn,
-    transform_mode: Literal["ortho", "general"] = None,
+    per_particle_basis_fn: BasisEvalFn,
+    grid_pass_fn: Callable[[ArrayLike, ArrayLike], Array],
+    grid_shape_lvl_one: tuple[int, ...],
+    transform_mode: CellMode | None = None,
 ):
-    def compute(positions, charges, cell=None):
-        # TODO: For debugging and modularity, it would be great if one could
-        #  pass not just cell but also precomputed kernel_stencils
-        # TODO: How to handle when cell is None?
+    def compute(positions, charges, kernel_stencils, cell=None):
+        # TODO: Should cell really have a default?
         transform_pos, backtransform_grad = _make_unitcube_transform_fns(
             cell, transform_mode
         )
@@ -469,13 +471,42 @@ def make_compute_longrange_energy(
             charges,
             grid_shape_lvl_one,
         )
-        # TODO: How to handle when cell is None?
-        gridpotential_lvl_one = grid_pass_fn(gridcharge_lvl_one, cell)
+        gridpotential_lvl_one = grid_pass_fn(
+            gridcharge_lvl_one, kernel_stencils
+        )
         return _interpolate_energy(
             gridpotential_lvl_one,
             per_particle_basis_vals,
             per_particle_inds,
             charges,
+        )
+
+    return compute
+
+
+def make_static_cell_longrange_fn(
+    compute_longrange,  # TODO: argument name
+    kernel_stencils,
+    cell=None,
+):
+    # TODO: Should cell really default to None?
+    def compute(positions, charges):
+        return compute_longrange(
+            positions, charges, cell=cell, kernel_stencils=kernel_stencils
+        )
+
+    return compute
+
+
+def make_dyn_cell_longrange_fn(
+    compute_longrange, kernel_stencil_construction_fn
+):
+    def compute(positions, charges, cell):
+        return compute_longrange(
+            positions,
+            charges,
+            cell=cell,
+            kernel_stencils=kernel_stencil_construction_fn(cell),
         )
 
     return compute
