@@ -451,8 +451,96 @@ def make_grid_pass(
 #  autodiffing the whole energy function?
 
 
+# TODO: Function name? Should it include `oneplus` somehow?
 def make_compute_longrange_energy(
     per_particle_basis_fn: BasisEvalFn,
+    grid_pass_fn: Callable[[ArrayLike, Sequence[ArrayLike]], Array],
+    grid_shape_lvl_one: tuple[int, ...],
+    transform_mode: CellMode | None = None,
+):
+    """Create a function that computes the energy by interpolating potential.
+
+    The quantity being (approximately) calculated is called :math:`U^{1+}`
+    in the reference article.
+
+    Args:
+        per_particle_basis_fn: A function that, for each particle,
+
+            1) identifies all grid points that are sufficiently close for the
+               particle's position to be contained within the support of
+               the associated basis functions, i.e., finds the set of
+               grid points
+               :math:`M = \\{
+               \\mathbf{m} : \\varphi_{\\mathbf{m}}(\\mathbf{r}_i) \\neq 0
+               \\} \\,`,
+               (where :math:`\\mathbf{r}_i` denotes the position of
+               particle :math:`i`),
+
+            2) evaluates the corresponding basis functions, i.e.
+               computes :math:`\\varphi_{\\mathbf{m}}(\\mathbf{r}_i)`
+               for all :math:`\mathbf{m} \in M \\,`.
+
+            Inputs and outputs:
+
+                - Input to ``basis_eval_fn`` should be a 2-d array of
+                  particle positions, shape `(n_particles, n_dim)`.
+
+                - Output of ``basis_eval_fn`` should be a tuple of two
+                  2-d arrays of shape `(n_particles, support_size)`,
+                  where `support_size` designates the fixed number of
+                  non-zero basis functions around each particle (= the
+                  cardinality of :math:`M` from above).
+                  Their first axes run over particles, and the second over
+                  grid points.
+                  The first of the two arrays contains the values of the basis
+                  functions for each particle, and the second array contains
+                  the `flat` (!) indices of the corresponding grid points.
+
+        grid_pass_fn: TODO A function that performs the entire moving up,
+            across, and back down the grid hierarchy. Takes in the grid charge
+            :math:`\\tilde{q}^1` at grid level one as the first argument, a
+            sequence of coefficient stencils :math:`\\mathcal{K}^l` for the
+            interaction kernels (one per grid level, including a placeholder
+            at level zero) as the second argument, and returns the grid
+            potential :math:`e^{l+}` at grid level one.
+        grid_shape_lvl_one: Tuple of integers indicating the shape of the
+            target grid to which to anterpolate the particle charges.
+        transform_mode: TODO
+
+    Returns:
+        TODO
+    """
+
+    def compute(positions, charges, kernel_stencils, cell=None):
+        # TODO: Should cell really have a default?
+        transform_pos, backtransform_grad = _make_unitcube_transform_fns(
+            cell, transform_mode
+        )
+        basis_vals, basis_inds = per_particle_basis_fn(
+            transform_pos(positions)
+        )
+        gridcharge_lvl_one = _anterpolate(
+            basis_vals,
+            basis_inds,
+            charges,
+            grid_shape_lvl_one,
+        )
+        gridpotential_lvl_one = grid_pass_fn(
+            gridcharge_lvl_one, kernel_stencils
+        )
+        return _interpolate_energy(
+            gridpotential_lvl_one,
+            basis_vals,
+            basis_inds,
+            charges,
+        )
+
+    return compute
+
+
+# TODO: Function name? Should it include `oneplus` somehow?
+def make_compute_longrange_forces(
+    per_particle_basis_and_grad_fn: BasisEvalFn,
     grid_pass_fn: Callable[[ArrayLike, ArrayLike], Array],
     grid_shape_lvl_one: tuple[int, ...],
     transform_mode: CellMode | None = None,
@@ -462,24 +550,66 @@ def make_compute_longrange_energy(
         transform_pos, backtransform_grad = _make_unitcube_transform_fns(
             cell, transform_mode
         )
-        per_particle_basis_vals, per_particle_inds = per_particle_basis_fn(
+        (basis_vals, basis_inds), basis_grads = per_particle_basis_and_grad_fn(
             transform_pos(positions)
         )
         gridcharge_lvl_one = _anterpolate(
-            per_particle_basis_vals,
-            per_particle_inds,
+            basis_vals,
+            basis_inds,
             charges,
             grid_shape_lvl_one,
         )
         gridpotential_lvl_one = grid_pass_fn(
             gridcharge_lvl_one, kernel_stencils
         )
-        return _interpolate_energy(
+        forces = _interpolate_forces(
             gridpotential_lvl_one,
-            per_particle_basis_vals,
-            per_particle_inds,
+            basis_grads,
+            basis_inds,
             charges,
         )
+        return backtransform_grad(forces)
+
+    return compute
+
+
+# TODO: Function name? Should it include `oneplus` somehow?
+def make_compute_longrange_energy_and_forces(
+    per_particle_basis_and_grad_fn: BasisEvalFn,
+    grid_pass_fn: Callable[[ArrayLike, ArrayLike], Array],
+    grid_shape_lvl_one: tuple[int, ...],
+    transform_mode: CellMode | None = None,
+):
+    def compute(positions, charges, kernel_stencils, cell=None):
+        # TODO: Should cell really have a default?
+        transform_pos, backtransform_grad = _make_unitcube_transform_fns(
+            cell, transform_mode
+        )
+        (basis_vals, basis_inds), basis_grads = per_particle_basis_and_grad_fn(
+            transform_pos(positions)
+        )
+        gridcharge_lvl_one = _anterpolate(
+            basis_vals,
+            basis_inds,
+            charges,
+            grid_shape_lvl_one,
+        )
+        gridpotential_lvl_one = grid_pass_fn(
+            gridcharge_lvl_one, kernel_stencils
+        )
+        energy = _interpolate_energy(
+            gridpotential_lvl_one,
+            basis_vals,
+            basis_inds,
+            charges,
+        )
+        forces = _interpolate_forces(
+            gridpotential_lvl_one,
+            basis_grads,
+            basis_inds,
+            charges,
+        )
+        return energy, backtransform_grad(forces)
 
     return compute
 
