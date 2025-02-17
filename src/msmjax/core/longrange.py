@@ -104,6 +104,20 @@ def special_periodic_convolve(
         )
 
 
+def _anterpolate(
+    basis_vals: ArrayLike,
+    indices: ArrayLike,
+    charges: ArrayLike,
+    grid_shape: tuple[int, ...],
+):
+    grid_size = int(onp.prod(grid_shape))
+    gridcharge_flat = jnp.zeros(grid_size)
+    gridcharge_flat = gridcharge_flat.at[indices].add(
+        charges[:, jnp.newaxis] * basis_vals
+    )
+    return gridcharge_flat.reshape(grid_shape)
+
+
 def make_anterpolation_fn(
     basis_eval_fn: BasisEvalFn,
     grid_shape: tuple[int, ...],
@@ -476,36 +490,12 @@ def make_compute_u_oneplus(
     return compute
 
 
-def make_dynamic_u_oneplus(
-    make_anterpolate_interpolate, grid_pass_fn, kernel_stencil_construction_fn
-):
-    def compute(positions, charges, cell):
-        # This should handle transform/backtransform
-        (
-            anterpolate_to_unitcube,
-            interpolate_from_unitcube,
-        ) = make_anterpolate_interpolate(cell)
-
-        kernel_stencils = kernel_stencil_construction_fn(cell)
-
-        # TODO: Condense into a function that takes in (positions, charges, kernel_stencils) and outputs result?
-        gridcharge_lvl_one = anterpolate_to_unitcube(positions, charges)
-        gridpotential_lvl_one = grid_pass_fn(
-            gridcharge_lvl_one, kernel_stencils
-        )
-        result = interpolate_from_unitcube(
-            gridpotential_lvl_one, positions, charges
-        )
-
-        return result
-
-    return compute
-
-
 def make_compute_longrange_static_cell(
     anterpolation_fn, interpolation_fn, grid_pass_fn, kernel_stencils
 ):
     def compute(positions, charges):
+        # TODO: Condense into one function with signature like the following?
+        #  (positions, charges, kernel_stencils) -> result
         gridcharge_lvl_one = anterpolation_fn(positions, charges)
         gridpotential_lvl_one = grid_pass_fn(
             gridcharge_lvl_one, kernel_stencils
@@ -528,7 +518,7 @@ def make_compute_longrange_dynamic_cell(
         ) = anterpolate_interpolate_factory(cell)
         kernel_stencils = kernel_stencil_construction_fn(cell)
 
-        # TODO: Condense into one function with signature like this?
+        # TODO: Condense into one function with signature like the following?
         #  (positions, charges, kernel_stencils) -> result
         gridcharge_lvl_one = anterpolate_to_unitcube(positions, charges)
         gridpotential_lvl_one = grid_pass_fn_unitcube(
@@ -539,5 +529,38 @@ def make_compute_longrange_dynamic_cell(
         )
 
         return result
+
+    return compute
+
+
+def make_explicit_compute_longrange_energy(
+    basis_eval_fn,
+    grid_pass_fn,
+    grid_shape_lvl_one,
+    transform_mode: Literal["ortho", "general"] = None,
+):
+    # TODO: transform_mode = None?
+    # TODO: parameter to make_unitcube_transform_fns instead of two different
+    #  setup functions for ortho and general?
+    if transform_mode == "ortho":
+        make_unitcube_transform_fns = make_unitcube_transform_fns_ortho
+    elif transform_mode == "general":
+        make_unitcube_transform_fns = make_unitcube_transform_fns_general
+
+    def compute(positions, charges, cell=None):
+        # TODO: For debugging and modularity, it would be great if one could
+        #  pass not just cell but also precomputed kernel_stencils
+        # TODO: How to handle when no transformation?
+        # TODO: How to handle when cell is None?
+        transform_pos, backtransform_grad = make_unitcube_transform_fns(cell)
+        basis_vals, indices = basis_eval_fn(transform_pos(positions))
+        gridcharge_lvl_one = _anterpolate(
+            basis_vals, indices, charges, grid_shape_lvl_one
+        )
+        # TODO: How to handle when cell is None?
+        gridpotential_lvl_one = grid_pass_fn(gridcharge_lvl_one, cell)
+        return _interpolate_energy(
+            gridpotential_lvl_one, basis_vals, indices, charges
+        )
 
     return compute
