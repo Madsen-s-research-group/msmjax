@@ -474,3 +474,70 @@ def make_compute_u_oneplus(
         )
 
     return compute
+
+
+def make_dynamic_u_oneplus(
+    make_anterpolate_interpolate, grid_pass_fn, kernel_stencil_construction_fn
+):
+    def compute(positions, charges, cell):
+        # This should handle transform/backtransform
+        (
+            anterpolate_to_unitcube,
+            interpolate_from_unitcube,
+        ) = make_anterpolate_interpolate(cell)
+
+        kernel_stencils = kernel_stencil_construction_fn(cell)
+
+        # TODO: Condense into a function that takes in (positions, charges, kernel_stencils) and outputs result?
+        gridcharge_lvl_one = anterpolate_to_unitcube(positions, charges)
+        gridpotential_lvl_one = grid_pass_fn(
+            gridcharge_lvl_one, kernel_stencils
+        )
+        result = interpolate_from_unitcube(
+            gridpotential_lvl_one, positions, charges
+        )
+
+        return result
+
+    return compute
+
+
+def make_compute_longrange_static_cell(
+    anterpolation_fn, interpolation_fn, grid_pass_fn, kernel_stencils
+):
+    def compute(positions, charges):
+        gridcharge_lvl_one = anterpolation_fn(positions, charges)
+        gridpotential_lvl_one = grid_pass_fn(
+            gridcharge_lvl_one, kernel_stencils
+        )
+        result = interpolation_fn(gridpotential_lvl_one, positions, charges)
+        return result
+
+    return compute
+
+
+def make_compute_longrange_dynamic_cell(
+    anterpolate_interpolate_factory,
+    grid_pass_fn_unitcube,
+    kernel_stencil_construction_fn,
+):
+    def compute(positions, charges, cell):
+        (
+            anterpolate_to_unitcube,
+            interpolate_from_unitcube,
+        ) = anterpolate_interpolate_factory(cell)
+        kernel_stencils = kernel_stencil_construction_fn(cell)
+
+        # TODO: Condense into one function with signature like this?
+        #  (positions, charges, kernel_stencils) -> result
+        gridcharge_lvl_one = anterpolate_to_unitcube(positions, charges)
+        gridpotential_lvl_one = grid_pass_fn_unitcube(
+            gridcharge_lvl_one, kernel_stencils
+        )
+        result = interpolate_from_unitcube(
+            gridpotential_lvl_one, positions, charges
+        )
+
+        return result
+
+    return compute
