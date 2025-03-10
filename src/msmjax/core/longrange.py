@@ -212,31 +212,10 @@ def _interpolate_forces(
     return forces
 
 
-def make_unitcube_transform_fns_ortho(
-    cell: ArrayLike,
-) -> tuple[Callable[[ArrayLike], Array], Callable[[ArrayLike], Array]]:
-    # TODO: Remove if superseded by _make_unitcube_transform_fns
-    # TODO: Right module for this function?
-    inverse = 1.0 / jnp.diag(cell)
-    transform_pos = lambda x: x * inverse
-    backtransform_grad = lambda dx: dx * inverse
-    return transform_pos, backtransform_grad
-
-
-def make_unitcube_transform_fns_general(
-    cell: ArrayLike,
-) -> tuple[Callable[[ArrayLike], Array], Callable[[ArrayLike], Array]]:
-    # TODO: Remove if superseded by _make_unitcube_transform_fns
-    # TODO: Right module for this function?
-    inverse = jnp.linalg.pinv(cell)
-    transform_pos = lambda x: x @ inverse
-    backtransform_grad = lambda dx: dx @ inverse.T
-    return transform_pos, backtransform_grad
-
-
 def _make_unitcube_transform_fns(
     cell: ArrayLike | None, transform_mode: CellMode | None
 ) -> tuple[Callable[[ArrayLike], Array], Callable[[ArrayLike], Array]]:
+    # TODO: Is this the right module for this function?
     if transform_mode is None:
         transform_pos = lambda x: x
         backtransform_grad = lambda x: x
