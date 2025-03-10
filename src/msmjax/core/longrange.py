@@ -27,6 +27,101 @@ BasisGradFn = Callable[[ArrayLike], tuple[Array, Array]]
 BasisValAndGradFn = Callable[[ArrayLike], tuple[tuple[Array, Array], Array]]
 
 
+def _anterpolate(
+    basis_vals: ArrayLike,
+    indices: ArrayLike,
+    charges: ArrayLike,
+    grid_shape: tuple[int, ...],
+):
+    grid_size = int(onp.prod(grid_shape))
+    gridcharge_flat = jnp.zeros(grid_size)
+    gridcharge_flat = gridcharge_flat.at[indices].add(
+        charges[:, jnp.newaxis] * basis_vals
+    )
+    return gridcharge_flat.reshape(grid_shape)
+
+
+def _interpolate_potential():
+    # TODO: Do we want to provide this?
+    pass
+
+
+def _interpolate_energy(
+    gridpotential: ArrayLike,
+    basis_vals: ArrayLike,
+    indices: ArrayLike,
+    charges: ArrayLike,
+) -> Array:
+    """Low-level function for calculating the energy from the grid potential.
+
+    Args:
+        gridpotential: Array of grid potential (:math:`e^{l+}` in the language
+            of the reference).
+        basis_vals: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_basis_vals`?)
+        indices: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_inds`?)
+        charges: Array of particle charges, shape `(n_particles,)`.
+
+    Returns:
+        The scalar electrostatic energy.
+    """
+    # TODO: Do we need to use a fill value with `take` here?
+    #  (it shouldn't be possible for indices returned by the spline eval
+    #  functions to be out of bounds)
+    energy = 0.5 * jnp.sum(
+        charges * (gridpotential.take(indices) * basis_vals).sum(axis=1)
+    )
+    return energy
+
+
+def _interpolate_forces(
+    gridpotential: ArrayLike,
+    basis_grads: ArrayLike,
+    indices: ArrayLike,
+    charges: ArrayLike,
+) -> Array:
+    """Low-level function for calculating forces from grid potential.
+
+    Args:
+        gridpotential: Array of grid potential (:math:`e^{l+}` in the language
+            of the reference).
+        basis_grads: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_basis_grads`?)
+        indices: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_inds`?)
+        charges: Array of particle charges, shape `(n_particles,)`.
+
+    Returns:
+        Array of forces on particles, shape `(n_particles, n_dim)`.
+    """
+    # TODO: Do we need to use a fill value with `take` here?
+    #  (it shouldn't be possible for indices returned by the spline eval
+    #  functions to be out of bounds)
+    forces = -charges[:, jnp.newaxis] * jnp.sum(
+        gridpotential.take(indices)[..., jnp.newaxis] * basis_grads, axis=1
+    )
+    return forces
+
+
+def _make_unitcube_transform_fns(
+    cell: ArrayLike | None, transform_mode: CellMode | None
+) -> tuple[Callable[[ArrayLike], Array], Callable[[ArrayLike], Array]]:
+    # TODO: Is this the right module for this function?
+    if transform_mode is None:
+        transform_pos = lambda x: x
+        backtransform_grad = lambda x: x
+        return transform_pos, backtransform_grad
+    elif transform_mode == "ortho":
+        inverse = 1.0 / jnp.diag(cell)
+        transform_pos = lambda x: x * inverse
+        backtransform_grad = lambda dx: dx * inverse
+        return transform_pos, backtransform_grad
+    elif transform_mode == "general":
+        inverse = jnp.linalg.pinv(cell)
+        transform_pos = lambda x: x @ inverse
+        backtransform_grad = lambda dx: dx @ inverse.T
+        return transform_pos, backtransform_grad
+    else:
+        raise ValueError(f"Invalid mode: {transform_mode}")
+
+
 @partial(jax.jit, static_argnames=["pbc", "method"])
 def special_periodic_convolve(
     data: ArrayLike,
@@ -105,20 +200,6 @@ def special_periodic_convolve(
         )
 
 
-def _anterpolate(
-    basis_vals: ArrayLike,
-    indices: ArrayLike,
-    charges: ArrayLike,
-    grid_shape: tuple[int, ...],
-):
-    grid_size = int(onp.prod(grid_shape))
-    gridcharge_flat = jnp.zeros(grid_size)
-    gridcharge_flat = gridcharge_flat.at[indices].add(
-        charges[:, jnp.newaxis] * basis_vals
-    )
-    return gridcharge_flat.reshape(grid_shape)
-
-
 def make_anterpolation_fn(
     per_particle_basis_fn: BasisEvalFn, grid_shape: tuple[int, ...]
 ) -> Callable[[ArrayLike, ArrayLike], Array]:
@@ -151,87 +232,6 @@ def make_anterpolation_fn(
         return gridcharge_flat.reshape(grid_shape)
 
     return anterpolate
-
-
-def _interpolate_potential():
-    # TODO: Do we want to provide this?
-    pass
-
-
-def _interpolate_energy(
-    gridpotential: ArrayLike,
-    basis_vals: ArrayLike,
-    indices: ArrayLike,
-    charges: ArrayLike,
-) -> Array:
-    """Low-level function for calculating energy from grid potential.
-
-    Args:
-        gridpotential: Array of grid potential (:math:`e^{l+}` in the language
-            of the reference).
-        basis_vals: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_basis_vals`?)
-        indices: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_inds`?)
-        charges: Array of particle charges, shape `(n_particles,)`.
-
-    Returns:
-        Scalar electrostatic energy.
-    """
-    # TODO: Do we need to use a fill value with `take` here?
-    #  (it shouldn't be possible for indices returned by the spline eval
-    #  functions to be out of bounds)
-    energy = 0.5 * jnp.sum(
-        charges * (gridpotential.take(indices) * basis_vals).sum(axis=1)
-    )
-    return energy
-
-
-def _interpolate_forces(
-    gridpotential: ArrayLike,
-    basis_grads: ArrayLike,
-    indices: ArrayLike,
-    charges: ArrayLike,
-) -> Array:
-    """Low-level function for calculating forces from grid potential.
-
-    Args:
-        gridpotential: Array of grid potential (:math:`e^{l+}` in the language
-            of the reference).
-        basis_grads: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_basis_grads`?)
-        indices: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_inds`?)
-        charges: Array of particle charges, shape `(n_particles,)`.
-
-    Returns:
-        Array of forces on particles, shape `(n_particles, n_dim)`.
-    """
-    # TODO: Do we need to use a fill value with `take` here?
-    #  (it shouldn't be possible for indices returned by the spline eval
-    #  functions to be out of bounds)
-    forces = -charges[:, jnp.newaxis] * jnp.sum(
-        gridpotential.take(indices)[..., jnp.newaxis] * basis_grads, axis=1
-    )
-    return forces
-
-
-def _make_unitcube_transform_fns(
-    cell: ArrayLike | None, transform_mode: CellMode | None
-) -> tuple[Callable[[ArrayLike], Array], Callable[[ArrayLike], Array]]:
-    # TODO: Is this the right module for this function?
-    if transform_mode is None:
-        transform_pos = lambda x: x
-        backtransform_grad = lambda x: x
-        return transform_pos, backtransform_grad
-    elif transform_mode == "ortho":
-        inverse = 1.0 / jnp.diag(cell)
-        transform_pos = lambda x: x * inverse
-        backtransform_grad = lambda dx: dx * inverse
-        return transform_pos, backtransform_grad
-    elif transform_mode == "general":
-        inverse = jnp.linalg.pinv(cell)
-        transform_pos = lambda x: x @ inverse
-        backtransform_grad = lambda dx: dx @ inverse.T
-        return transform_pos, backtransform_grad
-    else:
-        raise ValueError(f"Invalid mode: {transform_mode}")
 
 
 def make_grid_pass(
@@ -345,7 +345,7 @@ def make_compute_longrange_energy(
                   particle positions, shape `(n_particles, n_dim)`.
 
                 - Output of ``per_particle_basis_fn`` should be a tuple of two
-                  2-d arrays of shape `(n_particles, support_size)`,
+                  2-d arrays, each of shape `(n_particles, support_size)`,
                   where `support_size` designates the fixed number of
                   non-zero basis functions around each particle (= the
                   cardinality of :math:`M` from above).
