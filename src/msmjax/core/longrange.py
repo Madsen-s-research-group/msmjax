@@ -120,16 +120,15 @@ def _anterpolate(
 
 
 def make_anterpolation_fn(
-    basis_eval_fn: BasisEvalFn,
-    grid_shape: tuple[int, ...],
+    per_particle_basis_fn: BasisEvalFn, grid_shape: tuple[int, ...]
 ) -> Callable[[ArrayLike, ArrayLike], Array]:
     """
 
     Args:
-        basis_eval_fn: A function that, for all particles, identifies those
-            grid points with non-zero basis function values, and evaluates
-            them. See :func:`make_energy_interpolation_fn` for details of
-            signature and meaning of return values.
+        per_particle_basis_fn: A function that, for all particles, identifies
+            those grid points with non-zero basis function values,
+            and evaluates them. See :func:`make_compute_longrange_energy`
+            for details of signature and meaning of return values.
         grid_shape: Tuple of integers indicating the shape of the target grid
             to which to anterpolate the particle charges.
 
@@ -144,7 +143,7 @@ def make_anterpolation_fn(
         # TODO: Indicate by variable names that indices are expected to be flat?
         # TODO: Behavior when basis_eval_fn returns out-of-bounds indices?
         #  Are there reasonable cases in which this may occur? Warning in docstring?
-        basis_vals, indices = basis_eval_fn(positions)
+        basis_vals, indices = per_particle_basis_fn(positions)
         gridcharge_flat = jnp.zeros(grid_size)
         gridcharge_flat = gridcharge_flat.at[indices].add(
             charges[:, jnp.newaxis] * basis_vals
@@ -211,125 +210,6 @@ def _interpolate_forces(
         gridpotential.take(indices)[..., jnp.newaxis] * basis_grads, axis=1
     )
     return forces
-
-
-def make_energy_interpolation_fn(
-    basis_eval_fn: BasisEvalFn,  # TODO: name? "per_particle"? (also change in docstrings everywhere)
-) -> Callable[[ArrayLike, ArrayLike, ArrayLike], Array]:
-    """Create a function that computes the energy by interpolating potential.
-
-    Args:
-        basis_eval_fn: A function that, for each particle,
-
-                1) identifies all grid points that are sufficiently close for the
-                   particle's position to be contained within the support of
-                   the associated basis functions, i.e., finds the set of
-                   grid points
-                   :math:`M = \\{
-                   \\mathbf{m} : \\varphi_{\\mathbf{m}}(\\mathbf{r}_i) \\neq 0
-                   \\} \\,`,
-                   (where :math:`\\mathbf{r}_i` denotes the position of
-                   particle :math:`i`),
-
-                2) evaluates the corresponding basis functions, i.e.
-                   computes :math:`\\varphi_{\\mathbf{m}}(\\mathbf{r}_i)`
-                   for all :math:`\mathbf{m} \in M \\,`.
-
-            Inputs and outputs:
-
-                - Input to ``basis_eval_fn`` should be a 2-d array of
-                  particle positions, shape `(n_particles, n_dim)`.
-
-                - Output of ``basis_eval_fn`` should be a tuple of two
-                  2-d arrays of shape `(n_particles, support_size)`,
-                  where `support_size` designates the fixed number of
-                  non-zero basis functions around each particle (= the
-                  cardinality of :math:`M` from above).
-                  Their first axes run over particles, and the second over
-                  grid points.
-                  The first of the two arrays contains the values of the basis
-                  functions for each particle, and the second array contains
-                  the `flat` (!) indices of the corresponding grid points.
-
-    Returns:
-        A function of three array arguments (grid potential, particle
-        positions, particle charges) that calculates the energy.
-    """
-
-    def compute(
-        gridpotential: ArrayLike, positions: ArrayLike, charges: ArrayLike
-    ) -> Array:
-        basis_vals, indices = basis_eval_fn(positions)
-        return _interpolate_energy(gridpotential, basis_vals, indices, charges)
-
-    return compute
-
-
-def make_forces_interpolation_fn(
-    basis_grad_fn: BasisGradFn,  # TODO: name? "per_particle"? (also change in docstrings)
-) -> Callable[[ArrayLike, ArrayLike, ArrayLike], Array]:
-    """Create a function that computes the forces by interpolating potential.
-
-    Args:
-        basis_grad_fn: A function like the ``basis_eval_fn`` passed to
-            :func:`make_energy_interpolation_fn` (see there for details),
-            except it evaluates the gradients of the basis functions w.r.t.
-            to particle positions,
-            :math:`\\nabla_{\\mathbf{r}_i} \\,
-            \\varphi_{\\mathbf{m}}(\\mathbf{r}_i), \\,
-            \mathbf{m} \\in M`.
-
-            Consequently, the shape of the two output arrays, for the values
-            of the gradient and the indices of the non-zero grid points
-            around each particle, should be
-            `(n_particles, support_size, n_dim)` and
-            `(n_particles, support_size)`.
-
-    Returns:
-        A function of three array arguments (grid potential, particle
-        positions, particle charges) that calculates the forces.
-    """
-
-    def compute(
-        gridpotential: ArrayLike, positions: ArrayLike, charges: ArrayLike
-    ) -> Array:
-        basis_grads, indices = basis_grad_fn(positions)
-        return _interpolate_forces(
-            gridpotential, basis_grads, indices, charges
-        )
-
-    return compute
-
-
-def make_energy_and_forces_interpolation_fn(
-    basis_val_and_grad_fn: BasisValAndGradFn,
-) -> Callable[[ArrayLike, ArrayLike, ArrayLike], tuple[Array, Array]]:
-    """Create function that computes energy, forces by interpolating potential.
-
-    Args:
-        basis_val_and_grad_fn: TODO: How to document? Unlike for `basis_eval_fn`, there is no other place where this is used, that could be referenced.
-
-    Returns:
-        A function of three array arguments (grid potential, particle
-        positions, particle charges) that calculates the energy and forces.
-    """
-
-    def compute(
-        gridpotential: ArrayLike, positions: ArrayLike, charges: ArrayLike
-    ) -> tuple[Array, Array]:
-        # TODO: Make sure that the expected structure of the return value of
-        #  basis_val_and_grad_fn is properly documented, and correctly used
-        #  elsewhere.
-        (basis_vals, indices), basis_grads = basis_val_and_grad_fn(positions)
-        energy = _interpolate_energy(
-            gridpotential, basis_vals, indices, charges
-        )
-        forces = _interpolate_forces(
-            gridpotential, basis_grads, indices, charges
-        )
-        return energy, forces
-
-    return compute
 
 
 def make_unitcube_transform_fns_ortho(
@@ -482,10 +362,10 @@ def make_compute_longrange_energy(
 
             Inputs and outputs:
 
-                - Input to ``basis_eval_fn`` should be a 2-d array of
+                - Input to ``per_particle_basis_fn`` should be a 2-d array of
                   particle positions, shape `(n_particles, n_dim)`.
 
-                - Output of ``basis_eval_fn`` should be a tuple of two
+                - Output of ``per_particle_basis_fn`` should be a tuple of two
                   2-d arrays of shape `(n_particles, support_size)`,
                   where `support_size` designates the fixed number of
                   non-zero basis functions around each particle (= the
@@ -519,6 +399,9 @@ def make_compute_longrange_energy(
         basis_vals, basis_inds = per_particle_basis_fn(
             transform_pos(positions)
         )
+        # TODO: The next two statements are repeated in every,
+        #  make_compute_longrange_something function, should they be wrapped
+        #  in a single function?
         gridcharge_lvl_one = _anterpolate(
             basis_vals,
             basis_inds,
