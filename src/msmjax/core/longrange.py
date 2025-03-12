@@ -518,6 +518,9 @@ def make_dyn_cell_longrange_fn(
     return compute
 
 
+# TODO: If all is reduced to this custom-derivative energy function and there
+#  are no more separate force functions, there is really no reason not to call
+#  it compute_u_oneplus or similar
 def make_compute_energy_customjvp(
     charges, kernel_stencils, grid_shape_lvl_one, single_particle_basis_fn
 ):
