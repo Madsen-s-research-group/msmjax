@@ -163,6 +163,7 @@ def special_periodic_convolve(
         An array of the same shape as ``data`` containing the convolution of
         the two arrays.
     """
+    # TODO: Should this function be a protected member?
     pbc = onp.asarray(pbc)
 
     if pbc.any():
@@ -200,6 +201,7 @@ def special_periodic_convolve(
         )
 
 
+# TODO: This is not needed anymore, is it?
 def make_anterpolation_fn(
     per_particle_basis_fn: BasisEvalFn, grid_shape: tuple[int, ...]
 ) -> Callable[[ArrayLike, ArrayLike], Array]:
@@ -355,23 +357,35 @@ def make_compute_longrange_energy(
                   functions for each particle, and the second array contains
                   the `flat` (!) indices of the corresponding grid points.
 
-        grid_pass_fn: TODO A function that performs the entire moving up,
-            across, and back down the grid hierarchy. Takes in the grid charge
-            :math:`\\tilde{q}^1` at grid level one as the first argument, a
-            sequence of coefficient stencils :math:`\\mathcal{K}^l` for the
-            interaction kernels (one per grid level, including a placeholder
-            at level zero) as the second argument, and returns the grid
-            potential :math:`e^{l+}` at grid level one.
+        grid_pass_fn: A function that performs the entire moving up,
+            across, and back down the grid hierarchy.
+
+            Inputs and outputs:
+
+                - Input to ``grid_pass_fn`` should be the level-one grid
+                  charge :math:`\\tilde{q}^1` (an array of shape equal to
+                  the ``grid_shape_lvl_one`` parameter), and a sequence of
+                  coefficient stencils :math:`\\mathcal{K}^l` for the
+                  interaction kernels (one per grid level, including a
+                  placeholder at level zero).
+                - Output of ``grid_pass_fn`` should be the level-one grid
+                  potential, of shape ``grid_shape_lvl_one``.
+
         grid_shape_lvl_one: Tuple of integers indicating the shape of the
             target grid to which to anterpolate the particle charges.
-        transform_mode: TODO
+        transform_mode: TODO: A string specifying assumptions on the shape of the
+            unit cell. Either the cell is assumed orthorhombic and
+            axis-aligned, in which case only its diagonal is considered,
+            reducing computational cost, or a general triclinic one.
+            May be omitted if the cell is both orthorhombic and static.
 
     Returns:
         TODO
     """
 
     def compute(positions, charges, kernel_stencils, cell=None):
-        # TODO: Should cell really have a default?
+        # TODO: Should cell really have a default? Watch out for interaction
+        #  between defaults of transform_mode and cell.
         transform_pos, backtransform_grad = _make_unitcube_transform_fns(
             cell, transform_mode
         )
@@ -379,7 +393,7 @@ def make_compute_longrange_energy(
             transform_pos(positions)
         )
         # TODO: The next two statements are repeated in every,
-        #  make_compute_longrange_something function, should they be wrapped
+        #  make_compute_longrange_something function. Should they be wrapped
         #  in a single function?
         gridcharge_lvl_one = _anterpolate(
             basis_vals,

@@ -27,6 +27,7 @@ def _divide_zero_safe(
 
 @jax.custom_jvp
 def _sqrt(x):
+    # TODO: This reference to our gitlab should not be left in
     # see https://gitlab.tuwien.ac.at/e165-03-1_theoretische_materialchemie/scripts-et-al/-/wikis/Sqrt-without-trivial-NaN-derivative-for-jax
     return jnp.sqrt(x)
 
