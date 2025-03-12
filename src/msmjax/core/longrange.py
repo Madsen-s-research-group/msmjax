@@ -587,3 +587,96 @@ def make_compute_energy_customjvp(
         return primals_out, tangents_out
 
     return compute_energy
+
+
+def make_compute_u_oneplus(
+    single_particle_basis_fn: BasisEvalFn,
+    grid_pass_fn: Callable[[ArrayLike, Sequence[ArrayLike]], Array],
+    grid_shape_lvl_one: tuple[int, ...],
+):
+    def _compute_u_oneplus(
+        positions: ArrayLike,
+        charges: ArrayLike,
+        kernel_stencils: Sequence[ArrayLike],
+    ):
+        basis_vals, basis_inds = jax.vmap(single_particle_basis_fn)(positions)
+        gridcharge_lvl_one = _anterpolate(
+            basis_vals,
+            basis_inds,
+            charges,
+            grid_shape_lvl_one,
+        )
+        gridpotential_lvl_one = grid_pass_fn(
+            gridcharge_lvl_one, kernel_stencils
+        )
+        # TODO: Do direct contraction of gridcharge and gridpotential instead
+        #  of interpolating back?
+        return _interpolate_energy(
+            gridpotential_lvl_one,
+            basis_vals,
+            basis_inds,
+            charges,
+        )
+
+    @jax.custom_jvp
+    def compute_u_oneplus(
+        positions: ArrayLike,
+        charges: ArrayLike,
+        kernel_stencils: Sequence[ArrayLike],
+    ):
+        return _compute_u_oneplus(positions, charges, kernel_stencils)
+
+    def compute_u_oneplus_dx(
+        positions_dot, primal_out, positions, charges, kernel_stencils
+    ):
+        basis_vals, basis_inds = jax.vmap(single_particle_basis_fn)(positions)
+        # TODO: Order of jac and vmap? jacfwd/jacrev?
+        #  (jacrev was much slower in a quick test, which also makes sense
+        #  because single_particle_fn has (in 3 dimensions) 3 inputs vs.
+        #  something on the order of 64 or 216 outputs)
+        basis_grads, _ = jax.vmap(
+            jax.jacfwd(single_particle_basis_fn, has_aux=True)
+        )(positions)
+        gridcharge_lvl_one = _anterpolate(
+            basis_vals,
+            basis_inds,
+            charges,
+            grid_shape_lvl_one,
+        )
+        gridpotential_lvl_one = grid_pass_fn(
+            gridcharge_lvl_one, kernel_stencils
+        )
+        # TODO: don't go via forces, which requires double minus
+        forces = _interpolate_forces(
+            gridpotential_lvl_one,
+            basis_grads,
+            basis_inds,
+            charges,
+        )
+        # TODO: minus (see above)
+        return -(forces * positions_dot).sum()
+
+    def compute_u_oneplus_dq(
+        charges_dot, primal_out, positions, charges, kernel_stencils
+    ):
+        primals_in = (positions, charges, kernel_stencils)
+        # TODO: kernel_stencils is not an array but a sequence of arrays with
+        #  None as the first element?
+        tangents_in = (
+            onp.zeros_like(positions),
+            charges_dot,
+            onp.zeros_like(kernel_stencils),
+        )
+        _, tangents_out = jax.jvp(_compute_u_oneplus, primals_in, tangents_in)
+        return tangents_out
+
+    def compute_u_oneplus_dk(
+        kernel_stencils_dot, primal_out, positions, charges, kernel_stencils
+    ):
+        pass
+
+    compute_u_oneplus.defjvps(
+        compute_u_oneplus_dx, compute_u_oneplus_dq, compute_u_oneplus_dk
+    )
+
+    return compute_u_oneplus
