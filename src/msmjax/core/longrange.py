@@ -516,3 +516,71 @@ def make_dyn_cell_longrange_fn(
         )
 
     return compute
+
+
+def make_compute_energy_customjvp(
+    charges, kernel_stencils, grid_shape_lvl_one, single_particle_basis_fn
+):
+    # - Hardcoding charges, kernel stencils for now to not have to deal with
+    #   multiple parameters in JVP definition.
+    # - Hardcoding the grid shape for now.
+    # - Hardcoding the one-particle basis eval function for now.
+
+    @jax.custom_jvp
+    def compute_energy(positions):
+        basis_vals, basis_inds = jax.vmap(single_particle_basis_fn)(positions)
+        gridcharge_lvl_one = _anterpolate(
+            basis_vals,
+            basis_inds,
+            charges,
+            grid_shape_lvl_one,
+        )
+        gridpotential_lvl_one = grid_pass_fn(
+            gridcharge_lvl_one, kernel_stencils
+        )
+        return _interpolate_energy(
+            gridpotential_lvl_one,
+            basis_vals,
+            basis_inds,
+            charges,
+        )
+
+    @compute_energy.defjvp
+    def compute_energy_jvp(primals, tangents):
+        (positions,) = primals
+        (positions_t,) = tangents
+        basis_vals, basis_inds = jax.vmap(single_particle_basis_fn)(positions)
+        # TODO: don't repeat basis_inds assignment
+        # TODO: Order of jac and vmap? jacfwd/jacrev? (jacrev appears much slower in a quick test)
+        basis_grads, basis_inds = jax.vmap(
+            jax.jacfwd(single_particle_basis_fn, has_aux=True)
+        )(positions)
+        gridcharge_lvl_one = _anterpolate(
+            basis_vals,
+            basis_inds,
+            charges,
+            grid_shape_lvl_one,
+        )
+        gridpotential_lvl_one = grid_pass_fn(
+            gridcharge_lvl_one, kernel_stencils
+        )
+        # TODO: can we compute the energy by calling compute_e_jvp, or does that ruin the efficiency?
+        energy = _interpolate_energy(
+            gridpotential_lvl_one,
+            basis_vals,
+            basis_inds,
+            charges,
+        )
+        # TODO: don't go via forces, which requires double minus
+        forces = _interpolate_forces(
+            gridpotential_lvl_one,
+            basis_grads,
+            basis_inds,
+            charges,
+        )
+        primals_out = energy
+        tangents_out = -(forces * positions_t).sum()  # TODO: minus (see above)
+
+        return primals_out, tangents_out
+
+    return compute_energy
