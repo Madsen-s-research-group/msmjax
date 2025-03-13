@@ -620,11 +620,11 @@ def make_compute_u_oneplus(
     single_particle_basis_fn: BasisEvalFn,
     grid_pass_fn: Callable[[ArrayLike, Sequence[ArrayLike]], Array],
     grid_shape_lvl_one: tuple[int, ...],
+    kernel_stencils: Sequence[ArrayLike],
 ):
     def _compute_u_oneplus(
         positions: ArrayLike,
         charges: ArrayLike,
-        kernel_stencils: Sequence[ArrayLike],
     ):
         basis_vals, basis_inds = jax.vmap(single_particle_basis_fn)(positions)
         gridcharge_lvl_one = _anterpolate(
@@ -649,13 +649,10 @@ def make_compute_u_oneplus(
     def compute_u_oneplus(
         positions: ArrayLike,
         charges: ArrayLike,
-        kernel_stencils: Sequence[ArrayLike],
     ):
-        return _compute_u_oneplus(positions, charges, kernel_stencils)
+        return _compute_u_oneplus(positions, charges)
 
-    def compute_u_oneplus_dx(
-        positions_dot, primal_out, positions, charges, kernel_stencils
-    ):
+    def compute_u_oneplus_dx(positions_dot, primal_out, positions, charges):
         basis_vals, basis_inds = jax.vmap(single_particle_basis_fn)(positions)
         # TODO: Order of jac and vmap? jacfwd/jacrev?
         #  (jacrev was much slower in a quick test, which also makes sense
@@ -681,32 +678,30 @@ def make_compute_u_oneplus(
         )
         return (positions_jac * positions_dot).sum()
 
-    def compute_u_oneplus_dq(
-        charges_dot, primal_out, positions, charges, kernel_stencils
-    ):
-        primals_in = (positions, charges, kernel_stencils)
+    def compute_u_oneplus_dq(charges_dot, primal_out, positions, charges):
+        primals_in = (positions, charges)
         tangents_in = (
-            onp.zeros_like(positions),
+            onp.zeros(positions.shape, dtype=float),
             charges_dot,
-            [None, *[onp.zeros_like(ks) for ks in kernel_stencils[1:]]],
         )
         _, tangents_out = jax.jvp(_compute_u_oneplus, primals_in, tangents_in)
         return tangents_out
 
-    def compute_u_oneplus_dk(
-        kernel_stencils_dot, primal_out, positions, charges, kernel_stencils
-    ):
-        primals_in = (positions, charges, kernel_stencils)
-        tangents_in = (
-            onp.zeros_like(positions),
-            onp.zeros_like(charges),
-            kernel_stencils_dot,
-        )
-        _, tangents_out = jax.jvp(_compute_u_oneplus, primals_in, tangents_in)
-        return tangents_out
+    # def compute_u_oneplus_dk(
+    #     kernel_stencils_dot, primal_out, positions, charges, kernel_stencils
+    # ):
+    #     primals_in = (positions, charges, kernel_stencils)
+    #     tangents_in = (
+    #         onp.zeros_like(positions),
+    #         onp.zeros_like(charges),
+    #         kernel_stencils_dot,
+    #     )
+    #     _, tangents_out = jax.jvp(_compute_u_oneplus, primals_in, tangents_in)
+    #     return tangents_out
 
     compute_u_oneplus.defjvps(
-        compute_u_oneplus_dx, compute_u_oneplus_dq, compute_u_oneplus_dk
+        compute_u_oneplus_dx,
+        compute_u_oneplus_dq,  # compute_u_oneplus_dk
     )
 
     return compute_u_oneplus
