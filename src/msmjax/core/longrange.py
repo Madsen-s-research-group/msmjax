@@ -100,6 +100,33 @@ def _interpolate_forces(
     return forces
 
 
+def _interpolate_energy_positions_gradient(
+    gridpotential: ArrayLike,
+    basis_grads: ArrayLike,
+    indices: ArrayLike,
+    charges: ArrayLike,
+) -> Array:
+    """Low-level function for calculating forces from grid potential.
+
+    Args:
+        gridpotential: Array of grid potential (:math:`e^{l+}` in the language
+            of the reference).
+        basis_grads: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_basis_grads`?)
+        indices: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_inds`?)
+        charges: Array of particle charges, shape `(n_particles,)`.
+
+    Returns:
+        Array of forces on particles, shape `(n_particles, n_dim)`.
+    """
+    # TODO: Do we need to use a fill value with `take` here?
+    #  (it shouldn't be possible for indices returned by the spline eval
+    #  functions to be out of bounds)
+    forces = charges[:, jnp.newaxis] * jnp.sum(
+        gridpotential.take(indices)[..., jnp.newaxis] * basis_grads, axis=1
+    )
+    return forces
+
+
 def _make_unitcube_transform_fns(
     cell: ArrayLike | None, transform_mode: CellMode | None
 ) -> tuple[Callable[[ArrayLike], Array], Callable[[ArrayLike], Array]]:
@@ -646,26 +673,22 @@ def make_compute_u_oneplus(
         gridpotential_lvl_one = grid_pass_fn(
             gridcharge_lvl_one, kernel_stencils
         )
-        # TODO: don't go via forces, which requires double minus
-        forces = _interpolate_forces(
+        positions_jac = _interpolate_energy_positions_gradient(
             gridpotential_lvl_one,
             basis_grads,
             basis_inds,
             charges,
         )
-        # TODO: minus (see above)
-        return -(forces * positions_dot).sum()
+        return (positions_jac * positions_dot).sum()
 
     def compute_u_oneplus_dq(
         charges_dot, primal_out, positions, charges, kernel_stencils
     ):
         primals_in = (positions, charges, kernel_stencils)
-        # TODO: kernel_stencils is not an array but a sequence of arrays with
-        #  None as the first element?
         tangents_in = (
             onp.zeros_like(positions),
             charges_dot,
-            onp.zeros_like(kernel_stencils),
+            [None, *[onp.zeros_like(ks) for ks in kernel_stencils[1:]]],
         )
         _, tangents_out = jax.jvp(_compute_u_oneplus, primals_in, tangents_in)
         return tangents_out
@@ -673,7 +696,14 @@ def make_compute_u_oneplus(
     def compute_u_oneplus_dk(
         kernel_stencils_dot, primal_out, positions, charges, kernel_stencils
     ):
-        pass
+        primals_in = (positions, charges, kernel_stencils)
+        tangents_in = (
+            onp.zeros_like(positions),
+            onp.zeros_like(charges),
+            kernel_stencils_dot,
+        )
+        _, tangents_out = jax.jvp(_compute_u_oneplus, primals_in, tangents_in)
+        return tangents_out
 
     compute_u_oneplus.defjvps(
         compute_u_oneplus_dx, compute_u_oneplus_dq, compute_u_oneplus_dk
