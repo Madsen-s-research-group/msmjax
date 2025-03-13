@@ -106,25 +106,24 @@ def _interpolate_energy_positions_gradient(
     indices: ArrayLike,
     charges: ArrayLike,
 ) -> Array:
-    """Low-level function for calculating forces from grid potential.
-
-    Args:
-        gridpotential: Array of grid potential (:math:`e^{l+}` in the language
-            of the reference).
-        basis_grads: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_basis_grads`?)
-        indices: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_inds`?)
-        charges: Array of particle charges, shape `(n_particles,)`.
-
-    Returns:
-        Array of forces on particles, shape `(n_particles, n_dim)`.
-    """
     # TODO: Do we need to use a fill value with `take` here?
     #  (it shouldn't be possible for indices returned by the spline eval
     #  functions to be out of bounds)
-    forces = charges[:, jnp.newaxis] * jnp.sum(
+    result = charges[:, jnp.newaxis] * jnp.sum(
         gridpotential.take(indices)[..., jnp.newaxis] * basis_grads, axis=1
     )
-    return forces
+    return result
+
+
+def _interpolate_energy_charge_gradient(
+    gridpotential: ArrayLike,
+    basis_vals: ArrayLike,
+    indices: ArrayLike,
+) -> Array:
+    # TODO: Do we need to use a fill value with `take` here?
+    #  (it shouldn't be possible for indices returned by the spline eval
+    #  functions to be out of bounds)
+    return (gridpotential.take(indices) * basis_vals).sum(axis=1)
 
 
 def _make_unitcube_transform_fns(
@@ -679,13 +678,20 @@ def make_compute_u_oneplus(
         return (positions_jac * positions_dot).sum()
 
     def compute_u_oneplus_dq(charges_dot, primal_out, positions, charges):
-        primals_in = (positions, charges)
-        tangents_in = (
-            onp.zeros(positions.shape, dtype=float),
-            charges_dot,
+        basis_vals, basis_inds = jax.vmap(single_particle_basis_fn)(positions)
+        gridcharge_lvl_one = _anterpolate(
+            basis_vals,
+            basis_inds,
+            charges,
+            grid_shape_lvl_one,
         )
-        _, tangents_out = jax.jvp(_compute_u_oneplus, primals_in, tangents_in)
-        return tangents_out
+        gridpotential_lvl_one = grid_pass_fn(
+            gridcharge_lvl_one, kernel_stencils
+        )
+        charges_jac = _interpolate_energy_charge_gradient(
+            gridpotential_lvl_one, basis_vals, basis_inds
+        )
+        return (charges_jac * charges_dot).sum()
 
     # def compute_u_oneplus_dk(
     #     kernel_stencils_dot, primal_out, positions, charges, kernel_stencils
