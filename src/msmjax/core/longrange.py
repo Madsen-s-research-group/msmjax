@@ -715,3 +715,95 @@ def make_compute_u_oneplus(
     )
 
     return compute_u_oneplus
+
+
+def make_compute_u_oneplus_jvpdecorator(
+    single_particle_basis_fn: BasisEvalFn,
+    grid_pass_fn: Callable[[ArrayLike, Sequence[ArrayLike]], Array],
+    grid_shape_lvl_one: tuple[int, ...],
+):
+    def _compute_u_oneplus(
+        positions: ArrayLike,
+        charges: ArrayLike,
+        kernel_stencils: Sequence[ArrayLike],
+    ):
+        basis_vals, basis_inds = jax.vmap(single_particle_basis_fn)(positions)
+        gridcharge_lvl_one = _anterpolate(
+            basis_vals,
+            basis_inds,
+            charges,
+            grid_shape_lvl_one,
+        )
+        gridpotential_lvl_one = grid_pass_fn(
+            gridcharge_lvl_one, kernel_stencils
+        )
+        # TODO: Do direct contraction of gridcharge and gridpotential instead
+        #  of interpolating back?
+        return _interpolate_energy(
+            gridpotential_lvl_one,
+            basis_vals,
+            basis_inds,
+            charges,
+        )
+
+    @jax.custom_jvp
+    def compute_u_oneplus(
+        positions: ArrayLike,
+        charges: ArrayLike,
+        kernel_stencils: Sequence[ArrayLike],
+    ):
+        return _compute_u_oneplus(positions, charges, kernel_stencils)
+
+    @compute_u_oneplus.defjvp
+    def compute_u_oneplus_jvp(primals, tangents):
+        (positions, charges, kernel_stencils) = primals
+        (positions_dot, charges_dot, kernel_stencils_dot) = tangents
+
+        # Energy
+        basis_vals, basis_inds = jax.vmap(single_particle_basis_fn)(positions)
+        gridcharge_lvl_one = _anterpolate(
+            basis_vals, basis_inds, charges, grid_shape_lvl_one
+        )
+        gridpotential_lvl_one = grid_pass_fn(
+            gridcharge_lvl_one, kernel_stencils
+        )
+        energy = _interpolate_energy(
+            gridpotential_lvl_one, basis_vals, basis_inds, charges
+        )
+
+        # Derivative wrt positions
+        basis_grads, basis_inds = jax.vmap(
+            jax.jacfwd(single_particle_basis_fn, has_aux=True)
+        )(positions)
+        positions_jac = _interpolate_energy_positions_gradient(
+            gridpotential_lvl_one,
+            basis_grads,
+            basis_inds,
+            charges,
+        )
+        positions_tangent_out = (positions_jac * positions_dot).sum()
+
+        # Derivative wrt charges
+        charges_jac = _interpolate_energy_charge_gradient(
+            gridpotential_lvl_one, basis_vals, basis_inds
+        )
+        charges_tangent_out = (charges_jac * charges_dot).sum()
+
+        # Derivative wrt kernel stencils
+        tangents_zeroed = (
+            onp.zeros(positions.shape, dtype=float),
+            onp.zeros(charges.shape, dtype=float),
+            kernel_stencils_dot,
+        )
+        _, stencil_tangent_out = jax.jvp(
+            _compute_u_oneplus, primals, tangents_zeroed
+        )
+
+        primal_out = energy
+        tangent_out = (
+            positions_tangent_out + charges_tangent_out + stencil_tangent_out
+        )
+
+        return primal_out, tangent_out
+
+    return compute_u_oneplus
