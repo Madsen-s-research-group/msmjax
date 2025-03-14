@@ -234,7 +234,7 @@ def make_grid_pass(
     restriction_fns: Sequence[Callable],
     prolongation_fns: Sequence[Callable],
     interaction_fns: Sequence[Callable],  # TODO: name (everywhere)
-) -> Callable[[ArrayLike, Sequence[ArrayLike]], Array]:
+) -> Callable[[ArrayLike, Sequence[ArrayLike | None]], Array]:
     # TODO: In fact it's questionable, whether a separate interaction_fn for
     #  each level is needed at all. `special_periodic_convolve` should work
     #  for all levels, shouldn't it?
@@ -438,33 +438,83 @@ def make_dyn_cell_longrange_fn(
 
 # TODO: name
 def make_compute_u_oneplus_jvpdecorator(
-    single_particle_basis_fn: Callable[[ArrayLike], tuple[Array, Array]],
+    singleparticle_basis_fn_lvl_one: Callable[
+        [ArrayLike], tuple[Array, Array]
+    ],
     grid_pass_fn: Callable[[ArrayLike, Sequence[ArrayLike | None]], Array],
     grid_shape_lvl_one: tuple[int, ...],
     use_custom_derivatives: bool = True,
 ) -> Callable[[ArrayLike, ArrayLike, Sequence[ArrayLike | None]], Array]:
-    """Create a function that computes the MSM short-range energy contribution.
+    """Create a function that computes the MSM long-range energy contribution.
 
     Args:
-        single_particle_basis_fn:
-        grid_pass_fn: A function that performs the entire moving up,
-            across, and back down the grid hierarchy.
+        singleparticle_basis_fn_lvl_one:
+            A function that, for one particle,
+
+                1) identifies all points on the level-one grid that are
+                   sufficiently close for the particle's position to be
+                   contained within the support of the associated basis
+                   functions, i.e., finds the set of grid points
+                   :math:`M = \\{
+                   \\mathbf{m} : \\varphi^{1}_{\\mathbf{m}}(\\mathbf{r}_i) \\neq 0
+                   \\} \\,`
+                   (where :math:`\\mathbf{r}_i` denotes the position of
+                   particle :math:`i` and
+                   :math:`\\mathbf{\\varphi^{1}_{\\mathbf{m}}}` is the
+                   basis function centered on point :math:`\\mathbf{m}` of the
+                   level-one grid),
+
+                2) evaluates the corresponding basis functions, i.e.
+                   computes :math:`\\varphi^{1}_{\\mathbf{m}}(\\mathbf{r}_i)`
+                   for all grid points :math:`\mathbf{m} \in M \\,`.
+
+            Inputs and outputs:
+
+                - Input to ``singleparticle_basis_fn_lvl_one`` should be a 1-d array,
+                  shape `(n_dim,)`, representing the coordinates of a single
+                  particle.
+
+                - Output of ``singleparticle_basis_fn_lvl_one`` should be a tuple of
+                  two 1-d arrays, each of shape `(support_size,)`, where
+                  `support_size` designates the number of non-zero basis
+                  functions around one particle (= the cardinality of
+                  :math:`M` from above). The first of the two arrays
+                  contains the values of the basis functions at all grid
+                  points :math:`\mathbf{m} \in M`. The second array contains
+                  the corresponding set of grid point indices :math:`M` as
+                  `flat` (!) indices.
+
+            .. note::
+               Regardless of the spatial dimension of the system,
+               ``singleparticle_basis_fn_lvl_one`` should always return flat
+               arrays.
+
+            .. warning::
+               If ``singleparticle_basis_fn_lvl_one`` returs indices that
+               are out of bounds w.r.t. to the grid size defined by
+               ``grid_shape_lvl_one``, this will result in NaNs. This is
+               intentional because errors like particles moving outside of
+               the grid boundaries might otherwise go unnoticed.
+
+        grid_pass_fn: A function that performs the entire process of moving up,
+            across, and back down the grid hierarchy. For more details on
+            the expected signature, see :func:`make_grid_pass`, which can be
+            used conveniently to create such a function.
 
             Inputs and outputs:
 
                 - Input to ``grid_pass_fn`` should be the level-one grid
-                  charge :math:`\\tilde{q}^1` (an array of shape equal to
+                  charge :math:`\\tilde{q}^1` (an array whose shape matches
                   the ``grid_shape_lvl_one`` parameter), and a sequence of
-                  coefficient stencils :math:`\\mathcal{K}^l` for the
-                  interaction kernels (one per grid level, including a
-                  placeholder at level zero).
+                  coefficient stencils for the interaction kernels (one per
+                  grid level, including a placeholder at level zero).
                 - Output of ``grid_pass_fn`` should be the level-one grid
-                  potential, of shape ``grid_shape_lvl_one``.
+                  potential, also of shape ``grid_shape_lvl_one``.
+
         grid_shape_lvl_one: Tuple of integers representing shape of target
-            grid at level one, to which anterpolate particle charges will
-            be anterpolated.
+            grid at level one, to which particle charges will be anterpolated.
         use_custom_derivatives: Whether the returned energy function should
-            use custom (more efficient) differentiation rules for the
+            use custom (more efficient) differentiation rules for its
             derivatives w.r.t. positions and charges.
 
     Returns:
@@ -492,7 +542,9 @@ def make_compute_u_oneplus_jvpdecorator(
         Returns:
             The long-range energy contribution :math:`U^{1+}`.
         """
-        basis_vals, basis_inds = jax.vmap(single_particle_basis_fn)(positions)
+        basis_vals, basis_inds = jax.vmap(singleparticle_basis_fn_lvl_one)(
+            positions
+        )
         gridcharge_lvl_one = _anterpolate(
             basis_vals,
             basis_inds,
@@ -532,7 +584,9 @@ def make_compute_u_oneplus_jvpdecorator(
         (positions_dot, charges_dot, kernel_stencils_dot) = tangents
 
         # Energy
-        basis_vals, basis_inds = jax.vmap(single_particle_basis_fn)(positions)
+        basis_vals, basis_inds = jax.vmap(singleparticle_basis_fn_lvl_one)(
+            positions
+        )
         gridcharge_lvl_one = _anterpolate(
             basis_vals, basis_inds, charges, grid_shape_lvl_one
         )
@@ -545,7 +599,7 @@ def make_compute_u_oneplus_jvpdecorator(
 
         # Derivative w.r.t. positions:
         basis_grads, basis_inds = jax.vmap(
-            jax.jacfwd(single_particle_basis_fn, has_aux=True)
+            jax.jacfwd(singleparticle_basis_fn_lvl_one, has_aux=True)
         )(positions)
         positions_jac = _interpolate_energy_positions_gradient(
             gridpotential_lvl_oneplus,
@@ -562,12 +616,13 @@ def make_compute_u_oneplus_jvpdecorator(
         charges_tangent_out = (charges_jac * charges_dot).sum()
 
         # Derivative w.r.t. kernel stencils:
-        # In contrast to the positions and charges, we cannot supply a custom
-        # derivative rule for this parameter, as the functional form of
-        # `grid_pass_fn` is unspecified. Therefore, we fall back to the
-        # default derivative. This is done in a slightly hacky way, by calling
-        # the regular jvp, but with the input tangents corresponding to all
-        # parameters except `kernel_stencils` set to zero.
+        # In contrast to the positions and charges, we cannot supply a
+        # custom derivative rule for this parameter, as the functional form
+        # of `grid_pass_fn` is unspecified. Therefore, we fall back to
+        # default automatic differentiation. This is done in a slightly
+        # hacky way, by calling the regular jvp, but with the input tangents
+        # corresponding to all parameters except ``kernel_stencils`` set to
+        # zero.
         tangents_zeroed = (
             onp.zeros(positions.shape, dtype=float),
             onp.zeros(charges.shape, dtype=float),
