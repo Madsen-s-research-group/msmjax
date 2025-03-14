@@ -718,16 +718,60 @@ def make_compute_u_oneplus(
 
 
 def make_compute_u_oneplus_jvpdecorator(
-    single_particle_basis_fn: BasisEvalFn,
-    grid_pass_fn: Callable[[ArrayLike, Sequence[ArrayLike]], Array],
+    single_particle_basis_fn: Callable[[ArrayLike], tuple[Array, Array]],
+    grid_pass_fn: Callable[[ArrayLike, Sequence[ArrayLike | None]], Array],
     grid_shape_lvl_one: tuple[int, ...],
     use_custom_derivatives: bool = True,
-) -> Callable[[ArrayLike, ArrayLike, Sequence[ArrayLike]], Array]:
+) -> Callable[[ArrayLike, ArrayLike, Sequence[ArrayLike | None]], Array]:
+    """Create a function that computes the MSM short-range energy contribution.
+
+    Args:
+        single_particle_basis_fn:
+        grid_pass_fn: A function that performs the entire moving up,
+            across, and back down the grid hierarchy.
+
+            Inputs and outputs:
+
+                - Input to ``grid_pass_fn`` should be the level-one grid
+                  charge :math:`\\tilde{q}^1` (an array of shape equal to
+                  the ``grid_shape_lvl_one`` parameter), and a sequence of
+                  coefficient stencils :math:`\\mathcal{K}^l` for the
+                  interaction kernels (one per grid level, including a
+                  placeholder at level zero).
+                - Output of ``grid_pass_fn`` should be the level-one grid
+                  potential, of shape ``grid_shape_lvl_one``.
+        grid_shape_lvl_one: Tuple of integers representing shape of target
+            grid at level one, to which anterpolate particle charges will
+            be anterpolated.
+        use_custom_derivatives: Whether the returned energy function should
+            use custom (more efficient) differentiation rules for the
+            derivatives w.r.t. positions and charges.
+
+    Returns:
+        TODO
+    """
+
     def _compute_u_oneplus(
         positions: ArrayLike,
         charges: ArrayLike,
-        kernel_stencils: Sequence[ArrayLike],
+        kernel_stencils: Sequence[ArrayLike | None],
     ) -> Array:
+        """Compute the MSM's long-range energy contribution :math:`U^{1+}`.
+
+        Args:
+            positions: Array of positions, shape `(n_particles, n_dim)`.
+            charges: Array of charges, shape `(n_particles,)`.
+            kernel_stencils: A sequence of arrays, with length equal to the
+                number of MSM levels. Each element corresponds to one MSM
+                level. The element at index 0 (corresponding to level 0, where
+                the interaction is evaluated directly rather than via grids)
+                is not used, but a placeholder (conventionally ``None``) is
+                required to be present.
+                TODO: Explain what the stencils actually are; mention dimensions
+
+        Returns:
+            The long-range energy contribution :math:`U^{1+}`.
+        """
         basis_vals, basis_inds = jax.vmap(single_particle_basis_fn)(positions)
         gridcharge_lvl_one = _anterpolate(
             basis_vals,
@@ -754,10 +798,16 @@ def make_compute_u_oneplus_jvpdecorator(
         charges: ArrayLike,
         kernel_stencils: Sequence[ArrayLike],
     ) -> Array:
+        """Compute the long-range energy contribution :math:`U^0` using custom
+        derivative rules.
+
+        See ``_compute_u_oneplus`` for parameter details.
+        """
         return _compute_u_oneplus(positions, charges, kernel_stencils)
 
     @compute_u_oneplus.defjvp
     def compute_u_oneplus_jvp(primals, tangents):
+        """Defines custom derivative rules for compute_u_oneplus"""
         (positions, charges, kernel_stencils) = primals
         (positions_dot, charges_dot, kernel_stencils_dot) = tangents
 
