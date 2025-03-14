@@ -298,146 +298,7 @@ def make_grid_pass(
     return grid_pass
 
 
-# TODO: Also add function for the calculation of energy by direct
-#  contraction of grid charges with grid potential (without going the route
-#  of reconstructing electrostatic potential by interpolation)
-
-# TODO: Also add function for calculating gradient w.r.t. charge without
-#  autodiffing the whole energy function?
-
-
-# TODO: Function name? Should it include `oneplus` somehow?
-def make_compute_longrange_energy(
-    per_particle_basis_fn: BasisEvalFn,
-    grid_pass_fn: Callable[[ArrayLike, Sequence[ArrayLike]], Array],
-    grid_shape_lvl_one: tuple[int, ...],
-    transform_mode: CellMode | None = None,
-):
-    """Create a function that computes the energy by interpolating potential.
-
-    The quantity being (approximately) calculated is called :math:`U^{1+}`
-    in the reference article.
-
-    Args:
-        per_particle_basis_fn: A function that, for each particle,
-
-            1) identifies all grid points that are sufficiently close for the
-               particle's position to be contained within the support of
-               the associated basis functions, i.e., finds the set of
-               grid points
-               :math:`M = \\{
-               \\mathbf{m} : \\varphi_{\\mathbf{m}}(\\mathbf{r}_i) \\neq 0
-               \\} \\,`,
-               (where :math:`\\mathbf{r}_i` denotes the position of
-               particle :math:`i`),
-
-            2) evaluates the corresponding basis functions, i.e.
-               computes :math:`\\varphi_{\\mathbf{m}}(\\mathbf{r}_i)`
-               for all :math:`\mathbf{m} \in M \\,`.
-
-            Inputs and outputs:
-
-                - Input to ``per_particle_basis_fn`` should be a 2-d array of
-                  particle positions, shape `(n_particles, n_dim)`.
-
-                - Output of ``per_particle_basis_fn`` should be a tuple of two
-                  2-d arrays, each of shape `(n_particles, support_size)`,
-                  where `support_size` designates the fixed number of
-                  non-zero basis functions around each particle (= the
-                  cardinality of :math:`M` from above).
-                  Their first axes run over particles, and the second over
-                  grid points.
-                  The first of the two arrays contains the values of the basis
-                  functions for each particle, and the second array contains
-                  the `flat` (!) indices of the corresponding grid points.
-
-        grid_pass_fn: A function that performs the entire moving up,
-            across, and back down the grid hierarchy.
-
-            Inputs and outputs:
-
-                - Input to ``grid_pass_fn`` should be the level-one grid
-                  charge :math:`\\tilde{q}^1` (an array of shape equal to
-                  the ``grid_shape_lvl_one`` parameter), and a sequence of
-                  coefficient stencils :math:`\\mathcal{K}^l` for the
-                  interaction kernels (one per grid level, including a
-                  placeholder at level zero).
-                - Output of ``grid_pass_fn`` should be the level-one grid
-                  potential, of shape ``grid_shape_lvl_one``.
-
-        grid_shape_lvl_one: Tuple of integers indicating the shape of the
-            target grid to which to anterpolate the particle charges.
-        transform_mode: TODO: A string specifying assumptions on the shape of the
-            unit cell. Either the cell is assumed orthorhombic and
-            axis-aligned, in which case only its diagonal is considered,
-            reducing computational cost, or a general triclinic one.
-            May be omitted if the cell is both orthorhombic and static.
-
-    Returns:
-        TODO
-    """
-
-    def compute(positions, charges, kernel_stencils, cell=None):
-        # TODO: Should cell really have a default? Watch out for interaction
-        #  between defaults of transform_mode and cell.
-        transform_pos, backtransform_grad = _make_unitcube_transform_fns(
-            cell, transform_mode
-        )
-        basis_vals, basis_inds = per_particle_basis_fn(
-            transform_pos(positions)
-        )
-        # TODO: The next two statements are repeated in every,
-        #  make_compute_longrange_something function. Should they be wrapped
-        #  in a single function?
-        gridcharge_lvl_one = _anterpolate(
-            basis_vals,
-            basis_inds,
-            charges,
-            grid_shape_lvl_one,
-        )
-        gridpotential_lvl_one = grid_pass_fn(
-            gridcharge_lvl_one, kernel_stencils
-        )
-        return _interpolate_energy(
-            gridpotential_lvl_one,
-            basis_vals,
-            basis_inds,
-            charges,
-        )
-
-    return compute
-
-
-def make_static_cell_longrange_fn(
-    compute_longrange,  # TODO: argument name
-    kernel_stencils,
-    cell=None,
-):
-    # TODO: Should cell really default to None?
-    def compute(positions, charges):
-        return compute_longrange(
-            positions, charges, cell=cell, kernel_stencils=kernel_stencils
-        )
-
-    return compute
-
-
-def make_dyn_cell_longrange_fn(
-    compute_longrange, kernel_stencil_construction_fn
-):
-    def compute(positions, charges, cell):
-        return compute_longrange(
-            positions,
-            charges,
-            cell=cell,
-            kernel_stencils=kernel_stencil_construction_fn(cell),
-        )
-
-    return compute
-
-
-# TODO: name
-def make_compute_u_oneplus_jvpdecorator(
+def make_compute_u_oneplus(
     singleparticle_basis_fn_lvl_one: Callable[
         [ArrayLike], tuple[Array, Array]
     ],
@@ -446,6 +307,9 @@ def make_compute_u_oneplus_jvpdecorator(
     use_custom_derivatives: bool = True,
 ) -> Callable[[ArrayLike, ArrayLike, Sequence[ArrayLike | None]], Array]:
     """Create a function that computes the MSM long-range energy contribution.
+
+    The quantity being (approximately) calculated is called :math:`U^{1+}`
+    in the reference article.
 
     Args:
         singleparticle_basis_fn_lvl_one:
@@ -642,3 +506,32 @@ def make_compute_u_oneplus_jvpdecorator(
         return primal_out, tangent_out
 
     return compute_u_oneplus
+
+
+def make_dyn_cell_longrange_fn(
+    compute_longrange, kernel_stencil_construction_fn
+):
+    def compute(positions, charges, cell):
+        return compute_longrange(
+            positions,
+            charges,
+            cell=cell,
+            kernel_stencils=kernel_stencil_construction_fn(cell),
+        )
+
+    return compute
+
+
+# TODO: name
+def make_static_cell_longrange_fn(
+    compute_longrange,  # TODO: argument name
+    kernel_stencils,
+    cell=None,
+):
+    # TODO: Should cell really default to None?
+    def compute(positions, charges):
+        return compute_longrange(
+            positions, charges, cell=cell, kernel_stencils=kernel_stencils
+        )
+
+    return compute
