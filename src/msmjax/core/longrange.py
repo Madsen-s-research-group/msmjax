@@ -23,8 +23,6 @@ from jax.typing import ArrayLike
 # TODO: Define in some global typedef or utils module?
 CellMode = Literal["ortho", "general"]
 BasisEvalFn = Callable[[ArrayLike], tuple[Array, Array]]
-BasisGradFn = Callable[[ArrayLike], tuple[Array, Array]]
-BasisValAndGradFn = Callable[[ArrayLike], tuple[tuple[Array, Array], Array]]
 
 
 def _anterpolate(
@@ -41,18 +39,13 @@ def _anterpolate(
     return gridcharge_flat.reshape(grid_shape)
 
 
-def _interpolate_potential():
-    # TODO: Do we want to provide this?
-    pass
-
-
 def _interpolate_energy(
     gridpotential: ArrayLike,
     basis_vals: ArrayLike,
     indices: ArrayLike,
     charges: ArrayLike,
 ) -> Array:
-    """Low-level function for calculating the energy from the grid potential.
+    """Low-level function calculating long-range energy from grid potential.
 
     Args:
         gridpotential: Array of grid potential (:math:`e^{l+}` in the language
@@ -73,39 +66,30 @@ def _interpolate_energy(
     return energy
 
 
-def _interpolate_forces(
-    gridpotential: ArrayLike,
-    basis_grads: ArrayLike,
-    indices: ArrayLike,
-    charges: ArrayLike,
-) -> Array:
-    """Low-level function for calculating forces from grid potential.
-
-    Args:
-        gridpotential: Array of grid potential (:math:`e^{l+}` in the language
-            of the reference).
-        basis_grads: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_basis_grads`?)
-        indices: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_inds`?)
-        charges: Array of particle charges, shape `(n_particles,)`.
-
-    Returns:
-        Array of forces on particles, shape `(n_particles, n_dim)`.
-    """
-    # TODO: Do we need to use a fill value with `take` here?
-    #  (it shouldn't be possible for indices returned by the spline eval
-    #  functions to be out of bounds)
-    forces = -charges[:, jnp.newaxis] * jnp.sum(
-        gridpotential.take(indices)[..., jnp.newaxis] * basis_grads, axis=1
-    )
-    return forces
-
-
 def _interpolate_energy_positions_gradient(
     gridpotential: ArrayLike,
     basis_grads: ArrayLike,
     indices: ArrayLike,
     charges: ArrayLike,
 ) -> Array:
+    """Low-level function calculating positions gradient of long-range energy.
+
+    Implements an analytic expression for the derivative that calculates it
+    by explicitly interpolating it from the grid potential. This allows a
+    more efficient computation than default automatic differentiation of
+    the energy.
+
+    Args:
+        gridpotential: Array of grid potential (:math:`e^{l+}` in the language
+            of the reference).
+        basis_grads: TODO: How best to document (appears in several places (does it, though?))? More informative variable name? (`per_particle_basis_grads`?)
+        indices: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_inds`?)
+        charges: Array of particle charges, shape `(n_particles,)`.
+
+    Returns:
+        The gradient of the long-range energy w.r.t. particle positions,
+        which is an array of shape `(n_particles, n_dim)`.
+    """
     # TODO: Do we need to use a fill value with `take` here?
     #  (it shouldn't be possible for indices returned by the spline eval
     #  functions to be out of bounds)
@@ -120,6 +104,25 @@ def _interpolate_energy_charge_gradient(
     basis_vals: ArrayLike,
     indices: ArrayLike,
 ) -> Array:
+    """Low-level function calculating charge gradient of long-range energy.
+
+    Implements an analytic expression for the derivative that calculates it
+    by explicitly interpolating it from the grid potential. This allows a
+    more efficient computation than default automatic differentiation of
+    the energy.
+
+    # TODO: mention the relation to the electrostatic potential at particle positions?
+
+    Args:
+        gridpotential: Array of grid potential (:math:`e^{l+}` in the language
+            of the reference).
+        basis_vals: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_basis_grads`?)
+        indices: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_inds`?)
+
+    Returns:
+        The gradient of the long-range energy w.r.t. particle charges,
+        which is an array of shape `(n_particles,)`.
+    """
     # TODO: Do we need to use a fill value with `take` here?
     #  (it shouldn't be possible for indices returned by the spline eval
     #  functions to be out of bounds)
@@ -225,41 +228,6 @@ def special_periodic_convolve(
         return jax.scipy.signal.convolve(
             data, kernel, mode="same", method=method
         )
-
-
-# TODO: This is not needed anymore, is it?
-def make_anterpolation_fn(
-    per_particle_basis_fn: BasisEvalFn, grid_shape: tuple[int, ...]
-) -> Callable[[ArrayLike, ArrayLike], Array]:
-    """
-
-    Args:
-        per_particle_basis_fn: A function that, for all particles, identifies
-            those grid points with non-zero basis function values,
-            and evaluates them. See :func:`make_compute_longrange_energy`
-            for details of signature and meaning of return values.
-        grid_shape: Tuple of integers indicating the shape of the target grid
-            to which to anterpolate the particle charges.
-
-    Returns:
-        A function that takes arrays of particle positions and charges and
-        returns array of grid charge.
-    """
-    grid_size = int(onp.prod(grid_shape))
-
-    def anterpolate(positions: ArrayLike, charges: ArrayLike) -> Array:
-        """Anterpolate charge from particles to grid"""
-        # TODO: Indicate by variable names that indices are expected to be flat?
-        # TODO: Behavior when basis_eval_fn returns out-of-bounds indices?
-        #  Are there reasonable cases in which this may occur? Warning in docstring?
-        basis_vals, indices = per_particle_basis_fn(positions)
-        gridcharge_flat = jnp.zeros(grid_size)
-        gridcharge_flat = gridcharge_flat.at[indices].add(
-            charges[:, jnp.newaxis] * basis_vals
-        )
-        return gridcharge_flat.reshape(grid_shape)
-
-    return anterpolate
 
 
 def make_grid_pass(
@@ -440,82 +408,6 @@ def make_compute_longrange_energy(
     return compute
 
 
-# TODO: Function name? Should it include `oneplus` somehow?
-def make_compute_longrange_forces(
-    per_particle_basis_and_grad_fn: BasisEvalFn,
-    grid_pass_fn: Callable[[ArrayLike, ArrayLike], Array],
-    grid_shape_lvl_one: tuple[int, ...],
-    transform_mode: CellMode | None = None,
-):
-    def compute(positions, charges, kernel_stencils, cell=None):
-        # TODO: Should cell really have a default?
-        transform_pos, backtransform_grad = _make_unitcube_transform_fns(
-            cell, transform_mode
-        )
-        (basis_vals, basis_inds), basis_grads = per_particle_basis_and_grad_fn(
-            transform_pos(positions)
-        )
-        gridcharge_lvl_one = _anterpolate(
-            basis_vals,
-            basis_inds,
-            charges,
-            grid_shape_lvl_one,
-        )
-        gridpotential_lvl_one = grid_pass_fn(
-            gridcharge_lvl_one, kernel_stencils
-        )
-        forces = _interpolate_forces(
-            gridpotential_lvl_one,
-            basis_grads,
-            basis_inds,
-            charges,
-        )
-        return backtransform_grad(forces)
-
-    return compute
-
-
-# TODO: Function name? Should it include `oneplus` somehow?
-def make_compute_longrange_energy_and_forces(
-    per_particle_basis_and_grad_fn: BasisEvalFn,
-    grid_pass_fn: Callable[[ArrayLike, ArrayLike], Array],
-    grid_shape_lvl_one: tuple[int, ...],
-    transform_mode: CellMode | None = None,
-):
-    def compute(positions, charges, kernel_stencils, cell=None):
-        # TODO: Should cell really have a default?
-        transform_pos, backtransform_grad = _make_unitcube_transform_fns(
-            cell, transform_mode
-        )
-        (basis_vals, basis_inds), basis_grads = per_particle_basis_and_grad_fn(
-            transform_pos(positions)
-        )
-        gridcharge_lvl_one = _anterpolate(
-            basis_vals,
-            basis_inds,
-            charges,
-            grid_shape_lvl_one,
-        )
-        gridpotential_lvl_one = grid_pass_fn(
-            gridcharge_lvl_one, kernel_stencils
-        )
-        energy = _interpolate_energy(
-            gridpotential_lvl_one,
-            basis_vals,
-            basis_inds,
-            charges,
-        )
-        forces = _interpolate_forces(
-            gridpotential_lvl_one,
-            basis_grads,
-            basis_inds,
-            charges,
-        )
-        return energy, backtransform_grad(forces)
-
-    return compute
-
-
 def make_static_cell_longrange_fn(
     compute_longrange,  # TODO: argument name
     kernel_stencils,
@@ -544,179 +436,7 @@ def make_dyn_cell_longrange_fn(
     return compute
 
 
-# TODO: If all is reduced to this custom-derivative energy function and there
-#  are no more separate force functions, there is really no reason not to call
-#  it compute_u_oneplus or similar
-def make_compute_energy_customjvp(
-    charges, kernel_stencils, grid_shape_lvl_one, single_particle_basis_fn
-):
-    # - Hardcoding charges, kernel stencils for now to not have to deal with
-    #   multiple parameters in JVP definition.
-    # - Hardcoding the grid shape for now.
-    # - Hardcoding the one-particle basis eval function for now.
-
-    @jax.custom_jvp
-    def compute_energy(positions):
-        basis_vals, basis_inds = jax.vmap(single_particle_basis_fn)(positions)
-        gridcharge_lvl_one = _anterpolate(
-            basis_vals,
-            basis_inds,
-            charges,
-            grid_shape_lvl_one,
-        )
-        gridpotential_lvl_one = grid_pass_fn(
-            gridcharge_lvl_one, kernel_stencils
-        )
-        return _interpolate_energy(
-            gridpotential_lvl_one,
-            basis_vals,
-            basis_inds,
-            charges,
-        )
-
-    @compute_energy.defjvp
-    def compute_energy_jvp(primals, tangents):
-        (positions,) = primals
-        (positions_t,) = tangents
-        basis_vals, basis_inds = jax.vmap(single_particle_basis_fn)(positions)
-        # TODO: don't repeat basis_inds assignment
-        # TODO: Order of jac and vmap? jacfwd/jacrev? (jacrev appears much slower in a quick test)
-        basis_grads, basis_inds = jax.vmap(
-            jax.jacfwd(single_particle_basis_fn, has_aux=True)
-        )(positions)
-        gridcharge_lvl_one = _anterpolate(
-            basis_vals,
-            basis_inds,
-            charges,
-            grid_shape_lvl_one,
-        )
-        gridpotential_lvl_one = grid_pass_fn(
-            gridcharge_lvl_one, kernel_stencils
-        )
-        # TODO: can we compute the energy by calling compute_e_jvp, or does that ruin the efficiency?
-        energy = _interpolate_energy(
-            gridpotential_lvl_one,
-            basis_vals,
-            basis_inds,
-            charges,
-        )
-        # TODO: don't go via forces, which requires double minus
-        forces = _interpolate_forces(
-            gridpotential_lvl_one,
-            basis_grads,
-            basis_inds,
-            charges,
-        )
-        primals_out = energy
-        tangents_out = -(forces * positions_t).sum()  # TODO: minus (see above)
-
-        return primals_out, tangents_out
-
-    return compute_energy
-
-
-def make_compute_u_oneplus(
-    single_particle_basis_fn: BasisEvalFn,
-    grid_pass_fn: Callable[[ArrayLike, Sequence[ArrayLike]], Array],
-    grid_shape_lvl_one: tuple[int, ...],
-):
-    def _compute_u_oneplus(
-        positions: ArrayLike,
-        charges: ArrayLike,
-        kernel_stencils: Sequence[ArrayLike],
-    ):
-        basis_vals, basis_inds = jax.vmap(single_particle_basis_fn)(positions)
-        gridcharge_lvl_one = _anterpolate(
-            basis_vals,
-            basis_inds,
-            charges,
-            grid_shape_lvl_one,
-        )
-        gridpotential_lvl_one = grid_pass_fn(
-            gridcharge_lvl_one, kernel_stencils
-        )
-        # TODO: Do direct contraction of gridcharge and gridpotential instead
-        #  of interpolating back?
-        return _interpolate_energy(
-            gridpotential_lvl_one,
-            basis_vals,
-            basis_inds,
-            charges,
-        )
-
-    @jax.custom_jvp
-    def compute_u_oneplus(
-        positions: ArrayLike,
-        charges: ArrayLike,
-        kernel_stencils: Sequence[ArrayLike],
-    ):
-        return _compute_u_oneplus(positions, charges, kernel_stencils)
-
-    def compute_u_oneplus_dx(
-        positions_dot, primal_out, positions, charges, kernel_stencils
-    ):
-        basis_vals, basis_inds = jax.vmap(single_particle_basis_fn)(positions)
-        # TODO: Order of jac and vmap? jacfwd/jacrev?
-        #  (jacrev was much slower in a quick test, which also makes sense
-        #  because single_particle_fn has (in 3 dimensions) 3 inputs vs.
-        #  something on the order of 64 or 216 outputs)
-        basis_grads, _ = jax.vmap(
-            jax.jacfwd(single_particle_basis_fn, has_aux=True)
-        )(positions)
-        gridcharge_lvl_one = _anterpolate(
-            basis_vals,
-            basis_inds,
-            charges,
-            grid_shape_lvl_one,
-        )
-        gridpotential_lvl_one = grid_pass_fn(
-            gridcharge_lvl_one, kernel_stencils
-        )
-        positions_jac = _interpolate_energy_positions_gradient(
-            gridpotential_lvl_one,
-            basis_grads,
-            basis_inds,
-            charges,
-        )
-        return (positions_jac * positions_dot).sum()
-
-    def compute_u_oneplus_dq(
-        charges_dot, primal_out, positions, charges, kernel_stencils
-    ):
-        basis_vals, basis_inds = jax.vmap(single_particle_basis_fn)(positions)
-        gridcharge_lvl_one = _anterpolate(
-            basis_vals,
-            basis_inds,
-            charges,
-            grid_shape_lvl_one,
-        )
-        gridpotential_lvl_one = grid_pass_fn(
-            gridcharge_lvl_one, kernel_stencils
-        )
-        charges_jac = _interpolate_energy_charge_gradient(
-            gridpotential_lvl_one, basis_vals, basis_inds
-        )
-        return (charges_jac * charges_dot).sum()
-
-    def compute_u_oneplus_dk(
-        kernel_stencils_dot, primal_out, positions, charges, kernel_stencils
-    ):
-        primals_in = (positions, charges, kernel_stencils)
-        tangents_in = (
-            onp.zeros(positions.shape, dtype=float),
-            onp.zeros(charges.shape, dtype=float),
-            kernel_stencils_dot,
-        )
-        _, tangents_out = jax.jvp(_compute_u_oneplus, primals_in, tangents_in)
-        return tangents_out
-
-    compute_u_oneplus.defjvps(
-        compute_u_oneplus_dx, compute_u_oneplus_dq, compute_u_oneplus_dk
-    )
-
-    return compute_u_oneplus
-
-
+# TODO: name
 def make_compute_u_oneplus_jvpdecorator(
     single_particle_basis_fn: Callable[[ArrayLike], tuple[Array, Array]],
     grid_pass_fn: Callable[[ArrayLike, Sequence[ArrayLike | None]], Array],
