@@ -228,14 +228,14 @@ def make_grid_pass_fn(
 
        The operator sequences passed as parameters to this function need to
        respect the grid-level indexing convention. As per convention,
-       grid level 0 refers to the particle level (where interactions are
+       the index 0 refers to the particle level (where interactions are
        computed directly without grids), whereas the lowest actual grid
-       level is level 1. Further, for the restriction and prolongation
+       level is at index 1. Further, for the restriction and prolongation
        functions, which connect two different grid levels, the convention is
-       that the function at index :math:`l` is the one whose output lives on
-       grid level :math:`l`. For example, the operator :math:`\mathcal{
-       I}^2_1` that restricts the grid charge from level 1 to 2 would be
-       addressed as ``restriction_fns[2]``.
+       that the function whose `output` lives on grid level :math:`l` is
+       located at index :math:`l` of the sequence. For example, the operator
+       :math:`\mathcal{ I}^2_1` that restricts the grid charge from level 1
+       to 2 would be addressed as ``restriction_fns[2]``.
 
        Thus, the input for, e.g., four grid levels should look like this,
        employing placeholders where needed:
@@ -249,11 +249,22 @@ def make_grid_pass_fn(
     Args:
         restriction_fns: Sequence of restriction functions,
             one for each level, including placeholders (see above note).
+            Corresponding to the upward arrows on the left side of the
+            V-cycle diagram. Input is array of grid charge, output is array
+            of grid charge one level higher.
         prolongation_fns: Sequence of prolongation functions,
             one for each level, including placeholders (see above note).
+            Corresponding to the downward arrows on the right side of the
+            V-cycle diagram. Input is array of grid potential,
+            output is array of potential prolongated to the next lower level.
         interaction_fns: Sequence of interaction functions (TODO: name),
             one for each level, including placeholders (see above note).
-            TODO: explain signature?
+            Corresponding to the horizontal arrows in the V-cycle diagram.
+            Inputs are two arrays, grid charge and a kernel coefficient
+            stencil, output is the grid potential on the same level.
+            Mathematically:
+            :math:`e^{l}_{\\mathbf{m}} = \sum_{\mathbf{n}} K^l_{\\mathbf{m}
+            - \\mathbf{n}} \\tilde{q}^l_{\\mathbf{n}}`.
 
     Returns:
         A function for performing the pass through all grid levels.
@@ -261,15 +272,12 @@ def make_grid_pass_fn(
         one and takes two arguments:
 
             - The level-one grid charge :math:`\\tilde{q}^1`.
-            - A sequence of coefficient stencil arrays for the interaction kernels,
-              one per grid level (including a placeholder at level zero,
-              see note above on grid-level indexing convention).
-              These correspond to the :math:`K^l` in the expression
-              :math:`e^{l}_{\\mathbf{m}} = \sum_{\mathbf{n}} K^l_{\\mathbf{m}
-              - \\mathbf{n}} \\tilde{q}^l_{\\mathbf{n}}`
-              for calculating the grid potentials from grid charges.
-              The :math:`l`-th stencil is consumed by the :math:`l`-th element
-              of ``ìnteraction_fns``
+            - A sequence of coefficient stencil arrays for the interaction
+              kernels, one per grid level (including a placeholder at level
+              zero, see note above on grid-level indexing convention). These
+              are passed to the ``interaction_fns`` that were supplied to
+              construct the grid pass function. The :math:`l`-th stencil is
+              consumed by the :math:`l`-th element of ``ìnteraction_fns``
     """
     # TODO: In fact it's questionable, whether a separate interaction_fn for
     #  each level is needed at all. `special_periodic_convolve` should work
