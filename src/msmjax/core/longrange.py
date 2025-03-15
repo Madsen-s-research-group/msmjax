@@ -22,18 +22,36 @@ from jax.typing import ArrayLike
 
 # TODO: Define in some global typedef or utils module?
 CellMode = Literal["ortho", "general"]
-BasisEvalFn = Callable[[ArrayLike], tuple[Array, Array]]
 
 
 def _anterpolate(
     basis_vals: ArrayLike,
-    indices: ArrayLike,
+    basis_inds: ArrayLike,
     charges: ArrayLike,
     grid_shape: tuple[int, ...],
 ):
+    """ "Low-level function doing anterpolation (= calculating grid charge).
+
+    Args:
+        basis_vals: Array of shape `(n_particles, support_size)`, where
+            `support_size` is the number of grid points around one particle
+            with non-zero values of their basis functions. Contains the
+            values of nearby non-zero basis functions for all particles. The
+            first axis runs over particles, the second over grid points.
+        basis_inds: Array of the same shape as ``basis_vals`` which, for all
+            particles, contains the `flat` (!) indices of all nearby grid
+            points with non-zero basis function values.
+        charges: Array of charges, shape `(n_particles,)`.
+        grid_shape: Tuple of integers representing shape of the target
+            grid to which particle charges will be anterpolated.
+
+    Returns:
+        An array of the same shape as the ``grid_shape`` parameter that
+        contains the value of the grid charge for each grid point.
+    """
     grid_size = int(onp.prod(grid_shape))
     gridcharge_flat = jnp.zeros(grid_size)
-    gridcharge_flat = gridcharge_flat.at[indices].add(
+    gridcharge_flat = gridcharge_flat.at[basis_inds].add(
         charges[:, jnp.newaxis] * basis_vals
     )
     return gridcharge_flat.reshape(grid_shape)
@@ -90,9 +108,6 @@ def _interpolate_energy_positions_gradient(
         The gradient of the long-range energy w.r.t. particle positions,
         which is an array of shape `(n_particles, n_dim)`.
     """
-    # TODO: Do we need to use a fill value with `take` here?
-    #  (it shouldn't be possible for indices returned by the spline eval
-    #  functions to be out of bounds)
     result = charges[:, jnp.newaxis] * jnp.sum(
         gridpotential.take(indices)[..., jnp.newaxis] * basis_grads, axis=1
     )
@@ -123,9 +138,6 @@ def _interpolate_energy_charge_gradient(
         The gradient of the long-range energy w.r.t. particle charges,
         which is an array of shape `(n_particles,)`.
     """
-    # TODO: Do we need to use a fill value with `take` here?
-    #  (it shouldn't be possible for indices returned by the spline eval
-    #  functions to be out of bounds)
     return (gridpotential.take(indices) * basis_vals).sum(axis=1)
 
 
@@ -164,7 +176,7 @@ def special_periodic_convolve(
         pbc: One boolean per direction signaling periodicity.
         method: String indicating the method to use for calculating the
             convolution. Either 'direct' or 'fft'. Passed on to
-            :func:`jax.scipy.signal.convolve`.
+            :func:`jax.scipy.signal.convolve`. `fft` is usually much faster.
 
     Returns:
         An array of the same shape as ``data`` containing the convolution of
@@ -431,8 +443,8 @@ def make_compute_u_oneplus(
         - Array of positions, shape `(n_particles, n_dim)`.
         - Array of charges, shape `(n_particles,)`.
         - A sequence of coefficient stencils for the interaction kernels (one
-          per grid level, including a placeholder at level zero). See
-          :func:`make_grid_pass_fn` for more details.
+          per grid level, including a placeholder at level zero). Passed to
+          ``grid_pass_fn``. See :func:`make_grid_pass_fn` for more details.
     """
 
     def _compute_u_oneplus(
@@ -445,13 +457,10 @@ def make_compute_u_oneplus(
         Args:
             positions: Array of positions, shape `(n_particles, n_dim)`.
             charges: Array of charges, shape `(n_particles,)`.
-            kernel_stencils: A sequence of arrays, with length equal to the
-                number of MSM levels. Each element corresponds to one MSM
-                level. The element at index 0 (corresponding to level 0, where
-                the interaction is evaluated directly rather than via grids)
-                is not used, but a placeholder (conventionally ``None``) is
-                required to be present.
-                TODO: Explain what the stencils actually are; mention dimensions
+            kernel_stencils: A sequence of coefficient stencils for the
+                interaction kernels (one per grid level, including a
+                placeholder at level zero). Passed to ``grid_pass_fn``. See
+                :func:`make_grid_pass_fn` for more details.
 
         Returns:
             The long-range energy contribution :math:`U^{1+}`.
@@ -460,10 +469,7 @@ def make_compute_u_oneplus(
             positions
         )
         gridcharge_lvl_one = _anterpolate(
-            basis_vals,
-            basis_inds,
-            charges,
-            grid_shape_lvl_one,
+            basis_vals, basis_inds, charges, grid_shape_lvl_one
         )
         gridpotential_lvl_oneplus = grid_pass_fn(
             gridcharge_lvl_one, kernel_stencils
