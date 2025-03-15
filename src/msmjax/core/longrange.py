@@ -149,9 +149,6 @@ def special_periodic_convolve(
 ) -> Array:
     """Perform a specialized case of convolution with optional wrapping.
 
-    TODO: Show the formula of what this is meant for (convolving grid charge
-        with interaction kernel coefficient stencil)?
-
     Implemented as a wrapper around :func:`jax.scipy.signal.convolve`
     with, depending on periodicity, appropriate padding of the input arrays:
 
@@ -181,7 +178,6 @@ def special_periodic_convolve(
         An array of the same shape as ``data`` containing the convolution of
         the two arrays.
     """
-    # TODO: Should this function be a protected member?
     pbc = onp.asarray(pbc)
 
     if pbc.any():
@@ -581,28 +577,59 @@ def _make_unitcube_transform_fns(
 
 # TODO: name
 def make_static_cell_longrange_fn(
-    compute_longrange,  # TODO: argument name
-    kernel_stencils,
+    longrange_energy_fn,  # TODO: argument name
+    kernel_stencils,  # TODO: use stencil construction fn here as well?
+    transform_mode=None,
     cell=None,
 ):
-    # TODO: Should cell really default to None?
-    def compute(positions, charges):
-        return compute_longrange(
-            positions, charges, cell=cell, kernel_stencils=kernel_stencils
+    # TODO: in case we don't pass the kernel stencils themselves but the
+    #  stencil construction fn, the cell is always required, and we don't need
+    #  this check.
+    # TODO: If we pass the stencil construction fn, should the calcualation of
+    #  the kernel stencils (which probably should happen outside the returned
+    #  closure) be jitted?
+    if (transform_mode is None and cell is not None) or (
+        cell is None and transform_mode is not None
+    ):
+        raise ValueError(
+            "Specify either both 'transform_mode' and 'cell' "
+            "or none of them."
         )
+    use_transform = (transform_mode is not None) and (cell is not None)
+    if use_transform:
+        positions_to_unitcube = _make_unitcube_transform_fn(
+            cell, transform_mode
+        )
+
+    def compute(positions, charges):
+        if use_transform:
+            return longrange_energy_fn(
+                positions_to_unitcube(positions),
+                charges,
+                kernel_stencils=kernel_stencils,
+                # kernel_stencils=kernel_stencil_construction_fn(cell), # TODO
+            )
+        else:
+            return longrange_energy_fn(
+                positions, charges, kernel_stencils=kernel_stencils
+            )
 
     return compute
 
 
 # TODO: name
 def make_dyn_cell_longrange_fn(
-    compute_longrange, kernel_stencil_construction_fn
+    unitcube_longrange_energy_fn,
+    kernel_stencil_construction_fn,
+    transform_mode: CellMode,
 ):
     def compute(positions, charges, cell):
-        return compute_longrange(
-            positions,
+        positions_to_unitcube = _make_unitcube_transform_fn(
+            cell, transform_mode
+        )
+        return unitcube_longrange_energy_fn(
+            positions_to_unitcube(positions),
             charges,
-            cell=cell,
             kernel_stencils=kernel_stencil_construction_fn(cell),
         )
 
