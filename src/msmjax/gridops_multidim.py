@@ -172,6 +172,13 @@ class BSplineInterpolationGrid:
             *inds_individual_axes
         )
         # TODO: mode?
+        # TODO: In fact, it would probably be helpful if this function
+        #  returned out-of-bounds indices in case it receives coordinates
+        #  that are outside the box, in order to facilitate catching errors
+        #  (because particles are not supposed to move outside the pre-defined
+        #  grid limits, and if they do something went wrong).
+        #  Using ravel_multi_index, I don't think this behavior is possible,
+        #  because it always clips or wraps indices to the valid range.
         inds_flat = jax.vmap(
             lambda mi: jnp.ravel_multi_index(mi, dims=self.shape, mode="clip")
         )(multi_inds)
