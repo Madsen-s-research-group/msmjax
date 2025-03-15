@@ -233,9 +233,9 @@ def make_grid_pass_fn(
        level is level 1. Further, for the restriction and prolongation
        functions, which connect two different grid levels, the convention is
        that the function at index :math:`l` is the one whose output lives on
-       grid level :math:`l`. For example, the operator :math:`\mathcal{I}^2_1` that restricts the
-       grid charge from level 1 to 2 would be addressed as
-       ``restriction_fns[2]``.
+       grid level :math:`l`. For example, the operator :math:`\mathcal{
+       I}^2_1` that restricts the grid charge from level 1 to 2 would be
+       addressed as ``restriction_fns[2]``.
 
        Thus, the input for, e.g., four grid levels should look like this,
        employing placeholders where needed:
@@ -253,9 +253,23 @@ def make_grid_pass_fn(
             one for each level, including placeholders (see above note).
         interaction_fns: Sequence of interaction functions (TODO: name),
             one for each level, including placeholders (see above note).
+            TODO: explain signature?
 
     Returns:
+        A function for performing the pass through all grid levels.
+        It calculates the accumulated grid potential :math:`e^{1+}` at level
+        one and takes two arguments:
 
+            - The level-one grid charge :math:`\\tilde{q}^1`.
+            - A sequence of coefficient stencil arrays for the interaction kernels,
+              one per grid level (including a placeholder at level zero,
+              see note above on grid-level indexing convention).
+              These correspond to the :math:`K^l` in the expression
+              :math:`e^{l}_{\\mathbf{m}} = \sum_{\mathbf{n}} K^l_{\\mathbf{m}
+              - \\mathbf{n}} \\tilde{q}^l_{\\mathbf{n}}`
+              for calculating the grid potentials from grid charges.
+              The :math:`l`-th stencil is consumed by the :math:`l`-th element
+              of ``ìnteraction_fns``
     """
     # TODO: In fact it's questionable, whether a separate interaction_fn for
     #  each level is needed at all. `special_periodic_convolve` should work
