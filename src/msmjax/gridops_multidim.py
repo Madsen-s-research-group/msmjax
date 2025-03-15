@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Callable, Iterable, List, Literal, NamedTuple, Tuple, Union
+from typing import Callable, Iterable, List, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -7,6 +7,7 @@ import numpy as onp
 import numpy.typing as npt
 
 from msmjax.bspline_interpolation.basis import create_bspline_basis_element
+from msmjax.core.longrange import special_periodic_convolve
 
 
 class BSplineInterpolationAxis(NamedTuple):
@@ -492,102 +493,6 @@ def create_prolongation_operator(
     return prolongate
 
 
-def create_interaction_operator_custom(
-    grid: BSplineInterpolationGrid, kernel_stencil: npt.ArrayLike
-):
-    kernel_stencil = jnp.asarray(kernel_stencil)
-    kernelranges_individual_axes = [
-        jnp.arange(-(s // 2), (s // 2) + 1) for s in kernel_stencil.shape
-    ]
-
-    inds_all = jnp.meshgrid(
-        *[jnp.arange(s) for s in grid.shape], indexing="ij"
-    )
-    inds_all = [i.ravel() for i in inds_all]
-
-    def get_neighbor_inds(*ii):
-        neigbor_inds_individual_axes = [
-            i + offsets for i, offsets in zip(ii, kernelranges_individual_axes)
-        ]
-        neigbor_inds_individual_axes = [
-            ga.wrap_or_invalidate_indices(nghbr_inds)
-            for ga, nghbr_inds in zip(grid.axes, neigbor_inds_individual_axes)
-        ]
-        meshgrid = jnp.meshgrid(*neigbor_inds_individual_axes, indexing="ij")
-        neighbor_multi_inds = tuple(inds.ravel() for inds in meshgrid)
-
-        return neighbor_multi_inds
-
-    def calculate_one_element(in_array, *ii):
-        # TODO: it might be cleaner to not pass central idx as arg and determine
-        #  neighbor inds inside this function, but pass precomputed neighbor inds.
-        #  Precomputing all neighbor inds could be done like (informally) `inds_all + offsets`,
-        #  or determine for just one central idx and then shift to all other central inds
-        neighbor_multi_inds = get_neighbor_inds(*ii)
-        # TODO: if all directions are periodic, we can omit the in-bounds check,
-        #  potentially saving some time
-        is_in_bounds = jnp.array(
-            [inds < s for inds, s in zip(neighbor_multi_inds, in_array.shape)]
-        ).all(axis=0)
-        return jnp.where(
-            is_in_bounds,
-            in_array[neighbor_multi_inds] * kernel_stencil.ravel(),
-            0.0,
-        ).sum()
-
-    def apply_interaction(in_array):
-        convolved = jax.vmap(
-            calculate_one_element, in_axes=(None,) + (0,) * grid.ndim
-        )(in_array, *inds_all)
-        return convolved.reshape(grid.shape)
-
-    return apply_interaction
-
-
-@partial(jax.jit, static_argnames=["pbc", "method"])
-def convolve_scipy_general_pbc(
-    data: npt.ArrayLike,
-    kernel: npt.ArrayLike,
-    pbc: npt.ArrayLike,
-    method: Literal["direct", "fft"],
-):
-    pbc = onp.asarray(pbc)
-
-    if pbc.any():
-        size_kernel = onp.array(kernel.shape)
-        size_kernel_below_middle = size_kernel // 2
-        size_kernel_above_middle = size_kernel - size_kernel_below_middle - 1
-        pad_width = tuple(
-            (int(s_b), int(s_a))
-            for s_b, s_a in zip(
-                size_kernel_below_middle, size_kernel_above_middle
-            )
-        )
-        pad_width = tuple(
-            pw if periodic else (0, 0) for pw, periodic in zip(pad_width, pbc)
-        )
-        inds_reconstruct_unpadded = []
-        for pw, periodic in zip(pad_width, pbc):
-            if periodic:
-                inds_reconstruct_unpadded.append(slice(pw[0], -pw[1]))
-            else:
-                inds_reconstruct_unpadded.append(slice(None))
-        inds_reconstruct_unpadded = tuple(inds_reconstruct_unpadded)
-        data_extended = jnp.pad(
-            data,
-            pad_width=pad_width,
-            mode="wrap",
-        )
-        nruter = jax.scipy.signal.convolve(
-            data_extended, kernel, mode="same", method=method
-        )
-        return nruter[inds_reconstruct_unpadded]
-    else:
-        return jax.scipy.signal.convolve(
-            data, kernel, mode="same", method=method
-        )
-
-
 def create_all_grid_to_grid_ops(grids, convolution_methods=None):
     """Create all necessary functions that map from grids to grids
 
@@ -599,6 +504,9 @@ def create_all_grid_to_grid_ops(grids, convolution_methods=None):
     if convolution_methods is None:
         # TODO: Is this the best place to specify the convolution method? Do
         #  in the default parameters of a higher-level function instead?
+        # TODO: Do the strings really need to contain "scipy", now that my
+        #  "custom" convolution function has been removed? Aren't "direct"
+        #  and "fft" enough?
         convolution_methods = [None] + ["scipy-fft"] * n_levels
     if isinstance(convolution_methods, str):
         convolution_methods = [None] + [convolution_methods] * n_levels
@@ -625,17 +533,15 @@ def create_all_grid_to_grid_ops(grids, convolution_methods=None):
         conv_meth = convolution_methods[lvl]
         # TODO: test that all these convolution methods actually give the
         #  same result
-        if conv_meth == "custom-direct":
-            interact = create_interaction_operator_custom(grid=grids[lvl])
-        elif conv_meth == "scipy-direct":
+        if conv_meth == "scipy-direct":
             interact = partial(
-                convolve_scipy_general_pbc,
+                special_periodic_convolve,
                 pbc=grids[lvl].pbc,
                 method="direct",
             )
         elif conv_meth == "scipy-fft":
             interact = partial(
-                convolve_scipy_general_pbc,
+                special_periodic_convolve,
                 pbc=grids[lvl].pbc,
                 method="fft",
             )
@@ -646,237 +552,3 @@ def create_all_grid_to_grid_ops(grids, convolution_methods=None):
         interaction_fns[lvl] = interact
 
     return restriction_fns, prolongation_fns, interaction_fns
-
-
-def create_compute_gridpotential_level_one(
-    grids, convolution_methods=None
-) -> Callable:
-    """Create closure for computing potential on lowest-level grid"""
-    # TODO: check if all grids have same J and p?
-    # TODO: check if shape of J is compatible with p?
-    (
-        restriction_fns,
-        prolongation_fns,
-        interaction_fns,
-    ) = create_all_grid_to_grid_ops(grids, convolution_methods)
-
-    def compute_gridpotential_level_one(
-        gridcharge_level_one: jax.Array,
-        # TODO: correct type hint?
-        kernel_stencils: List[Union[None, Callable]],
-    ) -> jax.Array:
-        """Compute level-one grid potential from level-one grid charge.
-
-        Computes the quantity called e^{1+} in the reference article.
-
-        This corresponds to going from the lowest grid level on the left side
-        of ladder in Fig. 5 of the reference article all the way up to the
-        highest grid level and back down to the lowest grid level on the right.
-
-        Args:
-            gridcharge_level_one: Array of grid charge at lowest grid level
-
-        Returns:
-            Accumulated potential at the lowest grid level
-        """
-        n_levels = len(grids) - 1
-        gridcharges_all_levels = {1: gridcharge_level_one}
-
-        # Go up ladder
-        for lvl in range(2, n_levels + 1):
-            restrict = restriction_fns[lvl]
-            gridcharge_fine = gridcharges_all_levels[lvl - 1]
-            gridcharge_coarse = restrict(gridcharge_fine)
-            gridcharges_all_levels[lvl] = gridcharge_coarse
-
-        # Apply top-level interaction
-        gridcharge_toplevel = gridcharges_all_levels[n_levels]
-        interact_toplevel = interaction_fns[n_levels]
-        kernel_stencils_toplevel = kernel_stencils[n_levels]
-        gridpotential = interact_toplevel(
-            gridcharge_toplevel, kernel_stencils_toplevel
-        )
-
-        # Go down ladder
-        for lvl in range(n_levels - 1, 0, -1):
-            gridpotential = interaction_fns[lvl](
-                gridcharges_all_levels[lvl], kernel_stencils[lvl]
-            ) + prolongation_fns[lvl](gridpotential)
-
-        return gridpotential
-
-    return compute_gridpotential_level_one
-
-
-def create_compute_U_oneplus_direct(
-    grids, convolution_methods=None
-) -> Callable:
-    """Create closure for computing grid contribution to the energy.
-
-    This function is one of several ways how this can be done. It computes the
-    energy by directly contracting the grid charge with the grid potential,
-    without reconstructing the particle-level electrostatic potential.
-    """
-    anterpolate_level_one = create_anterpolation_operator(grids[1])
-    compute_gridpotential_level_one = create_compute_gridpotential_level_one(
-        grids=grids,
-        convolution_methods=convolution_methods,
-    )
-
-    def compute_U_oneplus(
-        positions: jax.Array, charges: jax.Array, kernel_stencils: jax.Array
-    ) -> jax.Array:
-        gridcharge_level_one = anterpolate_level_one(positions, charges)
-        gridpotential_level_one = compute_gridpotential_level_one(
-            gridcharge_level_one, kernel_stencils
-        )
-        return 0.5 * (gridcharge_level_one * gridpotential_level_one).sum()
-
-    return compute_U_oneplus
-
-
-def create_compute_U_oneplus_via_potential(
-    grids, convolution_methods=None, return_particle_contribs=False
-) -> Callable:
-    """Create closure for computing grid contribution to the energy
-
-    This function is one of several ways how this can be done. It computes the
-    energy by first explicitly reconstructing the electrostatic potential at
-    the positions of particles, by contracting the grid potential with the
-    interpolation basis functions.
-    """
-    anterpolate_level_one = create_anterpolation_operator(grids[1])
-    compute_gridpotential_level_one = create_compute_gridpotential_level_one(
-        grids=grids,
-        convolution_methods=convolution_methods,
-    )
-
-    def compute_U_oneplus(
-        positions: jax.Array, charges: jax.Array, kernel_stencils: jax.Array
-    ) -> jax.Array:
-        gridcharge_level_one = anterpolate_level_one(positions, charges)
-        gridpotential_level_one = compute_gridpotential_level_one(
-            gridcharge_level_one, kernel_stencils
-        )
-
-        # TODO: splinevals and indices from anterpolation could, in principle,
-        #  be reused here instead of recalculated;
-        #  but would this be any faster in practice?
-        # TODO: ... or compute by directly contracting grid charges with
-        #  grid potential? Why would one need to (re-)evaluate the spline
-        #  basis functions?
-        splinevals, indices = grids[1].evaluate_bspline_basis_multiparticle(
-            positions
-        )
-        # TODO: Do we need to use a fill value with `take` here?
-        #  (it shouldn't be possible for indices returned by the spline eval
-        #  functions to be out of bounds)
-        # TODO: return per-particle energy contributions, or electrostatic
-        #  potential at particle positions, or ...?
-        particle_contribs = charges * (
-            gridpotential_level_one.take(indices) * splinevals
-        ).sum(axis=1)
-        energy = 0.5 * jnp.sum(particle_contribs)
-
-        if return_particle_contribs:
-            return energy, particle_contribs
-        else:
-            return energy
-
-    return compute_U_oneplus
-
-
-def create_compute_f_oneplus_via_potential(
-    grids, convolution_methods=None
-) -> Callable:
-    """Create closure for computing grid contribution to forces
-
-    This function is one of several ways how this can be done. It computes the
-    forces by first explicitly reconstructing the electric field at the
-    positions of particles, by contracting the grid potential with the
-    negative gradient of the interpolation basis functions."""
-    anterpolate_level_one = create_anterpolation_operator(grids[1])
-    compute_gridpotential_level_one = create_compute_gridpotential_level_one(
-        grids=grids,
-        convolution_methods=convolution_methods,
-    )
-
-    def compute_f_oneplus(
-        positions: jax.Array, charges: jax.Array, kernel_stencils: jax.Array
-    ) -> jax.Array:
-        gridcharge_level_one = anterpolate_level_one(positions, charges)
-        gridpotential_level_one = compute_gridpotential_level_one(
-            gridcharge_level_one, kernel_stencils
-        )
-
-        # TODO: splinevals, splinegrads and indices from anterpolation could,
-        #  in principle, be reused here instead of recalculated;
-        #  but would this be any faster in practice?
-        splinegrads, indices = grids[
-            1
-        ].evaluate_bspline_basis_gradient_multiparticle(positions)
-        # TODO: Do we need to use a fill value with `take` here?
-        #  (it shouldn't be possible for indices returned by the spline eval
-        #  functions to be out of bounds)
-        forces = -charges[:, jnp.newaxis] * jnp.sum(
-            gridpotential_level_one.take(indices)[..., jnp.newaxis]
-            * splinegrads,
-            axis=1,
-        )
-
-        return forces
-
-    return compute_f_oneplus
-
-
-def create_compute_U_and_f_oneplus_via_potential(
-    grids, convolution_methods=None
-) -> Callable:
-    """Create closure for computing grid contribution to energy and forces.
-
-    This function is one of several ways how this can be done. It computes the
-    energy and forces by first explicitly reconstructing the electrostatic
-    potential and electric field at the positions of particles, by contracting
-    the grid potential with the interpolation basis functions and their
-    gradients, respectively.
-    """
-    # TODO: write test for this (compare to a different method of calculating)
-    anterpolate_level_one = create_anterpolation_operator(grids[1])
-    compute_gridpotential_level_one = create_compute_gridpotential_level_one(
-        grids=grids,
-        convolution_methods=convolution_methods,
-    )
-
-    def compute_U_and_f_oneplus(
-        positions: jax.Array, charges: jax.Array, kernel_stencils: jax.Array
-    ) -> Tuple[jax.Array, jax.Array]:
-        gridcharge_level_one = anterpolate_level_one(positions, charges)
-        gridpotential_level_one = compute_gridpotential_level_one(
-            gridcharge_level_one, kernel_stencils
-        )
-
-        # TODO: splinevals, splinegrads and indices from anterpolation could,
-        #  in principle, be reused here instead of recalculated;
-        #  but would this be any faster in practice?
-        splinevals, indices = grids[1].evaluate_bspline_basis_multiparticle(
-            positions
-        )
-        splinegrads, _ = grids[
-            1
-        ].evaluate_bspline_basis_gradient_multiparticle(positions)
-        # TODO: Do we need to use a fill value with `take` here?
-        #  (it shouldn't be possible for indices returned by the spline eval
-        #  functions to be out of bounds)
-        energy = 0.5 * jnp.sum(
-            charges
-            * (gridpotential_level_one.take(indices) * splinevals).sum(axis=1)
-        )
-        forces = -charges[:, jnp.newaxis] * jnp.sum(
-            gridpotential_level_one.take(indices)[..., jnp.newaxis]
-            * splinegrads,
-            axis=1,
-        )
-
-        return energy, forces
-
-    return compute_U_and_f_oneplus
