@@ -129,28 +129,6 @@ def _interpolate_energy_charge_gradient(
     return (gridpotential.take(indices) * basis_vals).sum(axis=1)
 
 
-def _make_unitcube_transform_fns(
-    cell: ArrayLike | None, transform_mode: CellMode | None
-) -> tuple[Callable[[ArrayLike], Array], Callable[[ArrayLike], Array]]:
-    # TODO: Is this the right module for this function?
-    if transform_mode is None:
-        transform_pos = lambda x: x
-        backtransform_grad = lambda x: x
-        return transform_pos, backtransform_grad
-    elif transform_mode == "ortho":
-        inverse = 1.0 / jnp.diag(cell)
-        transform_pos = lambda x: x * inverse
-        backtransform_grad = lambda dx: dx * inverse
-        return transform_pos, backtransform_grad
-    elif transform_mode == "general":
-        inverse = jnp.linalg.pinv(cell)
-        transform_pos = lambda x: x @ inverse
-        backtransform_grad = lambda dx: dx @ inverse.T
-        return transform_pos, backtransform_grad
-    else:
-        raise ValueError(f"Invalid mode: {transform_mode}")
-
-
 @partial(jax.jit, static_argnames=["pbc", "method"])
 def special_periodic_convolve(
     data: ArrayLike,
@@ -230,11 +208,55 @@ def special_periodic_convolve(
         )
 
 
-def make_grid_pass(
-    restriction_fns: Sequence[Callable],
-    prolongation_fns: Sequence[Callable],
-    interaction_fns: Sequence[Callable],  # TODO: name (everywhere)
+def make_grid_pass_fn(
+    restriction_fns: Sequence[Callable[[ArrayLike], Array]],
+    prolongation_fns: Sequence[Callable[[ArrayLike], Array]],
+    interaction_fns: Sequence[
+        Callable[[ArrayLike, ArrayLike], Array]
+    ],  # TODO: name (everywhere)
 ) -> Callable[[ArrayLike, Sequence[ArrayLike | None]], Array]:
+    """Create a function that makes a pass through all grid levels.
+
+    In other words, create the linear operator (consisting of restriction of
+    the grid charge to higher grid levels, calculation of potentials at all
+    levels, and prolongation of the higher-level potentials down to lower
+    levels) that connects the grid charge at level one to the accumulated
+    grid potential at level one. This corresponds to the upper part of the
+    V-cycle diagram as which the MSM is commonly visualized.
+
+    .. note::
+
+       The operator sequences passed as parameters to this function need to
+       respect the grid-level indexing convention. As per convention,
+       grid level 0 refers to the particle level (where interactions are
+       computed directly without grids), whereas the lowest actual grid
+       level is level 1. Further, for the restriction and prolongation
+       functions, which connect two different grid levels, the convention is
+       that the function at index :math:`l` is the one whose output lives on
+       grid level :math:`l`. For example, the operator :math:`\mathcal{I}^2_1` that restricts the
+       grid charge from level 1 to 2 would be addressed as
+       ``restriction_fns[2]``.
+
+       Thus, the input for, e.g., four grid levels should look like this,
+       employing placeholders where needed:
+
+       .. code-block:: python
+
+          restriction_fns = [None, None, I_21, I_32, I_43]
+          prolongation_fns = [None, I_12, I_23, I_34, None]
+          interaction_fns = [None, K_1, K_2, K_3, K_4]
+
+    Args:
+        restriction_fns: Sequence of restriction functions,
+            one for each level, including placeholders (see above note).
+        prolongation_fns: Sequence of prolongation functions,
+            one for each level, including placeholders (see above note).
+        interaction_fns: Sequence of interaction functions (TODO: name),
+            one for each level, including placeholders (see above note).
+
+    Returns:
+
+    """
     # TODO: In fact it's questionable, whether a separate interaction_fn for
     #  each level is needed at all. `special_periodic_convolve` should work
     #  for all levels, shouldn't it?
@@ -254,7 +276,6 @@ def make_grid_pass(
     #  included in evaluation
     n_levels = len(restriction_fns) - 1
 
-    # TODO: Name of the returned function?
     def grid_pass(
         gridcharge_lvl_one: ArrayLike, kernel_stencils: Sequence[ArrayLike]
     ) -> Array:
@@ -346,7 +367,7 @@ def make_compute_u_oneplus(
                   contains the values of the basis functions at all grid
                   points :math:`\mathbf{m} \in M`. The second array contains
                   the corresponding set of grid point indices :math:`M` as
-                  `flat` (!) indices.
+                  `flat` (!) indices into the grid.
 
             .. note::
                Regardless of the spatial dimension of the system,
@@ -357,13 +378,13 @@ def make_compute_u_oneplus(
                If ``singleparticle_basis_fn_lvl_one`` returs indices that
                are out of bounds w.r.t. to the grid size defined by
                ``grid_shape_lvl_one``, this will result in NaNs. This is
-               intentional because errors like particles moving outside of
+               intentional because errors like particles moving outside
                the grid boundaries might otherwise go unnoticed.
 
         grid_pass_fn: A function that performs the entire process of moving up,
             across, and back down the grid hierarchy. For more details on
-            the expected signature, see :func:`make_grid_pass`, which can be
-            used conveniently to create such a function.
+            the expected signature, see :func:`make_grid_pass_fn`, which can
+            be used conveniently to create such a function.
 
             Inputs and outputs:
 
@@ -382,7 +403,14 @@ def make_compute_u_oneplus(
             derivatives w.r.t. positions and charges.
 
     Returns:
-        TODO
+        A function that computes the scalar energy :math:`U^{1+}` and takes
+        three arguments:
+
+        - Array of positions, shape `(n_particles, n_dim)`.
+        - Array of charges, shape `(n_particles,)`.
+        - A sequence of coefficient stencils for the interaction kernels (one
+          per grid level, including a placeholder at level zero). See
+          :func:`make_grid_pass_fn` for more details.
     """
 
     def _compute_u_oneplus(
@@ -508,18 +536,26 @@ def make_compute_u_oneplus(
     return compute_u_oneplus
 
 
-def make_dyn_cell_longrange_fn(
-    compute_longrange, kernel_stencil_construction_fn
-):
-    def compute(positions, charges, cell):
-        return compute_longrange(
-            positions,
-            charges,
-            cell=cell,
-            kernel_stencils=kernel_stencil_construction_fn(cell),
-        )
-
-    return compute
+def _make_unitcube_transform_fns(
+    cell: ArrayLike | None, transform_mode: CellMode | None
+) -> tuple[Callable[[ArrayLike], Array], Callable[[ArrayLike], Array]]:
+    # TODO: Is this the right module for this function?
+    if transform_mode is None:
+        transform_pos = lambda x: x
+        backtransform_grad = lambda x: x
+        return transform_pos, backtransform_grad
+    elif transform_mode == "ortho":
+        inverse = 1.0 / jnp.diag(cell)
+        transform_pos = lambda x: x * inverse
+        backtransform_grad = lambda dx: dx * inverse
+        return transform_pos, backtransform_grad
+    elif transform_mode == "general":
+        inverse = jnp.linalg.pinv(cell)
+        transform_pos = lambda x: x @ inverse
+        backtransform_grad = lambda dx: dx @ inverse.T
+        return transform_pos, backtransform_grad
+    else:
+        raise ValueError(f"Invalid mode: {transform_mode}")
 
 
 # TODO: name
@@ -532,6 +568,21 @@ def make_static_cell_longrange_fn(
     def compute(positions, charges):
         return compute_longrange(
             positions, charges, cell=cell, kernel_stencils=kernel_stencils
+        )
+
+    return compute
+
+
+# TODO: name
+def make_dyn_cell_longrange_fn(
+    compute_longrange, kernel_stencil_construction_fn
+):
+    def compute(positions, charges, cell):
+        return compute_longrange(
+            positions,
+            charges,
+            cell=cell,
+            kernel_stencils=kernel_stencil_construction_fn(cell),
         )
 
     return compute
