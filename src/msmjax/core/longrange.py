@@ -30,7 +30,7 @@ def _anterpolate(
     charges: ArrayLike,
     grid_shape: tuple[int, ...],
 ):
-    """ "Low-level function doing anterpolation (= calculating grid charge).
+    """Low-level function doing anterpolation (= calculating grid charge).
 
     Args:
         basis_vals: Array of shape `(n_particles, support_size)`, where
@@ -60,7 +60,7 @@ def _anterpolate(
 def _interpolate_energy(
     gridpotential: ArrayLike,
     basis_vals: ArrayLike,
-    indices: ArrayLike,
+    basis_inds: ArrayLike,
     charges: ArrayLike,
 ) -> Array:
     """Low-level function calculating long-range energy from grid potential.
@@ -68,18 +68,15 @@ def _interpolate_energy(
     Args:
         gridpotential: Array of grid potential (:math:`e^{l+}` in the language
             of the reference).
-        basis_vals: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_basis_vals`?)
-        indices: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_inds`?)
+        basis_vals: See :func:`_anterpolate`.
+        basis_inds: See :func:`_anterpolate`.
         charges: Array of particle charges, shape `(n_particles,)`.
 
     Returns:
         The scalar electrostatic energy.
     """
-    # TODO: Do we need to use a fill value with `take` here?
-    #  (it shouldn't be possible for indices returned by the spline eval
-    #  functions to be out of bounds)
     energy = 0.5 * jnp.sum(
-        charges * (gridpotential.take(indices) * basis_vals).sum(axis=1)
+        charges * (gridpotential.take(basis_inds) * basis_vals).sum(axis=1)
     )
     return energy
 
@@ -87,7 +84,7 @@ def _interpolate_energy(
 def _interpolate_energy_positions_gradient(
     gridpotential: ArrayLike,
     basis_grads: ArrayLike,
-    indices: ArrayLike,
+    basis_inds: ArrayLike,
     charges: ArrayLike,
 ) -> Array:
     """Low-level function calculating positions gradient of long-range energy.
@@ -100,8 +97,12 @@ def _interpolate_energy_positions_gradient(
     Args:
         gridpotential: Array of grid potential (:math:`e^{l+}` in the language
             of the reference).
-        basis_grads: TODO: How best to document (appears in several places (does it, though?))? More informative variable name? (`per_particle_basis_grads`?)
-        indices: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_inds`?)
+        basis_grads: Similar to ``basis_vals`` (see :func:`_anterpolate`),
+            but containing the gradients of the basis functions w.r.t.
+            particle positions instead of their values. Shape `(n_particles,
+            support_size, n_dim)`, where `n_dim` is the spatial dimension of
+            the system.
+        basis_inds: See :func:`_anterpolate`.
         charges: Array of particle charges, shape `(n_particles,)`.
 
     Returns:
@@ -109,15 +110,13 @@ def _interpolate_energy_positions_gradient(
         which is an array of shape `(n_particles, n_dim)`.
     """
     result = charges[:, jnp.newaxis] * jnp.sum(
-        gridpotential.take(indices)[..., jnp.newaxis] * basis_grads, axis=1
+        gridpotential.take(basis_inds)[..., jnp.newaxis] * basis_grads, axis=1
     )
     return result
 
 
 def _interpolate_energy_charge_gradient(
-    gridpotential: ArrayLike,
-    basis_vals: ArrayLike,
-    indices: ArrayLike,
+    gridpotential: ArrayLike, basis_vals: ArrayLike, basis_inds: ArrayLike
 ) -> Array:
     """Low-level function calculating charge gradient of long-range energy.
 
@@ -131,14 +130,14 @@ def _interpolate_energy_charge_gradient(
     Args:
         gridpotential: Array of grid potential (:math:`e^{l+}` in the language
             of the reference).
-        basis_vals: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_basis_grads`?)
-        indices: TODO: How best to document (appears in several places)? More informative variable name? (`per_particle_inds`?)
+        basis_vals: See :func:`_anterpolate`.
+        basis_inds: See :func:`_anterpolate`.
 
     Returns:
         The gradient of the long-range energy w.r.t. particle charges,
         which is an array of shape `(n_particles,)`.
     """
-    return (gridpotential.take(indices) * basis_vals).sum(axis=1)
+    return (gridpotential.take(basis_inds) * basis_vals).sum(axis=1)
 
 
 @partial(jax.jit, static_argnames=["pbc", "method"])
@@ -475,10 +474,7 @@ def make_compute_u_oneplus(
             gridcharge_lvl_one, kernel_stencils
         )
         return _interpolate_energy(
-            gridpotential_lvl_oneplus,
-            basis_vals,
-            basis_inds,
-            charges,
+            gridpotential_lvl_oneplus, basis_vals, basis_inds, charges
         )
 
     if not use_custom_derivatives:
@@ -522,10 +518,7 @@ def make_compute_u_oneplus(
             jax.jacfwd(singleparticle_basis_fn_lvl_one, has_aux=True)
         )(positions)
         positions_jac = _interpolate_energy_positions_gradient(
-            gridpotential_lvl_oneplus,
-            basis_grads,
-            basis_inds,
-            charges,
+            gridpotential_lvl_oneplus, basis_grads, basis_inds, charges
         )
         positions_tangent_out = (positions_jac * positions_dot).sum()
 
