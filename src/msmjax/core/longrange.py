@@ -567,11 +567,13 @@ def _make_unitcube_transform_fns(
 
 # TODO: name
 def make_static_cell_longrange_fn(
-    longrange_energy_fn,  # TODO: argument name
+    longrange_energy_fn: Callable[
+        [ArrayLike, ArrayLike, Sequence[ArrayLike | None]], Array
+    ],  # TODO: argument name
     kernel_stencils,  # TODO: use stencil construction fn here as well?
-    transform_mode=None,
-    cell=None,
-):
+    transform_mode: CellMode | None = None,
+    cell: ArrayLike | None = None,
+) -> Callable[[ArrayLike, ArrayLike], Array]:
     # TODO: in case we don't pass the kernel stencils themselves but the
     #  stencil construction fn, the cell is always required, and we don't need
     #  this check.
@@ -591,18 +593,25 @@ def make_static_cell_longrange_fn(
             cell, transform_mode
         )
 
-    def compute(positions, charges):
+    def compute(positions: ArrayLike, charges: ArrayLike) -> Array:
+        """Compute the long-range energy.
+
+        Args:
+            positions: Array of positions, shape `(n_particles, n_dim)`.
+            charges: Array of charges, shape `(n_particles,)`.
+
+        Returns:
+            The energy.
+        """
         if use_transform:
             return longrange_energy_fn(
                 positions_to_unitcube(positions),
                 charges,
-                kernel_stencils=kernel_stencils,
+                kernel_stencils,
                 # kernel_stencils=kernel_stencil_construction_fn(cell), # TODO
             )
         else:
-            return longrange_energy_fn(
-                positions, charges, kernel_stencils=kernel_stencils
-            )
+            return longrange_energy_fn(positions, charges, kernel_stencils)
 
     return compute
 
@@ -616,7 +625,7 @@ def make_dyn_cell_longrange_fn(
         [ArrayLike], Sequence[ArrayLike | None]
     ],
     transform_mode: CellMode,
-):
+) -> Callable[[ArrayLike, ArrayLike, ArrayLike], Array]:
     """High-level wrapper to calculate long-range energy in a dynamic cell.
 
     Args:
@@ -642,7 +651,7 @@ def make_dyn_cell_longrange_fn(
     def compute(
         positions: ArrayLike, charges: ArrayLike, cell: ArrayLike
     ) -> Array:
-        """Compute the long-range energy in a dynamic cell.
+        """Compute the long-range energy.
 
         Args:
             positions: Array of positions, shape `(n_particles, n_dim)`.
