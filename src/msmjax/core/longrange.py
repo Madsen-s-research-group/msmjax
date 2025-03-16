@@ -374,14 +374,14 @@ def make_compute_u_oneplus(
 
             Inputs and outputs:
 
-                - Input to ``singleparticle_basis_fn_lvl_one`` should be a 1-d array,
-                  shape `(n_dim,)`, representing the coordinates of a single
-                  particle.
+                - Input to ``singleparticle_basis_fn_lvl_one`` should be a
+                  1-d array, shape `(n_dim,)`, representing the coordinates
+                  of a single particle.
 
-                - Output of ``singleparticle_basis_fn_lvl_one`` should be a tuple of
-                  two 1-d arrays, each of shape `(support_size,)`, where
-                  `support_size` designates the number of non-zero basis
-                  functions around one particle (= the cardinality of
+                - Output of ``singleparticle_basis_fn_lvl_one`` should be a
+                  tuple of two 1-d arrays, each of shape `(support_size,)`,
+                  where `support_size` designates the number of non-zero
+                  basis functions around one particle (= the cardinality of
                   :math:`M` from above). The first of the two arrays
                   contains the values of the basis functions at all grid
                   points :math:`\mathbf{m} \in M`. The second array contains
