@@ -286,11 +286,6 @@ def make_grid_pass_fn(
               construct the grid pass function. The :math:`l`-th stencil is
               consumed by the :math:`l`-th element of ``ìnteraction_fns``
     """
-    # TODO: In fact it's questionable, whether a separate interaction_fn for
-    #  each level is needed at all. `special_periodic_convolve` should work
-    #  for all levels, shouldn't it?
-    #  Do we still want to offer separate functions for increased flexibility?
-    #  Even for restriction and prolongation a single function might be sufficient?
     if (
         not len(restriction_fns)
         == len(prolongation_fns)
@@ -316,11 +311,6 @@ def make_grid_pass_fn(
             )
         # TODO: list instead of dict?
         gridcharges_all_levels = {1: gridcharge_lvl_one}
-
-        # TODO: More efficient to do the pass in the following order instead?
-        #  1. Iteratively go up (compute grid charges at all levels)
-        #  2. Apply interactions at all levels (possibly via `tree_map`)
-        #  3. Iteratively go back down.
 
         # Go up ladder
         for lvl in range(2, n_levels + 1):
@@ -595,8 +585,8 @@ def make_static_cell_longrange_fn(
             "Specify either both 'transform_mode' and 'cell' "
             "or none of them."
         )
-    use_transform = (transform_mode is not None) and (cell is not None)
-    if use_transform:
+    if (transform_mode is not None) and (cell is not None):
+        use_transform = True
         positions_to_unitcube = _make_unitcube_transform_fn(
             cell, transform_mode
         )
@@ -619,18 +609,56 @@ def make_static_cell_longrange_fn(
 
 # TODO: name
 def make_dyn_cell_longrange_fn(
-    unitcube_longrange_energy_fn,
-    kernel_stencil_construction_fn,
+    unitcube_longrange_energy_fn: Callable[
+        [ArrayLike, ArrayLike, Sequence[ArrayLike | None]], Array
+    ],
+    kernel_stencil_construction_fn: Callable[
+        [ArrayLike], Sequence[ArrayLike | None]
+    ],
     transform_mode: CellMode,
 ):
-    def compute(positions, charges, cell):
+    """High-level wrapper to calculate long-range energy in a dynamic cell.
+
+    Args:
+        unitcube_longrange_energy_fn: A function with the same signature as
+            the one returned by :func:`make_compute_u_oneplus` that calculates
+            the long-range energy contribution by grid interpolation.
+            It is expected to operate on positions given on a unit cube (i.e.
+            as fractional coordinates w.r.t. the real unit cell).
+        kernel_stencil_construction_fn: A function of one argument, an array
+            of shape `(n_dim, n_dim)` representing the unit cell, that
+            returns a sequence of kernel coefficient stencil arrays (one per
+            grid level, including a placeholder for level zero).
+        transform_mode: A string specifying assumptions on the shape of the
+            unit cell. Either the cell is assumed orthorhombic and
+            axis-aligned, in which case only its diagonal is considered,
+            reducing computational cost, or a general triclinic one.
+
+    Returns:
+        A function of three arguments that computes the long-range energy from
+        positions, charges, and the unit cell.
+    """
+
+    def compute(
+        positions: ArrayLike, charges: ArrayLike, cell: ArrayLike
+    ) -> Array:
+        """Compute the long-range energy in a dynamic cell.
+
+        Args:
+            positions: Array of positions, shape `(n_particles, n_dim)`.
+            charges: Array of charges, shape `(n_particles,)`.
+            cell: cell: Array representing unit cell, shape `(n_dim, n_dim)`.
+
+        Returns:
+            The energy.
+        """
         positions_to_unitcube = _make_unitcube_transform_fn(
             cell, transform_mode
         )
         return unitcube_longrange_energy_fn(
             positions_to_unitcube(positions),
             charges,
-            kernel_stencils=kernel_stencil_construction_fn(cell),
+            kernel_stencil_construction_fn(cell),
         )
 
     return compute
