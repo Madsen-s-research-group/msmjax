@@ -543,56 +543,15 @@ def make_compute_u_oneplus(
     return compute_u_oneplus
 
 
-def _make_unitcube_transform_fns(
-    cell: ArrayLike | None, transform_mode: CellMode | None
-) -> tuple[Callable[[ArrayLike], Array], Callable[[ArrayLike], Array]]:
-    # TODO: Is this the right module for this function?
-    if transform_mode is None:
-        transform_pos = lambda x: x
-        backtransform_grad = lambda x: x
-        return transform_pos, backtransform_grad
-    elif transform_mode == "ortho":
-        inverse = 1.0 / jnp.diag(cell)
-        transform_pos = lambda x: x * inverse
-        backtransform_grad = lambda dx: dx * inverse
-        return transform_pos, backtransform_grad
-    elif transform_mode == "general":
-        inverse = jnp.linalg.pinv(cell)
-        transform_pos = lambda x: x @ inverse
-        backtransform_grad = lambda dx: dx @ inverse.T
-        return transform_pos, backtransform_grad
-    else:
-        raise ValueError(f"Invalid mode: {transform_mode}")
-
-
 # TODO: name
+# TODO: Does this really need to be a dedicated function? All it does is
+#  make a closure of compute_u_oneplus over the kernel_stencils parameter.
 def make_static_cell_longrange_fn(
     longrange_energy_fn: Callable[
         [ArrayLike, ArrayLike, Sequence[ArrayLike | None]], Array
     ],  # TODO: argument name
-    kernel_stencils,  # TODO: use stencil construction fn here as well?
-    transform_mode: CellMode | None = None,
-    cell: ArrayLike | None = None,
+    kernel_stencils,
 ) -> Callable[[ArrayLike, ArrayLike], Array]:
-    # TODO: in case we don't pass the kernel stencils themselves but the
-    #  stencil construction fn, the cell is always required, and we don't need
-    #  this check.
-    # TODO: If we pass the stencil construction fn, should the calcualation of
-    #  the kernel stencils (which probably should happen outside the returned
-    #  closure) be jitted?
-    if (transform_mode is None and cell is not None) or (
-        cell is None and transform_mode is not None
-    ):
-        raise ValueError(
-            "Specify either both 'transform_mode' and 'cell' "
-            "or none of them."
-        )
-    if (transform_mode is not None) and (cell is not None):
-        use_transform = True
-        positions_to_unitcube = _make_unitcube_transform_fn(
-            cell, transform_mode
-        )
-
     def compute(positions: ArrayLike, charges: ArrayLike) -> Array:
         """Compute the long-range energy.
 
@@ -603,15 +562,7 @@ def make_static_cell_longrange_fn(
         Returns:
             The energy.
         """
-        if use_transform:
-            return longrange_energy_fn(
-                positions_to_unitcube(positions),
-                charges,
-                kernel_stencils,
-                # kernel_stencils=kernel_stencil_construction_fn(cell), # TODO
-            )
-        else:
-            return longrange_energy_fn(positions, charges, kernel_stencils)
+        return longrange_energy_fn(positions, charges, kernel_stencils)
 
     return compute
 
@@ -628,6 +579,8 @@ def make_dyn_cell_longrange_fn(
 ) -> Callable[[ArrayLike, ArrayLike, ArrayLike], Array]:
     """High-level wrapper to calculate long-range energy in a dynamic cell.
 
+    TODO: Explain the concept of the flex-cell implementation
+
     Args:
         unitcube_longrange_energy_fn: A function with the same signature as
             the one returned by :func:`make_compute_u_oneplus` that calculates
@@ -643,10 +596,25 @@ def make_dyn_cell_longrange_fn(
             axis-aligned, in which case only its diagonal is considered,
             reducing computational cost, or a general triclinic one.
 
+    Raises:
+        ValueError: If ``transform_mode`` is not valid.
+
     Returns:
         A function of three arguments that computes the long-range energy from
         positions, charges, and the unit cell.
     """
+
+    def _make_unitcube_transform_fn(
+        cell: ArrayLike,
+    ) -> Callable[[ArrayLike], Array]:
+        if transform_mode == "ortho":
+            inverse = 1.0 / jnp.diag(cell)
+            return lambda x: x * inverse
+        elif transform_mode == "general":
+            inverse = jnp.linalg.pinv(cell)
+            return lambda x: x @ inverse
+        else:
+            raise ValueError(f"Invalid 'transform_mode': {transform_mode}")
 
     def compute(
         positions: ArrayLike, charges: ArrayLike, cell: ArrayLike
@@ -656,14 +624,12 @@ def make_dyn_cell_longrange_fn(
         Args:
             positions: Array of positions, shape `(n_particles, n_dim)`.
             charges: Array of charges, shape `(n_particles,)`.
-            cell: cell: Array representing unit cell, shape `(n_dim, n_dim)`.
+            cell: Array representing unit cell, shape `(n_dim, n_dim)`.
 
         Returns:
             The energy.
         """
-        positions_to_unitcube = _make_unitcube_transform_fn(
-            cell, transform_mode
-        )
+        positions_to_unitcube = _make_unitcube_transform_fn(cell)
         return unitcube_longrange_energy_fn(
             positions_to_unitcube(positions),
             charges,
