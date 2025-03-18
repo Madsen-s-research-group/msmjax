@@ -552,6 +552,7 @@ def make_static_cell_longrange_fn(
     ],  # TODO: argument name
     kernel_stencils,
 ) -> Callable[[ArrayLike, ArrayLike], Array]:
+    # TODO: Add docstring or remove the whole function.
     def compute(positions: ArrayLike, charges: ArrayLike) -> Array:
         """Compute the long-range energy.
 
