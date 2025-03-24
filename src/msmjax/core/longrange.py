@@ -286,6 +286,9 @@ def make_grid_pass_fn(
               construct the grid pass function. The :math:`l`-th stencil is
               consumed by the :math:`l`-th element of ``ìnteraction_fns``
     """
+    # TODO: Don't take interaction_fns as a parameter at all and default to
+    #  always using special_periodic_convolve? In this case, pbc and conv_meth
+    #  would need to be added as parameters.
     if (
         not len(restriction_fns)
         == len(prolongation_fns)
