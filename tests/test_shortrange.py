@@ -558,7 +558,7 @@ def test_u_zero_self_interaction_term(fixture_structure, fixture_pbc):
     for U0 can be calculated from the charges alone.
     """
     pos, chg, cell, cell_mode = fixture_structure
-    k_0 = lambda x: 0.0
+    k_0 = lambda x: onp.zeros(x.shape, dtype=float)
     ks_higher = [lambda x: 1.0] * 2
     kernel_fns = [k_0] + ks_higher
     compute_u_zero = make_compute_u_zero(

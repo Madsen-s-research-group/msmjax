@@ -317,7 +317,7 @@ def make_eval_pair_pot(
         dr_ij = mapped_metric_fn(super_positions, positions)
         qi_qj = charges[:, jnp.newaxis] * super_charges
         return (
-            0.5 * (_generalized_diagonal_mask(qi_qj * kernel_fn(dr_ij))).sum()
+            0.5 * (qi_qj * _generalized_diagonal_mask(kernel_fn(dr_ij))).sum()
         )
 
     return compute_energy
