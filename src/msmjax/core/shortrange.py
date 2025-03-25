@@ -200,26 +200,26 @@ def _concretize_displacement_fn(
 
     if not onp.any(pbc):
 
-        def displacement_fn(R_1, R_2, cell=None):
-            return _displacement_free(R_1, R_2)
+        def displacement_fn(r_1, r_2, cell=None):
+            return _displacement_free(r_1, r_2)
 
         return displacement_fn
 
     if cell_mode == "ortho":
 
-        def displacement_fn(R_1, R_2, cell):
+        def displacement_fn(r_1, r_2, cell):
             side_lengths_processed_for_pbc = jnp.diag(cell) * pbc
             return _displacement_ortho(
-                R_1, R_2, side_lengths_processed_for_pbc
+                r_1, r_2, side_lengths_processed_for_pbc
             )
 
         return displacement_fn
 
     elif cell_mode == "general":
 
-        def displacement_fn(R_1, R_2, cell):
+        def displacement_fn(r_1, r_2, cell):
             cell_processed_for_pbc = cell * pbc[:, jnp.newaxis]
-            return _displacement_general(R_1, R_2, cell_processed_for_pbc)
+            return _displacement_general(r_1, r_2, cell_processed_for_pbc)
 
         return displacement_fn
 
