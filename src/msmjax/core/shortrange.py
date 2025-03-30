@@ -492,7 +492,7 @@ def make_compute_u_zero(
             :func:`make_eval_pair_pot` or
             :func:`make_eval_pair_pot_with_neighbor_list` over their extra
             arguments, e.g. ``pair_map_fn = functools.partial(
-            make_eval_pair_pot, pbc=(True, True, False))``.
+            make_eval_pair_pot, pbc=(True, True, False), cell_mode='ortho')``.
 
     Returns:
         A function with the same signature as the one returned by
