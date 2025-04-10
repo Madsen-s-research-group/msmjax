@@ -80,21 +80,33 @@ def set_up_static_cell_msm(params: StaticCellMSMParams):
         softening_function=SofteningFunctionOneOverR(p),
     )
 
-    static_pair_eval_kwargs = {"pbc": pbc, "cell_mode": cell_mode}
     if use_neighborlist:
-        pair_map_fn = partial(
-            make_eval_pair_pot_neighborlist, **static_pair_eval_kwargs
+        compute_u_zero = make_compute_u_zero(
+            kernel_fns=kernel_fns,
+            pair_map_fn=partial(
+                make_eval_pair_pot_neighborlist,
+                pbc=pbc,
+                cell_mode=cell_mode,
+            ),
         )
+        # TODO: Make sure there is no performance penalty from using partial
+        #  instead of completely fixing the constants
+        compute_u_zero = partial(compute_u_zero, cell=cell, weights=1.0)
     else:
-        static_pair_eval_kwargs["supercell_diag"] = supercell_diag
-        pair_map_fn = partial(make_eval_pair_pot, **static_pair_eval_kwargs)
-
-    # TODO: Close over cell (currently, this happens inside compute_energy
-    #  -> do it here instead?)
-    # TODO: Close over weights if use_neighborlist?
-    compute_u_zero = make_compute_u_zero(
-        kernel_fns=kernel_fns, pair_map_fn=pair_map_fn
-    )
+        compute_u_zero = make_compute_u_zero(
+            kernel_fns=kernel_fns,
+            # TODO: If I allow supercell_diag for make_eval_pair_pot_neighborlist
+            #  as well, this if-else could be much cleaner.
+            pair_map_fn=partial(
+                make_eval_pair_pot,
+                pbc=pbc,
+                cell_mode=cell_mode,
+                supercell_diag=supercell_diag,
+            ),
+        )
+        # TODO: Make sure there is no performance penalty from using partial
+        #  instead of completely fixing the constants
+        compute_u_zero = partial(compute_u_zero, cell=cell)
 
     # TODO: coefficients
     omega, _ = compute_coeffs_with_truncation(p, mu)
@@ -110,34 +122,31 @@ def set_up_static_cell_msm(params: StaticCellMSMParams):
     #  define the energy function and all its derivatives twice, inside both
     #  both branches of an if-else that switches between neighbor list and
     #  no neighbor list?
-    if use_neighborlist:
 
-        def calc_energy(positions, charges, neighborlist):
+    def calc_energy(positions, charges, neighborlist=None):
 
-            # TODO: Could cell and weights be fixed further up? This would
-            #  allow writing a unified calc_energy function for both with
-            #  and without neighbor list, if we accept that the
-            #  no-neighbor-list version has an (unused) 'neighborlist'
-            #  parameter as well.
+        # TODO: Could cell and weights be fixed further up? This would
+        #  allow writing a unified calc_energy function for both with
+        #  and without neighbor list, if we accept that the
+        #  no-neighbor-list version has an (unused) 'neighborlist'
+        #  parameter as well.
 
-            u_zero = compute_u_zero(
-                positions,
-                charges,
-                cell=cell,
-                neighbor_list=neighborlist,
-                weights=1.0,
-            )
-            u_oneplus = compute_u_oneplus(positions, charges, kernel_stencils)
-            return u_zero + u_oneplus
+        u_zero = compute_u_zero(
+            positions,
+            charges,
+            neighborlist=neighborlist,
+        )
+        u_oneplus = compute_u_oneplus(positions, charges, kernel_stencils)
+        return u_zero + u_oneplus
 
-    def calc_forces(positions, charges, neighbor_list):
+    def calc_forces(positions, charges, neighborlist=None):
         return -jax.grad(calc_energy, argnums=0)(
-            positions, charges, neighbor_list
+            positions, charges, neighborlist
         )
 
-    def calc_energy_and_forces(positions, charges, neighbor_list):
+    def calc_energy_and_forces(positions, charges, neighborlist=None):
         value, grad = jax.value_and_grad(calc_energy, argnums=0)(
-            positions, charges, neighbor_list
+            positions, charges, neighborlist
         )
         return value, -grad
 
