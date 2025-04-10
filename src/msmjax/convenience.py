@@ -7,7 +7,7 @@ from msmjax.bspline_interpolation.coefficients import (
     compute_coeffs_with_truncation,
     compute_J_zeroplus,
 )
-from msmjax.gridops_multidim import set_up_grids_all_levels
+from msmjax.bspline_interpolation.gridops import set_up_grids_all_levels
 from msmjax.kernels import (
     SofteningFunctionOneOverR,
     make_dynamic_kernel_stencil_construction_fn,

@@ -8,12 +8,12 @@ import numpy.typing as npt
 from msmjax.bspline_interpolation.coefficients import (
     compute_coeffs_with_truncation,
 )
-from msmjax.convenience import set_up_kernels_and_grids
-from msmjax.gridops_multidim import (
+from msmjax.bspline_interpolation.gridops import (
     create_compute_f_oneplus_via_potential,
     create_compute_U_and_f_oneplus_via_potential,
     create_compute_U_oneplus_direct,
 )
+from msmjax.convenience import set_up_kernels_and_grids
 from msmjax.kernels import make_dynamic_kernel_stencil_construction_fn
 
 

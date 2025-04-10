@@ -17,12 +17,9 @@ from msmjax.bspline_interpolation.coefficients import (
     compute_coeffs_with_truncation,
     compute_J_zeroplus,
 )
+from msmjax.bspline_interpolation.gridops import set_up_grids_all_levels
 from msmjax.convenience import set_up_kernels_grids_and_stencils
-from msmjax.gridops_multidim import set_up_grids_all_levels
-from msmjax.kernels import (
-    _construct_all_kernel_stencils,
-    make_dynamic_kernel_stencil_construction_fn,
-)
+from msmjax.kernels import make_dynamic_kernel_stencil_construction_fn
 
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 

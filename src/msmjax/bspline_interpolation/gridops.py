@@ -180,6 +180,7 @@ class BSplineInterpolationGrid:
         #  grid limits, and if they do something went wrong).
         #  Using ravel_multi_index, I don't think this behavior is possible,
         #  because it always clips or wraps indices to the valid range.
+        #  `ravel_multi_inds_and_apply_bcs` from further below could be used?
         inds_flat = jax.vmap(
             lambda mi: jnp.ravel_multi_index(mi, dims=self.shape, mode="clip")
         )(multi_inds)
@@ -277,24 +278,6 @@ def make_ravel_multi_inds_and_apply_bcs(grid: BSplineInterpolationGrid):
         return flat_inds
 
     return ravel_multi_inds_and_apply_bcs
-
-
-def create_anterpolation_operator(grid: BSplineInterpolationGrid):
-    """Create a function that anterpolates charge from particles to grid"""
-
-    def anterpolate(positions: jax.Array, charges: jax.Array) -> jax.Array:
-        """Anterpolate charge from particles to grid"""
-        splinevals, indices = grid.evaluate_bspline_basis_multiparticle(
-            positions
-        )
-        gridcharge_flat = jnp.zeros(grid.size)
-        gridcharge_flat = gridcharge_flat.at[indices].add(
-            charges[:, jnp.newaxis] * splinevals
-        )
-
-        return gridcharge_flat.reshape(grid.shape)
-
-    return anterpolate
 
 
 def create_restriction_operator_1d(

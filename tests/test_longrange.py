@@ -1,19 +1,18 @@
 from pathlib import Path
 
 import jax
-import jax.numpy as jnp
 import numpy as onp
 import pytest
 
 from msmjax.benchmark_tools import path_input_structures
-from msmjax.convenience import (
-    set_up_kernels_grids_and_stencils,
-    suggest_msm_params,
-)
-from msmjax.gridops_multidim import (
+from msmjax.bspline_interpolation.gridops import (
     create_compute_f_oneplus_via_potential,
     create_compute_U_oneplus_direct,
     create_compute_U_oneplus_via_potential,
+)
+from msmjax.convenience import (
+    set_up_kernels_grids_and_stencils,
+    suggest_msm_params,
 )
 
 # jax.config.update("jax_enable_x64", True) # TODO
