@@ -24,10 +24,12 @@ class StaticCellMSMParams:
     # -------------------------------------------------------------------------
     p: int  # TODO: Name: 'order'?
     mu: int  # TODO: One value per level?
-    r_cut_0: float  # TODO: cutoff? r_cut? Mention 'level_zero'?
+    r_cut_0: float  # TODO: cutoff? r_cut? Mention 'level_zero'? Check if fits?
     h_1: Sequence[float]  # TODO: Allow only array? Name: grid_spacings?
-    max_level_split: int  # TODO: Related to max_level_split and pbc. Check?
-    max_level_eval: int  # TODO: Related to max_level_split and pbc. Check?
+    # TODO: The two 'max_level_*' are related to one another, to pbc and grids.
+    #  Check consistency? Move to 'Long-range evaluation' or 'Info' sections?
+    max_level_split: int
+    max_level_eval: int
     # -------------------------------------------------------------------------
     # Geometry-related (arguably)
     # -------------------------------------------------------------------------
@@ -37,11 +39,23 @@ class StaticCellMSMParams:
     # -------------------------------------------------------------------------
     # Short-range evaluation
     # -------------------------------------------------------------------------
+    # TODO: Make optional? Interaction with `use_neighbor_list`?
+    #  (Where to) check if cutoff fits?
+    supercell_diag: Sequence[int]
+    use_neighbor_list: bool  # TODO: Interaction with `supercell_diag`?
     ...
     # -------------------------------------------------------------------------
     # Long-range evaluation
     # -------------------------------------------------------------------------
     ...
+    # -------------------------------------------------------------------------
+    # Info
+    # -------------------------------------------------------------------------
+    n_dim: int
+    # TODO: Store number of particles? In principle, they are not a fundamental
+    #  model attribute. Users should be allowed to run the same model on
+    #  different numbers of particles.
+    n_particles: int
 
 
 def set_up_static_cell_msm(params: StaticCellMSMParams):
