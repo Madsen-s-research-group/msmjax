@@ -31,13 +31,14 @@ autodoc_default_options = {
     "members": True,
     "undoc-members": True,
     "private-members": True,
+    "member-order": "bysource",
 }
 
 
 def custom_typehints_formatter(annotation, config):
     """Small custom formatter taking care of npt.ArrayLike"""
     # TODO: Remove this quick hack as soon as a better solution is
-    # available for aliases (that works with typehints).
+    #  available for aliases (that works with typehints).
     if annotation == npt.ArrayLike:
         return ":py:class:`numpy.typing.ArrayLike`"
     if annotation == Optional[npt.ArrayLike]:
@@ -50,10 +51,13 @@ def custom_typehints_formatter(annotation, config):
 
 
 typehints_formatter = custom_typehints_formatter
+# Caching will not be available with the custom formatter
+# since functions cannot be pickled
+suppress_warnings = ["config.cache"]
 
 
 templates_path = ["_templates"]
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_autosummary", "_build", "Thumbs.db", ".DS_Store"]
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -61,5 +65,4 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # html_theme = "pydata_sphinx_theme"
 html_theme = "sphinx_rtd_theme"
-html_static_path = ["_static"]
 html_theme_options = {"collapse_navigation": False, "sticky_navigation": True}

@@ -1,5 +1,5 @@
-msmjax.gridops_multidim
+msmjax.core.longrange
 ----------------------------------
-.. automodule:: msmjax.gridops_multidim
+.. automodule:: msmjax.core.longrange
    :members:
    :undoc-members:

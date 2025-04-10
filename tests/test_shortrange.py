@@ -27,7 +27,7 @@ from ase.geometry import get_distances
 from matscipy.neighbours import neighbour_list
 
 from msmjax.benchmark_tools import path_input_structures
-from msmjax.shortrange import (
+from msmjax.core.shortrange import (
     _concretize_displacement_fn,
     _gen_supercell,
     make_compute_u_zero,
@@ -558,7 +558,7 @@ def test_u_zero_self_interaction_term(fixture_structure, fixture_pbc):
     for U0 can be calculated from the charges alone.
     """
     pos, chg, cell, cell_mode = fixture_structure
-    k_0 = lambda x: 0.0
+    k_0 = lambda x: onp.zeros(x.shape, dtype=float)
     ks_higher = [lambda x: 1.0] * 2
     kernel_fns = [k_0] + ks_higher
     compute_u_zero = make_compute_u_zero(

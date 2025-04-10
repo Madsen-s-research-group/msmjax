@@ -12,7 +12,7 @@
 """
 
 from functools import partial
-from typing import Callable, Literal, Optional, ParamSpec, Sequence
+from typing import Callable, Literal, Optional, Sequence
 
 import jax
 import jax.numpy as jnp
@@ -27,7 +27,7 @@ from msmjax.utils import _divide_zero_safe
 # TODO: This should be defined elsewhere, since the longrange part will likely
 #  also use it
 CellMode = Literal["ortho", "general"]
-KernelFn = Callable[[ArrayLike], Array]  # TODO: float or Array?
+KernelFn = Callable[[ArrayLike], Array]
 
 
 def _gen_supercell(
@@ -63,7 +63,7 @@ def _gen_supercell(
     return super_positions, super_charges, super_cell
 
 
-def _generalized_diagonal_mask(X: ArrayLike) -> Array:
+def _generalized_diagonal_mask(a: ArrayLike) -> Array:
     """Set the diagonal of a, possibly wider than tall, matrix to zero.
 
     Adapted from JAX-MD. # TODO: JAX-MD attribution
@@ -79,45 +79,45 @@ def _generalized_diagonal_mask(X: ArrayLike) -> Array:
        of bugs that caused them to be invalid.
 
     Args:
-        X: Original matrix.
+        a: Original matrix.
 
     Returns:
         The matrix with diagonal set to zero.
     """
-    if len(X.shape) != 2:
+    if len(a.shape) != 2:
         raise ValueError("Only two-dimensional arrays are supported.")
-    M, N = X.shape
+    M, N = a.shape
     if M > N:
         raise ValueError(
             "Input array must be either square, or wider than tall."
         )
-    X = jnp.nan_to_num(X)
-    mask = 1.0 - jnp.eye(M, dtype=X.dtype)
+    a = jnp.nan_to_num(a)
+    mask = 1.0 - jnp.eye(M, dtype=a.dtype)
     mask = jnp.pad(
         mask,
         pad_width=((0, 0), (0, N - M)),
         mode="constant",
         constant_values=1,
     )
-    return mask * X
+    return mask * a
 
 
-def _displacement_free(R_1: ArrayLike, R_2: ArrayLike) -> Array:
+def _displacement_free(r_1: ArrayLike, r_2: ArrayLike) -> Array:
     """Compute distance vector between two points in free space
 
     Args:
-        R_1: First point
-        R_2: Second point
+        r_1: First point
+        r_2: Second point
 
     Returns:
         Distance vector.
     """
     # TODO: unit test this on its own?
-    return R_1 - R_2
+    return r_1 - r_2
 
 
 def _displacement_ortho(
-    R_1: ArrayLike, R_2: ArrayLike, side_lengths: ArrayLike
+    r_1: ArrayLike, r_2: ArrayLike, side_lengths: ArrayLike
 ) -> Array:
     """Compute distance vector between two points in orthorhombic cell.
 
@@ -127,15 +127,15 @@ def _displacement_ortho(
     with all the known limitations entailed by this.
 
     Args:
-        R_1: First point
-        R_2: Second point
+        r_1: First point
+        r_2: Second point
         side_lengths: 1-d array of side lengths (one per direction)
 
     Returns:
         Distance vector.
     """
     # TODO: unit test this on its own?
-    delta = R_1 - R_2
+    delta = r_1 - r_2
     return (
         delta
         - jnp.round(_divide_zero_safe(delta, side_lengths)) * side_lengths
@@ -143,7 +143,7 @@ def _displacement_ortho(
 
 
 def _displacement_general(
-    R_1: ArrayLike, R_2: ArrayLike, cell: ArrayLike
+    r_1: ArrayLike, r_2: ArrayLike, cell: ArrayLike
 ) -> Array:
     """Compute distance vector between two points in general triclinic cell.
 
@@ -153,20 +153,20 @@ def _displacement_general(
     with all the known limitations entailed by this.
 
     Args:
-        R_1: First point
-        R_2: Second point
+        r_1: First point
+        r_2: Second point
         cell: Array representing unit cell, shape `(n_dim, n_dim)`.
 
     Returns:
         Distance vector.
     """
     # TODO: unit test this on its own?
-    dR = R_1 - R_2
+    dr = r_1 - r_2
     inv_cell = jnp.linalg.pinv(cell)
-    R_1_transf = R_1 @ inv_cell
-    R_2_transf = R_2 @ inv_cell
-    dR_transformed = R_1_transf - R_2_transf
-    return dR - jnp.round(dR_transformed) @ cell
+    r_1_transf = r_1 @ inv_cell
+    r_2_transf = r_2 @ inv_cell
+    dr_transformed = r_1_transf - r_2_transf
+    return dr - jnp.round(dr_transformed) @ cell
 
 
 def _concretize_displacement_fn(
@@ -200,26 +200,26 @@ def _concretize_displacement_fn(
 
     if not onp.any(pbc):
 
-        def displacement_fn(R_1, R_2, cell=None):
-            return _displacement_free(R_1, R_2)
+        def displacement_fn(r_1, r_2, cell=None):
+            return _displacement_free(r_1, r_2)
 
         return displacement_fn
 
     if cell_mode == "ortho":
 
-        def displacement_fn(R_1, R_2, cell):
+        def displacement_fn(r_1, r_2, cell):
             side_lengths_processed_for_pbc = jnp.diag(cell) * pbc
             return _displacement_ortho(
-                R_1, R_2, side_lengths_processed_for_pbc
+                r_1, r_2, side_lengths_processed_for_pbc
             )
 
         return displacement_fn
 
     elif cell_mode == "general":
 
-        def displacement_fn(R_1, R_2, cell):
+        def displacement_fn(r_1, r_2, cell):
             cell_processed_for_pbc = cell * pbc[:, jnp.newaxis]
-            return _displacement_general(R_1, R_2, cell_processed_for_pbc)
+            return _displacement_general(r_1, r_2, cell_processed_for_pbc)
 
         return displacement_fn
 
@@ -239,8 +239,6 @@ def make_eval_pair_pot(
     construct another function that computes the total system energy,
     :math:`\\frac{1}{2} \\sum_i \\sum_{j \\neq i} q_i q_j k(r_{ij})`,
     by mapping :math:`k(r)` over all particle pairs.
-
-    # TODO: Include the formula for maximum allowed cutoff (and reference)?
 
     .. warning::
        Distance computations under periodic boundary conditions are handled
@@ -319,7 +317,7 @@ def make_eval_pair_pot(
         dr_ij = mapped_metric_fn(super_positions, positions)
         qi_qj = charges[:, jnp.newaxis] * super_charges
         return (
-            0.5 * (_generalized_diagonal_mask(qi_qj * kernel_fn(dr_ij))).sum()
+            0.5 * (qi_qj * _generalized_diagonal_mask(kernel_fn(dr_ij))).sum()
         )
 
     return compute_energy
@@ -344,8 +342,6 @@ def make_eval_pair_pot_with_neighbor_list(
 
     Like :func:`make_eval_pair_pot`, but with a neighbor list.
 
-    # TODO: Include the formula for maximum allowed cutoff (and reference)?
-
     .. warning::
        Distance computations under periodic boundary conditions are handled
        by means of the minimum image convention, with the known limitations
@@ -365,9 +361,8 @@ def make_eval_pair_pot_with_neighbor_list(
             omitted (and is ignored) if no direction is periodic.
         safe_eval_distance: A value for which ``kernel_fn`` evaluates to a
             result that is not NaN or infinite. Apart from this, it can be
-            arbitrary and its exact value is of no consequence. Used
-            internally in safely ignoring placeholder pairs contained in the
-            neighbor list in a jit- and autodiff-compatible way.
+            arbitrary. Used only internally, the exact value has no further
+            consequence.
 
     Returns:
         A function that takes arrays of particle positions and charges,
@@ -436,16 +431,13 @@ def make_eval_pair_pot_with_neighbor_list(
     return compute_energy
 
 
-P = ParamSpec("P")
-
-
 def make_compute_u_zero(
     kernel_fns: Sequence[KernelFn],
     pair_map_fn: Callable[
         [KernelFn],
-        Callable[[ArrayLike, ArrayLike, P], Array],
+        Callable[[ArrayLike, ArrayLike, ...], Array],
     ],
-) -> Callable[[ArrayLike, ArrayLike, P], Array]:
+) -> Callable[[ArrayLike, ArrayLike, ...], Array]:
     """Create a function that computes the MSM short-range energy contribution.
 
     The precise quantity being computed is
@@ -500,7 +492,7 @@ def make_compute_u_zero(
             :func:`make_eval_pair_pot` or
             :func:`make_eval_pair_pot_with_neighbor_list` over their extra
             arguments, e.g. ``pair_map_fn = functools.partial(
-            make_eval_pair_pot, pbc=(True, True, False))``.
+            make_eval_pair_pot, pbc=(True, True, False), cell_mode='ortho')``.
 
     Returns:
         A function with the same signature as the one returned by
@@ -513,7 +505,7 @@ def make_compute_u_zero(
     def compute_u_zero(
         positions: ArrayLike,
         charges: ArrayLike,
-        **kwargs: P.kwargs,
+        **kwargs: ...,
     ) -> Array:
         """Compute the short-range energy contribution :math:`U^0` of the MSM.
 
