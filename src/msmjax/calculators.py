@@ -17,7 +17,7 @@ from msmjax.core.longrange import (
 from msmjax.core.shortrange import (
     make_compute_u_zero,
     make_eval_pair_pot,
-    make_eval_pair_pot_with_neighbor_list,
+    make_eval_pair_pot_neighborlist,
 )
 from msmjax.kernels import SofteningFunctionOneOverR, split_one_over_r_kernel
 
@@ -83,13 +83,15 @@ def set_up_static_cell_msm(params: StaticCellMSMParams):
     static_pair_eval_kwargs = {"pbc": pbc, "cell_mode": cell_mode}
     if use_neighborlist:
         pair_map_fn = partial(
-            make_eval_pair_pot_with_neighbor_list, **static_pair_eval_kwargs
+            make_eval_pair_pot_neighborlist, **static_pair_eval_kwargs
         )
     else:
         static_pair_eval_kwargs["supercell_diag"] = supercell_diag
         pair_map_fn = partial(make_eval_pair_pot, **static_pair_eval_kwargs)
 
-    # TODO: close over cell -> in fact, this happens inside compute_energy
+    # TODO: Close over cell (currently, this happens inside compute_energy
+    #  -> do it here instead?)
+    # TODO: Close over weights if use_neighborlist?
     compute_u_zero = make_compute_u_zero(
         kernel_fns=kernel_fns, pair_map_fn=pair_map_fn
     )
@@ -110,19 +112,19 @@ def set_up_static_cell_msm(params: StaticCellMSMParams):
     #  no neighbor list?
     if use_neighborlist:
 
-        def calc_energy(positions, charges, neighbor_list):
+        def calc_energy(positions, charges, neighborlist):
 
             # TODO: Could cell and weights be fixed further up? This would
             #  allow writing a unified calc_energy function for both with
             #  and without neighbor list, if we accept that the
-            #  no-neighbor-list version has an (unused) 'neighbor_list'
+            #  no-neighbor-list version has an (unused) 'neighborlist'
             #  parameter as well.
 
             u_zero = compute_u_zero(
                 positions,
                 charges,
                 cell=cell,
-                neighbor_list=neighbor_list,
+                neighbor_list=neighborlist,
                 weights=1.0,
             )
             u_oneplus = compute_u_oneplus(positions, charges, kernel_stencils)

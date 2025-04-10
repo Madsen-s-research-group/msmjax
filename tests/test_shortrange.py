@@ -32,7 +32,7 @@ from msmjax.core.shortrange import (
     _gen_supercell,
     make_compute_u_zero,
     make_eval_pair_pot,
-    make_eval_pair_pot_with_neighbor_list,
+    make_eval_pair_pot_neighborlist,
 )
 
 # TODO: this and preallocate should both be handled in the same way
@@ -373,7 +373,7 @@ def test_pair_term_periodic_wrap_vs_replicate(
 
     n_repeats_explicit = (3, 3, 3)
     M = onp.prod(n_repeats_explicit)
-    pair_term_fn_explicit_replicate = make_eval_pair_pot_with_neighbor_list(
+    pair_term_fn_explicit_replicate = make_eval_pair_pot_neighborlist(
         kernel_fn=kernel_fn, pbc=(False, False, False), cell_mode=cell_mode
     )
     pos_extended, chg_extended, cell_extended = _gen_supercell(
@@ -395,7 +395,7 @@ def test_pair_term_periodic_wrap_vs_replicate(
         pos_extended,
         chg_extended,
         cell=cell_extended,
-        neighbor_list=pair_inds_explicit_replicate,
+        neighborlist=pair_inds_explicit_replicate,
         weights=pair_weights_explicit_replicate,
     )
 
@@ -415,7 +415,7 @@ def test_pair_term_periodic_wrap_vs_replicate(
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
     indirect=True,
 )
-def test_pair_term_with_and_without_neighbor_list(
+def test_pair_term_with_and_without_neighborlist(
     fixture_structure, fixture_pbc
 ):
     """Test equal result for pair term with and without using neighbor list
@@ -431,7 +431,7 @@ def test_pair_term_with_and_without_neighbor_list(
     compute_pair_term = make_eval_pair_pot(
         kernel_fn=kernel_fn_cutoff, pbc=fixture_pbc, cell_mode=cell_mode
     )
-    compute_pair_term_nbl = make_eval_pair_pot_with_neighbor_list(
+    compute_pair_term_nbl = make_eval_pair_pot_neighborlist(
         kernel_fn=kernel_fn_no_cutoff, pbc=fixture_pbc, cell_mode=cell_mode
     )
     nbl = neighbour_list(
@@ -440,7 +440,7 @@ def test_pair_term_with_and_without_neighbor_list(
     assert onp.isclose(
         compute_pair_term(pos, chg, cell),
         compute_pair_term_nbl(
-            pos, chg, cell=cell, neighbor_list=nbl, weights=0.5
+            pos, chg, cell=cell, neighborlist=nbl, weights=0.5
         ),
     )
 
@@ -455,7 +455,7 @@ def test_pair_term_ignore_placeholders(fixture_structure, fixture_pbc):
     pos, chg, cell, cell_mode = fixture_structure
     cutoff = float(get_max_cutoff_3d(cell))
     kernel_fn = partial(shortrange_quadratic_potential, r_cut=cutoff)
-    compute_pair_term_nbl = make_eval_pair_pot_with_neighbor_list(
+    compute_pair_term_nbl = make_eval_pair_pot_neighborlist(
         kernel_fn=kernel_fn, pbc=fixture_pbc, cell_mode=cell_mode
     )
     nbl = neighbour_list(
@@ -467,13 +467,13 @@ def test_pair_term_ignore_placeholders(fixture_structure, fixture_pbc):
     )
     assert onp.isclose(
         compute_pair_term_nbl(
-            pos, chg, cell=cell, neighbor_list=nbl, weights=0.5
+            pos, chg, cell=cell, neighborlist=nbl, weights=0.5
         ),
         compute_pair_term_nbl(
             pos,
             chg,
             cell=cell,
-            neighbor_list=nbl_with_placeholders,
+            neighborlist=nbl_with_placeholders,
             weights=0.5,
         ),
     )
@@ -576,7 +576,7 @@ def test_u_zero_self_interaction_term(fixture_structure, fixture_pbc):
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
     indirect=True,
 )
-def test_u_zero_with_and_without_neighbor_list(fixture_structure, fixture_pbc):
+def test_u_zero_with_and_without_neighborlist(fixture_structure, fixture_pbc):
     """Test equal result for pair term with and without using neighbor list
 
     (In the latter case relying on the potential having its cutoff built in.)
@@ -586,7 +586,7 @@ def test_u_zero_with_and_without_neighbor_list(fixture_structure, fixture_pbc):
 
     kernel_fns_no_cutoff = [lambda r: 1.0, lambda r: 0.5, lambda r: 0.25]
     pair_map_fn_nbl = partial(
-        make_eval_pair_pot_with_neighbor_list,
+        make_eval_pair_pot_neighborlist,
         pbc=fixture_pbc,
         cell_mode=cell_mode,
     )
@@ -610,7 +610,5 @@ def test_u_zero_with_and_without_neighbor_list(fixture_structure, fixture_pbc):
     )
     assert onp.isclose(
         compute_u_zero(pos, chg, cell=cell),
-        compute_u_zero_nbl(
-            pos, chg, cell=cell, neighbor_list=nbl, weights=0.5
-        ),
+        compute_u_zero_nbl(pos, chg, cell=cell, neighborlist=nbl, weights=0.5),
     )

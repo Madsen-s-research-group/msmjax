@@ -323,7 +323,7 @@ def make_eval_pair_pot(
     return compute_energy
 
 
-def make_eval_pair_pot_with_neighbor_list(
+def make_eval_pair_pot_neighborlist(
     kernel_fn: KernelFn,
     pbc: Sequence[bool],
     cell_mode: Optional[CellMode] = None,
@@ -376,7 +376,7 @@ def make_eval_pair_pot_with_neighbor_list(
     def compute_energy(
         positions: ArrayLike,
         charges: ArrayLike,
-        neighbor_list: tuple[ArrayLike, ArrayLike],
+        neighborlist: tuple[ArrayLike, ArrayLike],
         weights: ArrayLike,
         cell: ArrayLike = None,
     ) -> Array:
@@ -385,7 +385,7 @@ def make_eval_pair_pot_with_neighbor_list(
         Args:
             positions: Array of positions, shape `(n_particles, n_dim)`.
             charges: Array of charges, shape `(n_particles,)`.
-            neighbor_list: Tuple of two 1-d integer arrays of the same shape.
+            neighborlist: Tuple of two 1-d integer arrays of the same shape.
                 For example, `([0, ..., 26, ...], [91, ..., 5, ...])` would
                 mean that particle `91` is a neighbor of particle `0`,
                 and particle `5` is a neighbor of particle `26`. Entries `>=
@@ -414,7 +414,7 @@ def make_eval_pair_pot_with_neighbor_list(
                     "If at least one direction is periodic, "
                     "the cell argument is required."
                 )
-        (i, j) = neighbor_list
+        (i, j) = neighborlist
         metric_fn = partial(space.metric(displacement_fn), cell=cell)
         mapped_metric_fn = space.map_bond(metric_fn)
         dr_ij = mapped_metric_fn(positions[i], positions[j])
@@ -490,7 +490,7 @@ def make_compute_u_zero(
             The most convenient way to obtain a ``pair_map_fn`` with
             appropriate signature is by closing
             :func:`make_eval_pair_pot` or
-            :func:`make_eval_pair_pot_with_neighbor_list` over their extra
+            :func:`make_eval_pair_pot_neighborlist` over their extra
             arguments, e.g. ``pair_map_fn = functools.partial(
             make_eval_pair_pot, pbc=(True, True, False), cell_mode='ortho')``.
 
