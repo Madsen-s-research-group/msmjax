@@ -89,9 +89,6 @@ def set_up_static_cell_msm(params: StaticCellMSMParams):
                 cell_mode=cell_mode,
             ),
         )
-        # TODO: Make sure there is no performance penalty from using partial
-        #  instead of completely fixing the constants
-        compute_u_zero = partial(compute_u_zero, cell=cell, weights=1.0)
     else:
         compute_u_zero = make_compute_u_zero(
             kernel_fns=kernel_fns,
@@ -104,9 +101,6 @@ def set_up_static_cell_msm(params: StaticCellMSMParams):
                 supercell_diag=supercell_diag,
             ),
         )
-        # TODO: Make sure there is no performance penalty from using partial
-        #  instead of completely fixing the constants
-        compute_u_zero = partial(compute_u_zero, cell=cell)
 
     # TODO: coefficients
     omega, _ = compute_coeffs_with_truncation(p, mu)
@@ -124,18 +118,20 @@ def set_up_static_cell_msm(params: StaticCellMSMParams):
     #  no neighbor list?
 
     def calc_energy(positions, charges, neighborlist=None):
-
-        # TODO: Could cell and weights be fixed further up? This would
-        #  allow writing a unified calc_energy function for both with
-        #  and without neighbor list, if we accept that the
-        #  no-neighbor-list version has an (unused) 'neighborlist'
-        #  parameter as well.
-
-        u_zero = compute_u_zero(
-            positions,
-            charges,
-            neighborlist=neighborlist,
-        )
+        if use_neighbor_list:
+            u_zero = compute_u_zero(
+                positions,
+                charges,
+                cell=cell,
+                weights=1.0,
+                neighborlist=neighborlist,
+            )
+        else:
+            u_zero = compute_u_zero(
+                positions,
+                charges,
+                cell=cell,
+            )
         u_oneplus = compute_u_oneplus(positions, charges, kernel_stencils)
         return u_zero + u_oneplus
 
