@@ -4,11 +4,17 @@ from typing import Literal, Sequence
 
 import jax
 import jax.numpy as jnp
+import numpy as onp
 import numpy.typing as npt
 from jax import Array
 from jax.typing import ArrayLike
 
-from grid_ops_experiment.grid_ops_experiment_multidim import J_zeroplus
+from msmjax.bspline_interpolation.coefficients import (
+    compute_coeffs_with_truncation,
+    compute_J_zeroplus,
+)
+from msmjax.bspline_interpolation.gridops import create_all_grid_to_grid_ops
+from msmjax.convenience import set_up_kernels_grids_and_stencils
 from msmjax.core.longrange import (
     make_compute_u_oneplus,
     make_dyn_cell_longrange_fn,
@@ -30,6 +36,7 @@ ConvMeth = Literal["direct", "fft"]
 
 @dataclass
 class StaticCellMSMParams:
+    # TODO: Include package version?
     # -------------------------------------------------------------------------
     # Basic MSM settings
     # -------------------------------------------------------------------------
@@ -71,30 +78,37 @@ class StaticCellMSMParams:
     # -------------------------------------------------------------------------
     # Info
     # -------------------------------------------------------------------------
-    n_dim: int
-    # TODO: Store number of particles? In principle, they are not a fundamental
-    #  model attribute. Users should be allowed to run the same model on
-    #  different numbers of particles.
-    n_particles: int
-    omega: ArrayLike  # TODO: Non-negative-index part or full? Include at all?
-    J: ArrayLike  # TODO: Non-negative-index part or full? Include at all? Lowercase name?
-    kernel_stencils: Sequence[ArrayLike]  # TODO: Include??? Type?
+    # n_dim: int
+    # # TODO: Store number of particles? In principle, they are not a fundamental
+    # #  model attribute. Users should be allowed to run the same model on
+    # #  different numbers of particles.
+    # n_particles: int
+    # omega: ArrayLike  # TODO: Non-negative-index part or full? Include at all?
+    # J: ArrayLike  # TODO: Non-negative-index part or full? Include at all? Lowercase name?
+    # kernel_stencils: Sequence[ArrayLike]  # TODO: Include??? Type?
+
+
+@dataclass
+class DynCellMSMParams:
+    # TODO
+    p: int
+    mu: int
 
 
 def set_up_static_cell_msm(params: StaticCellMSMParams):
     kernel_fns = split_one_over_r_kernel(
-        max_level=max_level_split,
-        level_zero_cutoff=level_zero_cutoff,
-        softening_function=SofteningFunctionOneOverR(p),
+        max_level=params.max_level_split,
+        level_zero_cutoff=params.r_cut_0,
+        softening_function=SofteningFunctionOneOverR(params.p),
     )
 
-    if use_neighborlist:
+    if params.use_neighborlist:
         compute_u_zero = make_compute_u_zero(
             kernel_fns=kernel_fns,
             pair_map_fn=partial(
                 make_eval_pair_pot_neighborlist,
-                pbc=pbc,
-                cell_mode=cell_mode,
+                pbc=params.pbc,
+                cell_mode=params.cell_mode,
             ),
         )
     else:
@@ -104,30 +118,57 @@ def set_up_static_cell_msm(params: StaticCellMSMParams):
             #  as well, this if-else could be much cleaner.
             pair_map_fn=partial(
                 make_eval_pair_pot,
-                pbc=pbc,
-                cell_mode=cell_mode,
-                supercell_diag=supercell_diag,
+                pbc=params.pbc,
+                cell_mode=params.cell_mode,
+                supercell_diag=params.supercell_diag,
             ),
         )
 
     # TODO: coefficients
-    omega, _ = compute_coeffs_with_truncation(p, mu)
-    J_zeroplus = compute_J_zeroplus(p)
+    omega, _ = compute_coeffs_with_truncation(params.p, params.mu)
+    J_zeroplus = compute_J_zeroplus(params.p)
 
     # TODO: grids
-
     # TODO: stencils
+
+    # TODO: Replace with more specific reworked functions for grid and stencil setup
+    # TODO: Currently this only works for ortho cells!
+    _, grids, kernel_stencils = set_up_kernels_grids_and_stencils(
+        box_lengths=onp.diag(params.cell),
+        pbc=params.pbc,
+        level_one_gridspacing=params.h_1,
+        level_zero_cutoff=params.r_cut_0,
+        p=params.p,
+        mu=params.mu,
+        n_levels=params.max_level_split,
+    )
+    grids = grids[: params.max_level_eval + 1]
+    kernel_stencils = kernel_stencils[: params.max_level_eval + 1]
 
     # TODO: compute_u_oneplus must include transformation to unit cube
     #  if cell_mode == "general"
-    compute_u_oneplus = make_compute_u_oneplus(...)  # TODO
+    (
+        restriction_fns,
+        prolongation_fns,
+        interaction_fns,
+    ) = create_all_grid_to_grid_ops(grids, params.convolution_methods)
+    grid_pass_fn = make_grid_pass_fn(
+        restriction_fns, prolongation_fns, interaction_fns
+    )
+    compute_u_oneplus = make_compute_u_oneplus(
+        singleparticle_basis_fn_lvl_one=grids[
+            1
+        ].evaluate_bspline_basis_one_particle,
+        grid_pass_fn=grid_pass_fn,
+        grid_shape_lvl_one=grids[1].shape,
+    )
 
     def calc_energy(positions, charges, neighborlist=None):
-        if use_neighbor_list:
+        if params.use_neighborlist:
             u_zero = compute_u_zero(
                 positions,
                 charges,
-                cell=cell,
+                cell=params.cell,
                 weights=1.0,
                 neighborlist=neighborlist,
             )
@@ -137,7 +178,7 @@ def set_up_static_cell_msm(params: StaticCellMSMParams):
             u_zero = compute_u_zero(
                 positions,
                 charges,
-                cell=cell,
+                cell=params.cell,
             )
         u_oneplus = compute_u_oneplus(positions, charges, kernel_stencils)
         return u_zero + u_oneplus
