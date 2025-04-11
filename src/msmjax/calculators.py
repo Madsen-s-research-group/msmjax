@@ -95,7 +95,11 @@ class DynCellMSMParams:
     mu: int
 
 
-def set_up_static_cell_msm(params: StaticCellMSMParams):
+def set_up_params_static_cell():
+    pass  # TODO
+
+
+def static_cell_msm(params: StaticCellMSMParams):
     kernel_fns = split_one_over_r_kernel(
         max_level=params.max_level_split,
         level_zero_cutoff=params.r_cut_0,
@@ -209,7 +213,7 @@ def set_up_static_cell_msm(params: StaticCellMSMParams):
     )
 
 
-def set_up_dyn_cell_msm(params: DynCellMSMParams):
+def dyn_cell_msm(params: DynCellMSMParams):
     # TODO: Functions for forces, energy and forces, charge gradient, ...
     #  + stress!!!
     pass  # TODO
