@@ -145,9 +145,19 @@ def set_up_static_cell_msm(params: StaticCellMSMParams):
         )
         return value, -grad
 
-    # TODO: charge gradient?
+    def calc_charge_gradient(positions, charges, neighborlist=None):
+        return jax.grad(calc_energy, argnums=1)(
+            positions, charges, neighborlist
+        )
 
-    return calc_energy, calc_forces, calc_energy_and_forces
+    # TODO: Option to return fns for short- and long-range part separately?
+
+    return (
+        calc_energy,
+        calc_forces,
+        calc_energy_and_forces,
+        calc_charge_gradient,
+    )
 
 
 def set_up_dyn_cell_msm(params: DynCellMSMParams):
