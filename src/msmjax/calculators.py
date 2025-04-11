@@ -35,7 +35,9 @@ class StaticCellMSMParams:
     # -------------------------------------------------------------------------
     p: int  # TODO: Name: 'order'?
     mu: int  # TODO: One value per level?
-    r_cut_0: float  # TODO: cutoff? r_cut? Mention 'level_zero'? Check if fits?
+    # TODO: Name: cutoff? r_cut? Mention 'level_zero'? Check if fits?
+    #  Store the cutoffs at ALL levels? (Maybe under info?)
+    r_cut_0: float
     h_1: Sequence[float]  # TODO: Allow only array? Name: grid_spacings?
     # TODO: The two 'max_level_*' are related to one another, to pbc and grids.
     #  Check consistency? Move to 'Long-range evaluation' or 'Info' sections?
@@ -112,11 +114,6 @@ def set_up_static_cell_msm(params: StaticCellMSMParams):
 
     compute_u_oneplus = make_compute_u_oneplus(...)  # TODO
 
-    # TODO: Offer versions with and without neighbor list without having to
-    #  define the energy function and all its derivatives twice, inside both
-    #  both branches of an if-else that switches between neighbor list and
-    #  no neighbor list?
-
     def calc_energy(positions, charges, neighborlist=None):
         if use_neighbor_list:
             u_zero = compute_u_zero(
@@ -127,6 +124,8 @@ def set_up_static_cell_msm(params: StaticCellMSMParams):
                 neighborlist=neighborlist,
             )
         else:
+            # TODO: Raise an error/warn if use_neighborlist is False
+            #  but the neighborlist parameter is not None?
             u_zero = compute_u_zero(
                 positions,
                 charges,
