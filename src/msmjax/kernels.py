@@ -144,7 +144,7 @@ def _compute_kernel_stencil(values: ArrayLike, omega: ArrayLike):
 def _construct_all_kernel_stencils(
     kernel_fns: List[Callable],  # TODO: appropriate type hint?
     omega,
-    points,  # TODO: pass points or directly the distances?
+    points,  # TODO: pass points or directly the distances? Name 'points_intermediate_levels'?
     kernels_include_toplevel: bool,
     points_toplevel,  # TODO: pass points or directly the distances?
 ):
@@ -182,6 +182,8 @@ def _construct_all_kernel_stencils(
             stencils.append(0.5 * stencils[-1])
 
     # Top level with the long-range tail (if included)
+    # TODO: Do we need a separate boolean for this? Can't we just check whether
+    #  points_toplevel is None?
     if kernels_include_toplevel:
         # TODO: Some possible efficiency gain by precomputing `points_cartesian`
         #  or `points_cartesian_toplevel`, whichever is larger in shape,

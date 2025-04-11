@@ -61,7 +61,13 @@ class StaticCellMSMParams:
     # Long-range evaluation
     # -------------------------------------------------------------------------
     convolution_methods: Sequence[str]
-    ...  # TODO: all grid stuff
+    # TODO: Is it possible/helpful to handle dynamic cells like this?
+    #  The main intended benefit is to make it clear upon inspection of model
+    #  params that a transform is used, so they don't assume an error because
+    #  the grid spacings and extents don't match the input values.
+    #  Note: cell_mode = "general" in combination with grids_defined_on_unitcube = False would be invalid
+    grids_defined_on_unitcube: bool
+    ...  # TODO: all other grid stuff
     # -------------------------------------------------------------------------
     # Info
     # -------------------------------------------------------------------------
@@ -112,6 +118,8 @@ def set_up_static_cell_msm(params: StaticCellMSMParams):
 
     # TODO: stencils
 
+    # TODO: compute_u_oneplus must include transformation to unit cube
+    #  if cell_mode == "general"
     compute_u_oneplus = make_compute_u_oneplus(...)  # TODO
 
     def calc_energy(positions, charges, neighborlist=None):

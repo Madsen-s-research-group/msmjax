@@ -247,8 +247,11 @@ def set_up_grids_all_levels(
 
 
 def make_ravel_multi_inds_and_apply_bcs(grid: BSplineInterpolationGrid):
-    # TODO: this is not used anywhere except in (obsolete) custom interaction operator
-    # TODO: should this be a method of BSplineInterpolationGrid?
+    # TODO: This is not used anywhere except in (obsolete) custom interaction
+    #  operator => remove?
+    #  In fact, it might find a new use in the bspline basis evaluation
+    #  (particles outside non-periodic boundaries should result in nans)
+    # TODO: should this be a method of BSplineInterpolationGrid? -> probably not
     is_not_periodic = ~jnp.array([ga.periodic for ga in grid.axes])
     intentionally_out_of_bounds_index = grid.size
 
