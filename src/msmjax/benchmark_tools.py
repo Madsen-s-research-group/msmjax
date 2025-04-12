@@ -254,6 +254,24 @@ def evaluate_structure_with_lammps_p3m(
     return CONVERSION_FACTOR * energy, CONVERSION_FACTOR * forces
 
 
+def calc_rmse(y_pred, y_true):
+    return onp.sqrt(((y_pred - y_true) ** 2).mean())
+
+
+def calc_relative_rmse_percent(y_pred, y_true):
+    return calc_rmse(y_pred, y_true) / y_true.std() * 100
+
+
+def plot_parity_line(ax, **kwargs):
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    common_lims = (np.min([xlim[0], ylim[0]]), np.max([xlim[1], ylim[1]]))
+    p = ax.plot(common_lims, common_lims, **kwargs)
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+    return p
+
+
 if __name__ == "__main__":
     LAMMPS_EXECUTABLE = "/home/florian/Downloads/lammps-static/bin/lmp"
 
