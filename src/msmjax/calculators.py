@@ -1,7 +1,7 @@
+import dataclasses
 import json
-from collections import deque
-from dataclasses import dataclass
 from functools import partial
+from pathlib import Path
 from typing import Literal, Sequence
 
 import jax
@@ -11,6 +11,7 @@ import numpy.typing as npt
 from jax import Array
 from jax.typing import ArrayLike
 
+import msmjax
 from msmjax.bspline_interpolation.coefficients import (
     compute_coeffs_with_truncation,
     compute_J_zeroplus,
@@ -36,32 +37,26 @@ CellMode = Literal["ortho", "general"]
 ConvMeth = Literal["direct", "fft"]
 
 
-class JSONEncoder(json.JSONEncoder):
+class CustomJSONEncoder(json.JSONEncoder):
     """Class that extends JSONEncoder to handle different data types."""
 
     # TODO: clinamen2 attribution
 
-    def default(self, obj):
+    def default(self, o):
         """Return a json-izable version of o or delegate on the base class."""
-        if isinstance(obj, onp.generic):
+        if isinstance(o, onp.generic):
             # Deal with non-serializable types such as numpy.int64
-            return obj.item()
-        elif isinstance(obj, onp.ndarray):
+            return o.item()
+        elif isinstance(o, onp.ndarray):
             nruter = {
-                "main_type": "NumPy/" + obj.dtype.name,
-                "data": obj.tolist(),
+                "main_type": "NumPy/" + o.dtype.name,
+                "data": o.tolist(),
             }
             return nruter
-        elif isinstance(obj, deque):
-            nruter = {
-                "main_type": "deque/" + str(obj.maxlen),
-                "data": list(obj),
-            }
-            return nruter
-        return json.JSONEncoder.default(self, obj)
+        return json.JSONEncoder.default(self, o)
 
 
-class JSONDecoder(json.JSONDecoder):
+class CustomJSONDecoder(json.JSONDecoder):
     """Class that extends the JSONDecoder to handle different data types."""
 
     # TODO: clinamen2 attribution
@@ -71,20 +66,17 @@ class JSONDecoder(json.JSONDecoder):
             self, object_hook=self.object_hook, *args, **kwargs
         )
 
-    def object_hook(self, obj):
+    def object_hook(self, o):
         """Reencode numpy arrays from dictionary."""
         try:
-            main_type, *extra = obj["main_type"].split("/")
+            main_type, *extra = o["main_type"].split("/")
             if main_type == "NumPy":
-                return onp.asarray(obj["data"], dtype=extra[0])
-            elif main_type == "deque":
-                maxlen = int(extra[0])
-                return deque(obj["data"], maxlen=maxlen)
+                return onp.asarray(o["data"], dtype=extra[0])
         except (KeyError, ValueError):
-            return obj
+            return o
 
 
-@dataclass
+@dataclasses.dataclass
 class StaticCellMSMParams:
     # TODO: Include package version?
     # -------------------------------------------------------------------------
@@ -136,9 +128,37 @@ class StaticCellMSMParams:
     # omega: ArrayLike  # TODO: Non-negative-index part or full? Include at all?
     # J: ArrayLike  # TODO: Non-negative-index part or full? Include at all? Lowercase name?
     # kernel_stencils: Sequence[ArrayLike]  # TODO: Include??? Type?
+    version: str = msmjax.__version__
+
+    def __post_init__(self):
+        self.h_1 = onp.asarray(self.h_1)
+        self.pbc = tuple(self.pbc)
+        self.supercell_diag = (
+            None if self.supercell_diag is None else tuple(self.supercell_diag)
+        )
+        self.convolution_methods = list(self.convolution_methods)
+        # TODO: grid shapes to list (of tuples)
+        # TODO: grid sizes to list (of int) (or don't include at all?)
+        # TODO: spacings on all levels to list (of array? of tuple?)
+        # TODO: cutoffs on all levels to list (of array? of tuple?)
+        # TODO: J to onp.array
+        # TODO: omega to onp.array
+        # TODO: kernel_stencils to onp.array (or don't include at all?)
+
+    def save_json(self, filename: str | Path, **kwargs) -> None:
+        with open(filename, "w") as f:
+            json.dump(
+                dataclasses.asdict(self), f, cls=CustomJSONEncoder, **kwargs
+            )
+
+    @classmethod
+    def load_json(cls, filename: str | Path):
+        with open(filename, "r") as f:
+            params_dict = json.load(f, cls=CustomJSONDecoder)
+        return cls(**params_dict)
 
 
-@dataclass
+@dataclasses.dataclass
 class DynCellMSMParams:
     # TODO
     p: int
