@@ -1,3 +1,5 @@
+import json
+from collections import deque
 from dataclasses import dataclass
 from functools import partial
 from typing import Literal, Sequence
@@ -32,6 +34,54 @@ from msmjax.kernels import SofteningFunctionOneOverR, split_one_over_r_kernel
 # TODO: Name that is meaningful in all places where this is used?
 CellMode = Literal["ortho", "general"]
 ConvMeth = Literal["direct", "fft"]
+
+
+class JSONEncoder(json.JSONEncoder):
+    """Class that extends JSONEncoder to handle different data types."""
+
+    # TODO: clinamen2 attribution
+
+    def default(self, obj):
+        """Return a json-izable version of o or delegate on the base class."""
+        if isinstance(obj, onp.generic):
+            # Deal with non-serializable types such as numpy.int64
+            return obj.item()
+        elif isinstance(obj, onp.ndarray):
+            nruter = {
+                "main_type": "NumPy/" + obj.dtype.name,
+                "data": obj.tolist(),
+            }
+            return nruter
+        elif isinstance(obj, deque):
+            nruter = {
+                "main_type": "deque/" + str(obj.maxlen),
+                "data": list(obj),
+            }
+            return nruter
+        return json.JSONEncoder.default(self, obj)
+
+
+class JSONDecoder(json.JSONDecoder):
+    """Class that extends the JSONDecoder to handle different data types."""
+
+    # TODO: clinamen2 attribution
+
+    def __init__(self, *args, **kwargs):
+        json.JSONDecoder.__init__(
+            self, object_hook=self.object_hook, *args, **kwargs
+        )
+
+    def object_hook(self, obj):
+        """Reencode numpy arrays from dictionary."""
+        try:
+            main_type, *extra = obj["main_type"].split("/")
+            if main_type == "NumPy":
+                return onp.asarray(obj["data"], dtype=extra[0])
+            elif main_type == "deque":
+                maxlen = int(extra[0])
+                return deque(obj["data"], maxlen=maxlen)
+        except (KeyError, ValueError):
+            return obj
 
 
 @dataclass
@@ -128,7 +178,10 @@ def static_cell_msm(params: StaticCellMSMParams):
             ),
         )
 
-    # TODO: coefficients
+    # TODO: Should these be computed here, or be part of params?
+    #  A thought: For debugging and post-calculation analysis, they should
+    #             definitely be included in the params, whether the setup
+    #             process does actually take them from there or not.
     omega, _ = compute_coeffs_with_truncation(params.p, params.mu)
     J_zeroplus = compute_J_zeroplus(params.p)
 
