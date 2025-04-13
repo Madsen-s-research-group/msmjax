@@ -199,7 +199,7 @@ class BSplineInterpolationGrid:
 def set_up_grids_all_levels(
     box_lengths: Iterable[float],
     level_one_spacings: Iterable[float],
-    pbcs: Iterable[bool],
+    pbcs: Iterable[bool],  # TODO: rename 'pbc'
     n_levels: int,
     p: int,
     J_zeroplus: npt.ArrayLike,
