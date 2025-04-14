@@ -246,7 +246,7 @@ def _make_prolongate_1d(n_points_in, n_points_out, p, is_periodic):
 
     # TODO: Variable names? Shouldn't be uppercase, and (lower-case) J is
     #  already in use as an index further down
-    J_zeroplus = compute_J_zeroplus(p)
+    J_zeroplus = jnp.array(compute_J_zeroplus(p))
     J = jnp.concatenate((J_zeroplus[::-1][:-1], J_zeroplus))
 
     # TODO: External factory function that creates both `zero_align_idx` and
@@ -289,16 +289,18 @@ def _make_prolongate_1d(n_points_in, n_points_out, p, is_periodic):
         j_even_aligned = (i_even_aligned // 2)[
             :, jnp.newaxis
         ] + dists_to_neighbors_even
-        # TODO: wrap if periodic (this is where n_points_in will be required)
         j_even = to_positional_idx(j_even_aligned)
+        if is_periodic:
+            j_even = j_even % n_points_in
 
         i_odd = i[slice_odd]
         i_odd_aligned = zero_align_idx(i_odd)
         j_odd_aligned = (i_odd_aligned // 2)[
             :, jnp.newaxis
         ] + dists_to_neighbors_odd
-        # TODO: wrap if periodic (this is where n_points_in will be required)
         j_odd = to_positional_idx(j_odd_aligned)
+        if is_periodic:
+            j_odd = j_odd % n_points_in
 
         result = jnp.zeros(n_points_out)
         result = result.at[i_even].add(
