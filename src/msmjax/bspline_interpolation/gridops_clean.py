@@ -33,50 +33,6 @@ def _find_n_gridpoints_1d(
         return int(onp.ceil(length / h)) + 1 + p
 
 
-def _arbitrary_dim_outer(*xi: Array) -> Array:
-    """Compute the outer product of an arbitrary number of arrays"""
-    # TODO: could this be made more efficient? (the way it is currently done
-    #   technically involves redundant multiplications)
-    return jnp.prod(jnp.array(jnp.meshgrid(*xi, indexing="ij")), axis=0)
-
-
-def _multiindex_outer(*inds_individual_axes: Array) -> tuple[Array, ...]:
-    # TODO: name of this function and its arguments?
-    multi_inds = tuple(
-        arr.ravel()
-        for arr in jnp.meshgrid(*inds_individual_axes, indexing="ij")
-    )
-    return multi_inds
-
-
-# TODO: jit with static pbc?
-# TODO: function name?
-def _ravel_multi_index_with_invalidation(
-    multi_index: tuple[Array, ...], dims: Sequence[int], pbc: Sequence[bool]
-):
-    pbc = onp.asarray(pbc)  # TODO: onp/jnp?
-    all_periodic = pbc.all()
-    any_periodic = pbc.any()
-    intentionally_out_of_bounds_index = onp.prod(dims)
-
-    flat_inds_wrapped = jnp.ravel_multi_index(multi_index, dims, mode="wrap")
-    if all_periodic:
-        return flat_inds_wrapped
-    else:
-        multi_index = jnp.asarray(multi_index)
-        in_bounds = jnp.logical_and(
-            multi_index >= 0, multi_index < jnp.array(dims)[:, jnp.newaxis]
-        )
-        if any_periodic:
-            in_bounds = jnp.logical_or(in_bounds, pbc[:, jnp.newaxis])
-        return jnp.where(
-            # TODO: Which axis? Shouldn't it be .all() instead of .any()?
-            in_bounds.all(axis=0),
-            flat_inds_wrapped,
-            intentionally_out_of_bounds_index,
-        )
-
-
 def set_up_grids_all_levels(
     side_lengths: Sequence[float],
     level_one_spacings: Sequence[float],
@@ -104,6 +60,47 @@ def set_up_grids_all_levels(
         spacings_all_levels.append(spacings)
 
     return shapes_all_levels, spacings_all_levels
+
+
+def _arbitrary_dim_outer(*xi: Array) -> Array:
+    """Compute the outer product of an arbitrary number of arrays"""
+    return jnp.prod(jnp.array(jnp.meshgrid(*xi, indexing="ij")), axis=0)
+
+
+def _multiindex_outer(*inds_individual_axes: Array) -> tuple[Array, ...]:
+    multi_inds = tuple(
+        arr.ravel()
+        for arr in jnp.meshgrid(*inds_individual_axes, indexing="ij")
+    )
+    return multi_inds
+
+
+def _ravel_multi_index_with_invalidation(
+    multi_index: tuple[Array, ...], dims: Sequence[int], pbc: Sequence[bool]
+):
+    # TODO: jit with static pbc?
+    # TODO: function name?
+    pbc = onp.asarray(pbc)  # TODO: onp/jnp?
+    all_periodic = pbc.all()
+    any_periodic = pbc.any()
+    intentionally_out_of_bounds_index = onp.prod(dims)
+
+    flat_inds_wrapped = jnp.ravel_multi_index(multi_index, dims, mode="wrap")
+    if all_periodic:
+        return flat_inds_wrapped
+    else:
+        multi_index = jnp.asarray(multi_index)
+        in_bounds = jnp.logical_and(
+            multi_index >= 0, multi_index < jnp.array(dims)[:, jnp.newaxis]
+        )
+        if any_periodic:
+            in_bounds = jnp.logical_or(in_bounds, pbc[:, jnp.newaxis])
+        return jnp.where(
+            # TODO: Which axis? Shouldn't it be .all() instead of .any()?
+            in_bounds.all(axis=0),
+            flat_inds_wrapped,
+            intentionally_out_of_bounds_index,
+        )
 
 
 def make_basis_evaluation_fn(
@@ -156,7 +153,7 @@ def make_basis_evaluation_fn(
     return eval_basis
 
 
-def make_restrict_1d(n_points_in, n_points_out, p, is_periodic):
+def _make_restrict_1d(n_points_in, n_points_out, p, is_periodic):
     # TODO: Check n_points_in >= n_points_out? Indicate 'fine' and 'coarse'
     #  by the variable names somehow?
     # TODO: Take n_points_in from the shape of the input array?
@@ -217,7 +214,7 @@ def make_restriction_operator(
 ) -> Callable[[Array], Array]:
 
     restriction_fns_1d_per_axis = [
-        make_restrict_1d(n_points_in, n_points_out, p, is_periodic)
+        _make_restrict_1d(n_points_in, n_points_out, p, is_periodic)
         for n_points_in, n_points_out, is_periodic in zip(
             grid_shape_in, grid_shape_out, pbc
         )
@@ -236,7 +233,7 @@ def make_restriction_operator(
     return restrict
 
 
-def make_prolongate_1d(n_points_in, n_points_out, p, is_periodic):
+def _make_prolongate_1d(n_points_in, n_points_out, p, is_periodic):
     # TODO: Check n_points_in <= n_points_out? Indicate 'fine' and 'coarse'
     #  by the variable names somehow?
     # TODO: Take n_points_in from the shape of the input array?
@@ -326,7 +323,7 @@ def make_prolongation_operator(
 ) -> Callable[[Array], Array]:
 
     prolongation_fns_1d_per_axis = [
-        make_prolongate_1d(n_points_in, n_points_out, p, is_periodic)
+        _make_prolongate_1d(n_points_in, n_points_out, p, is_periodic)
         for n_points_in, n_points_out, is_periodic in zip(
             grid_shape_in, grid_shape_out, pbc
         )
