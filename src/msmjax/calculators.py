@@ -86,18 +86,22 @@ class StaticCellMSMParams:
     # -------------------------------------------------------------------------
     p: int  # TODO: Name: 'order'?
     mu: int  # TODO: One value per level?
-    # TODO: Name: cutoff? r_cut? Mention 'level_zero'? Check if fits?
-    #  Store the cutoffs at ALL levels? (Maybe under info?)
-    r_cut_0: float
-    h_1: Sequence[float]  # TODO: Allow only array? Name: grid_spacings?
     # TODO: The two 'max_level_*' are related to one another, to pbc and grids.
     #  Check consistency? Move to 'Long-range evaluation' or 'Info' sections?
     max_level_split: int
-    max_level_eval: int
+    max_level_grids: int
+    # TODO: Should grid_shapes, cutoff_radii, grid_spacings only include up to
+    #  max_level_grids in the first place, or should the setup process take
+    #  care of only using them up max_level_grids?
+    grid_shapes: Sequence[tuple[int, ...]]
+    # TODO: redundant with r_cut_0; highest-level cutoff must be inf!
+    #  Check if cutoff fits?
+    cutoff_radii: Sequence[float]
+    grid_spacings: Sequence[onp.ndarray]
     # -------------------------------------------------------------------------
     # Geometry-related (arguably)
     # -------------------------------------------------------------------------
-    cell: ArrayLike  # TODO: type?
+    cell: onp.ndarray  # TODO: type?
     cell_mode: CellMode
     pbc: Sequence[bool]  # TODO: type?
     # -------------------------------------------------------------------------
@@ -111,13 +115,14 @@ class StaticCellMSMParams:
     # -------------------------------------------------------------------------
     # Long-range evaluation
     # -------------------------------------------------------------------------
-    convolution_methods: Sequence[str]
+    convolution_methods: Sequence[ConvMeth]
     # TODO: Is it possible/helpful to handle dynamic cells like this?
     #  The main intended benefit is to make it clear upon inspection of model
     #  params that a transform is used, so they don't assume an error because
     #  the grid spacings and extents don't match the input values.
     #  Note: cell_mode = "general" in combination with grids_defined_on_unitcube = False would be invalid
     grids_defined_on_unitcube: bool
+    stencil_shapes: Sequence[tuple[int, ...]]
     ...  # TODO: all other grid stuff
     # -------------------------------------------------------------------------
     # Info
@@ -130,10 +135,10 @@ class StaticCellMSMParams:
     # omega: ArrayLike  # TODO: Non-negative-index part or full? Include at all?
     # J: ArrayLike  # TODO: Non-negative-index part or full? Include at all? Lowercase name?
     # kernel_stencils: Sequence[ArrayLike]  # TODO: Include??? Type?
+    info: dict = dataclasses.field(default_factory=dict)
     version: str = msmjax.__version__
 
     def __post_init__(self):
-        self.h_1 = onp.asarray(self.h_1)
         self.pbc = tuple(self.pbc)
         self.supercell_diag = (
             None if self.supercell_diag is None else tuple(self.supercell_diag)
@@ -142,7 +147,7 @@ class StaticCellMSMParams:
         # TODO: grid shapes to list (of tuples)
         # TODO: grid sizes to list (of int) (or don't include at all?)
         # TODO: spacings on all levels to list (of array? of tuple?)
-        # TODO: cutoffs on all levels to list (of array? of tuple?)
+        # TODO: cutoffs on all levels to list (of float?)
         # TODO: J to onp.array
         # TODO: omega to onp.array
         # TODO: kernel_stencils to onp.array (or don't include at all?)
@@ -174,7 +179,7 @@ def set_up_params_static_cell():
 def static_cell_msm(params: StaticCellMSMParams):
     kernel_fns = split_one_over_r_kernel(
         max_level=params.max_level_split,
-        level_zero_cutoff=params.r_cut_0,
+        level_zero_cutoff=params.cutoff_radii[0],
         softening_function=SofteningFunctionOneOverR(params.p),
     )
 
@@ -211,13 +216,13 @@ def static_cell_msm(params: StaticCellMSMParams):
     _, _, kernel_stencils = set_up_kernels_grids_and_stencils(
         box_lengths=onp.diag(params.cell),
         pbc=params.pbc,
-        level_one_gridspacing=params.h_1,
-        level_zero_cutoff=params.r_cut_0,
+        level_one_gridspacing=params.grid_spacings[1],
+        level_zero_cutoff=params.cutoff_radii[0],
         p=params.p,
         mu=params.mu,
         n_levels=params.max_level_split,
     )
-    kernel_stencils = kernel_stencils[: params.max_level_eval + 1]
+    kernel_stencils = kernel_stencils[: params.max_level_grids + 1]
 
     # TODO: compute_u_oneplus must include transformation to unit cube
     #  if cell_mode == "general"
