@@ -1,13 +1,19 @@
-from typing import Callable, Sequence
+from functools import partial
+from typing import Callable, Literal, Sequence
 
 import jax
 import jax.numpy as jnp
 import numpy as onp
 from jax import Array
 from jax.typing import ArrayLike
+from sympy import convolution
 
 from msmjax.bspline_interpolation.basis import create_bspline_basis_element
 from msmjax.bspline_interpolation.coefficients import compute_J_zeroplus
+from msmjax.core.longrange import special_periodic_convolve
+
+# TODO: define somewhere central
+ConvMeth = Literal["direct", "fft"]
 
 
 def _find_n_gridpoints_1d(
@@ -340,3 +346,62 @@ def make_prolongation_operator(
         return out_array_fine
 
     return prolongate
+
+
+def create_all_grid_to_grid_ops(
+    grid_shapes: Sequence[tuple[int, ...]],
+    p: int,
+    pbc: Sequence[bool],
+    convolution_methods: Sequence[ConvMeth],
+):
+    """Create all necessary functions that map from grids to grids"""
+    max_level_grids = len(grid_shapes) - 1
+
+    # TODO: check grid_shapes and convolution_methods same length
+    # TODO: check pbc same length as the elements of grid_shapes
+
+    restriction_fns = [None] * (max_level_grids + 1)
+    for lvl in range(2, max_level_grids + 1):
+        restrict = make_restriction_operator(
+            grid_shape_in=grid_shapes[lvl - 1],
+            grid_shape_out=grid_shapes[lvl],
+            p=p,
+            pbc=pbc,
+        )
+        restriction_fns[lvl] = restrict
+
+    prolongation_fns = [None] * (max_level_grids + 1)
+    for lvl in range(1, max_level_grids):
+        prolongate = make_prolongation_operator(
+            grid_shape_in=grid_shapes[lvl + 1],
+            grid_shape_out=grid_shapes[lvl],
+            p=p,
+            pbc=pbc,
+        )
+        prolongation_fns[lvl] = prolongate
+
+    # TODO: There might be more efficient ways to compute the convolution on
+    #  the highest level for non-periodic cases (where the stencil is always
+    #  larger than the grid)
+    convolution_fns = [None] * (max_level_grids + 1)
+    for lvl in range(1, max_level_grids + 1):
+        conv_meth = convolution_methods[lvl]
+        if conv_meth == "scipy-direct":
+            interact = partial(
+                special_periodic_convolve,
+                pbc=pbc,
+                method="direct",
+            )
+        elif conv_meth == "scipy-fft":
+            interact = partial(
+                special_periodic_convolve,
+                pbc=pbc,
+                method="fft",
+            )
+        else:
+            raise ValueError(
+                f"`{conv_meth}` is not a valid convolution method"
+            )
+        convolution_fns[lvl] = interact
+
+    return restriction_fns, prolongation_fns, convolution_fns
