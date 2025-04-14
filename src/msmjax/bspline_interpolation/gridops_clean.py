@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Callable, Sequence
 
 import jax
 import jax.numpy as jnp
@@ -7,6 +7,7 @@ from jax import Array
 from jax.typing import ArrayLike
 
 from msmjax.bspline_interpolation.basis import create_bspline_basis_element
+from msmjax.bspline_interpolation.coefficients import compute_J_zeroplus
 
 
 def _arbitrary_dim_outer(*xi: Array) -> Array:
@@ -105,32 +106,27 @@ def make_basis_evaluation_fn(
     return eval_basis
 
 
-def make_restrict_1d(
-    axis_source_fine: BSplineInterpolationAxis,
-    axis_target_coarse: BSplineInterpolationAxis,
-):
-    # TODO: Change function parameters to (n_points_in, n_points_out, p, periodic)
-    #  => directly compute J from p during setup, this should be fine
-    p = axis_source_fine.p
-    J_zeroplus = axis_source_fine.J_zeroplus
-    J = jnp.concatenate((J_zeroplus[::-1][:-1], J_zeroplus))
+def make_restrict_1d(n_points_in, n_points_out, p, is_periodic):
+    # TODO: Check n_points_in >= n_points_out? Indicate 'fine' and 'coarse'
+    #  by the variable names somehow?
+    # TODO: Take n_points_in from the shape of the input array?
 
-    n_points_in = axis_source_fine.n_total
-    n_points_out = axis_target_coarse.n_total
-    # TODO: check n_points_in >= n_points_out?
-    periodic = axis_source_fine.periodic
+    # TODO: Variable names? Shouldn't be uppercase, and (lower-case) J is
+    #  already in use as an index further down
+    J_zeroplus = compute_J_zeroplus(p)
+    J = jnp.concatenate((J_zeroplus[::-1][:-1], J_zeroplus))
 
     # TODO: External factory function that creates both `zero_align_idx` and
     #  `to_positional_idx` from `periodic` and `p`. Function names?
 
     def zero_align_idx(positional_idx):
-        if periodic:
+        if is_periodic:
             return positional_idx
         else:
             return positional_idx - p // 2
 
     def to_positional_idx(zero_aligned_idx):
-        if periodic:
+        if is_periodic:
             return zero_aligned_idx
         else:
             return zero_aligned_idx + p // 2
@@ -144,7 +140,7 @@ def make_restrict_1d(
         )
         j = to_positional_idx(j_aligned)
 
-        if axis_source_fine.periodic:
+        if is_periodic:
             j = j % n_points_in
             selected_source_values = in_array_fine[j]
         else:
@@ -163,37 +159,57 @@ def make_restrict_1d(
     return restrict_1d
 
 
-def make_clean_prolongate_1d(
-    axis_source_coarse: BSplineInterpolationAxis,
-    axis_target_fine: BSplineInterpolationAxis,
-):
-    # TODO: Change function parameters to (n_points_in, n_points_out, p, periodic)
-    #  => directly compute J from p during setup, this should be fine
-    p = axis_source_coarse.p
-    J_zeroplus = jnp.asarray(axis_source_coarse.J_zeroplus)
+def make_restriction_operator(
+    grid_shape_in: Sequence[int],
+    grid_shape_out: Sequence[int],
+    p: int,
+    pbc: Sequence[bool],
+) -> Callable[[Array], Array]:
+
+    restriction_fns_1d_per_axis = [
+        make_restrict_1d(n_points_in, n_points_out, p, is_periodic)
+        for n_points_in, n_points_out, is_periodic in zip(
+            grid_shape_in, grid_shape_out, pbc
+        )
+    ]
+
+    def restrict(in_array_fine):
+        out_array_coarse = in_array_fine
+        for axis, fn_1d in enumerate(restriction_fns_1d_per_axis):
+            out_array_coarse = jnp.apply_along_axis(
+                func1d=fn_1d,
+                axis=axis,
+                arr=out_array_coarse,
+            )
+        return out_array_coarse
+
+    return restrict
+
+
+def make_prolongate_1d(n_points_in, n_points_out, p, is_periodic):
+    # TODO: Check n_points_in <= n_points_out? Indicate 'fine' and 'coarse'
+    #  by the variable names somehow?
+    # TODO: Take n_points_in from the shape of the input array?
+
+    # TODO: Variable names? Shouldn't be uppercase, and (lower-case) J is
+    #  already in use as an index further down
+    J_zeroplus = compute_J_zeroplus(p)
     J = jnp.concatenate((J_zeroplus[::-1][:-1], J_zeroplus))
 
-    n_points_in = axis_source_coarse.n_total
-    n_points_out = axis_target_fine.n_total
-    # TODO: check n_points_in >= n_points_out?
-    periodic = axis_source_coarse.periodic
-
     # TODO: External factory function that creates both `zero_align_idx` and
-    #  `to_positional_idx` from `periodic` and `p`
+    #  `to_positional_idx` from `periodic` and `p`. Function names?
 
     def zero_align_idx(positional_idx):
-        if periodic:
+        if is_periodic:
             return positional_idx
         else:
             return positional_idx - p // 2
 
     def to_positional_idx(zero_aligned_idx):
-        if periodic:
+        if is_periodic:
             return zero_aligned_idx
         else:
             return zero_aligned_idx + p // 2
-
-    # TODO: get_neighbor_inds_on_sourcegrid_even, get_neighbor_inds_on_sourcegrid_odd?
 
     start_even = int(onp.ceil(onp.round(-p / 4, decimals=1)))
     end_even = int(onp.floor(onp.round(p / 4, decimals=1)))
@@ -205,7 +221,7 @@ def make_clean_prolongate_1d(
     inds_into_J_even = -2 * dists_to_neighbors_even
     inds_into_J_odd = 1 - 2 * dists_to_neighbors_odd
 
-    if periodic:
+    if is_periodic:
         slice_even = slice(0, None, 2)
         slice_odd = slice(1, None, 2)
     else:
@@ -220,6 +236,7 @@ def make_clean_prolongate_1d(
         j_even_aligned = (i_even_aligned // 2)[
             :, jnp.newaxis
         ] + dists_to_neighbors_even
+        # TODO: wrap if periodic (this is where n_points_in will be required)
         j_even = to_positional_idx(j_even_aligned)
 
         i_odd = i[slice_odd]
@@ -227,6 +244,7 @@ def make_clean_prolongate_1d(
         j_odd_aligned = (i_odd_aligned // 2)[
             :, jnp.newaxis
         ] + dists_to_neighbors_odd
+        # TODO: wrap if periodic (this is where n_points_in will be required)
         j_odd = to_positional_idx(j_odd_aligned)
 
         result = jnp.zeros(n_points_out)
@@ -242,9 +260,36 @@ def make_clean_prolongate_1d(
         )
 
         # TODO: check that the output has the same length as axis_target_coarse?
-        # TODO: Handle restricting from one point to one point (see branch `one_to_one_edge_cases`)!
+        # TODO: Handle prolongating from one point to one point (see branch `one_to_one_edge_cases`)!
         #  Also, does "min number of points -> min number of points" (in nonperiodic case) work correctly?
 
         return result
 
     return prolongate_1d
+
+
+def make_prolongation_operator(
+    grid_shape_in: Sequence[int],
+    grid_shape_out: Sequence[int],
+    p: int,
+    pbc: Sequence[bool],
+) -> Callable[[Array], Array]:
+
+    prolongation_fns_1d_per_axis = [
+        make_prolongate_1d(n_points_in, n_points_out, p, is_periodic)
+        for n_points_in, n_points_out, is_periodic in zip(
+            grid_shape_in, grid_shape_out, pbc
+        )
+    ]
+
+    def prolongate(in_array_coarse):
+        out_array_fine = in_array_coarse
+        for axis, fn_1d in enumerate(prolongation_fns_1d_per_axis):
+            out_array_fine = jnp.apply_along_axis(
+                func1d=fn_1d,
+                axis=axis,
+                arr=out_array_fine,
+            )
+        return out_array_fine
+
+    return prolongate
