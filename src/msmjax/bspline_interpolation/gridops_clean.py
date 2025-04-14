@@ -3,18 +3,20 @@ from typing import Sequence
 import jax
 import jax.numpy as jnp
 import numpy as onp
+from jax import Array
+from jax.typing import ArrayLike
 
 from msmjax.bspline_interpolation.basis import create_bspline_basis_element
 
 
-def _arbitrary_dim_outer(*xi: jax.Array) -> jax.Array:
+def _arbitrary_dim_outer(*xi: Array) -> Array:
     """Compute the outer product of an arbitrary number of arrays"""
     # TODO: could this be made more efficient? (the way it is currently done
     #   technically involves redundant multiplications)
     return jnp.prod(jnp.array(jnp.meshgrid(*xi, indexing="ij")), axis=0)
 
 
-def _multiindex_outer(*inds_individual_axes):
+def _multiindex_outer(*inds_individual_axes: Array) -> tuple[Array, ...]:
     # TODO: name of this function and its arguments?
     multi_inds = tuple(
         arr.ravel()
@@ -25,7 +27,9 @@ def _multiindex_outer(*inds_individual_axes):
 
 # TODO: jit with static pbc?
 # TODO: function name?
-def _ravel_multi_index_with_invalidation(multi_index, dims, pbc):
+def _ravel_multi_index_with_invalidation(
+    multi_index: tuple[Array, ...], dims: Sequence[int], pbc: Sequence[bool]
+):
     pbc = onp.asarray(pbc)  # TODO: onp/jnp?
     all_periodic = pbc.all()
     any_periodic = pbc.any()
@@ -55,7 +59,7 @@ def make_basis_evaluation_fn(
     pbc = onp.asarray(pbc)
 
     # TODO: External factory function that creates both `zero_align_idx` and
-    #  `to_positional_idx` from `periodic` and `p`
+    #  `to_positional_idx` from `periodic` and `p`. Function names?
 
     def zero_align_idx(positional_idx):
         if pbc.all():
@@ -99,3 +103,148 @@ def make_basis_evaluation_fn(
         return splinevals, flat_inds
 
     return eval_basis
+
+
+def make_restrict_1d(
+    axis_source_fine: BSplineInterpolationAxis,
+    axis_target_coarse: BSplineInterpolationAxis,
+):
+    # TODO: Change function parameters to (n_points_in, n_points_out, p, periodic)
+    #  => directly compute J from p during setup, this should be fine
+    p = axis_source_fine.p
+    J_zeroplus = axis_source_fine.J_zeroplus
+    J = jnp.concatenate((J_zeroplus[::-1][:-1], J_zeroplus))
+
+    n_points_in = axis_source_fine.n_total
+    n_points_out = axis_target_coarse.n_total
+    # TODO: check n_points_in >= n_points_out?
+    periodic = axis_source_fine.periodic
+
+    # TODO: External factory function that creates both `zero_align_idx` and
+    #  `to_positional_idx` from `periodic` and `p`. Function names?
+
+    def zero_align_idx(positional_idx):
+        if periodic:
+            return positional_idx
+        else:
+            return positional_idx - p // 2
+
+    def to_positional_idx(zero_aligned_idx):
+        if periodic:
+            return zero_aligned_idx
+        else:
+            return zero_aligned_idx + p // 2
+
+    def restrict_1d(in_array_fine: jax.Array) -> jax.Array:
+        # TODO: onp backend for these index arrays that could as well be static?
+        i = jnp.arange(n_points_out)
+        i_aligned = zero_align_idx(i)
+        j_aligned = (2 * i_aligned)[:, jnp.newaxis] + jnp.arange(
+            -p // 2, p // 2 + 1
+        )
+        j = to_positional_idx(j_aligned)
+
+        if axis_source_fine.periodic:
+            j = j % n_points_in
+            selected_source_values = in_array_fine[j]
+        else:
+            selected_source_values = jnp.where(
+                jnp.logical_and(j >= 0, j < n_points_in),
+                in_array_fine[j],
+                0.0,
+            )
+
+        # TODO: check that the output has the same length as axis_target_coarse?
+        # TODO: Handle restricting from one point to one point (see branch `one_to_one_edge_cases`)!
+        #  Also, does "min number of points -> min number of points" (in nonperiodic case) work correctly?
+
+        return (selected_source_values * J).sum(axis=1)
+
+    return restrict_1d
+
+
+def make_clean_prolongate_1d(
+    axis_source_coarse: BSplineInterpolationAxis,
+    axis_target_fine: BSplineInterpolationAxis,
+):
+    # TODO: Change function parameters to (n_points_in, n_points_out, p, periodic)
+    #  => directly compute J from p during setup, this should be fine
+    p = axis_source_coarse.p
+    J_zeroplus = jnp.asarray(axis_source_coarse.J_zeroplus)
+    J = jnp.concatenate((J_zeroplus[::-1][:-1], J_zeroplus))
+
+    n_points_in = axis_source_coarse.n_total
+    n_points_out = axis_target_fine.n_total
+    # TODO: check n_points_in >= n_points_out?
+    periodic = axis_source_coarse.periodic
+
+    # TODO: External factory function that creates both `zero_align_idx` and
+    #  `to_positional_idx` from `periodic` and `p`
+
+    def zero_align_idx(positional_idx):
+        if periodic:
+            return positional_idx
+        else:
+            return positional_idx - p // 2
+
+    def to_positional_idx(zero_aligned_idx):
+        if periodic:
+            return zero_aligned_idx
+        else:
+            return zero_aligned_idx + p // 2
+
+    # TODO: get_neighbor_inds_on_sourcegrid_even, get_neighbor_inds_on_sourcegrid_odd?
+
+    start_even = int(onp.ceil(onp.round(-p / 4, decimals=1)))
+    end_even = int(onp.floor(onp.round(p / 4, decimals=1)))
+    start_odd = int(onp.ceil(onp.round(0.5 - p / 4, decimals=1)))
+    end_odd = int(onp.floor(onp.round(0.5 + p / 4, decimals=1)))
+    dists_to_neighbors_even = jnp.arange(start_even, end_even + 1)
+    dists_to_neighbors_odd = jnp.arange(start_odd, end_odd + 1)
+
+    inds_into_J_even = -2 * dists_to_neighbors_even
+    inds_into_J_odd = 1 - 2 * dists_to_neighbors_odd
+
+    if periodic:
+        slice_even = slice(0, None, 2)
+        slice_odd = slice(1, None, 2)
+    else:
+        slice_even = slice((p // 2) % 2, None, 2)
+        slice_odd = slice(1 - (p // 2) % 2, None, 2)
+
+    def prolongate_1d(in_array_coarse: jax.Array) -> jax.Array:
+        i = jnp.arange(n_points_out)
+
+        i_even = i[slice_even]
+        i_even_aligned = zero_align_idx(i_even)
+        j_even_aligned = (i_even_aligned // 2)[
+            :, jnp.newaxis
+        ] + dists_to_neighbors_even
+        j_even = to_positional_idx(j_even_aligned)
+
+        i_odd = i[slice_odd]
+        i_odd_aligned = zero_align_idx(i_odd)
+        j_odd_aligned = (i_odd_aligned // 2)[
+            :, jnp.newaxis
+        ] + dists_to_neighbors_odd
+        j_odd = to_positional_idx(j_odd_aligned)
+
+        result = jnp.zeros(n_points_out)
+        result = result.at[i_even].add(
+            (
+                in_array_coarse[j_even] * J_zeroplus[jnp.abs(inds_into_J_even)]
+            ).sum(axis=1)
+        )
+        result = result.at[i_odd].add(
+            (
+                in_array_coarse[j_odd] * J_zeroplus[jnp.abs(inds_into_J_odd)]
+            ).sum(axis=1)
+        )
+
+        # TODO: check that the output has the same length as axis_target_coarse?
+        # TODO: Handle restricting from one point to one point (see branch `one_to_one_edge_cases`)!
+        #  Also, does "min number of points -> min number of points" (in nonperiodic case) work correctly?
+
+        return result
+
+    return prolongate_1d
