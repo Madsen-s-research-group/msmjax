@@ -10,6 +10,29 @@ from msmjax.bspline_interpolation.basis import create_bspline_basis_element
 from msmjax.bspline_interpolation.coefficients import compute_J_zeroplus
 
 
+def _find_n_gridpoints_1d(
+    length: float, h: float, p: int, is_periodic: bool
+) -> int:
+    if p % 2 != 0:
+        raise ValueError("p must be even")
+
+    if is_periodic:
+        if not (
+            onp.isclose(length % h, 0.0)
+            or onp.isclose(length % h, h)
+            or onp.isclose(h % length, 0.0)
+            or onp.isclose(h % length, length)
+        ):
+            raise ValueError(
+                "Along any periodic axis, the grid spacing must either evenly "
+                "divide the box length or be a multiple thereof."
+            )
+        return int(onp.ceil(length / h))
+    else:
+        # +1 to be safe
+        return int(onp.ceil(length / h)) + 1 + p
+
+
 def _arbitrary_dim_outer(*xi: Array) -> Array:
     """Compute the outer product of an arbitrary number of arrays"""
     # TODO: could this be made more efficient? (the way it is currently done
@@ -54,9 +77,38 @@ def _ravel_multi_index_with_invalidation(
         )
 
 
+def set_up_grids_all_levels(
+    side_lengths: Sequence[float],
+    level_one_spacings: Sequence[float],
+    pbc: Sequence[bool],
+    max_level_grids: int,
+    p: int,
+) -> tuple[list[tuple[int, ...]], list[onp.ndarray]]:
+    if max_level_grids < 1:
+        raise ValueError("Need at least one grid level.")
+
+    # TODO: Check same length of side_lengths, level_one_spacings, pbc?
+
+    level_one_spacings = onp.asarray(level_one_spacings)
+
+    shapes_all_levels = [None]
+    spacings_all_levels = [None]
+
+    for lvl in range(1, max_level_grids + 1):
+        spacings = 2 ** (lvl - 1) * level_one_spacings
+        shape = tuple(
+            _find_n_gridpoints_1d(length, h, p, is_periodic)
+            for length, h, is_periodic in zip(side_lengths, spacings, pbc)
+        )
+        shapes_all_levels.append(shape)
+        spacings_all_levels.append(spacings)
+
+    return shapes_all_levels, spacings_all_levels
+
+
 def make_basis_evaluation_fn(
     grid_shape: tuple[int, ...], p: int, pbc: Sequence[bool]
-):
+) -> Callable[[Array, Array], tuple[Array, Array]]:
     pbc = onp.asarray(pbc)
 
     # TODO: External factory function that creates both `zero_align_idx` and
@@ -80,9 +132,7 @@ def make_basis_evaluation_fn(
 
     bspline_basis_element = create_bspline_basis_element(order=p - 1)
 
-    def eval_basis(
-        coords: jax.Array, spacings: jax.Array
-    ) -> tuple[jax.Array, jax.Array]:
+    def eval_basis(coords: Array, spacings: Array) -> tuple[Array, Array]:
         # TODO: should spacing be argument to the closure or to the setup fn?
         r_over_h = coords / spacings
         raw_reference_inds = jnp.ceil(r_over_h).astype(int)
