@@ -122,21 +122,17 @@ class StaticCellMSMParams:
     #  the grid spacings and extents don't match the input values.
     #  Note: cell_mode = "general" in combination with grids_defined_on_unitcube = False would be invalid
     grids_defined_on_unitcube: bool
-    stencil_shapes: Sequence[tuple[int, ...]]
+    stencil_shapes: Sequence[tuple[int, ...]]  # TODO: full or from center?
     ...  # TODO: all other grid stuff
     # -------------------------------------------------------------------------
     # Info
     # -------------------------------------------------------------------------
     # n_dim: int
-    # # TODO: Store number of particles? In principle, they are not a fundamental
-    # #  model attribute. Users should be allowed to run the same model on
-    # #  different numbers of particles.
-    # n_particles: int
     # omega: ArrayLike  # TODO: Non-negative-index part or full? Include at all?
     # J: ArrayLike  # TODO: Non-negative-index part or full? Include at all? Lowercase name?
     # kernel_stencils: Sequence[ArrayLike]  # TODO: Include??? Type?
-    info: dict = dataclasses.field(default_factory=dict)
     version: str = msmjax.__version__
+    info: dict = dataclasses.field(default_factory=dict)
 
     def __post_init__(self):
         self.pbc = tuple(self.pbc)
