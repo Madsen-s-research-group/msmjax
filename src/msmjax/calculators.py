@@ -95,12 +95,9 @@ class MSMParams:
     # Basic MSM settings
     # -------------------------------------------------------------------------
     p: int
-    mu: int  # TODO: One value per level?
-    max_splitting_level: int  # TODO: name
-    max_grid_level: int  # TODO: name
-    # TODO: Should grid_shapes, cutoff_radii, grid_spacings only include up to
-    #  max_grid_level in the first place, or should the setup process take
-    #  care of only using them up to max_grid_level?
+    mu: int
+    max_splitting_level: int
+    max_grid_level: int
     cutoff_radii: Sequence[float]
     # -------------------------------------------------------------------------
     # Geometry-related (arguably)
@@ -119,9 +116,9 @@ class MSMParams:
     # TODO: cell_mode = "general" in combination with grids_defined_on_unitcube = False would be invalid
     grids_defined_on_unitcube: bool
     grid_shapes: Sequence[None | tuple[int, ...]]
-    grid_spacings: Sequence[onp.ndarray]
+    grid_spacings: Sequence[None | onp.ndarray]
     stencil_extents_from_center: Sequence[None | tuple[int, ...]]
-    convolution_methods: Sequence[ConvMeth]
+    convolution_methods: Sequence[None | ConvMeth]
     # -------------------------------------------------------------------------
     # Info
     # -------------------------------------------------------------------------
@@ -208,17 +205,6 @@ def set_up_msm_params_static_cell(
             )
         max_grid_level = max_splitting_level
 
-    cutoff_radii = [
-        2**lvl * level_zero_cutoff for lvl in range(max_splitting_level)
-    ] + [onp.inf]
-    gridshapes_all_levels, spacings_all_levels = set_up_grids_all_levels(
-        side_lengths=side_lengths,
-        level_one_spacings=level_one_spacings,
-        pbc=pbc,
-        max_grid_level=max_grid_level,
-        p=p,
-    )
-
     alpha = int(onp.max(level_zero_cutoff / level_one_spacings))
     if p is None:
         p = suggest_p(alpha)
@@ -227,6 +213,30 @@ def set_up_msm_params_static_cell(
     #  mu >= 3*p/2 for the highest grid level)
     if mu is None:
         mu = max(int(4 * alpha + p // 2), 3 * p // 2)
+
+    cutoff_radii = [
+        2**lvl * level_zero_cutoff for lvl in range(max_splitting_level)
+    ] + [onp.inf]
+
+    if cell_mode == "ortho":
+        grids_defined_on_unitcube = False
+    elif cell_mode == "general":
+        grids_defined_on_unitcube = True
+        # TODO: Scale side lengths and spacings.
+        #  Is overwriting the variables the way to go though?
+        level_one_spacings /= side_lengths
+        side_lengths = onp.ones_like(level_one_spacings)
+    else:
+        # TODO: Where to check for this?
+        raise ValueError("Illegal value for cell_mode")
+
+    gridshapes_all_levels, spacings_all_levels = set_up_grids_all_levels(
+        side_lengths=side_lengths,
+        level_one_spacings=level_one_spacings,
+        pbc=pbc,
+        max_grid_level=max_grid_level,
+        p=p,
+    )
 
     stencil_extents_from_center = [None]
     extents_intermediate = (2 * alpha + 1,) * n_dim
