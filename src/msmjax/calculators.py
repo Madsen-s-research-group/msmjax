@@ -162,8 +162,7 @@ def set_up_msm_params_static_cell(
     cell_mode: CellMode,
     pbc: Sequence[bool],
     level_one_spacings: float | ArrayLike,
-    level_zero_cutoff: float = None,
-    alpha: float = None,
+    level_zero_cutoff: float,
     p: int = None,
     mu: int = None,
     n_particles: int = None,
@@ -203,14 +202,15 @@ def set_up_msm_params_static_cell(
                 min_pos=onp.zeros(n_dim, dtype=float),
                 max_pos=side_lengths,
                 nb_particles=n_particles,
-                level_one_gridspacing=level_one_gridspacing,
+                level_one_gridspacing=level_one_spacings,  # TODO: Does this have to be scalar?
                 level_zero_cutoff=level_zero_cutoff,
                 p=p,
             )
         max_grid_level = max_splitting_level
 
-    # TODO: cutoffs all levels (inf at highest level!)
-
+    cutoff_radii = [
+        2**lvl * level_zero_cutoff for lvl in range(max_splitting_level)
+    ] + [onp.inf]
     shapes_all_levels, spacings_all_levels = set_up_grids_all_levels(
         side_lengths=side_lengths,
         level_one_spacings=level_one_spacings,
@@ -219,6 +219,7 @@ def set_up_msm_params_static_cell(
         p=p,
     )
 
+    alpha = onp.max(level_zero_cutoff / level_one_spacings)
     if p is None:
         p = suggest_p(alpha)
     # See section "1. Preprocessing" of the article
@@ -247,7 +248,6 @@ def set_up_msm_params_static_cell(
         stencil_extents_from_center=stencil_extents_from_center,
         convolution_methods=convolution_methods,
         n_dim=n_dim,
-        version=version,
         info=info,
     )
 
