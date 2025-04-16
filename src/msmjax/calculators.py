@@ -31,7 +31,11 @@ from msmjax.core.shortrange import (
     make_eval_pair_pot,
     make_eval_pair_pot_neighborlist,
 )
-from msmjax.kernels import SofteningFunctionOneOverR, split_one_over_r_kernel
+from msmjax.kernels import (
+    SofteningFunctionOneOverR,
+    make_construct_stencils,
+    split_one_over_r_kernel,
+)
 
 # TODO: This should be defined elsewhere, since the longrange part will likely
 #  also use it
@@ -219,6 +223,28 @@ def static_cell_msm(params: StaticCellMSMParams):
         n_levels=params.max_level_split,
     )
     kernel_stencils = kernel_stencils[: params.max_level_grids + 1]
+
+    n_levels_intermed = params.max_level_split - 1
+    include_toplevel = params.max_level_grids == params.max_level_split
+    if n_levels_intermed > 0:
+        k_lowest_intermed = kernel_fns[1]
+        extents_intermed = params.stencil_extents_from_center[1]
+    else:
+        (k_lowest_intermed, extents_intermed) = (None, None)
+    if include_toplevel:
+        k_toplevel = kernel_fns[-1]
+        grid_shape_toplevel = params.grid_shapes[-1]
+    else:
+        (k_toplevel, grid_shape_toplevel) = (None, None)
+    construct_stencils = make_construct_stencils(
+        omega=omega,
+        n_levels_intermed=n_levels_intermed,
+        include_toplevel=include_toplevel,
+        k_lowest_intermed=k_lowest_intermed,
+        extents_from_center_intermed=extents_intermed,
+        k_toplevel=k_toplevel,
+        grid_shape_toplevel=grid_shape_toplevel,
+    )
 
     # TODO: compute_u_oneplus must include transformation to unit cube
     #  if cell_mode == "general"
