@@ -90,25 +90,20 @@ class StaticCellMSMParams:
     # -------------------------------------------------------------------------
     p: int  # TODO: Name: 'order'?
     mu: int  # TODO: One value per level?
-    # TODO: The two 'max_level_*' are related to one another, to pbc and grids.
-    #  Check consistency? Move to 'Long-range evaluation' or 'Info' sections?
     max_level_split: int
     max_level_grids: int
     # TODO: Should grid_shapes, cutoff_radii, grid_spacings only include up to
     #  max_level_grids in the first place, or should the setup process take
     #  care of only using them up max_level_grids?
     grid_shapes: Sequence[tuple[int, ...]]
-    stencil_extents_from_center: Sequence[tuple[int, ...]]
-    # TODO: redundant with r_cut_0; highest-level cutoff must be inf!
-    #  Check if cutoff fits?
     cutoff_radii: Sequence[float]
     grid_spacings: Sequence[onp.ndarray]
     # -------------------------------------------------------------------------
     # Geometry-related (arguably)
     # -------------------------------------------------------------------------
-    cell: onp.ndarray  # TODO: type?
+    cell: onp.ndarray
     cell_mode: CellMode
-    pbc: Sequence[bool]  # TODO: type?
+    pbc: Sequence[bool]  # TODO: type? (for consistent serialization)
     # -------------------------------------------------------------------------
     # Short-range evaluation
     # -------------------------------------------------------------------------
@@ -127,15 +122,11 @@ class StaticCellMSMParams:
     #  the grid spacings and extents don't match the input values.
     #  Note: cell_mode = "general" in combination with grids_defined_on_unitcube = False would be invalid
     grids_defined_on_unitcube: bool
-    stencil_shapes: Sequence[tuple[int, ...]]  # TODO: full or from center?
-    ...  # TODO: all other grid stuff
+    stencil_extents_from_center: Sequence[tuple[int, ...]]
     # -------------------------------------------------------------------------
     # Info
     # -------------------------------------------------------------------------
-    # n_dim: int
-    # omega: ArrayLike  # TODO: Non-negative-index part or full? Include at all?
-    # J: ArrayLike  # TODO: Non-negative-index part or full? Include at all? Lowercase name?
-    # kernel_stencils: Sequence[ArrayLike]  # TODO: Include??? Type?
+    n_dim: int
     version: str = msmjax.__version__
     info: dict = dataclasses.field(default_factory=dict)
 
@@ -207,10 +198,8 @@ def static_cell_msm(params: StaticCellMSMParams):
             ),
         )
 
-    # TODO: Should these be computed here, or be part of params?
-    #  A thought: For debugging and post-calculation analysis, they should
-    #             definitely be included in the params, whether the setup
-    #             process does actually take them from there or not.
+    # TODO: (Re-)compute omega here, or should it be part of params (maybe just in info)?
+    #  - same for J
     omega, _ = compute_coeffs_with_truncation(params.p, params.mu)
 
     n_levels_intermed = params.max_level_split - 1
