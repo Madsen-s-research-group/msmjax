@@ -19,8 +19,14 @@ from msmjax.bspline_interpolation.coefficients import (
 from msmjax.bspline_interpolation.gridops_clean import (
     create_all_grid_to_grid_ops,
     make_basis_evaluation_fn,
+    set_up_grids_all_levels,
 )
-from msmjax.convenience import set_up_kernels_grids_and_stencils, suggest_p
+from msmjax.convenience import (
+    find_spacings_and_n_levels_periodic,
+    set_up_kernels_grids_and_stencils,
+    suggest_max_gridlevel_nonPBC,
+    suggest_p,
+)
 from msmjax.core.longrange import (
     make_compute_u_oneplus,
     make_dyn_cell_longrange_fn,
@@ -152,26 +158,66 @@ class MSMParams:
 
 
 def set_up_msm_params_static_cell(
-    cell: ArrayLike,  # TODO: npt.arraylike?
+    cell: ArrayLike,
     cell_mode: CellMode,
     pbc: Sequence[bool],
-    level_one_gridspacing: float | ArrayLike,  # TODO: npt.arraylike?
+    level_one_spacings: float | ArrayLike,
     level_zero_cutoff: float = None,
     alpha: float = None,
     p: int = None,
     mu: int = None,
     n_particles: int = None,
-    max_splitting_level: int = None,  # TODO: name
+    max_splitting_level: int = None,
     supercell_diag: Sequence[int] = None,
     use_neighborlist: bool = None,
     convolution_methods: ConvMeth | Sequence[ConvMeth] = "fft",
 ) -> MSMParams:
+    """High-level convenience function for setting up MSM params."""
     cell = onp.asarray(cell)
     n_dim = cell.shape[0]
-    level_one_gridspacing = onp.asarray(level_one_gridspacing)
-    if onp.ndim(level_one_gridspacing) == 0:
-        level_one_gridspacing = onp.full(level_one_gridspacing, n_dim)
+    side_lengths = onp.linalg.norm(cell, axis=1)
+    level_one_spacings = onp.asarray(level_one_spacings)
+    if onp.ndim(level_one_spacings) == 0:
+        level_one_spacings = onp.full(level_one_spacings, n_dim)
     pbc = onp.asarray(pbc)
+
+    if pbc.any():
+        if max_splitting_level is not None:
+            raise ValueError(
+                "Leave max_splitting_level unfilled if at least one direction "
+                "is periodic. It is determined automatically."
+            )
+        (
+            adjusted_spacings,
+            max_splitting_level,
+        ) = find_spacings_and_n_levels_periodic(
+            side_lengths[pbc], level_one_spacings[pbc]
+        )
+        level_one_spacings[onp.where(pbc)[0]] = adjusted_spacings
+        max_grid_level = max_splitting_level - 1
+    else:
+        if max_splitting_level is None:
+            # TODO: Replace/rework this very old grid level determination function
+            # TODO: Print a message that max_level is being determined automatically?
+            max_splitting_level = suggest_max_gridlevel_nonPBC(
+                min_pos=onp.zeros(n_dim, dtype=float),
+                max_pos=side_lengths,
+                nb_particles=n_particles,
+                level_one_gridspacing=level_one_gridspacing,
+                level_zero_cutoff=level_zero_cutoff,
+                p=p,
+            )
+        max_grid_level = max_splitting_level
+
+    # TODO: cutoffs all levels (inf at highest level!)
+
+    shapes_all_levels, spacings_all_levels = set_up_grids_all_levels(
+        side_lengths=side_lengths,
+        level_one_spacings=level_one_spacings,
+        pbc=pbc,
+        max_grid_level=max_grid_level,
+        p=p,
+    )
 
     if p is None:
         p = suggest_p(alpha)
@@ -196,8 +242,8 @@ def set_up_msm_params_static_cell(
         supercell_diag=supercell_diag,
         use_neighborlist=use_neighborlist,
         grids_defined_on_unitcube=grids_defined_on_unitcube,
-        grid_shapes=grid_shapes,
-        grid_spacings=grid_spacings,
+        grid_shapes=shapes_all_levels,
+        grid_spacings=spacings_all_levels,
         stencil_extents_from_center=stencil_extents_from_center,
         convolution_methods=convolution_methods,
         n_dim=n_dim,

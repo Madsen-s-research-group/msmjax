@@ -6,7 +6,6 @@ import jax.numpy as jnp
 import numpy as onp
 from jax import Array
 from jax.typing import ArrayLike
-from sympy import convolution
 
 from msmjax.bspline_interpolation.basis import create_bspline_basis_element
 from msmjax.bspline_interpolation.coefficients import compute_J_zeroplus
@@ -43,10 +42,10 @@ def set_up_grids_all_levels(
     side_lengths: Sequence[float],
     level_one_spacings: Sequence[float],
     pbc: Sequence[bool],
-    max_level_grids: int,
+    max_grid_level: int,
     p: int,
 ) -> tuple[list[tuple[int, ...]], list[onp.ndarray]]:
-    if max_level_grids < 1:
+    if max_grid_level < 1:
         raise ValueError("Need at least one grid level.")
 
     # TODO: Check same length of side_lengths, level_one_spacings, pbc?
@@ -56,7 +55,7 @@ def set_up_grids_all_levels(
     shapes_all_levels = [None]
     spacings_all_levels = [None]
 
-    for lvl in range(1, max_level_grids + 1):
+    for lvl in range(1, max_grid_level + 1):
         spacings = 2 ** (lvl - 1) * level_one_spacings
         shape = tuple(
             _find_n_gridpoints_1d(length, h, p, is_periodic)
