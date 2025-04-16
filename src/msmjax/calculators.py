@@ -41,7 +41,7 @@ from msmjax.kernels import (
 #  also use it
 # TODO: Name that is meaningful in all places where this is used?
 CellMode = Literal["ortho", "general"]
-ConvMeth = Literal["direct", "fft"]
+ConvMeth = Literal["direct", "fft"]  # TODO: "scipy-direct", "scipy-fft"
 
 
 class CustomJSONEncoder(json.JSONEncoder):
@@ -151,7 +151,21 @@ class MSMParams:
         return cls(**params_dict)
 
 
-def set_up_msm_params_static_cell():
+def set_up_msm_params_static_cell(
+    cell: ArrayLike,
+    cell_mode: CellMode,
+    pbc: Sequence[bool],
+    level_one_gridspacing: float | ArrayLike,
+    level_zero_cutoff: float = None,
+    alpha: float = None,
+    p: int = None,
+    mu: int = None,
+    n_particles: int = None,
+    max_level_split: int = None,
+    supercell_diag: Sequence[int] = None,
+    use_neighborlist: bool = None,
+    convolution_methods: Sequence[ConvMeth] = "fft",
+) -> MSMParams:
     pass  # TODO
 
 
@@ -288,6 +302,7 @@ def create_msm(params: MSMParams):
         )
 
     # TODO: Option to return fns for short- and long-range part separately?
+    # TODO: calc_stress in dynamic-cell case
 
     return (
         calc_energy,
