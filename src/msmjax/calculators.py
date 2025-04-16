@@ -88,16 +88,14 @@ class StaticCellMSMParams:
     # -------------------------------------------------------------------------
     # Basic MSM settings
     # -------------------------------------------------------------------------
-    p: int  # TODO: Name: 'order'?
+    p: int
     mu: int  # TODO: One value per level?
     max_level_split: int
     max_level_grids: int
     # TODO: Should grid_shapes, cutoff_radii, grid_spacings only include up to
     #  max_level_grids in the first place, or should the setup process take
-    #  care of only using them up max_level_grids?
-    grid_shapes: Sequence[tuple[int, ...]]
+    #  care of only using them up to max_level_grids?
     cutoff_radii: Sequence[float]
-    grid_spacings: Sequence[onp.ndarray]
     # -------------------------------------------------------------------------
     # Geometry-related (arguably)
     # -------------------------------------------------------------------------
@@ -107,22 +105,17 @@ class StaticCellMSMParams:
     # -------------------------------------------------------------------------
     # Short-range evaluation
     # -------------------------------------------------------------------------
-    # TODO: Make optional? Interaction with `use_neighbor_list`?
-    #  (Where to) check if cutoff fits?
-    supercell_diag: Sequence[int]
+    supercell_diag: Sequence[int]  # TODO: Check cutoff fits? (If yes, where?)
     use_neighborlist: bool  # TODO: Interaction with `supercell_diag`?
-    ...
     # -------------------------------------------------------------------------
     # Long-range evaluation
     # -------------------------------------------------------------------------
-    convolution_methods: Sequence[ConvMeth]
-    # TODO: Is it possible/helpful to handle dynamic cells like this?
-    #  The main intended benefit is to make it clear upon inspection of model
-    #  params that a transform is used, so they don't assume an error because
-    #  the grid spacings and extents don't match the input values.
-    #  Note: cell_mode = "general" in combination with grids_defined_on_unitcube = False would be invalid
+    # TODO: cell_mode = "general" in combination with grids_defined_on_unitcube = False would be invalid
     grids_defined_on_unitcube: bool
+    grid_shapes: Sequence[tuple[int, ...]]
+    grid_spacings: Sequence[onp.ndarray]
     stencil_extents_from_center: Sequence[tuple[int, ...]]
+    convolution_methods: Sequence[ConvMeth]
     # -------------------------------------------------------------------------
     # Info
     # -------------------------------------------------------------------------
