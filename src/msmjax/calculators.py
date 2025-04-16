@@ -20,7 +20,7 @@ from msmjax.bspline_interpolation.gridops_clean import (
     create_all_grid_to_grid_ops,
     make_basis_evaluation_fn,
 )
-from msmjax.convenience import set_up_kernels_grids_and_stencils
+from msmjax.convenience import set_up_kernels_grids_and_stencils, suggest_p
 from msmjax.core.longrange import (
     make_compute_u_oneplus,
     make_dyn_cell_longrange_fn,
@@ -90,11 +90,11 @@ class MSMParams:
     # -------------------------------------------------------------------------
     p: int
     mu: int  # TODO: One value per level?
-    max_level_split: int
-    max_level_grids: int
+    max_splitting_level: int  # TODO: name
+    max_grid_level: int  # TODO: name
     # TODO: Should grid_shapes, cutoff_radii, grid_spacings only include up to
-    #  max_level_grids in the first place, or should the setup process take
-    #  care of only using them up to max_level_grids?
+    #  max_grid_level in the first place, or should the setup process take
+    #  care of only using them up to max_grid_level?
     cutoff_radii: Sequence[float]
     # -------------------------------------------------------------------------
     # Geometry-related (arguably)
@@ -152,21 +152,58 @@ class MSMParams:
 
 
 def set_up_msm_params_static_cell(
-    cell: ArrayLike,
+    cell: ArrayLike,  # TODO: npt.arraylike?
     cell_mode: CellMode,
     pbc: Sequence[bool],
-    level_one_gridspacing: float | ArrayLike,
+    level_one_gridspacing: float | ArrayLike,  # TODO: npt.arraylike?
     level_zero_cutoff: float = None,
     alpha: float = None,
     p: int = None,
     mu: int = None,
     n_particles: int = None,
-    max_level_split: int = None,
+    max_splitting_level: int = None,  # TODO: name
     supercell_diag: Sequence[int] = None,
     use_neighborlist: bool = None,
-    convolution_methods: Sequence[ConvMeth] = "fft",
+    convolution_methods: ConvMeth | Sequence[ConvMeth] = "fft",
 ) -> MSMParams:
-    pass  # TODO
+    cell = onp.asarray(cell)
+    n_dim = cell.shape[0]
+    level_one_gridspacing = onp.asarray(level_one_gridspacing)
+    if onp.ndim(level_one_gridspacing) == 0:
+        level_one_gridspacing = onp.full(level_one_gridspacing, n_dim)
+    pbc = onp.asarray(pbc)
+
+    if p is None:
+        p = suggest_p(alpha)
+    # See section "1. Preprocessing" of the article
+    # TODO: Allow different mus for each level? (The article suggests
+    #  mu >= 3*p/2 for the highest grid level)
+    if mu is None:
+        mu = max(int(4 * alpha + p // 2), 3 * p // 2)
+
+    if isinstance(convolution_methods, str):
+        convolution_methods = [None] + [convolution_methods] * max_grid_level
+
+    return MSMParams(
+        p=p,
+        mu=mu,
+        max_splitting_level=max_splitting_level,
+        max_grid_level=max_grid_level,
+        cutoff_radii=cutoff_radii,
+        cell=cell,
+        cell_mode=cell_mode,
+        pbc=pbc,
+        supercell_diag=supercell_diag,
+        use_neighborlist=use_neighborlist,
+        grids_defined_on_unitcube=grids_defined_on_unitcube,
+        grid_shapes=grid_shapes,
+        grid_spacings=grid_spacings,
+        stencil_extents_from_center=stencil_extents_from_center,
+        convolution_methods=convolution_methods,
+        n_dim=n_dim,
+        version=version,
+        info=info,
+    )
 
 
 def set_up_msm_params_dyn_cell():
@@ -175,7 +212,7 @@ def set_up_msm_params_dyn_cell():
 
 def create_msm(params: MSMParams):
     kernel_fns = split_one_over_r_kernel(
-        max_level=params.max_level_split,
+        max_level=params.max_splitting_level,
         level_zero_cutoff=params.cutoff_radii[0],
         softening_function=SofteningFunctionOneOverR(params.p),
     )
@@ -206,8 +243,8 @@ def create_msm(params: MSMParams):
     #  - same for J
     omega, _ = compute_coeffs_with_truncation(params.p, params.mu)
 
-    n_levels_intermed = params.max_level_split - 1
-    include_toplevel = params.max_level_grids == params.max_level_split
+    n_levels_intermed = params.max_splitting_level - 1
+    include_toplevel = params.max_grid_level == params.max_splitting_level
     if n_levels_intermed > 0:
         k_lowest_intermed = kernel_fns[1]
         extents_intermed = params.stencil_extents_from_center[1]

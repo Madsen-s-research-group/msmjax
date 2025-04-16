@@ -16,7 +16,8 @@ from typing import Callable, List, Sequence
 import jax
 import jax.numpy as jnp
 import numpy as onp
-from jax._src.basearray import ArrayLike
+from jax import Array
+from jax.typing import ArrayLike
 
 from msmjax.utils import _divide_zero_safe, _sqrt
 
