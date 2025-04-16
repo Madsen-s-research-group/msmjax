@@ -353,7 +353,7 @@ def create_all_grid_to_grid_ops(
     grid_shapes: Sequence[tuple[int, ...]],
     p: int,
     pbc: Sequence[bool],
-    convolution_methods: Sequence[ConvMeth],
+    convolution_methods: Sequence[None | ConvMeth],
 ):
     """Create all necessary functions that map from grids to grids"""
     max_level_grids = len(grid_shapes) - 1
