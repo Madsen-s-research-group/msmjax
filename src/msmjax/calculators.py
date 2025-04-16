@@ -118,9 +118,9 @@ class MSMParams:
     # -------------------------------------------------------------------------
     # TODO: cell_mode = "general" in combination with grids_defined_on_unitcube = False would be invalid
     grids_defined_on_unitcube: bool
-    grid_shapes: Sequence[tuple[int, ...]]
+    grid_shapes: Sequence[None | tuple[int, ...]]
     grid_spacings: Sequence[onp.ndarray]
-    stencil_extents_from_center: Sequence[tuple[int, ...]]
+    stencil_extents_from_center: Sequence[None | tuple[int, ...]]
     convolution_methods: Sequence[ConvMeth]
     # -------------------------------------------------------------------------
     # Info
@@ -211,7 +211,7 @@ def set_up_msm_params_static_cell(
     cutoff_radii = [
         2**lvl * level_zero_cutoff for lvl in range(max_splitting_level)
     ] + [onp.inf]
-    shapes_all_levels, spacings_all_levels = set_up_grids_all_levels(
+    gridshapes_all_levels, spacings_all_levels = set_up_grids_all_levels(
         side_lengths=side_lengths,
         level_one_spacings=level_one_spacings,
         pbc=pbc,
@@ -219,7 +219,7 @@ def set_up_msm_params_static_cell(
         p=p,
     )
 
-    alpha = onp.max(level_zero_cutoff / level_one_spacings)
+    alpha = int(onp.max(level_zero_cutoff / level_one_spacings))
     if p is None:
         p = suggest_p(alpha)
     # See section "1. Preprocessing" of the article
@@ -227,6 +227,18 @@ def set_up_msm_params_static_cell(
     #  mu >= 3*p/2 for the highest grid level)
     if mu is None:
         mu = max(int(4 * alpha + p // 2), 3 * p // 2)
+
+    stencil_extents_from_center = [None]
+    extents_intermediate = (2 * alpha + 1,) * n_dim
+    if pbc.any():
+        stencil_extents_from_center += [extents_intermediate] * max_grid_level
+    else:
+        stencil_extents_from_center += [extents_intermediate] * (
+            max_grid_level - 1
+        )
+        stencil_extents_from_center += [
+            tuple(onp.array(gridshapes_all_levels[-1]) - 1)
+        ]
 
     if isinstance(convolution_methods, str):
         convolution_methods = [None] + [convolution_methods] * max_grid_level
@@ -243,7 +255,7 @@ def set_up_msm_params_static_cell(
         supercell_diag=supercell_diag,
         use_neighborlist=use_neighborlist,
         grids_defined_on_unitcube=grids_defined_on_unitcube,
-        grid_shapes=shapes_all_levels,
+        grid_shapes=gridshapes_all_levels,
         grid_spacings=spacings_all_levels,
         stencil_extents_from_center=stencil_extents_from_center,
         convolution_methods=convolution_methods,
