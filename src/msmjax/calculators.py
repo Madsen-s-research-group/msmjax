@@ -84,7 +84,7 @@ class CustomJSONDecoder(json.JSONDecoder):
 
 
 @dataclasses.dataclass
-class StaticCellMSMParams:
+class MSMParams:
     # -------------------------------------------------------------------------
     # Basic MSM settings
     # -------------------------------------------------------------------------
@@ -151,18 +151,15 @@ class StaticCellMSMParams:
         return cls(**params_dict)
 
 
-@dataclasses.dataclass
-class DynCellMSMParams:
-    # TODO
-    p: int
-    mu: int
-
-
-def set_up_params_static_cell():
+def set_up_msm_params_static_cell():
     pass  # TODO
 
 
-def static_cell_msm(params: StaticCellMSMParams):
+def set_up_msm_params_dyn_cell():
+    pass  # TODO
+
+
+def create_msm(params: MSMParams):
     kernel_fns = split_one_over_r_kernel(
         max_level=params.max_level_split,
         level_zero_cutoff=params.cutoff_radii[0],
@@ -298,9 +295,3 @@ def static_cell_msm(params: StaticCellMSMParams):
         calc_energy_and_forces,
         calc_charge_gradient,
     )
-
-
-def dyn_cell_msm(params: DynCellMSMParams):
-    # TODO: Functions for forces, energy and forces, charge gradient, ...
-    #  + stress!!!
-    pass  # TODO
