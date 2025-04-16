@@ -125,6 +125,8 @@ def split_one_over_r_kernel(
 
 
 def _compute_kernel_stencil(values: ArrayLike, omega: ArrayLike):
+    # TODO: old -> remove once no longer needed
+
     def _onedim_convolution_fn(in1: ArrayLike, in2: ArrayLike):
         # TODO: method="fft"?
         return jax.scipy.signal.convolve(in1, in2, mode="same")
@@ -148,6 +150,8 @@ def _construct_all_kernel_stencils(
     kernels_include_toplevel: bool,
     points_toplevel,  # TODO: pass points or directly the distances?
 ):
+    # TODO: old -> remove once no longer needed
+
     # TODO: raise error when `kernels_include_toplevel=True`, but sizes not
     #  given
     # TODO: When there is only one grid level (=kernel splitting into two
@@ -214,6 +218,8 @@ def make_dynamic_kernel_stencil_construction_fn(
     kernels_include_toplevel: bool,
     sizes_from_center_toplevel=None,
 ):
+    # TODO: old -> remove once no longer needed
+
     # TODO: "dynamic" in name?
     # TODO: raise error when `kernels_include_toplevel=True`, but sizes not given
 
@@ -247,3 +253,108 @@ def make_dynamic_kernel_stencil_construction_fn(
         )
 
     return construct_kernel_stencils
+
+
+def _get_distances(
+    sizes_from_center,  # TODO: name (extents? from_center?)
+    spacing_or_gridcell,
+):
+    indices_per_axis = [jnp.arange(-s, s + 1) for s in sizes_from_center]
+    indices = jnp.stack(
+        jnp.meshgrid(*indices_per_axis, indexing="ij"), axis=-1
+    )
+    if jnp.ndim(spacing_or_gridcell) < 2:
+        points = indices * spacing_or_gridcell
+    else:
+        points = indices @ spacing_or_gridcell
+    return _sqrt((points * points).sum(axis=-1))
+
+
+def _compute_one_stencil(
+    function_values: ArrayLike, omega: ArrayLike, mode: str
+):
+    def _conv_1d(in1: ArrayLike, in2: ArrayLike):
+        return jax.scipy.signal.convolve(in1, in2, mode=mode)
+
+    result = function_values
+    for axis in range(function_values.ndim):
+        result = jnp.apply_along_axis(
+            func1d=_conv_1d, axis=axis, arr=result, in2=omega
+        )
+    return result
+
+
+def make_construct_stencils(
+    omega: ArrayLike,
+    n_levels_intermediate: int,
+    include_toplevel: bool,
+    k_lvl_1: Callable[[ArrayLike], Array] = None,
+    sizes_intermediate: tuple[
+        int, ...
+    ] = None,  # TODO: name (extents? from_center?)
+    k_toplevel: Callable[[ArrayLike], Array] = None,
+    grid_shape_toplevel: tuple[int, ...] = None,
+) -> Callable[[ArrayLike], list[Array]]:
+
+    if n_levels_intermediate < 0:
+        raise ValueError("n_levels_intermediate must be >= 0")
+    if n_levels_intermediate == 0 and not include_toplevel:
+        raise ValueError(
+            "n_levels_intermediate = 0 and include_toplevel = False "
+            "at the same is not allowed (this would mean that "
+            "there isn't a single grid level)."
+        )
+    args_intermediate = [k_lvl_1, sizes_intermediate]
+    if n_levels_intermediate > 0 and any(
+        [x is None for x in args_intermediate]
+    ):
+        raise ValueError(
+            "k_lvl_1 and sizes_intermediate "
+            "are required when n_levels_intermediate > 0."
+        )
+    args_toplevel = [k_toplevel, grid_shape_toplevel]
+    if include_toplevel and any([x is None for x in args_toplevel]):
+        raise ValueError(
+            "k_toplevel and grid_shape_toplevel "
+            "are required when include_toplevel = True."
+        )
+
+    def construct_stencils(spacings_or_gridcell_lowest: ArrayLike):
+        # Placeholder for level zero (l = 0), at which there is no grid:
+        stencils = [None]
+
+        # Intermediate levels (l = 1 ... L - 1):
+        if n_levels_intermediate > 0:
+            distances_lvl_1 = _get_distances(
+                sizes_intermediate, spacings_or_gridcell_lowest
+            )
+            kernel_values_at_gridpoints = k_lvl_1(distances_lvl_1)
+            stencils.append(
+                _compute_one_stencil(
+                    kernel_values_at_gridpoints, omega, mode="same"
+                )
+            )
+            for lvl in range(n_levels_intermediate - 1):
+                stencils.append(0.5 * stencils[-1])
+
+        # Top level containing long-range tail (l = L), if included
+        if include_toplevel:
+            # TODO: explain why the sizes are the way they are
+            sizes_toplevel = tuple(
+                (s - 1) + len(omega) // 2 for s in grid_shape_toplevel
+            )
+            max_grid_level = n_levels_intermediate + 1
+            distances_toplevel = _get_distances(
+                sizes_toplevel,
+                2 ** (max_grid_level - 1) * spacings_or_gridcell_lowest,
+            )
+            kernel_values_at_gridpoints = k_toplevel(distances_toplevel)
+            stencils.append(
+                _compute_one_stencil(
+                    kernel_values_at_gridpoints, omega, mode="valid"
+                )
+            )
+
+        return stencils
+
+    return construct_stencils
