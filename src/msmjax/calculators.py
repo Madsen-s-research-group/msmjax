@@ -98,6 +98,7 @@ class StaticCellMSMParams:
     #  max_level_grids in the first place, or should the setup process take
     #  care of only using them up max_level_grids?
     grid_shapes: Sequence[tuple[int, ...]]
+    stencil_extents_from_center: Sequence[tuple[int, ...]]
     # TODO: redundant with r_cut_0; highest-level cutoff must be inf!
     #  Check if cutoff fits?
     cutoff_radii: Sequence[float]
@@ -146,6 +147,7 @@ class StaticCellMSMParams:
         self.convolution_methods = list(self.convolution_methods)
         # TODO: grid shapes to list (of tuples)
         # TODO: grid sizes to list (of int) (or don't include at all?)
+        # TODO: stencil extents to list (of tuples)
         # TODO: spacings on all levels to list (of array? of tuple?)
         # TODO: cutoffs on all levels to list (of float?)
         # TODO: J to onp.array
@@ -211,19 +213,6 @@ def static_cell_msm(params: StaticCellMSMParams):
     #             process does actually take them from there or not.
     omega, _ = compute_coeffs_with_truncation(params.p, params.mu)
 
-    # TODO: Replace with more specific reworked functions for grid and stencil setup
-    # TODO: Currently this only works for ortho cells!
-    _, _, kernel_stencils = set_up_kernels_grids_and_stencils(
-        box_lengths=onp.diag(params.cell),
-        pbc=params.pbc,
-        level_one_gridspacing=params.grid_spacings[1],
-        level_zero_cutoff=params.cutoff_radii[0],
-        p=params.p,
-        mu=params.mu,
-        n_levels=params.max_level_split,
-    )
-    kernel_stencils = kernel_stencils[: params.max_level_grids + 1]
-
     n_levels_intermed = params.max_level_split - 1
     include_toplevel = params.max_level_grids == params.max_level_split
     if n_levels_intermed > 0:
@@ -245,6 +234,17 @@ def static_cell_msm(params: StaticCellMSMParams):
         k_toplevel=k_toplevel,
         grid_shape_toplevel=grid_shape_toplevel,
     )
+    if params.cell_mode == "ortho":
+        kernel_stencils = jax.jit(construct_stencils)(params.grid_spacings[1])
+    elif params.cell_mode == "general":
+        one_grid_cell = (
+            params.cell
+            * (params.grid_spacings[1] / onp.linalg.norm(params.cell, axis=1))[
+                :, onp.newaxis
+            ]
+        )
+        kernel_stencils = jax.jit(construct_stencils)(one_grid_cell)
+    # TODO: (where to) check for invalid cell_mode?
 
     # TODO: compute_u_oneplus must include transformation to unit cube
     #  if cell_mode == "general"
