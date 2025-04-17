@@ -143,6 +143,10 @@ def suggest_max_grid_level_nonperiodic(
     n_gridpoints_all_levels = [
         None if s is None else onp.prod(s) for s in shapes_all_levels
     ]
-    # TODO: find minimum index where n_gridpoints_all_levels < sqrt(n_particles)
+    levels_with_fewer_points = (
+        onp.where(n_gridpoints_all_levels[1:] <= onp.sqrt(n_particles))[0] + 1
+    )
+    if len(levels_with_fewer_points) > 0:
+        max_grid_level = min(max_grid_level, min(levels_with_fewer_points))
 
     return int(max_grid_level)
