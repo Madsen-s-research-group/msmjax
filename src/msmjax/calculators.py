@@ -47,7 +47,7 @@ from msmjax.kernels import (
 #  also use it
 # TODO: Name that is meaningful in all places where this is used?
 CellMode = Literal["ortho", "general"]
-ConvMeth = Literal["direct", "fft"]  # TODO: "scipy-direct", "scipy-fft"
+ConvMeth = Literal["scipy-direct", "scipy-fft"]
 
 
 class CustomJSONEncoder(json.JSONEncoder):
@@ -166,16 +166,32 @@ def set_up_msm_params_static_cell(
     max_splitting_level: int = None,
     supercell_diag: Sequence[int] = None,
     use_neighborlist: bool = None,
-    convolution_methods: ConvMeth | Sequence[ConvMeth] = "fft",
+    convolution_methods: ConvMeth | Sequence[ConvMeth] = "scipy-fft",
 ) -> MSMParams:
     """High-level convenience function for setting up MSM params."""
+    # TODO: How necessary/useful is this? I want it to include only non-default
+    #  arguments, but currently includes everythink that is not None (convolution_methods as well)
+    passed_args = {k: v for k, v in locals().items() if v is not None}
+
     cell = onp.asarray(cell)
     n_dim = cell.shape[0]
     side_lengths = onp.linalg.norm(cell, axis=1)
     level_one_spacings = onp.asarray(level_one_spacings)
     if onp.ndim(level_one_spacings) == 0:
-        level_one_spacings = onp.full(level_one_spacings, n_dim)
+        level_one_spacings = onp.full(n_dim, level_one_spacings)
     pbc = onp.asarray(pbc)
+
+    # TODO: In periodic case, the spacings are adjusted further down, so this
+    #  step calculates alpha and thus p and mu from the initial spacings
+    #  pre-adjustment. Is this a problem? Which behavior is less surprising?
+    alpha = int(onp.max(level_zero_cutoff / level_one_spacings))
+    if p is None:
+        p = suggest_p(alpha)
+    # See section "1. Preprocessing" of the article
+    # TODO: Allow different mus for each level? (The article suggests
+    #  mu >= 3*p/2 for the highest grid level)
+    if mu is None:
+        mu = max(int(4 * alpha + p // 2), 3 * p // 2)
 
     if pbc.any():
         if max_splitting_level is not None:
@@ -193,6 +209,13 @@ def set_up_msm_params_static_cell(
         max_grid_level = max_splitting_level - 1
     else:
         if max_splitting_level is None:
+            if n_particles is None:
+                raise ValueError(
+                    "n_particles is required for the automatic determination "
+                    "of the number of grid levels in non-periodic systems. "
+                    "Either specify max_splitting_level directly, "
+                    "or n_particles."
+                )
             # TODO: Replace/rework this very old grid level determination function
             # TODO: Print a message that max_level is being determined automatically?
             max_splitting_level = suggest_max_gridlevel_nonPBC(
@@ -204,15 +227,6 @@ def set_up_msm_params_static_cell(
                 p=p,
             )
         max_grid_level = max_splitting_level
-
-    alpha = int(onp.max(level_zero_cutoff / level_one_spacings))
-    if p is None:
-        p = suggest_p(alpha)
-    # See section "1. Preprocessing" of the article
-    # TODO: Allow different mus for each level? (The article suggests
-    #  mu >= 3*p/2 for the highest grid level)
-    if mu is None:
-        mu = max(int(4 * alpha + p // 2), 3 * p // 2)
 
     cutoff_radii = [
         2**lvl * level_zero_cutoff for lvl in range(max_splitting_level)
@@ -270,7 +284,7 @@ def set_up_msm_params_static_cell(
         stencil_extents_from_center=stencil_extents_from_center,
         convolution_methods=convolution_methods,
         n_dim=n_dim,
-        info=info,
+        info={"args_passed_during_setup": passed_args},
     )
 
 
@@ -372,10 +386,15 @@ def create_msm(params: MSMParams):
 
     def calc_energy(positions, charges, neighborlist=None):
         if params.use_neighborlist:
+            # TODO: Better error message.
+            if neighborlist is None:
+                raise ValueError("neighborlist argument is required.")
             u_zero = compute_u_zero(
                 positions,
                 charges,
                 cell=params.cell,
+                # TODO: Is weights=1.0 too restrictive?
+                #  (setting this enforces that neighbor list contains no duplicates)
                 weights=1.0,
                 neighborlist=neighborlist,
             )
