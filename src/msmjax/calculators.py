@@ -170,7 +170,7 @@ def set_up_msm_params_static_cell(
 ) -> MSMParams:
     """High-level convenience function for setting up MSM params."""
     # TODO: How necessary/useful is this? I want it to include only non-default
-    #  arguments, but currently includes everythink that is not None (convolution_methods as well)
+    #  arguments, but currently includes everything that is not None (convolution_methods as well)
     passed_args = {k: v for k, v in locals().items() if v is not None}
 
     cell = onp.asarray(cell)
@@ -394,7 +394,10 @@ def create_msm(params: MSMParams):
                 charges,
                 cell=params.cell,
                 # TODO: Is weights=1.0 too restrictive?
-                #  (setting this enforces that neighbor list contains no duplicates)
+                #  (setting to 1.0 enforces that neighbor list contains no duplicates)
+                #  The problem would go away if I added support for neighbor list in
+                #  matrix format and add a parameter 'neighborlist_format' such that
+                #  users are forced to think about what they are using.
                 weights=1.0,
                 neighborlist=neighborlist,
             )

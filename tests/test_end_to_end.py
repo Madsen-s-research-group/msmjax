@@ -1,0 +1,59 @@
+import os
+
+from msmjax.benchmark_tools import calc_relative_rmse_percent
+
+os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
+
+from pathlib import Path
+
+import jax
+import numpy as onp
+import pytest
+from matscipy.neighbours import neighbour_list
+
+from msmjax.calculators import create_msm, set_up_msm_params_static_cell
+
+
+@pytest.fixture(scope="module")
+def fixture_datadir() -> Path:
+    return Path(__file__).resolve().parent / "data"
+
+
+@pytest.fixture(scope="module")
+def fixture_nonperiodic_cubic(fixture_datadir):
+    # TODO: return the NpzFile instance
+    #  or directly pos, chg, cell, energy_ref, forces_ref, ...?
+    return onp.load(fixture_datadir / "nonperiodic_cubic.npz")
+
+
+# TODO: static/dynamic cell tests?
+
+
+def test_nonperiodic_cubic(fixture_nonperiodic_cubic):
+    # TODO: cell mode and pbc are specific to the structure fixture
+    cell_mode = "ortho"
+    pbc = (False, False, False)
+    # TODO: spacings and cutoff should be defined outside (fixtures?)
+    level_one_spacings = 1.0
+    level_zero_cutoff = 3.0
+
+    cell = fixture_nonperiodic_cubic["cell"]
+    pos = fixture_nonperiodic_cubic["positions"]
+    chg = fixture_nonperiodic_cubic["charges"]
+    (n_particles, n_dim) = pos.shape
+    energy_ref = fixture_nonperiodic_cubic["energy"]
+    forces_ref = fixture_nonperiodic_cubic["forces"]
+
+    msm_params = set_up_msm_params_static_cell(
+        cell=cell,
+        cell_mode=cell_mode,
+        pbc=pbc,
+        level_one_spacings=level_one_spacings,
+        level_zero_cutoff=level_zero_cutoff,
+        n_particles=n_particles,
+    )
+    _, calc_forces, _, _ = create_msm(msm_params)
+    forces_msm = jax.jit(calc_forces)(pos, chg)
+
+    # TODO: Define the error tolerances somewhere?
+    assert calc_relative_rmse_percent(forces_msm, forces_ref) < 1.0
