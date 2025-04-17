@@ -1,3 +1,9 @@
+import numpy as onp
+from jax.typing import ArrayLike
+
+from msmjax.bspline_interpolation.gridops_clean import set_up_grids_all_levels
+
+
 def make_clean_prolongate_1d(
     axis_source_coarse: BSplineInterpolationAxis,
     axis_target_fine: BSplineInterpolationAxis,
@@ -102,3 +108,41 @@ def construct_stencils(
         )
 
     return stencils
+
+
+def suggest_max_grid_level_nonperiodic(
+    side_lengths: ArrayLike,
+    n_particles: int,
+    level_one_spacings: ArrayLike,
+    level_zero_cutoff: float,
+    p: int,
+):
+    # 1. Find level at which spacing becomes larger than side length
+    level_from_spacings = (
+        onp.log2(side_lengths / level_one_spacings).astype(int) + 1
+    )
+    # TODO: min (spacings along NO direction greater than box size) or
+    #  max (spacings along all but the longest side allowed to be greater than
+    #  box size)?
+    level_from_spacings = max(level_from_spacings)
+    max_grid_level = level_from_spacings
+
+    # 2. Find last level at which the cutoff is not larger than half the largest side length
+    level_from_cutoff = onp.log2(side_lengths / level_zero_cutoff).astype(int)
+    level_from_cutoff = max(level_from_cutoff)
+    max_grid_level = min(max_grid_level, level_from_cutoff)
+
+    # 3. Find (if achievable) the level where n_gridpoints <= sqrt(n_particles)
+    shapes_all_levels, _ = set_up_grids_all_levels(
+        side_lengths=side_lengths,
+        level_one_spacings=level_one_spacings,
+        max_grid_level=max_grid_level,
+        p=p,
+        pbc=(False,) * len(side_lengths),
+    )
+    n_gridpoints_all_levels = [
+        None if s is None else onp.prod(s) for s in shapes_all_levels
+    ]
+    # TODO: find minimum index where n_gridpoints_all_levels < sqrt(n_particles)
+
+    return int(max_grid_level)

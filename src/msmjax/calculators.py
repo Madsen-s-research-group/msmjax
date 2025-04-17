@@ -98,7 +98,7 @@ class MSMParams:
     mu: int
     max_splitting_level: int
     max_grid_level: int
-    cutoff_radii: Sequence[float]
+    cutoffs: Sequence[float]
     # -------------------------------------------------------------------------
     # Geometry-related (arguably)
     # -------------------------------------------------------------------------
@@ -228,7 +228,7 @@ def set_up_msm_params_static_cell(
             )
         max_grid_level = max_splitting_level
 
-    cutoff_radii = [
+    cutoffs_all_levels = [
         2**lvl * level_zero_cutoff for lvl in range(max_splitting_level)
     ] + [onp.inf]
 
@@ -272,7 +272,7 @@ def set_up_msm_params_static_cell(
         mu=mu,
         max_splitting_level=max_splitting_level,
         max_grid_level=max_grid_level,
-        cutoff_radii=cutoff_radii,
+        cutoffs=cutoffs_all_levels,
         cell=cell,
         cell_mode=cell_mode,
         pbc=pbc,
@@ -295,7 +295,7 @@ def set_up_msm_params_dyn_cell():
 def create_msm(params: MSMParams):
     kernel_fns = split_one_over_r_kernel(
         max_level=params.max_splitting_level,
-        level_zero_cutoff=params.cutoff_radii[0],
+        level_zero_cutoff=params.cutoffs[0],
         softening_function=SofteningFunctionOneOverR(params.p),
     )
 

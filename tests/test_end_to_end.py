@@ -37,7 +37,8 @@ def fixture_nonperiodic_ortho_diff_sides(fixture_datadir):
 
 # TODO: Test static/dynamic cell?
 # TODO: Test different grid spacings along different axes?
-# TODO: with/without neighbor list?
+# TODO: Test with/without neighbor list?
+# TODO: Test serialization/deserialization of MSMParams (in this module or elsewhere?)
 
 
 def test_nonperiodic_cubic(fixture_nonperiodic_cubic):

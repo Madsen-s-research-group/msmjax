@@ -44,7 +44,7 @@ def set_up_grids_all_levels(
     pbc: Sequence[bool],
     max_grid_level: int,
     p: int,
-) -> tuple[list[tuple[int, ...]], list[onp.ndarray]]:
+) -> tuple[list[None | tuple[int, ...]], list[None | onp.ndarray]]:
     if max_grid_level < 1:
         raise ValueError("Need at least one grid level.")
 
