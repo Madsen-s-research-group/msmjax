@@ -461,43 +461,43 @@ def find_spacings_and_max_level_periodic(
     side_lengths = onp.array(side_lengths)
     target_level_one_spacings = onp.array(target_level_one_spacings)
 
-    ells_raw_one_based = onp.log2(side_lengths / target_level_one_spacings) + 1
-    candidate_ells_one_based = [
-        onp.floor(ells_raw_one_based).astype(int),
-        onp.ceil(ells_raw_one_based).astype(int),
-    ]
-    candidate_spacings_one_based = [
-        side_lengths / 2 ** (onp.ceil(ells) - 1)
-        for ells in candidate_ells_one_based
-    ]
-
-    ells_raw_three_based = (
+    ells_raw_one = onp.log2(side_lengths / target_level_one_spacings) + 1
+    candidate_ells_one = onp.column_stack(
+        [
+            onp.floor(ells_raw_one).astype(int),
+            onp.ceil(ells_raw_one).astype(int),
+        ]
+    )
+    candidate_spacings_one_based = side_lengths[:, onp.newaxis] / 2 ** (
+        onp.ceil(candidate_ells_one) - 1
+    )
+    ells_raw_three = (
         onp.log2(side_lengths / (3 * target_level_one_spacings)) + 2
     )
-    candidate_ells_three_based = [
-        onp.floor(ells_raw_three_based).astype(int),
-        onp.ceil(ells_raw_three_based).astype(int),
-    ]
-    candidate_spacings_three_based = [
-        side_lengths / (3 * 2 ** (ells - 2))
-        for ells in candidate_ells_three_based
-    ]
+    candidate_ells_three = onp.column_stack(
+        [
+            onp.floor(ells_raw_three).astype(int),
+            onp.ceil(ells_raw_three).astype(int),
+        ]
+    )
+    candidate_spacings_three_based = side_lengths[:, onp.newaxis] / (
+        3 * 2 ** (candidate_ells_three - 2)
+    )
 
     candidate_spacings = onp.concatenate(
-        [*candidate_spacings_one_based, *candidate_spacings_three_based]
-    ).T
+        [candidate_spacings_one_based, candidate_spacings_three_based], axis=1
+    )
     candidate_ells = onp.concatenate(
-        [*candidate_ells_one_based, *candidate_ells_three_based]
-    ).T
+        [candidate_ells_one, candidate_ells_three], axis=1
+    )
 
     deviations = onp.abs(
         candidate_spacings - target_level_one_spacings[:, onp.newaxis]
     )
     inds_best_match = onp.argmin(deviations, axis=1)
-
     ells = candidate_ells[onp.arange(candidate_ells.shape[0]), inds_best_match]
     adjusted_spacings = candidate_spacings[
         onp.arange(candidate_spacings.shape[0]), inds_best_match
     ]
 
-    return int(max(ells)), adjusted_spacings
+    return adjusted_spacings, int(max(ells))

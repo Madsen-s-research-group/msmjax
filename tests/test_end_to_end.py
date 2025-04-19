@@ -35,6 +35,13 @@ def fixture_nonperiodic_ortho_diff_sides(fixture_datadir):
     )
 
 
+@pytest.fixture(scope="module")
+def fixture_periodic_cubic(fixture_datadir):
+    # TODO: return the NpzFile instance
+    #  or directly pos, chg, cell, energy_ref, forces_ref, ...?
+    return onp.load(fixture_datadir / "periodic_cubic.npz")
+
+
 # TODO: Test static/dynamic cell?
 # TODO: Test different grid spacings along different axes?
 # TODO: Test with/without neighbor list?
@@ -85,6 +92,36 @@ def test_nonperiodic_ortho_diff_sides(fixture_nonperiodic_ortho_diff_sides):
     (n_particles, n_dim) = pos.shape
     energy_ref = fixture_nonperiodic_ortho_diff_sides["energy"]
     forces_ref = fixture_nonperiodic_ortho_diff_sides["forces"]
+
+    msm_params = set_up_msm_params_static_cell(
+        cell=cell,
+        cell_mode=cell_mode,
+        pbc=pbc,
+        level_one_spacings=level_one_spacings,
+        level_zero_cutoff=level_zero_cutoff,
+        n_particles=n_particles,
+    )
+    _, calc_forces, _, _ = create_msm(msm_params)
+    forces_msm = jax.jit(calc_forces)(pos, chg)
+
+    # TODO: Define the error tolerances somewhere?
+    assert calc_relative_rmse_percent(forces_msm, forces_ref) < 1.0
+
+
+def test_periodic_cubic(fixture_periodic_cubic):
+    # TODO: cell mode and pbc are specific to the structure fixture
+    cell_mode = "ortho"
+    pbc = (True, True, True)
+    # TODO: spacings and cutoff should be defined outside (fixtures?)
+    level_one_spacings = 1.0
+    level_zero_cutoff = 3.0
+
+    cell = fixture_periodic_cubic["cell"]
+    pos = fixture_periodic_cubic["positions"]
+    chg = fixture_periodic_cubic["charges"]
+    (n_particles, n_dim) = pos.shape
+    energy_ref = fixture_periodic_cubic["energy"]
+    forces_ref = fixture_periodic_cubic["forces"]
 
     msm_params = set_up_msm_params_static_cell(
         cell=cell,
