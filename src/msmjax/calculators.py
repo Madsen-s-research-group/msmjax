@@ -18,15 +18,12 @@ from msmjax.bspline_interpolation.coefficients import (
 )
 from msmjax.bspline_interpolation.gridops_clean import (
     create_all_grid_to_grid_ops,
+    find_spacings_and_max_level_periodic,
     make_basis_evaluation_fn,
     set_up_grids_all_levels,
+    suggest_max_grid_level_nonperiodic,
 )
-from msmjax.convenience import (
-    find_spacings_and_n_levels_periodic,
-    set_up_kernels_grids_and_stencils,
-    suggest_max_gridlevel_nonPBC,
-    suggest_p,
-)
+from msmjax.convenience import suggest_p
 from msmjax.core.longrange import (
     make_compute_u_oneplus,
     make_dyn_cell_longrange_fn,
@@ -202,7 +199,7 @@ def set_up_msm_params_static_cell(
         (
             adjusted_spacings,
             max_splitting_level,
-        ) = find_spacings_and_n_levels_periodic(
+        ) = find_spacings_and_max_level_periodic(
             side_lengths[pbc], level_one_spacings[pbc]
         )
         level_one_spacings[onp.where(pbc)[0]] = adjusted_spacings
@@ -218,11 +215,10 @@ def set_up_msm_params_static_cell(
                 )
             # TODO: Replace/rework this very old grid level determination function
             # TODO: Print a message that max_level is being determined automatically?
-            max_splitting_level = suggest_max_gridlevel_nonPBC(
-                min_pos=onp.zeros(n_dim, dtype=float),
-                max_pos=side_lengths,
-                nb_particles=n_particles,
-                level_one_gridspacing=level_one_spacings,  # TODO: Does this have to be scalar?
+            max_splitting_level = suggest_max_grid_level_nonperiodic(
+                side_lengths=side_lengths,
+                n_particles=n_particles,
+                level_one_spacings=level_one_spacings,
                 level_zero_cutoff=level_zero_cutoff,
                 p=p,
             )

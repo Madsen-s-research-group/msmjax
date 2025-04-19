@@ -406,3 +406,98 @@ def create_all_grid_to_grid_ops(
         convolution_fns[lvl] = interact
 
     return restriction_fns, prolongation_fns, convolution_fns
+
+
+def suggest_max_grid_level_nonperiodic(
+    side_lengths: ArrayLike,
+    n_particles: int,
+    level_one_spacings: ArrayLike,
+    level_zero_cutoff: float,
+    p: int,
+):
+    # TODO: Put this function in this module or in some utils?
+
+    # 1. Find level at which spacing becomes larger than side length.
+    #    This corresponds to the point where the number of grid points cannot
+    #    be reduced any further by adding another level, and serves as an upper
+    #    limit on the number of grid levels.
+    upper_limit_per_direction = (
+        onp.log2(side_lengths / level_one_spacings).astype(int) + 1
+    )
+    max_grid_level = max(upper_limit_per_direction)
+
+    # TODO: better explanation
+    # 2. Find the highest level at which the cutoff is not larger than half
+    #    the longest side of the cell.
+    level_from_cutoff = onp.log2(side_lengths / level_zero_cutoff).astype(int)
+    level_from_cutoff = max(level_from_cutoff)
+    max_grid_level = min(max_grid_level, level_from_cutoff)
+
+    # 3. Find (if achievable) the level where n_gridpoints <= sqrt(n_particles)
+    shapes_all_levels, _ = set_up_grids_all_levels(
+        side_lengths=side_lengths,
+        level_one_spacings=level_one_spacings,
+        max_grid_level=max_grid_level,
+        p=p,
+        pbc=(False,) * len(side_lengths),
+    )
+    n_gridpoints_all_levels = [
+        None if s is None else onp.prod(s) for s in shapes_all_levels
+    ]
+    levels_with_fewer_points = (
+        onp.where(n_gridpoints_all_levels[1:] <= onp.sqrt(n_particles))[0] + 1
+    )
+    if len(levels_with_fewer_points) > 0:
+        max_grid_level = min(max_grid_level, min(levels_with_fewer_points))
+
+    return int(max_grid_level)
+
+
+def find_spacings_and_max_level_periodic(
+    side_lengths, target_level_one_spacings
+):
+    # TODO: Put this function in this module or in some utils?
+
+    side_lengths = onp.array(side_lengths)
+    target_level_one_spacings = onp.array(target_level_one_spacings)
+
+    ells_raw_one_based = onp.log2(side_lengths / target_level_one_spacings) + 1
+    candidate_ells_one_based = [
+        onp.floor(ells_raw_one_based).astype(int),
+        onp.ceil(ells_raw_one_based).astype(int),
+    ]
+    candidate_spacings_one_based = [
+        side_lengths / 2 ** (onp.ceil(ells) - 1)
+        for ells in candidate_ells_one_based
+    ]
+
+    ells_raw_three_based = (
+        onp.log2(side_lengths / (3 * target_level_one_spacings)) + 2
+    )
+    candidate_ells_three_based = [
+        onp.floor(ells_raw_three_based).astype(int),
+        onp.ceil(ells_raw_three_based).astype(int),
+    ]
+    candidate_spacings_three_based = [
+        side_lengths / (3 * 2 ** (ells - 2))
+        for ells in candidate_ells_three_based
+    ]
+
+    candidate_spacings = onp.concatenate(
+        [*candidate_spacings_one_based, *candidate_spacings_three_based]
+    ).T
+    candidate_ells = onp.concatenate(
+        [*candidate_ells_one_based, *candidate_ells_three_based]
+    ).T
+
+    deviations = onp.abs(
+        candidate_spacings - target_level_one_spacings[:, onp.newaxis]
+    )
+    inds_best_match = onp.argmin(deviations, axis=1)
+
+    ells = candidate_ells[onp.arange(candidate_ells.shape[0]), inds_best_match]
+    adjusted_spacings = candidate_spacings[
+        onp.arange(candidate_spacings.shape[0]), inds_best_match
+    ]
+
+    return int(max(ells)), adjusted_spacings
