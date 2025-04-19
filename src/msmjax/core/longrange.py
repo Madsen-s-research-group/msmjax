@@ -347,6 +347,11 @@ def make_compute_u_oneplus(
     ],
     grid_pass_fn: Callable[[ArrayLike, Sequence[ArrayLike | None]], Array],
     grid_shape_lvl_one: tuple[int, ...],
+    transform_mode: CellMode | None = None,
+    kernel_stencils: Sequence[None | ArrayLike] = None,
+    kernel_stencil_construction_fn: Callable[
+        [ArrayLike], Sequence[ArrayLike | None]
+    ] = None,
     use_custom_derivatives: bool = True,
 ) -> Callable[[ArrayLike, ArrayLike, Sequence[ArrayLike | None]], Array]:
     """Create a function that computes the MSM long-range energy contribution.
@@ -435,7 +440,7 @@ def make_compute_u_oneplus(
           ``grid_pass_fn``. See :func:`make_grid_pass_fn` for more details.
     """
 
-    def _compute_u_oneplus(
+    def _calc_from_stencils(
         positions: ArrayLike,
         charges: ArrayLike,
         kernel_stencils: Sequence[ArrayLike | None],
@@ -466,11 +471,12 @@ def make_compute_u_oneplus(
             gridpotential_lvl_oneplus, basis_vals, basis_inds, charges
         )
 
+    # TODO: with streamlined flex cell, this is not the right place for this
     if not use_custom_derivatives:
-        return _compute_u_oneplus
+        return _calc_from_stencils
 
     @jax.custom_jvp
-    def compute_u_oneplus(
+    def calc_from_stencils(
         positions: ArrayLike,
         charges: ArrayLike,
         kernel_stencils: Sequence[ArrayLike],
@@ -478,13 +484,13 @@ def make_compute_u_oneplus(
         """Compute the long-range energy contribution :math:`U^0` using custom
         derivative rules.
 
-        See ``_compute_u_oneplus`` for parameter details.
+        See ``_calc_from_stencils`` for parameter details.
         """
-        return _compute_u_oneplus(positions, charges, kernel_stencils)
+        return _calc_from_stencils(positions, charges, kernel_stencils)
 
-    @compute_u_oneplus.defjvp
-    def compute_u_oneplus_jvp(primals, tangents):
-        """Defines custom derivative rules for compute_u_oneplus"""
+    @calc_from_stencils.defjvp
+    def calc_from_stencils_jvp(primals, tangents):
+        """Defines custom derivative rules for calc_from_stencils"""
         (positions, charges, kernel_stencils) = primals
         (positions_dot, charges_dot, kernel_stencils_dot) = tangents
 
@@ -531,7 +537,7 @@ def make_compute_u_oneplus(
             kernel_stencils_dot,
         )
         _, kernel_stencils_tangent_out = jax.jvp(
-            _compute_u_oneplus, primals, tangents_zeroed
+            _calc_from_stencils, primals, tangents_zeroed
         )
 
         primal_out = energy
@@ -542,6 +548,33 @@ def make_compute_u_oneplus(
         )
 
         return primal_out, tangent_out
+
+    def _make_unitcube_transform_fn(
+        cell: ArrayLike,
+    ) -> Callable[[ArrayLike], Array]:
+        if transform_mode == "ortho":
+            inverse = 1.0 / jnp.diag(cell)
+            return lambda x: x * inverse
+        elif transform_mode == "general":
+            inverse = jnp.linalg.pinv(cell)
+            return lambda x: x @ inverse
+        else:
+            raise ValueError(f"Invalid 'transform_mode': {transform_mode}")
+
+    def compute_u_oneplus(
+        positions: ArrayLike,
+        charges: ArrayLike,
+        cell: ArrayLike,
+    ) -> Array:
+        # TODO: custom derivatives yes or no
+        # TODO: transform positions yes or no
+        # TODO: kernel_stencils or kernel_stencil_construction_fn
+        positions_to_unitcube = _make_unitcube_transform_fn(cell)
+        return calc_from_stencils(
+            positions_to_unitcube(positions),
+            charges,
+            kernel_stencil_construction_fn(cell),
+        )
 
     return compute_u_oneplus
 
