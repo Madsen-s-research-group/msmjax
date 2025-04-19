@@ -454,7 +454,7 @@ def make_compute_u_oneplus(
             "are mutually exclusive."
         )
 
-    def _calc_from_stencils(
+    def _calc_energy(
         positions: ArrayLike,
         charges: ArrayLike,
         kernel_stencils: Sequence[ArrayLike | None],
@@ -486,7 +486,7 @@ def make_compute_u_oneplus(
         )
 
     @jax.custom_jvp
-    def calc_from_stencils(
+    def _calc_energy_custom(
         positions: ArrayLike,
         charges: ArrayLike,
         kernel_stencils: Sequence[ArrayLike],
@@ -494,13 +494,13 @@ def make_compute_u_oneplus(
         """Compute the long-range energy contribution :math:`U^0` using custom
         derivative rules.
 
-        See ``_calc_from_stencils`` for parameter details.
+        See ``_calc_energy`` for parameter details.
         """
-        return _calc_from_stencils(positions, charges, kernel_stencils)
+        return _calc_energy(positions, charges, kernel_stencils)
 
-    @calc_from_stencils.defjvp
-    def calc_from_stencils_jvp(primals, tangents):
-        """Defines custom derivative rules for calc_from_stencils"""
+    @_calc_energy_custom.defjvp
+    def _calc_energy_custom_jvp(primals, tangents):
+        """Defines custom derivative rules for _calc_energy_custom"""
         (positions, charges, kernel_stencils) = primals
         (positions_dot, charges_dot, kernel_stencils_dot) = tangents
 
@@ -547,7 +547,7 @@ def make_compute_u_oneplus(
             kernel_stencils_dot,
         )
         _, kernel_stencils_tangent_out = jax.jvp(
-            _calc_from_stencils, primals, tangents_zeroed
+            _calc_energy, primals, tangents_zeroed
         )
 
         primal_out = energy
@@ -590,105 +590,8 @@ def make_compute_u_oneplus(
             stencils = kernel_stencil_construction_fn(cell)
 
         if not use_custom_derivatives:
-            return _calc_from_stencils(positions, charges, stencils)
+            return _calc_energy(positions, charges, stencils)
 
-        return calc_from_stencils(positions, charges, stencils)
+        return _calc_energy_custom(positions, charges, stencils)
 
     return compute_u_oneplus
-
-
-# TODO: name
-# TODO: Does this really need to be a dedicated function? All it does is
-#  make a closure of compute_u_oneplus over the kernel_stencils parameter.
-def make_static_cell_longrange_fn(
-    longrange_energy_fn: Callable[
-        [ArrayLike, ArrayLike, Sequence[ArrayLike | None]], Array
-    ],  # TODO: argument name
-    kernel_stencils,
-) -> Callable[[ArrayLike, ArrayLike], Array]:
-    # TODO: Add docstring or remove the whole function.
-    def compute(positions: ArrayLike, charges: ArrayLike) -> Array:
-        """Compute the long-range energy.
-
-        Args:
-            positions: Array of positions, shape `(n_particles, n_dim)`.
-            charges: Array of charges, shape `(n_particles,)`.
-
-        Returns:
-            The energy.
-        """
-        return longrange_energy_fn(positions, charges, kernel_stencils)
-
-    return compute
-
-
-# TODO: name
-def make_dyn_cell_longrange_fn(
-    unitcube_longrange_energy_fn: Callable[
-        [ArrayLike, ArrayLike, Sequence[ArrayLike | None]], Array
-    ],
-    kernel_stencil_construction_fn: Callable[
-        [ArrayLike], Sequence[ArrayLike | None]
-    ],
-    transform_mode: CellMode,
-) -> Callable[[ArrayLike, ArrayLike, ArrayLike], Array]:
-    """High-level wrapper to calculate long-range energy in a dynamic cell.
-
-    TODO: Explain the concept of the flex-cell implementation
-
-    Args:
-        unitcube_longrange_energy_fn: A function with the same signature as
-            the one returned by :func:`make_compute_u_oneplus` that calculates
-            the long-range energy contribution by grid interpolation.
-            It is expected to operate on positions given on a unit cube (i.e.
-            as fractional coordinates w.r.t. the real unit cell).
-        kernel_stencil_construction_fn: A function of one argument, an array
-            of shape `(n_dim, n_dim)` representing the unit cell, that
-            returns a sequence of kernel coefficient stencil arrays (one per
-            grid level, including a placeholder for level zero).
-        transform_mode: A string specifying assumptions on the shape of the
-            unit cell. Either the cell is assumed orthorhombic and
-            axis-aligned, in which case only its diagonal is considered,
-            reducing computational cost, or a general triclinic one.
-
-    Raises:
-        ValueError: If ``transform_mode`` is not valid.
-
-    Returns:
-        A function of three arguments that computes the long-range energy from
-        positions, charges, and the unit cell.
-    """
-
-    def _make_unitcube_transform_fn(
-        cell: ArrayLike,
-    ) -> Callable[[ArrayLike], Array]:
-        if transform_mode == "ortho":
-            inverse = 1.0 / jnp.diag(cell)
-            return lambda x: x * inverse
-        elif transform_mode == "general":
-            inverse = jnp.linalg.pinv(cell)
-            return lambda x: x @ inverse
-        else:
-            raise ValueError(f"Invalid 'transform_mode': {transform_mode}")
-
-    def compute(
-        positions: ArrayLike, charges: ArrayLike, cell: ArrayLike
-    ) -> Array:
-        """Compute the long-range energy.
-
-        Args:
-            positions: Array of positions, shape `(n_particles, n_dim)`.
-            charges: Array of charges, shape `(n_particles,)`.
-            cell: Array representing unit cell, shape `(n_dim, n_dim)`.
-
-        Returns:
-            The energy.
-        """
-        positions_to_unitcube = _make_unitcube_transform_fn(cell)
-        return unitcube_longrange_energy_fn(
-            positions_to_unitcube(positions),
-            charges,
-            kernel_stencil_construction_fn(cell),
-        )
-
-    return compute
