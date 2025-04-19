@@ -440,6 +440,20 @@ def make_compute_u_oneplus(
           ``grid_pass_fn``. See :func:`make_grid_pass_fn` for more details.
     """
 
+    if kernel_stencils is None and kernel_stencil_construction_fn is None:
+        raise ValueError(
+            "One of kernel_stencils or kernel_stencil_construction_fn "
+            "is required."
+        )
+    if (
+        kernel_stencils is not None
+        and kernel_stencil_construction_fn is not None
+    ):
+        raise ValueError(
+            "kernel_stencils and kernel_stencil_construction_fn "
+            "are mutually exclusive."
+        )
+
     def _calc_from_stencils(
         positions: ArrayLike,
         charges: ArrayLike,
@@ -470,10 +484,6 @@ def make_compute_u_oneplus(
         return _interpolate_energy(
             gridpotential_lvl_oneplus, basis_vals, basis_inds, charges
         )
-
-    # TODO: with streamlined flex cell, this is not the right place for this
-    if not use_custom_derivatives:
-        return _calc_from_stencils
 
     @jax.custom_jvp
     def calc_from_stencils(
@@ -569,12 +579,20 @@ def make_compute_u_oneplus(
         # TODO: custom derivatives yes or no
         # TODO: transform positions yes or no
         # TODO: kernel_stencils or kernel_stencil_construction_fn
-        positions_to_unitcube = _make_unitcube_transform_fn(cell)
-        return calc_from_stencils(
-            positions_to_unitcube(positions),
-            charges,
-            kernel_stencil_construction_fn(cell),
-        )
+        # TODO: make cell optional?
+        if transform_mode is not None:
+            positions_to_unitcube = _make_unitcube_transform_fn(cell)
+            positions = positions_to_unitcube(positions)
+
+        if kernel_stencils is not None:
+            stencils = kernel_stencils
+        else:
+            stencils = kernel_stencil_construction_fn(cell)
+
+        if not use_custom_derivatives:
+            return _calc_from_stencils(positions, charges, stencils)
+
+        return calc_from_stencils(positions, charges, stencils)
 
     return compute_u_oneplus
 
