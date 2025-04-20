@@ -369,10 +369,14 @@ def create_msm(params: MSMParams):
         #  returns a function taking cell, not spacings_or_gridcell, as arg
         if params.cell_mode == "ortho":
             spacings_or_gridcell_lowest = scaled_spacings * jnp.diag(cell)
-            return _construct_stencils(spacings_or_gridcell_lowest)
+        elif params.cell_mode == "general":
+            spacings_or_gridcell_lowest = (
+                cell * scaled_spacings[:, jnp.newaxis]
+            )
         else:
-            # TODO: add cell_mode == "general"
-            raise ValueError("Not implemented (TODO)")
+            # TODO: (where to) check for invalid cell_mode?
+            raise ValueError("Invalid cell_mode")
+        return _construct_stencils(spacings_or_gridcell_lowest)
 
     # TODO: remove
     # if params.cell_mode == "ortho":
@@ -396,6 +400,10 @@ def create_msm(params: MSMParams):
         ),
         grid_pass_fn=grid_pass_fn,
         grid_shape_lvl_one=params.grid_shapes[1],
+        # TODO: transform_mode
+        transform_mode=(
+            params.cell_mode if params.grids_defined_on_unitcube else None
+        ),
         # TODO: currently only static
         kernel_stencils=jax.jit(construct_stencils)(params.cell),
     )

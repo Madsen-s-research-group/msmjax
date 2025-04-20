@@ -36,6 +36,13 @@ def fixture_nonperiodic_ortho_diff_sides(fixture_datadir):
 
 
 @pytest.fixture(scope="module")
+def fixture_nonperiodic_triclinic(fixture_datadir):
+    # TODO: return the NpzFile instance
+    #  or directly pos, chg, cell, energy_ref, forces_ref, ...?
+    return onp.load(fixture_datadir / "nonperiodic_triclinic.npz")
+
+
+@pytest.fixture(scope="module")
 def fixture_periodic_cubic(fixture_datadir):
     # TODO: return the NpzFile instance
     #  or directly pos, chg, cell, energy_ref, forces_ref, ...?
@@ -49,6 +56,13 @@ def fixture_periodic_ortho_diff_sides(fixture_datadir):
     return onp.load(
         fixture_datadir / "periodic_ortho-different-sidelengths.npz"
     )
+
+
+@pytest.fixture(scope="module")
+def fixture_periodic_triclinic(fixture_datadir):
+    # TODO: return the NpzFile instance
+    #  or directly pos, chg, cell, energy_ref, forces_ref, ...?
+    return onp.load(fixture_datadir / "periodic_triclinic.npz")
 
 
 # TODO: Test static/dynamic cell?
@@ -101,6 +115,36 @@ def test_nonperiodic_ortho_diff_sides(fixture_nonperiodic_ortho_diff_sides):
     (n_particles, n_dim) = pos.shape
     energy_ref = fixture_nonperiodic_ortho_diff_sides["energy"]
     forces_ref = fixture_nonperiodic_ortho_diff_sides["forces"]
+
+    msm_params = set_up_msm_params_static_cell(
+        cell=cell,
+        cell_mode=cell_mode,
+        pbc=pbc,
+        level_one_spacings=level_one_spacings,
+        level_zero_cutoff=level_zero_cutoff,
+        n_particles=n_particles,
+    )
+    _, calc_forces, _, _ = create_msm(msm_params)
+    forces_msm = jax.jit(calc_forces)(pos, chg)
+
+    # TODO: Define the error tolerances somewhere?
+    assert calc_relative_rmse_percent(forces_msm, forces_ref) < 1.0
+
+
+def test_nonperiodic_triclinic(fixture_nonperiodic_triclinic):
+    # TODO: cell mode and pbc are specific to the structure fixture
+    cell_mode = "general"  # TODO
+    pbc = (False, False, False)
+    # TODO: spacings and cutoff should be defined outside (fixtures?)
+    level_one_spacings = 1.0
+    level_zero_cutoff = 3.0
+
+    cell = fixture_nonperiodic_triclinic["cell"]
+    pos = fixture_nonperiodic_triclinic["positions"]
+    chg = fixture_nonperiodic_triclinic["charges"]
+    (n_particles, n_dim) = pos.shape
+    energy_ref = fixture_nonperiodic_triclinic["energy"]
+    forces_ref = fixture_nonperiodic_triclinic["forces"]
 
     msm_params = set_up_msm_params_static_cell(
         cell=cell,
