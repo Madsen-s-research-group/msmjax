@@ -24,11 +24,7 @@ from msmjax.bspline_interpolation.gridops_clean import (
     suggest_max_grid_level_nonperiodic,
 )
 from msmjax.convenience import suggest_p
-from msmjax.core.longrange import (
-    make_compute_u_oneplus,
-    make_dyn_cell_longrange_fn,
-    make_grid_pass_fn,
-)
+from msmjax.core.longrange import make_compute_u_oneplus, make_grid_pass_fn
 from msmjax.core.shortrange import (
     make_compute_u_zero,
     make_eval_pair_pot,
@@ -321,6 +317,25 @@ def create_msm(params: MSMParams):
     #  - same for J
     omega, _ = compute_coeffs_with_truncation(params.p, params.mu)
 
+    # TODO: compute_u_oneplus must include transformation to unit cube
+    #  if cell_mode == "general"
+    (
+        restriction_fns,
+        prolongation_fns,
+        convolution_fns,
+    ) = create_all_grid_to_grid_ops(
+        grid_shapes=params.grid_shapes,
+        p=params.p,
+        pbc=params.pbc,
+        convolution_methods=params.convolution_methods,
+    )
+    grid_pass_fn = make_grid_pass_fn(
+        restriction_fns, prolongation_fns, convolution_fns
+    )
+    basis_evaluation_fn = make_basis_evaluation_fn(
+        grid_shape=params.grid_shapes[1], p=params.p, pbc=params.pbc
+    )
+
     n_levels_intermed = params.max_splitting_level - 1
     include_toplevel = params.max_grid_level == params.max_splitting_level
     if n_levels_intermed > 0:
@@ -354,30 +369,16 @@ def create_msm(params: MSMParams):
         kernel_stencils = jax.jit(construct_stencils)(one_grid_cell)
     # TODO: (where to) check for invalid cell_mode?
 
-    # TODO: compute_u_oneplus must include transformation to unit cube
-    #  if cell_mode == "general"
-    (
-        restriction_fns,
-        prolongation_fns,
-        convolution_fns,
-    ) = create_all_grid_to_grid_ops(
-        grid_shapes=params.grid_shapes,
-        p=params.p,
-        pbc=params.pbc,
-        convolution_methods=params.convolution_methods,
-    )
-    grid_pass_fn = make_grid_pass_fn(
-        restriction_fns, prolongation_fns, convolution_fns
-    )
-    basis_evaluation_fn = make_basis_evaluation_fn(
-        grid_shape=params.grid_shapes[1], p=params.p, pbc=params.pbc
-    )
     compute_u_oneplus = make_compute_u_oneplus(
+        # TODO: Can this closure over spacings be made more compact?
+        #  (Confusing to first define a basis eval function that takes
+        #  spacings as arguments, and then define one that doesn't)
         singleparticle_basis_fn_lvl_one=partial(
             basis_evaluation_fn, spacings=params.grid_spacings[1]
         ),
         grid_pass_fn=grid_pass_fn,
         grid_shape_lvl_one=params.grid_shapes[1],
+        kernel_stencils=kernel_stencils,  # TODO: currently only static
     )
 
     def calc_energy(positions, charges, neighborlist=None):
