@@ -348,7 +348,7 @@ def create_msm(params: MSMParams):
         grid_shape_toplevel = params.grid_shapes[-1]
     else:
         (k_toplevel, grid_shape_toplevel) = (None, None)
-    construct_stencils = make_construct_stencils(
+    _construct_stencils = make_construct_stencils(
         omega=omega,
         n_levels_intermed=n_levels_intermed,
         include_toplevel=include_toplevel,
@@ -357,16 +357,34 @@ def create_msm(params: MSMParams):
         k_toplevel=k_toplevel,
         grid_shape_toplevel=grid_shape_toplevel,
     )
-    if params.cell_mode == "ortho":
-        kernel_stencils = jax.jit(construct_stencils)(params.grid_spacings[1])
-    elif params.cell_mode == "general":
-        one_grid_cell = (
-            params.cell
-            * (params.grid_spacings[1] / onp.linalg.norm(params.cell, axis=1))[
-                :, onp.newaxis
-            ]
+    if params.grids_defined_on_unitcube:
+        scaled_spacings = params.grid_spacings[1]
+    else:
+        scaled_spacings = params.grid_spacings[1] / onp.linalg.norm(
+            params.cell, axis=1
         )
-        kernel_stencils = jax.jit(construct_stencils)(one_grid_cell)
+
+    def construct_stencils(cell):
+        # TODO: Probably makes more sense if make_construct_stencils itself
+        #  returns a function taking cell, not spacings_or_gridcell, as arg
+        if params.cell_mode == "ortho":
+            spacings_or_gridcell_lowest = scaled_spacings * jnp.diag(cell)
+            return _construct_stencils(spacings_or_gridcell_lowest)
+        else:
+            # TODO: add cell_mode == "general"
+            raise ValueError("Not implemented (TODO)")
+
+    # TODO: remove
+    # if params.cell_mode == "ortho":
+    #     kernel_stencils = jax.jit(_construct_stencils)(params.grid_spacings[1])
+    # elif params.cell_mode == "general":
+    #     one_grid_cell = (
+    #         params.cell
+    #         * (params.grid_spacings[1] / onp.linalg.norm(params.cell, axis=1))[
+    #             :, onp.newaxis
+    #         ]
+    #     )
+    #     kernel_stencils = jax.jit(_construct_stencils)(one_grid_cell)
     # TODO: (where to) check for invalid cell_mode?
 
     compute_u_oneplus = make_compute_u_oneplus(
@@ -378,10 +396,12 @@ def create_msm(params: MSMParams):
         ),
         grid_pass_fn=grid_pass_fn,
         grid_shape_lvl_one=params.grid_shapes[1],
-        kernel_stencils=kernel_stencils,  # TODO: currently only static
+        # TODO: currently only static
+        kernel_stencils=jax.jit(construct_stencils)(params.cell),
     )
 
     def calc_energy(positions, charges, neighborlist=None):
+        # TODO: Raise an error if cell given if static cell, and if not given if dynamic cell?
         if params.use_neighborlist:
             # TODO: Better error message.
             if neighborlist is None:
@@ -406,7 +426,7 @@ def create_msm(params: MSMParams):
                 charges,
                 cell=params.cell,
             )
-        u_oneplus = compute_u_oneplus(positions, charges, kernel_stencils)
+        u_oneplus = compute_u_oneplus(positions, charges, params.cell)
         return u_zero + u_oneplus
 
     def calc_forces(positions, charges, neighborlist=None):
