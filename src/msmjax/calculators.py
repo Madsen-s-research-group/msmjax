@@ -98,6 +98,7 @@ class MSMParams:
     cell: onp.ndarray
     cell_mode: CellMode
     pbc: Sequence[bool]  # TODO: type? (for consistent serialization)
+    dynamic_cell: bool
     # -------------------------------------------------------------------------
     # Short-range evaluation
     # -------------------------------------------------------------------------
@@ -269,6 +270,7 @@ def set_up_msm_params_static_cell(
         cell=cell,
         cell_mode=cell_mode,
         pbc=pbc,
+        dynamic_cell=False,
         supercell_diag=supercell_diag,
         use_neighborlist=use_neighborlist,
         grids_defined_on_unitcube=grids_defined_on_unitcube,
@@ -367,24 +369,37 @@ def create_msm(params: MSMParams):
         grid_shape_toplevel=grid_shape_toplevel,
     )
 
-    compute_u_oneplus = make_compute_u_oneplus(
-        # TODO: Can this closure over spacings be made more compact?
-        #  (Confusing to first define a basis eval function that takes
-        #  spacings as arguments, and then define one that doesn't)
-        singleparticle_basis_fn_lvl_one=partial(
-            basis_evaluation_fn, spacings=params.grid_spacings[1]
-        ),
-        grid_pass_fn=grid_pass_fn,
-        grid_shape_lvl_one=params.grid_shapes[1],
-        # TODO: transform_mode
-        transform_mode=(
-            params.cell_mode if params.grids_defined_on_unitcube else None
-        ),
-        # TODO: currently only static cell
-        kernel_stencils=jax.jit(construct_stencils)(params.cell),
-    )
+    # TODO: unnecessary duplication?
+    if params.dynamic_cell:
+        compute_u_oneplus = make_compute_u_oneplus(
+            # TODO: Can this closure over spacings be made more compact?
+            #  (Confusing to first define a basis eval function that takes
+            #  spacings as arguments, and then define one that doesn't)
+            singleparticle_basis_fn_lvl_one=partial(
+                basis_evaluation_fn, spacings=params.grid_spacings[1]
+            ),
+            grid_pass_fn=grid_pass_fn,
+            grid_shape_lvl_one=params.grid_shapes[1],
+            transform_mode=params.cell_mode,
+            kernel_stencil_construction_fn=construct_stencils,
+        )
+    else:
+        compute_u_oneplus = make_compute_u_oneplus(
+            # TODO: Can this closure over spacings be made more compact?
+            #  (Confusing to first define a basis eval function that takes
+            #  spacings as arguments, and then define one that doesn't)
+            singleparticle_basis_fn_lvl_one=partial(
+                basis_evaluation_fn, spacings=params.grid_spacings[1]
+            ),
+            grid_pass_fn=grid_pass_fn,
+            grid_shape_lvl_one=params.grid_shapes[1],
+            transform_mode=(
+                params.cell_mode if params.grids_defined_on_unitcube else None
+            ),
+            kernel_stencils=jax.jit(construct_stencils)(params.cell),
+        )
 
-    def calc_energy(positions, charges, neighborlist=None):
+    def calc_energy(positions, charges, cell=None, neighborlist=None):
         # TODO: Raise an error if cell given if static cell, and if not given if dynamic cell?
         if params.use_neighborlist:
             # TODO: Better error message.
@@ -393,7 +408,7 @@ def create_msm(params: MSMParams):
             u_zero = compute_u_zero(
                 positions,
                 charges,
-                cell=params.cell,
+                cell=cell if params.dynamic_cell else params.cell,
                 # TODO: Is weights=1.0 too restrictive?
                 #  (setting to 1.0 enforces that neighbor list contains no duplicates)
                 #  The problem would go away if I added support for neighbor list in
@@ -408,25 +423,27 @@ def create_msm(params: MSMParams):
             u_zero = compute_u_zero(
                 positions,
                 charges,
-                cell=params.cell,
+                cell=cell if params.dynamic_cell else params.cell,
             )
         u_oneplus = compute_u_oneplus(positions, charges, params.cell)
         return u_zero + u_oneplus
 
-    def calc_forces(positions, charges, neighborlist=None):
+    def calc_forces(positions, charges, cell=None, neighborlist=None):
         return -jax.grad(calc_energy, argnums=0)(
-            positions, charges, neighborlist
+            positions, charges, cell, neighborlist
         )
 
-    def calc_energy_and_forces(positions, charges, neighborlist=None):
+    def calc_energy_and_forces(
+        positions, charges, cell=None, neighborlist=None
+    ):
         value, grad = jax.value_and_grad(calc_energy, argnums=0)(
-            positions, charges, neighborlist
+            positions, charges, cell, neighborlist
         )
         return value, -grad
 
-    def calc_charge_gradient(positions, charges, neighborlist=None):
+    def calc_charge_gradient(positions, charges, cell=None, neighborlist=None):
         return jax.grad(calc_energy, argnums=1)(
-            positions, charges, neighborlist
+            positions, charges, cell, neighborlist
         )
 
     # TODO: Option to return fns for short- and long-range part separately?
