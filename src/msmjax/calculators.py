@@ -339,6 +339,12 @@ def create_msm(params: MSMParams):
 
     n_levels_intermed = params.max_splitting_level - 1
     include_toplevel = params.max_grid_level == params.max_splitting_level
+    if params.grids_defined_on_unitcube:
+        scaled_spacings = params.grid_spacings[1]
+    else:
+        scaled_spacings = params.grid_spacings[1] / onp.linalg.norm(
+            params.cell, axis=1
+        )
     if n_levels_intermed > 0:
         k_lowest_intermed = kernel_fns[1]
         extents_intermed = params.stencil_extents_from_center[1]
@@ -349,48 +355,17 @@ def create_msm(params: MSMParams):
         grid_shape_toplevel = params.grid_shapes[-1]
     else:
         (k_toplevel, grid_shape_toplevel) = (None, None)
-    _construct_stencils = make_construct_stencils(
+    construct_stencils = make_construct_stencils(
         omega=omega,
         n_levels_intermed=n_levels_intermed,
         include_toplevel=include_toplevel,
+        scaled_spacings=scaled_spacings,
+        cell_mode=params.cell_mode,
         k_lowest_intermed=k_lowest_intermed,
         extents_from_center_intermed=extents_intermed,
         k_toplevel=k_toplevel,
         grid_shape_toplevel=grid_shape_toplevel,
     )
-    if params.grids_defined_on_unitcube:
-        scaled_spacings = params.grid_spacings[1]
-    else:
-        scaled_spacings = params.grid_spacings[1] / onp.linalg.norm(
-            params.cell, axis=1
-        )
-
-    def construct_stencils(cell):
-        # TODO: Probably makes more sense if make_construct_stencils itself
-        #  returns a function taking cell, not spacings_or_gridcell, as arg
-        if params.cell_mode == "ortho":
-            spacings_or_gridcell_lowest = scaled_spacings * jnp.diag(cell)
-        elif params.cell_mode == "general":
-            spacings_or_gridcell_lowest = (
-                cell * scaled_spacings[:, jnp.newaxis]
-            )
-        else:
-            # TODO: (where to) check for invalid cell_mode?
-            raise ValueError("Invalid cell_mode")
-        return _construct_stencils(spacings_or_gridcell_lowest)
-
-    # TODO: remove
-    # if params.cell_mode == "ortho":
-    #     kernel_stencils = jax.jit(_construct_stencils)(params.grid_spacings[1])
-    # elif params.cell_mode == "general":
-    #     one_grid_cell = (
-    #         params.cell
-    #         * (params.grid_spacings[1] / onp.linalg.norm(params.cell, axis=1))[
-    #             :, onp.newaxis
-    #         ]
-    #     )
-    #     kernel_stencils = jax.jit(_construct_stencils)(one_grid_cell)
-    # TODO: (where to) check for invalid cell_mode?
 
     compute_u_oneplus = make_compute_u_oneplus(
         # TODO: Can this closure over spacings be made more compact?
@@ -405,7 +380,7 @@ def create_msm(params: MSMParams):
         transform_mode=(
             params.cell_mode if params.grids_defined_on_unitcube else None
         ),
-        # TODO: currently only static
+        # TODO: currently only static cell
         kernel_stencils=jax.jit(construct_stencils)(params.cell),
     )
 
