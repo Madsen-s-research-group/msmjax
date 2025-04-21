@@ -244,6 +244,7 @@ def set_up_msm_params_static_cell(
         p=p,
     )
 
+    # TODO: These stencil sizes can be too small for non-ortho cells
     stencil_extents_from_center = [None]
     extents_intermediate = (2 * alpha + 1,) * n_dim
     if pbc.any():
