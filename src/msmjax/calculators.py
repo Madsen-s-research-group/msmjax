@@ -16,7 +16,7 @@ from msmjax.bspline.coefficients import (
     compute_coeffs_with_truncation,
     compute_J_zeroplus,
 )
-from msmjax.bspline.gridops_clean import (
+from msmjax.bspline.gridops import (
     create_all_grid_to_grid_ops,
     find_spacings_and_max_level_periodic,
     make_basis_evaluation_fn,
