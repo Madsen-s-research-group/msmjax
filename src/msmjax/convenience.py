@@ -3,15 +3,14 @@ from typing import Callable, List, Sequence
 
 import numpy as onp
 
-from msmjax.bspline_interpolation.coefficients import (
+from msmjax.bspline.coefficients import (
     compute_coeffs_with_truncation,
     compute_J_zeroplus,
 )
-from msmjax.bspline_interpolation.gridops import set_up_grids_all_levels
-from msmjax.kernels import (
-    SofteningFunctionOneOverR,
-    make_dynamic_kernel_stencil_construction_fn,
-    split_one_over_r_kernel,
+from msmjax.bspline.gridops import set_up_grids_all_levels
+from msmjax.kernels import (  # make_dynamic_kernel_stencil_construction_fn,
+    SoftenerOneOverR,
+    split_one_over_r,
 )
 
 
@@ -304,10 +303,10 @@ def set_up_kernels_grids_and_stencils(
     level_one_gridspacing = onp.asarray(level_one_gridspacing)
     omega, _ = compute_coeffs_with_truncation(p, mu)
 
-    kernels = split_one_over_r_kernel(
+    kernels = split_one_over_r(
         max_level=n_levels,
         level_zero_cutoff=level_zero_cutoff,
-        softening_function=SofteningFunctionOneOverR(p),
+        softening_function=SoftenerOneOverR(p),
     )
     grids = set_up_grids_all_levels(
         box_lengths=box_lengths,
@@ -353,10 +352,10 @@ def set_up_kernel_fns(
     n_levels: int,
     **unused_kwargs,
 ) -> List[Callable]:
-    kernel_fns = split_one_over_r_kernel(
+    kernel_fns = split_one_over_r(
         max_level=n_levels,
         level_zero_cutoff=level_zero_cutoff,
-        softening_function=SofteningFunctionOneOverR(p),
+        softening_function=SoftenerOneOverR(p),
     )
 
     return kernel_fns
@@ -371,10 +370,10 @@ def set_up_kernels_and_grids(
     n_levels,
     **unused_kwargs,
 ):
-    kernels = split_one_over_r_kernel(
+    kernels = split_one_over_r(
         max_level=n_levels,
         level_zero_cutoff=level_zero_cutoff,
-        softening_function=SofteningFunctionOneOverR(p),
+        softening_function=SoftenerOneOverR(p),
     )
     grids = set_up_grids_all_levels(
         box_lengths=box_lengths,

@@ -17,6 +17,7 @@ import jax
 import jax.numpy as jnp
 import numpy as onp
 from jax import Array
+from jax._src.basearray import ArrayLike
 from jax.typing import ArrayLike
 
 from msmjax.utils import _divide_zero_safe, _sqrt
@@ -25,7 +26,7 @@ from msmjax.utils import _divide_zero_safe, _sqrt
 CellMode = Literal["ortho", "general"]
 
 
-class SofteningFunctionOneOverR:
+class SoftenerOneOverR:
     """Class for constructing and evaluating softener for the 1/r kernel.
 
     The softener is a function of a dimensionless argument rho that is equal
@@ -64,7 +65,7 @@ class SofteningFunctionOneOverR:
         )
 
 
-def split_one_over_r_kernel(
+def split_one_over_r(
     max_level: int, level_zero_cutoff: float, softening_function: Callable
 ):
     """Split kernel 1/r in (max_level + 1) terms according to reference.
@@ -126,137 +127,6 @@ def split_one_over_r_kernel(
         a_l *= 2.0
 
     return nruter
-
-
-def _compute_kernel_stencil(values: ArrayLike, omega: ArrayLike):
-    # TODO: old -> remove once no longer needed
-
-    def _onedim_convolution_fn(in1: ArrayLike, in2: ArrayLike):
-        # TODO: method="fft"?
-        return jax.scipy.signal.convolve(in1, in2, mode="same")
-
-    convolved = values
-    # TODO: exploit symmetry?
-    # TODO: Is this sequential application of 1d convolutions the fastest thing
-    #  one can do? Might it be faster to do it as a single 3D convolution
-    #  (especially if the stencil size can be significantly reduced by symmetry?
-    for i in range(values.ndim):
-        convolved = jnp.apply_along_axis(
-            func1d=_onedim_convolution_fn, axis=i, arr=convolved, in2=omega
-        )
-    return convolved
-
-
-def _construct_all_kernel_stencils(
-    kernel_fns: List[Callable],  # TODO: appropriate type hint?
-    omega,
-    points,  # TODO: pass points or directly the distances? Name 'points_intermediate_levels'?
-    kernels_include_toplevel: bool,
-    points_toplevel,  # TODO: pass points or directly the distances?
-):
-    # TODO: old -> remove once no longer needed
-
-    # TODO: raise error when `kernels_include_toplevel=True`, but sizes not
-    #  given
-    # TODO: When there is only one grid level (=kernel splitting into two
-    #  terms), `points` and `points_toplevel` actually mean the same thing.
-    #  How should this be handled in terms of default argument values?
-    #  (Not that the case of exactly one grid level is very relevant, but we
-    #  should still support it)
-
-    # TODO: better variable names for highest/intermediate levels?
-    highest_included_level = len(kernel_fns) - 1
-    if kernels_include_toplevel:
-        number_of_intermediate_kernels = highest_included_level - 1
-    else:
-        number_of_intermediate_kernels = highest_included_level
-
-    # Level zero (at which there is no grid)
-    stencils = [None]
-
-    # Intermediate levels:
-    if number_of_intermediate_kernels > 0:
-        distances = _sqrt((points * points).sum(axis=-1))
-        fn_vals_at_points = kernel_fns[1](distances)
-        stencils.append(_compute_kernel_stencil(fn_vals_at_points, omega))
-        # For the type of kernel splitting used, the kernel (and thus stencil)
-        # values at the remaining intermediate levels can be computed simply
-        # by dividing the level-one result by powers of two.
-        # This need not hold for other kernels or ways of splitting.
-        # TODO: Can this be done faster by a broadcast multiplication? So far, it
-        #  looks like there is not much to be gained here. The stencil calculation
-        #  appears to be not much of a bottleneck.
-        for lvl in range(number_of_intermediate_kernels - 1):
-            stencils.append(0.5 * stencils[-1])
-
-    # Top level with the long-range tail (if included)
-    # TODO: Do we need a separate boolean for this? Can't we just check whether
-    #  points_toplevel is None?
-    if kernels_include_toplevel:
-        # TODO: Some possible efficiency gain by precomputing `points_cartesian`
-        #  or `points_cartesian_toplevel`, whichever is larger in shape,
-        #  and then getting the smaller by indexing into the larger
-        # TODO: For the size of the top level stencil chosen sufficiently
-        #  large (I think it needs to be the grid size + half the length of
-        #  omega as padding), constructing it is very costly
-        # TODO: Should the scaling of distances by the appropriate power of two
-        #  (`2 ** (highest_included_level - 1)`) be done inside this function?
-        #  Perhaps it should rather receive the correct distances from outside?
-        distances_toplevel = 2 ** (highest_included_level - 1) * _sqrt(
-            (points_toplevel * points_toplevel).sum(axis=-1)
-        )
-        fn_vals_at_points_toplevel = kernel_fns[-1](distances_toplevel)
-        stencils.append(
-            _compute_kernel_stencil(fn_vals_at_points_toplevel, omega)
-        )
-
-    return stencils
-
-
-def make_dynamic_kernel_stencil_construction_fn(
-    kernel_fns: List[Callable],
-    sizes_from_center: Sequence[int],
-    reference_cell,
-    reference_spacings,
-    omega,
-    kernels_include_toplevel: bool,
-    sizes_from_center_toplevel=None,
-):
-    # TODO: old -> remove once no longer needed
-
-    # TODO: "dynamic" in name?
-    # TODO: raise error when `kernels_include_toplevel=True`, but sizes not given
-
-    reference_side_lengths = onp.linalg.norm(reference_cell, axis=1)
-    reference_spacings = onp.asarray(reference_spacings)
-    spacings_unitcube = reference_spacings / reference_side_lengths
-
-    indices_1d = [onp.arange(-s, s + 1) for s in sizes_from_center]
-    indices = onp.stack(onp.meshgrid(*indices_1d, indexing="ij"), axis=-1)
-    points_unitcube = indices * spacings_unitcube
-    if kernels_include_toplevel:
-        indices_1d_toplevel = [
-            onp.arange(-s, s + 1) for s in sizes_from_center_toplevel
-        ]
-        indices_toplevel = onp.stack(
-            onp.meshgrid(*indices_1d_toplevel, indexing="ij"), axis=-1
-        )
-        points_unitcube_toplevel = indices_toplevel * spacings_unitcube
-
-    def construct_kernel_stencils(cell):
-        return _construct_all_kernel_stencils(
-            kernel_fns=kernel_fns,
-            omega=omega,
-            points=points_unitcube @ cell,
-            kernels_include_toplevel=kernels_include_toplevel,
-            points_toplevel=(
-                points_unitcube_toplevel @ cell
-                if kernels_include_toplevel
-                else None
-            ),
-        )
-
-    return construct_kernel_stencils
 
 
 def _get_distances(extents_from_center, spacing_or_gridcell):
@@ -367,3 +237,64 @@ def make_construct_stencils(
         return stencils
 
     return construct_stencils
+
+
+def determine_min_kernel_stencil_size(
+    cell: ArrayLike, spacings: ArrayLike, cutoff: float
+):
+    # TODO: Should the parameter names for spacings and r_cut suggest one
+    #  specific grid level? In principle, if they're given at the same level,
+    #  it does not matter which, since both are doubled at each level.
+    #  But OTOH, the risk of inadvertently passing the level-ONE spacing and
+    #  together with the level-ZERO cutoff should be minimized
+
+    # TODO: unit test this function
+
+    n_dim = cell.shape[0]
+    inverse = onp.linalg.inv(cell)
+
+    # TODO: Can this be made more generic (same code working for all dimensions)?
+    # TODO: Could this be implemented via the usual max-cutoff formula
+    #  (as implemented in `get_max_cutoff_3d`) instead? (Keep enlarging the
+    #  cell passed to `get_max_cutoff_3d` in discrete steps, corresponding to
+    #  adding an additional grid point, until the cutoff fits)
+    if n_dim == 1:
+        return tuple(onp.atleast_1d(cutoff / spacings).astype(int).tolist())
+    elif n_dim == 2:
+        phis = onp.linspace(0, 2 * onp.pi, 500)
+        points_unitsphere = onp.array([onp.cos(phis), onp.sin(phis)]).T
+    elif n_dim == 3:
+        phis = onp.linspace(0, 2 * onp.pi, 200)
+        thetas = onp.linspace(0, onp.pi, 200)
+        phis, thetas = onp.meshgrid(phis, thetas)
+        phis = phis.ravel()
+        thetas = thetas.ravel()
+        points_unitsphere = onp.array(
+            [
+                onp.cos(phis) * onp.sin(thetas),
+                onp.sin(phis) * onp.sin(thetas),
+                onp.cos(thetas),
+            ]
+        ).T
+    else:
+        raise ValueError("Spatial dimensions greater than 3 not supported.")
+
+    points_at_cutoff = cutoff * points_unitsphere
+    points_at_cutoff_transformed = points_at_cutoff @ inverse
+
+    single_grid_cell = (
+        cell
+        / onp.linalg.norm(cell, axis=1)[:, onp.newaxis]
+        * onp.atleast_1d(spacings)[:, onp.newaxis]
+    )
+    spacings_transformed = onp.diag(single_grid_cell @ inverse)
+
+    # The maximum taken from the precomputed cutoff sphere points may be
+    # slightly too low, because they incompletely sample the cutoff sphere
+    # => use an additional small tolerance
+    tol = 1.0e-3
+    sizes_from_center = onp.floor(
+        points_at_cutoff_transformed.max(axis=0) / spacings_transformed + tol
+    ).astype(int)
+
+    return tuple(sizes_from_center.tolist())

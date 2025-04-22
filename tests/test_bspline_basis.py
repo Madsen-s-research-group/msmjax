@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 from scipy.interpolate import BSpline
 
-from msmjax.bspline_interpolation.basis import create_bspline_basis_element
+from msmjax.bspline.basis import create_bspline_basis_element
 
 jax.config.update("jax_enable_x64", True)
 

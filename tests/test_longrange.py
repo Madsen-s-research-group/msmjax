@@ -5,7 +5,7 @@ import numpy as onp
 import pytest
 
 from msmjax.benchmark_tools import path_input_structures
-from msmjax.bspline_interpolation.gridops import (
+from msmjax.bspline.gridops import (
     create_compute_f_oneplus_via_potential,
     create_compute_U_oneplus_direct,
     create_compute_U_oneplus_via_potential,

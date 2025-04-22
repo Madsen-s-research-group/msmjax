@@ -7,8 +7,8 @@ import numpy as onp
 from jax import Array
 from jax.typing import ArrayLike
 
-from msmjax.bspline_interpolation.basis import create_bspline_basis_element
-from msmjax.bspline_interpolation.coefficients import compute_J_zeroplus
+from msmjax.bspline.basis import create_bspline_basis_element
+from msmjax.bspline.coefficients import compute_J_zeroplus
 from msmjax.core.longrange import special_periodic_convolve
 
 # TODO: define somewhere central

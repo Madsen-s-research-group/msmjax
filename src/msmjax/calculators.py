@@ -12,11 +12,11 @@ from jax import Array
 from jax.typing import ArrayLike
 
 import msmjax
-from msmjax.bspline_interpolation.coefficients import (
+from msmjax.bspline.coefficients import (
     compute_coeffs_with_truncation,
     compute_J_zeroplus,
 )
-from msmjax.bspline_interpolation.gridops_clean import (
+from msmjax.bspline.gridops_clean import (
     create_all_grid_to_grid_ops,
     find_spacings_and_max_level_periodic,
     make_basis_evaluation_fn,
@@ -30,11 +30,11 @@ from msmjax.core.shortrange import (
     make_eval_pair_pot,
     make_eval_pair_pot_neighborlist,
 )
-from msmjax.flexcell import determine_min_kernel_stencil_size
 from msmjax.kernels import (
-    SofteningFunctionOneOverR,
+    SoftenerOneOverR,
+    determine_min_kernel_stencil_size,
     make_construct_stencils,
-    split_one_over_r_kernel,
+    split_one_over_r,
 )
 
 # TODO: This should be defined elsewhere, since the longrange part will likely
@@ -310,21 +310,24 @@ def set_up_msm_params_static_cell(
 def set_up_msm_params_dyn_cell(
     reference_cell: ArrayLike,
     reference_level_one_spacings: float | ArrayLike,
-    strain_limits: tuple[float, float] = None,  # TODO: name/definition
+    stretch_ratio_limits: tuple[float, float] = None,
     stencil_extents_from_center=None,
-    **base_kwargs,  # TODO: name
+    **base_kwargs,
 ):
     # TODO: How necessary/useful is this? I want it to include only non-default
     #  arguments, but currently includes everything that is not None (convolution_methods as well)
     passed_args = {k: v for k, v in locals().items() if v is not None}
 
-    if strain_limits is not None and stencil_extents_from_center is not None:
+    if (
+        stretch_ratio_limits is not None
+        and stencil_extents_from_center is not None
+    ):
         raise ValueError(
             "Do not specify both strain_limits and "
             "stencil_extents_from_center at the same time."
         )
 
-    if strain_limits is None:
+    if stretch_ratio_limits is None:
         params = _set_up_msm_params_base(
             cell=reference_cell,
             level_one_spacings=reference_level_one_spacings,
@@ -336,12 +339,13 @@ def set_up_msm_params_dyn_cell(
         #   strain_limits[0] => cell at max compression => determines stencil sizes
         #   strain_limits[1] => cell at max extension => determines grid spacing
         params = _set_up_msm_params_base(
-            cell=reference_cell * strain_limits[0],
-            level_one_spacings=reference_level_one_spacings / strain_limits[1],
+            cell=reference_cell * stretch_ratio_limits[0],
+            level_one_spacings=reference_level_one_spacings
+            / stretch_ratio_limits[1],
             **base_kwargs,
         )
         side_lengths = onp.linalg.norm(
-            reference_cell * strain_limits[0], axis=1
+            reference_cell * stretch_ratio_limits[0], axis=1
         )
 
     params.dynamic_cell = True
@@ -360,10 +364,10 @@ def set_up_msm_params_dyn_cell(
 
 
 def create_msm(params: MSMParams):
-    kernel_fns = split_one_over_r_kernel(
+    kernel_fns = split_one_over_r(
         max_level=params.max_splitting_level,
         level_zero_cutoff=params.cutoffs[0],
-        softening_function=SofteningFunctionOneOverR(params.p),
+        softening_function=SoftenerOneOverR(params.p),
     )
 
     if params.use_neighborlist:

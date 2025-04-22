@@ -1,7 +1,7 @@
 import numpy as onp
 from jax.typing import ArrayLike
 
-from msmjax.bspline_interpolation.gridops_clean import set_up_grids_all_levels
+from msmjax.bspline.gridops_clean import set_up_grids_all_levels
 
 
 def suggest_max_grid_level_nonperiodic(

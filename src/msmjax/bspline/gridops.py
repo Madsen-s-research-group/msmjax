@@ -6,7 +6,7 @@ import jax.numpy as jnp
 import numpy as onp
 import numpy.typing as npt
 
-from msmjax.bspline_interpolation.basis import create_bspline_basis_element
+from msmjax.bspline.basis import create_bspline_basis_element
 from msmjax.core.longrange import special_periodic_convolve
 
 
