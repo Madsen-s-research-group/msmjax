@@ -50,7 +50,7 @@ def get_max_cutoff_3d(cell: jnp.ndarray):
     Returns:
         Cutoff radius
     """
-    # TODO: move this function to some utils?
+    # TODO: Move to core.shortrange or leave in utils?
     return jnp.min(
         jnp.fabs(
             jnp.linalg.det(cell)

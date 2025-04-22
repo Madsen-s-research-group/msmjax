@@ -29,6 +29,8 @@ path_reference_lammps_p3m = (
     / "results_ref_periodic_lammps_p3m"
 )
 
+# TODO: clean up (not all of these functions need to be published)
+
 
 def get_git_commit_id(repository_path):
     proc = subprocess.run(
