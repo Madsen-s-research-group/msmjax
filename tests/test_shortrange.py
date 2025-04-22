@@ -26,7 +26,6 @@ from ase.atoms import Atoms
 from ase.geometry import get_distances
 from matscipy.neighbours import neighbour_list
 
-from msmjax.benchmark_tools import path_input_structures
 from msmjax.core.shortrange import (
     _concretize_displacement_fn,
     _gen_supercell,
@@ -34,6 +33,7 @@ from msmjax.core.shortrange import (
     make_eval_pair_pot,
     make_eval_pair_pot_neighborlist,
 )
+from msmjax.utils.benchmarking import path_input_structures
 
 # TODO: this and preallocate should both be handled in the same way
 #  (EITHER via os.environ OR via jax.config.update)

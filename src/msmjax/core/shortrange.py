@@ -14,15 +14,13 @@
 from functools import partial
 from typing import Callable, Literal, Optional, Sequence
 
-import jax
 import jax.numpy as jnp
 import numpy as onp
-import numpy.typing as npt
 from jax import Array
 from jax.typing import ArrayLike
 
 from msmjax.jax_md import space
-from msmjax.utils import _divide_zero_safe
+from msmjax.utils.misc import _divide_zero_safe
 
 # TODO: This should be defined elsewhere, since the longrange part will likely
 #  also use it

@@ -11,16 +11,15 @@
         of Illinois at Urbana-Champaign, 2006.
 """
 
-from typing import Callable, List, Literal, Sequence
+from typing import Callable, Literal
 
 import jax
 import jax.numpy as jnp
 import numpy as onp
 from jax import Array
-from jax._src.basearray import ArrayLike
 from jax.typing import ArrayLike
 
-from msmjax.utils import _divide_zero_safe, _sqrt
+from msmjax.utils.misc import _divide_zero_safe, _sqrt
 
 # TODO: define somwhere central
 CellMode = Literal["ortho", "general"]

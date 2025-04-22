@@ -20,7 +20,7 @@ import numpy.typing as npt
 from ase import Atoms
 
 path_input_structures = (
-    Path(__file__).resolve().parents[2] / "data" / "benchmark" / "structures"
+    Path(__file__).resolve().parents[3] / "data" / "benchmark" / "structures"
 )
 path_reference_lammps_p3m = (
     Path(__file__).resolve().parents[2]

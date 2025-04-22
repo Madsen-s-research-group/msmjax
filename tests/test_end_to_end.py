@@ -1,7 +1,5 @@
 import os
 
-from msmjax.benchmark_tools import calc_relative_rmse_percent
-
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 
 from pathlib import Path
@@ -9,13 +7,13 @@ from pathlib import Path
 import jax
 import numpy as onp
 import pytest
-from matscipy.neighbours import neighbour_list
 
 from msmjax.calculators import (
     create_msm,
     set_up_msm_params_dyn_cell,
     set_up_msm_params_static_cell,
 )
+from msmjax.utils.benchmarking import calc_relative_rmse_percent
 
 # For closeness checks to pass in single precision
 ATOL = 5.0e-6

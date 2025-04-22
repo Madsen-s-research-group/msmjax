@@ -5,17 +5,11 @@ from pathlib import Path
 from typing import Literal, Sequence
 
 import jax
-import jax.numpy as jnp
 import numpy as onp
-import numpy.typing as npt
-from jax import Array
 from jax.typing import ArrayLike
 
 import msmjax
-from msmjax.bspline.coefficients import (
-    compute_coeffs_with_truncation,
-    compute_J_zeroplus,
-)
+from msmjax.bspline.coefficients import compute_coeffs_with_truncation
 from msmjax.bspline.gridops import (
     create_all_grid_to_grid_ops,
     find_spacings_and_max_level_periodic,
@@ -23,7 +17,6 @@ from msmjax.bspline.gridops import (
     set_up_grids_all_levels,
     suggest_max_grid_level_nonperiodic,
 )
-from msmjax.convenience import suggest_p
 from msmjax.core.longrange import make_compute_u_oneplus, make_grid_pass_fn
 from msmjax.core.shortrange import (
     make_compute_u_zero,
@@ -149,8 +142,26 @@ class MSMParams:
         return cls(**params_dict)
 
 
-def _set_up_msm_params_base(
-    # TODO: Make arguments keyword-only?
+def _suggest_p(alpha):
+    """Find the interpolation order p that the article recommends.
+
+    The article's criterion for choosing p for a given alpha is heuristic
+    and is stated in section III.B.2.
+
+    Args:
+        alpha: The ratio between level-zero cutoff and level-one grid spacing.
+
+    Returns:
+        Suggested value of interpolation order.
+    """
+    list_of_ps = [4, 6, 8]
+    idx_optimal_p = onp.argmin(
+        onp.abs(onp.asarray(list_of_ps) - (1.25 * alpha + 0.25))
+    )
+    return list_of_ps[idx_optimal_p]
+
+
+def set_up_msm_params_base(
     cell: ArrayLike,
     level_one_spacings: float | ArrayLike,
     *,
@@ -178,7 +189,9 @@ def _set_up_msm_params_base(
     #  pre-adjustment. Is this a problem? Which behavior is less surprising?
     alpha = int(onp.max(level_zero_cutoff / level_one_spacings))
     if p is None:
-        p = suggest_p(alpha)  # TODO: does this have to be a separate function?
+        p = _suggest_p(
+            alpha
+        )  # TODO: does this have to be a separate function?
     # See section "1. Preprocessing" of the article
     # TODO: Allow different mus for each level? (The article suggests
     #  mu >= 3*p/2 for the highest grid level)
@@ -280,7 +293,7 @@ def set_up_msm_params_static_cell(
     #  arguments, but currently includes everything that is not None (convolution_methods as well)
     passed_args = {k: v for k, v in locals().items() if v is not None}
 
-    params = _set_up_msm_params_base(
+    params = set_up_msm_params_base(
         cell,
         level_one_spacings,
         **base_kwargs,
@@ -313,7 +326,7 @@ def set_up_msm_params_dyn_cell(
     stretch_ratio_limits: tuple[float, float] = None,
     stencil_extents_from_center=None,
     **base_kwargs,
-):
+) -> MSMParams:
     # TODO: How necessary/useful is this? I want it to include only non-default
     #  arguments, but currently includes everything that is not None (convolution_methods as well)
     passed_args = {k: v for k, v in locals().items() if v is not None}
@@ -328,7 +341,7 @@ def set_up_msm_params_dyn_cell(
         )
 
     if stretch_ratio_limits is None:
-        params = _set_up_msm_params_base(
+        params = set_up_msm_params_base(
             cell=reference_cell,
             level_one_spacings=reference_level_one_spacings,
             **base_kwargs,
@@ -338,7 +351,7 @@ def set_up_msm_params_dyn_cell(
         # TODO: explain this in docstring, then remove comment
         #   strain_limits[0] => cell at max compression => determines stencil sizes
         #   strain_limits[1] => cell at max extension => determines grid spacing
-        params = _set_up_msm_params_base(
+        params = set_up_msm_params_base(
             cell=reference_cell * stretch_ratio_limits[0],
             level_one_spacings=reference_level_one_spacings
             / stretch_ratio_limits[1],

@@ -7,7 +7,7 @@ import jax
 import jax.numpy as jnp
 from jax.typing import ArrayLike
 
-from msmjax.utils import _divide_zero_safe
+from msmjax.utils.misc import _divide_zero_safe
 
 
 def characteristic(knots: jnp.ndarray, eval_point: ArrayLike) -> jnp.ndarray:

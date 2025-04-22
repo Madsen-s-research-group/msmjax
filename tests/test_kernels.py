@@ -13,21 +13,12 @@
 
 import os
 
-from msmjax.bspline.coefficients import (
-    compute_coeffs_with_truncation,
-    compute_J_zeroplus,
-)
-from msmjax.bspline.gridops import set_up_grids_all_levels
-from msmjax.convenience import set_up_kernels_grids_and_stencils
-from msmjax.kernels import make_dynamic_kernel_stencil_construction_fn
-
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 
 from typing import Callable, List
 
 import jax
 import jax.numpy as jnp
-import numpy as onp
 import pytest
 
 from msmjax.kernels import SoftenerOneOverR, split_one_over_r
