@@ -148,25 +148,23 @@ class MSMParams:
         return cls(**params_dict)
 
 
-def set_up_msm_params_static_cell(
-    cell: ArrayLike,
-    level_one_spacings: float | ArrayLike,
-    level_zero_cutoff: float,
-    pbc: Sequence[bool],
-    cell_mode: CellMode,
-    p: int = None,
-    mu: int = None,
-    n_particles: int = None,
-    max_splitting_level: int = None,
-    supercell_diag: Sequence[int] = None,
-    use_neighborlist: bool = None,
-    convolution_methods: ConvMeth | Sequence[ConvMeth] = "scipy-fft",
-) -> MSMParams:
-    """High-level convenience function for setting up MSM params."""
-    # TODO: How necessary/useful is this? I want it to include only non-default
-    #  arguments, but currently includes everything that is not None (convolution_methods as well)
-    passed_args = {k: v for k, v in locals().items() if v is not None}
-
+def _set_up_msm_params_base(
+    # TODO: order of args (currently alphabetic) should match set_up_msm_params
+    # TODO: make args keyword-only?
+    cell,
+    cell_mode,
+    convolution_methods,
+    level_one_spacings,
+    level_zero_cutoff,
+    max_splitting_level,
+    mu,
+    n_particles,
+    p,
+    passed_args,
+    pbc,
+    supercell_diag,
+    use_neighborlist,
+):
     cell = onp.asarray(cell)
     n_dim = cell.shape[0]
     side_lengths = onp.linalg.norm(cell, axis=1)
@@ -225,22 +223,6 @@ def set_up_msm_params_static_cell(
         2**lvl * level_zero_cutoff for lvl in range(max_splitting_level)
     ] + [onp.inf]
 
-    # TODO: Move this further up? (before the grid level and spacing
-    #  determinations, such that those operate on already-scaled side lengths
-    #  and spacings) -> One problem with this is that
-    #  suggest_max_grid_level_nonperiodic takes the cutoff as argument, which
-    #  then would need to be scaled as well...
-    if cell_mode == "ortho":
-        grids_defined_on_unitcube = False
-    elif cell_mode == "general":
-        grids_defined_on_unitcube = True
-        # TODO: Is overwriting the variables the way to go?
-        level_one_spacings /= side_lengths
-        side_lengths = onp.ones_like(level_one_spacings)
-    else:
-        # TODO: Where to check for this?
-        raise ValueError("Illegal value for cell_mode")
-
     gridshapes_all_levels, spacings_all_levels = set_up_grids_all_levels(
         side_lengths=side_lengths,
         level_one_spacings=level_one_spacings,
@@ -269,7 +251,7 @@ def set_up_msm_params_static_cell(
     if isinstance(convolution_methods, str):
         convolution_methods = [None] + [convolution_methods] * max_grid_level
 
-    return MSMParams(
+    params = MSMParams(
         p=p,
         mu=mu,
         max_splitting_level=max_splitting_level,
@@ -281,14 +263,66 @@ def set_up_msm_params_static_cell(
         dynamic_cell=False,
         supercell_diag=supercell_diag,
         use_neighborlist=use_neighborlist,
-        grids_defined_on_unitcube=grids_defined_on_unitcube,
+        grids_defined_on_unitcube=None,  # TODO
         grid_shapes=gridshapes_all_levels,
-        grid_spacings=spacings_all_levels,
+        grid_spacings=spacings_all_levels,  # TODO
         stencil_extents_from_center=stencil_extents_from_center,
         convolution_methods=convolution_methods,
         n_dim=n_dim,
         info={"args_passed_during_setup": passed_args},
     )
+    return params
+
+
+def set_up_msm_params_static_cell(
+    cell: ArrayLike,
+    level_one_spacings: float | ArrayLike,
+    level_zero_cutoff: float,
+    pbc: Sequence[bool],
+    cell_mode: CellMode,
+    p: int = None,
+    mu: int = None,
+    n_particles: int = None,
+    max_splitting_level: int = None,
+    supercell_diag: Sequence[int] = None,
+    use_neighborlist: bool = None,
+    convolution_methods: ConvMeth | Sequence[ConvMeth] = "scipy-fft",
+) -> MSMParams:
+    """High-level convenience function for setting up MSM params."""
+    # TODO: How necessary/useful is this? I want it to include only non-default
+    #  arguments, but currently includes everything that is not None (convolution_methods as well)
+    passed_args = {k: v for k, v in locals().items() if v is not None}
+
+    params = _set_up_msm_params_base(
+        cell,
+        cell_mode,
+        convolution_methods,
+        level_one_spacings,
+        level_zero_cutoff,
+        max_splitting_level,
+        mu,
+        n_particles,
+        p,
+        passed_args,
+        pbc,
+        supercell_diag,
+        use_neighborlist,
+    )
+
+    if cell_mode == "ortho":
+        params.grids_defined_on_unitcube = False
+    elif cell_mode == "general":
+        params.grids_defined_on_unitcube = True
+        side_lengths = onp.linalg.norm(cell, axis=1)
+        params.grid_spacings = [
+            (None if spacings is None else spacings / side_lengths)
+            for spacings in params.grid_spacings
+        ]
+    else:
+        # TODO: Where to check for this?
+        raise ValueError("Illegal value for cell_mode")
+
+    return params
 
 
 def set_up_msm_params_dyn_cell(
