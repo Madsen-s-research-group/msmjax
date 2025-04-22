@@ -27,6 +27,10 @@ from msmjax.kernels import SoftenerOneOverR, split_one_over_r
 #  environment variable, or both via jax.config.update)
 jax.config.update("jax_enable_x64", True)
 
+# TODO: Some of the tests in this module take extremely long (high derivatives
+#  are expensive to evaluate) => don't go to as high derivatives? Bbut make
+#  sure that the things supposed to be tested still get tested...
+
 
 @pytest.fixture(scope="module")
 def fixture_level_zero_cutoff() -> float:
