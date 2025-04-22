@@ -30,6 +30,7 @@ from msmjax.core.shortrange import (
     make_eval_pair_pot,
     make_eval_pair_pot_neighborlist,
 )
+from msmjax.flexcell import determine_min_kernel_stencil_size
 from msmjax.kernels import (
     SofteningFunctionOneOverR,
     make_construct_stencils,
@@ -149,21 +150,20 @@ class MSMParams:
 
 
 def _set_up_msm_params_base(
-    # TODO: order of args (currently alphabetic) should match set_up_msm_params
-    # TODO: make args keyword-only?
-    cell,
-    cell_mode,
-    convolution_methods,
-    level_one_spacings,
-    level_zero_cutoff,
-    max_splitting_level,
-    mu,
-    n_particles,
-    p,
-    passed_args,
-    pbc,
-    supercell_diag,
-    use_neighborlist,
+    # TODO: Make arguments keyword-only?
+    cell: ArrayLike,
+    level_one_spacings: float | ArrayLike,
+    *,
+    level_zero_cutoff: float,
+    pbc: Sequence[bool],
+    cell_mode: CellMode,
+    p: int = None,
+    mu: int = None,
+    n_particles: int = None,
+    max_splitting_level: int = None,
+    supercell_diag: Sequence[int] = None,
+    use_neighborlist: bool = None,
+    convolution_methods: ConvMeth | Sequence[ConvMeth] = "scipy-fft",
 ):
     cell = onp.asarray(cell)
     n_dim = cell.shape[0]
@@ -231,13 +231,10 @@ def _set_up_msm_params_base(
         p=p,
     )
 
-    # TODO: These stencil sizes can be too small for non-ortho cells
     stencil_extents_from_center = [None]
-    # TODO: Is +1 necessary?
-    #  (I guess depends on how we have previously defined/rounded/int-cast alpha...)
-    # TODO: Centralize this determination of the minimum intermediate stencil
-    #  extents for a given cell in a function (that should handle both ortho and triclinic case)?
-    extents_intermediate = (2 * alpha + 1,) * n_dim
+    extents_intermediate = determine_min_kernel_stencil_size(
+        cell, level_one_spacings, 2 * level_zero_cutoff
+    )
     if pbc.any():
         stencil_extents_from_center += [extents_intermediate] * max_grid_level
     else:
@@ -260,7 +257,7 @@ def _set_up_msm_params_base(
         cell=cell,
         cell_mode=cell_mode,
         pbc=pbc,
-        dynamic_cell=False,
+        dynamic_cell=None,
         supercell_diag=supercell_diag,
         use_neighborlist=use_neighborlist,
         grids_defined_on_unitcube=None,  # TODO
@@ -269,7 +266,6 @@ def _set_up_msm_params_base(
         stencil_extents_from_center=stencil_extents_from_center,
         convolution_methods=convolution_methods,
         n_dim=n_dim,
-        info={"args_passed_during_setup": passed_args},
     )
     return params
 
@@ -277,16 +273,7 @@ def _set_up_msm_params_base(
 def set_up_msm_params_static_cell(
     cell: ArrayLike,
     level_one_spacings: float | ArrayLike,
-    level_zero_cutoff: float,
-    pbc: Sequence[bool],
-    cell_mode: CellMode,
-    p: int = None,
-    mu: int = None,
-    n_particles: int = None,
-    max_splitting_level: int = None,
-    supercell_diag: Sequence[int] = None,
-    use_neighborlist: bool = None,
-    convolution_methods: ConvMeth | Sequence[ConvMeth] = "scipy-fft",
+    **base_kwargs,  # TODO: name
 ) -> MSMParams:
     """High-level convenience function for setting up MSM params."""
     # TODO: How necessary/useful is this? I want it to include only non-default
@@ -295,23 +282,16 @@ def set_up_msm_params_static_cell(
 
     params = _set_up_msm_params_base(
         cell,
-        cell_mode,
-        convolution_methods,
         level_one_spacings,
-        level_zero_cutoff,
-        max_splitting_level,
-        mu,
-        n_particles,
-        p,
-        passed_args,
-        pbc,
-        supercell_diag,
-        use_neighborlist,
+        **base_kwargs,
     )
 
-    if cell_mode == "ortho":
+    params.dynamic_cell = False
+    # TODO: ok to take cell_mode from kwargs? (more generally, is it ok that
+    #  some kwargs are required?)
+    if base_kwargs["cell_mode"] == "ortho":
         params.grids_defined_on_unitcube = False
-    elif cell_mode == "general":
+    elif base_kwargs["cell_mode"] == "general":
         params.grids_defined_on_unitcube = True
         side_lengths = onp.linalg.norm(cell, axis=1)
         params.grid_spacings = [
@@ -319,8 +299,10 @@ def set_up_msm_params_static_cell(
             for spacings in params.grid_spacings
         ]
     else:
-        # TODO: Where to check for this?
+        # TODO: Where is the right place to check for this?
         raise ValueError("Illegal value for cell_mode")
+
+    # TODO: add passed_args to params
 
     return params
 
@@ -328,13 +310,23 @@ def set_up_msm_params_static_cell(
 def set_up_msm_params_dyn_cell(
     reference_cell: ArrayLike,
     reference_level_one_spacings: float | ArrayLike,
-    level_zero_cutoff: float,
-    pbc: Sequence[bool],
-    cell_mode: CellMode,
-    strain_limits: tuple[float, float] = None,
+    strain_limits: tuple[float, float] = None,  # TODO: name/definition
     stencil_extents_from_center=None,
-    **kwargs,  # TODO: name (highlight that they will be passed to static-cell setup fn?)
+    **base_kwargs,  # TODO: name
 ):
+    # TODO: Should strain_limits (at least the more compressed limit) and
+    #  stencil_extents_from_center be mutually exclusive?
+
+    params = _set_up_msm_params_base(cell, level_one_spacings, **base_kwargs)
+
+    params.dynamic_cell = True
+    params.grids_defined_on_unitcube = True
+    side_lengths = onp.linalg.norm(cell, axis=1)
+    params.grid_spacings = [
+        (None if spacings is None else spacings / side_lengths)
+        for spacings in params.grid_spacings
+    ]
+    # TODO: Set stencil_extents_from_center, if given
 
     pass  # TODO
 

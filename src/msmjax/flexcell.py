@@ -4,20 +4,25 @@ from typing import Callable, List, Literal, Optional, Sequence, Union
 import jax.numpy as jnp
 import numpy as onp
 import numpy.typing as npt
+from jax import Array
+from jax.typing import ArrayLike
 
 from msmjax.bspline_interpolation.coefficients import (
     compute_coeffs_with_truncation,
 )
-from msmjax.bspline_interpolation.gridops import (
-    create_compute_f_oneplus_via_potential,
-    create_compute_U_and_f_oneplus_via_potential,
-    create_compute_U_oneplus_direct,
-)
+
+# from msmjax.bspline_interpolation.gridops import (
+#     create_compute_f_oneplus_via_potential,
+#     create_compute_U_and_f_oneplus_via_potential,
+#     create_compute_U_oneplus_direct,
+# )
 from msmjax.convenience import set_up_kernels_and_grids
 from msmjax.kernels import make_dynamic_kernel_stencil_construction_fn
 
 
-def determine_min_kernel_stencil_size(cell, spacings, cutoff):
+def determine_min_kernel_stencil_size(
+    cell: ArrayLike, spacings: ArrayLike, cutoff: float
+):
     # TODO: Should the parameter names for spacings and r_cut suggest one
     #  specific grid level? In principle, if they're given at the same level,
     #  it does not matter which, since both are doubled at each level.
@@ -35,7 +40,7 @@ def determine_min_kernel_stencil_size(cell, spacings, cutoff):
     #  cell passed to `get_max_cutoff_3d` in discrete steps, corresponding to
     #  adding an additional grid point, until the cutoff fits)
     if n_dim == 1:
-        return tuple([onp.floor(cutoff / spacings).astype(int)])
+        return tuple(onp.atleast_1d(cutoff / spacings).astype(int).tolist())
     elif n_dim == 2:
         phis = onp.linspace(0, 2 * onp.pi, 500)
         points_unitsphere = onp.array([onp.cos(phis), onp.sin(phis)]).T
@@ -73,7 +78,7 @@ def determine_min_kernel_stencil_size(cell, spacings, cutoff):
         points_at_cutoff_transformed.max(axis=0) / spacings_transformed + tol
     ).astype(int)
 
-    return tuple(sizes_from_center)
+    return tuple(sizes_from_center.tolist())
 
 
 def set_up_grids_unitcube(
