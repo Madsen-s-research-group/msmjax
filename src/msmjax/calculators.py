@@ -314,21 +314,48 @@ def set_up_msm_params_dyn_cell(
     stencil_extents_from_center=None,
     **base_kwargs,  # TODO: name
 ):
-    # TODO: Should strain_limits (at least the more compressed limit) and
-    #  stencil_extents_from_center be mutually exclusive?
+    # TODO: How necessary/useful is this? I want it to include only non-default
+    #  arguments, but currently includes everything that is not None (convolution_methods as well)
+    passed_args = {k: v for k, v in locals().items() if v is not None}
 
-    params = _set_up_msm_params_base(cell, level_one_spacings, **base_kwargs)
+    if strain_limits is not None and stencil_extents_from_center is not None:
+        raise ValueError(
+            "Do not specify both strain_limits and "
+            "stencil_extents_from_center at the same time."
+        )
+
+    if strain_limits is None:
+        params = _set_up_msm_params_base(
+            cell=reference_cell,
+            level_one_spacings=reference_level_one_spacings,
+            **base_kwargs,
+        )
+        side_lengths = onp.linalg.norm(reference_cell, axis=1)
+    else:
+        # TODO: explain this in docstring, then remove comment
+        #   strain_limits[0] => cell at max compression => determines stencil sizes
+        #   strain_limits[1] => cell at max extension => determines grid spacing
+        params = _set_up_msm_params_base(
+            cell=reference_cell * strain_limits[0],
+            level_one_spacings=reference_level_one_spacings / strain_limits[1],
+            **base_kwargs,
+        )
+        side_lengths = onp.linalg.norm(
+            reference_cell * strain_limits[0], axis=1
+        )
 
     params.dynamic_cell = True
     params.grids_defined_on_unitcube = True
-    side_lengths = onp.linalg.norm(cell, axis=1)
     params.grid_spacings = [
         (None if spacings is None else spacings / side_lengths)
         for spacings in params.grid_spacings
     ]
-    # TODO: Set stencil_extents_from_center, if given
+    if stencil_extents_from_center is not None:
+        params.stencil_extents_from_center = stencil_extents_from_center
 
-    pass  # TODO
+    # TODO: add passed_args to params
+
+    return params
 
 
 def create_msm(params: MSMParams):
