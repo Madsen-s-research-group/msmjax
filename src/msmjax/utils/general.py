@@ -1,12 +1,15 @@
-from typing import Literal
+from typing import Callable, Literal
 
 import jax
 import jax.numpy as jnp
+from jax import Array
 from jax import numpy as jnp
+from jax._src.basearray import ArrayLike
 
 # Type definitions
-CellMode = Literal["ortho", "general"]  # TODO: "general" -> "triclinic"
+CellMode = Literal["ortho", "triclinic"]
 ConvMeth = Literal["scipy-direct", "scipy-fft"]
+KernelFn = Callable[[ArrayLike], Array]
 
 
 def _divide_zero_safe(

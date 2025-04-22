@@ -299,7 +299,7 @@ def set_up_msm_params_static_cell(
     #  some kwargs are required?)
     if base_kwargs["cell_mode"] == "ortho":
         params.grids_defined_on_unitcube = False
-    elif base_kwargs["cell_mode"] == "general":
+    elif base_kwargs["cell_mode"] == "triclinic":
         params.grids_defined_on_unitcube = True
         side_lengths = onp.linalg.norm(cell, axis=1)
         params.grid_spacings = [

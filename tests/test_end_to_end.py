@@ -160,7 +160,7 @@ def test_nonperiodic_ortho_diff_sides(fixture_nonperiodic_ortho_diff_sides):
 
 def test_nonperiodic_triclinic(fixture_nonperiodic_triclinic):
     # TODO: cell mode and pbc are specific to the structure fixture
-    cell_mode = "general"  # TODO
+    cell_mode = "triclinic"  # TODO
     pbc = (False, False, False)
     # TODO: spacings and cutoff should be defined outside (fixtures?)
     level_one_spacings = 1.0
@@ -286,7 +286,7 @@ def test_periodic_ortho_diff_sides(fixture_periodic_ortho_diff_sides):
 )
 def test_periodic_triclinic(fixture_periodic_triclinic):
     # TODO: cell mode and pbc are specific to the structure fixture
-    cell_mode = "general"  # TODO
+    cell_mode = "triclinic"  # TODO
     pbc = (True, True, True)
     # TODO: spacings and cutoff should be defined outside (fixtures?)
     level_one_spacings = 1.0

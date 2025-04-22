@@ -564,7 +564,7 @@ def make_compute_u_oneplus(
         if transform_mode == "ortho":
             inverse = 1.0 / jnp.diag(cell)
             return lambda x: x * inverse
-        elif transform_mode == "general":
+        elif transform_mode == "triclinic":
             inverse = jnp.linalg.pinv(cell)
             return lambda x: x @ inverse
         else:

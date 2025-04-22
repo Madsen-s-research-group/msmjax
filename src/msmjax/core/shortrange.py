@@ -12,7 +12,7 @@
 """
 
 from functools import partial
-from typing import Callable, Literal, Optional, Sequence
+from typing import Callable, Optional, Sequence
 
 import jax.numpy as jnp
 import numpy as onp
@@ -20,11 +20,7 @@ from jax import Array
 from jax.typing import ArrayLike
 
 from msmjax.jax_md import space
-from msmjax.utils.general import CellMode, _divide_zero_safe
-
-# TODO: This should be defined elsewhere, since the longrange part will likely
-#  also use it
-KernelFn = Callable[[ArrayLike], Array]
+from msmjax.utils.general import CellMode, KernelFn, _divide_zero_safe
 
 
 def _gen_supercell(
@@ -213,7 +209,7 @@ def _concretize_displacement_fn(
 
         return displacement_fn
 
-    elif cell_mode == "general":
+    elif cell_mode == "triclinic":
 
         def displacement_fn(r_1, r_2, cell):
             cell_processed_for_pbc = cell * pbc[:, jnp.newaxis]

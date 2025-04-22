@@ -19,7 +19,7 @@ import numpy as onp
 from jax import Array
 from jax.typing import ArrayLike
 
-from msmjax.utils.general import CellMode, _divide_zero_safe, _sqrt
+from msmjax.utils.general import CellMode, KernelFn, _divide_zero_safe, _sqrt
 
 
 class SoftenerOneOverR:
@@ -63,7 +63,7 @@ class SoftenerOneOverR:
 
 def split_one_over_r(
     max_level: int, level_zero_cutoff: float, softening_function: Callable
-):
+) -> list[KernelFn]:
     """Split kernel 1/r in (max_level + 1) terms according to reference.
 
     The splitting terms sum up to the Coulomb kernel 1/r like this:
@@ -157,9 +157,9 @@ def make_construct_stencils(
     include_toplevel: bool,
     scaled_spacings: ArrayLike,
     cell_mode: CellMode,
-    k_lowest_intermed: Callable[[ArrayLike], Array] = None,
+    k_lowest_intermed: KernelFn = None,
     extents_from_center_intermed: tuple[int, ...] = None,
-    k_toplevel: Callable[[ArrayLike], Array] = None,
+    k_toplevel: KernelFn = None,
     grid_shape_toplevel: tuple[int, ...] = None,
 ) -> Callable[[ArrayLike], list[Array]]:
 
@@ -187,7 +187,7 @@ def make_construct_stencils(
     def construct_stencils(cell: ArrayLike):
         if cell_mode == "ortho":
             spacings_or_gridcell_lowest = scaled_spacings * jnp.diag(cell)
-        elif cell_mode == "general":
+        elif cell_mode == "triclinic":
             spacings_or_gridcell_lowest = (
                 cell * scaled_spacings[:, jnp.newaxis]
             )

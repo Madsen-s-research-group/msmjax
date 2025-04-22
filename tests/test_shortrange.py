@@ -73,7 +73,7 @@ def fixture_structure_nonortho(fixture_structure_cubic) -> tuple:
     # TODO: Rename to `fixture_structure_triclinic`?
     # TODO: Add another structure fixture that is orthorhombic with unequal
     #  side lengths?
-    cell_mode = "general"
+    cell_mode = "triclinic"
     positions, charges, cell, _ = fixture_structure_cubic
     atoms = Atoms(positions=positions, charges=charges, cell=cell)
     new_lengths = onp.diag(cell) * (0.8, 1.0, 1.25)
@@ -250,7 +250,7 @@ def test_compute_distance_vectors_different_cell_types(
         pbc=onp.asarray(fixture_pbc), cell_mode="ortho"
     )
     displacement_fn_general = _concretize_displacement_fn(
-        pbc=onp.asarray(fixture_pbc), cell_mode="general"
+        pbc=onp.asarray(fixture_pbc), cell_mode="triclinic"
     )
     deltas_ortho = jax.vmap(displacement_fn_ortho, in_axes=(0, 0, None))(
         pos[i], pos[j], cell
