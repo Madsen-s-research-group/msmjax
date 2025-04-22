@@ -24,16 +24,13 @@ from msmjax.bspline_interpolation.gridops_clean import (
     suggest_max_grid_level_nonperiodic,
 )
 from msmjax.convenience import suggest_p
-from msmjax.core.longrange import (
-    make_compute_u_oneplus,
-    make_dyn_cell_longrange_fn,
-    make_grid_pass_fn,
-)
+from msmjax.core.longrange import make_compute_u_oneplus, make_grid_pass_fn
 from msmjax.core.shortrange import (
     make_compute_u_zero,
     make_eval_pair_pot,
     make_eval_pair_pot_neighborlist,
 )
+from msmjax.flexcell import determine_min_kernel_stencil_size
 from msmjax.kernels import (
     SofteningFunctionOneOverR,
     make_construct_stencils,
@@ -102,6 +99,7 @@ class MSMParams:
     cell: onp.ndarray
     cell_mode: CellMode
     pbc: Sequence[bool]  # TODO: type? (for consistent serialization)
+    dynamic_cell: bool
     # -------------------------------------------------------------------------
     # Short-range evaluation
     # -------------------------------------------------------------------------
@@ -151,12 +149,14 @@ class MSMParams:
         return cls(**params_dict)
 
 
-def set_up_msm_params_static_cell(
+def _set_up_msm_params_base(
+    # TODO: Make arguments keyword-only?
     cell: ArrayLike,
-    cell_mode: CellMode,
-    pbc: Sequence[bool],
     level_one_spacings: float | ArrayLike,
+    *,
     level_zero_cutoff: float,
+    pbc: Sequence[bool],
+    cell_mode: CellMode,
     p: int = None,
     mu: int = None,
     n_particles: int = None,
@@ -164,12 +164,7 @@ def set_up_msm_params_static_cell(
     supercell_diag: Sequence[int] = None,
     use_neighborlist: bool = None,
     convolution_methods: ConvMeth | Sequence[ConvMeth] = "scipy-fft",
-) -> MSMParams:
-    """High-level convenience function for setting up MSM params."""
-    # TODO: How necessary/useful is this? I want it to include only non-default
-    #  arguments, but currently includes everything that is not None (convolution_methods as well)
-    passed_args = {k: v for k, v in locals().items() if v is not None}
-
+):
     cell = onp.asarray(cell)
     n_dim = cell.shape[0]
     side_lengths = onp.linalg.norm(cell, axis=1)
@@ -183,7 +178,7 @@ def set_up_msm_params_static_cell(
     #  pre-adjustment. Is this a problem? Which behavior is less surprising?
     alpha = int(onp.max(level_zero_cutoff / level_one_spacings))
     if p is None:
-        p = suggest_p(alpha)
+        p = suggest_p(alpha)  # TODO: does this have to be a separate function?
     # See section "1. Preprocessing" of the article
     # TODO: Allow different mus for each level? (The article suggests
     #  mu >= 3*p/2 for the highest grid level)
@@ -213,7 +208,7 @@ def set_up_msm_params_static_cell(
                     "Either specify max_splitting_level directly, "
                     "or n_particles."
                 )
-            # TODO: Replace/rework this very old grid level determination function
+            # TODO: Warn/raise if max_splitting_level and n_particles are both given?
             # TODO: Print a message that max_level is being determined automatically?
             max_splitting_level = suggest_max_grid_level_nonperiodic(
                 side_lengths=side_lengths,
@@ -228,18 +223,6 @@ def set_up_msm_params_static_cell(
         2**lvl * level_zero_cutoff for lvl in range(max_splitting_level)
     ] + [onp.inf]
 
-    if cell_mode == "ortho":
-        grids_defined_on_unitcube = False
-    elif cell_mode == "general":
-        grids_defined_on_unitcube = True
-        # TODO: Scale side lengths and spacings.
-        #  Is overwriting the variables the way to go though?
-        level_one_spacings /= side_lengths
-        side_lengths = onp.ones_like(level_one_spacings)
-    else:
-        # TODO: Where to check for this?
-        raise ValueError("Illegal value for cell_mode")
-
     gridshapes_all_levels, spacings_all_levels = set_up_grids_all_levels(
         side_lengths=side_lengths,
         level_one_spacings=level_one_spacings,
@@ -249,7 +232,9 @@ def set_up_msm_params_static_cell(
     )
 
     stencil_extents_from_center = [None]
-    extents_intermediate = (2 * alpha + 1,) * n_dim
+    extents_intermediate = determine_min_kernel_stencil_size(
+        cell, level_one_spacings, 2 * level_zero_cutoff
+    )
     if pbc.any():
         stencil_extents_from_center += [extents_intermediate] * max_grid_level
     else:
@@ -263,7 +248,7 @@ def set_up_msm_params_static_cell(
     if isinstance(convolution_methods, str):
         convolution_methods = [None] + [convolution_methods] * max_grid_level
 
-    return MSMParams(
+    params = MSMParams(
         p=p,
         mu=mu,
         max_splitting_level=max_splitting_level,
@@ -272,20 +257,106 @@ def set_up_msm_params_static_cell(
         cell=cell,
         cell_mode=cell_mode,
         pbc=pbc,
+        dynamic_cell=None,
         supercell_diag=supercell_diag,
         use_neighborlist=use_neighborlist,
-        grids_defined_on_unitcube=grids_defined_on_unitcube,
+        grids_defined_on_unitcube=None,  # TODO
         grid_shapes=gridshapes_all_levels,
-        grid_spacings=spacings_all_levels,
+        grid_spacings=spacings_all_levels,  # TODO
         stencil_extents_from_center=stencil_extents_from_center,
         convolution_methods=convolution_methods,
         n_dim=n_dim,
-        info={"args_passed_during_setup": passed_args},
+    )
+    return params
+
+
+def set_up_msm_params_static_cell(
+    cell: ArrayLike,
+    level_one_spacings: float | ArrayLike,
+    **base_kwargs,  # TODO: name
+) -> MSMParams:
+    """High-level convenience function for setting up MSM params."""
+    # TODO: How necessary/useful is this? I want it to include only non-default
+    #  arguments, but currently includes everything that is not None (convolution_methods as well)
+    passed_args = {k: v for k, v in locals().items() if v is not None}
+
+    params = _set_up_msm_params_base(
+        cell,
+        level_one_spacings,
+        **base_kwargs,
     )
 
+    params.dynamic_cell = False
+    # TODO: ok to take cell_mode from kwargs? (more generally, is it ok that
+    #  some kwargs are required?)
+    if base_kwargs["cell_mode"] == "ortho":
+        params.grids_defined_on_unitcube = False
+    elif base_kwargs["cell_mode"] == "general":
+        params.grids_defined_on_unitcube = True
+        side_lengths = onp.linalg.norm(cell, axis=1)
+        params.grid_spacings = [
+            (None if spacings is None else spacings / side_lengths)
+            for spacings in params.grid_spacings
+        ]
+    else:
+        # TODO: Where is the right place to check for this?
+        raise ValueError("Illegal value for cell_mode")
 
-def set_up_msm_params_dyn_cell():
-    pass  # TODO
+    # TODO: add passed_args to params
+
+    return params
+
+
+def set_up_msm_params_dyn_cell(
+    reference_cell: ArrayLike,
+    reference_level_one_spacings: float | ArrayLike,
+    strain_limits: tuple[float, float] = None,  # TODO: name/definition
+    stencil_extents_from_center=None,
+    **base_kwargs,  # TODO: name
+):
+    # TODO: How necessary/useful is this? I want it to include only non-default
+    #  arguments, but currently includes everything that is not None (convolution_methods as well)
+    passed_args = {k: v for k, v in locals().items() if v is not None}
+
+    if strain_limits is not None and stencil_extents_from_center is not None:
+        raise ValueError(
+            "Do not specify both strain_limits and "
+            "stencil_extents_from_center at the same time."
+        )
+
+    if strain_limits is None:
+        params = _set_up_msm_params_base(
+            cell=reference_cell,
+            level_one_spacings=reference_level_one_spacings,
+            **base_kwargs,
+        )
+        side_lengths = onp.linalg.norm(reference_cell, axis=1)
+    else:
+        # TODO: explain this in docstring, then remove comment
+        #   strain_limits[0] => cell at max compression => determines stencil sizes
+        #   strain_limits[1] => cell at max extension => determines grid spacing
+        params = _set_up_msm_params_base(
+            cell=reference_cell * strain_limits[0],
+            level_one_spacings=reference_level_one_spacings / strain_limits[1],
+            **base_kwargs,
+        )
+        side_lengths = onp.linalg.norm(
+            reference_cell * strain_limits[0], axis=1
+        )
+
+    params.dynamic_cell = True
+    params.grids_defined_on_unitcube = True
+    params.cell = None
+    params.grid_spacings = [
+        (None if spacings is None else spacings / side_lengths)
+        for spacings in params.grid_spacings
+    ]
+    if stencil_extents_from_center is not None:
+        params.stencil_extents_from_center = stencil_extents_from_center
+
+    # TODO: add passed_args to params
+
+    return params
 
 
 def create_msm(params: MSMParams):
@@ -321,39 +392,6 @@ def create_msm(params: MSMParams):
     #  - same for J
     omega, _ = compute_coeffs_with_truncation(params.p, params.mu)
 
-    n_levels_intermed = params.max_splitting_level - 1
-    include_toplevel = params.max_grid_level == params.max_splitting_level
-    if n_levels_intermed > 0:
-        k_lowest_intermed = kernel_fns[1]
-        extents_intermed = params.stencil_extents_from_center[1]
-    else:
-        (k_lowest_intermed, extents_intermed) = (None, None)
-    if include_toplevel:
-        k_toplevel = kernel_fns[-1]
-        grid_shape_toplevel = params.grid_shapes[-1]
-    else:
-        (k_toplevel, grid_shape_toplevel) = (None, None)
-    construct_stencils = make_construct_stencils(
-        omega=omega,
-        n_levels_intermed=n_levels_intermed,
-        include_toplevel=include_toplevel,
-        k_lowest_intermed=k_lowest_intermed,
-        extents_from_center_intermed=extents_intermed,
-        k_toplevel=k_toplevel,
-        grid_shape_toplevel=grid_shape_toplevel,
-    )
-    if params.cell_mode == "ortho":
-        kernel_stencils = jax.jit(construct_stencils)(params.grid_spacings[1])
-    elif params.cell_mode == "general":
-        one_grid_cell = (
-            params.cell
-            * (params.grid_spacings[1] / onp.linalg.norm(params.cell, axis=1))[
-                :, onp.newaxis
-            ]
-        )
-        kernel_stencils = jax.jit(construct_stencils)(one_grid_cell)
-    # TODO: (where to) check for invalid cell_mode?
-
     # TODO: compute_u_oneplus must include transformation to unit cube
     #  if cell_mode == "general"
     (
@@ -372,15 +410,69 @@ def create_msm(params: MSMParams):
     basis_evaluation_fn = make_basis_evaluation_fn(
         grid_shape=params.grid_shapes[1], p=params.p, pbc=params.pbc
     )
-    compute_u_oneplus = make_compute_u_oneplus(
-        singleparticle_basis_fn_lvl_one=partial(
-            basis_evaluation_fn, spacings=params.grid_spacings[1]
-        ),
-        grid_pass_fn=grid_pass_fn,
-        grid_shape_lvl_one=params.grid_shapes[1],
+
+    n_levels_intermed = params.max_splitting_level - 1
+    include_toplevel = params.max_grid_level == params.max_splitting_level
+    if params.grids_defined_on_unitcube:
+        scaled_spacings = params.grid_spacings[1]
+    else:
+        scaled_spacings = params.grid_spacings[1] / onp.linalg.norm(
+            params.cell, axis=1
+        )
+    if n_levels_intermed > 0:
+        k_lowest_intermed = kernel_fns[1]
+        extents_intermed = params.stencil_extents_from_center[1]
+    else:
+        (k_lowest_intermed, extents_intermed) = (None, None)
+    if include_toplevel:
+        k_toplevel = kernel_fns[-1]
+        grid_shape_toplevel = params.grid_shapes[-1]
+    else:
+        (k_toplevel, grid_shape_toplevel) = (None, None)
+    construct_stencils = make_construct_stencils(
+        omega=omega,
+        n_levels_intermed=n_levels_intermed,
+        include_toplevel=include_toplevel,
+        scaled_spacings=scaled_spacings,
+        cell_mode=params.cell_mode,
+        k_lowest_intermed=k_lowest_intermed,
+        extents_from_center_intermed=extents_intermed,
+        k_toplevel=k_toplevel,
+        grid_shape_toplevel=grid_shape_toplevel,
     )
 
-    def calc_energy(positions, charges, neighborlist=None):
+    # TODO: unnecessary duplication?
+    if params.dynamic_cell:
+        compute_u_oneplus = make_compute_u_oneplus(
+            # TODO: Can this closure over spacings be made more compact?
+            #  (Confusing to first define a basis eval function that takes
+            #  spacings as arguments, and then define one that doesn't)
+            singleparticle_basis_fn_lvl_one=partial(
+                basis_evaluation_fn, spacings=params.grid_spacings[1]
+            ),
+            grid_pass_fn=grid_pass_fn,
+            grid_shape_lvl_one=params.grid_shapes[1],
+            transform_mode=params.cell_mode,
+            kernel_stencil_construction_fn=construct_stencils,
+        )
+    else:
+        compute_u_oneplus = make_compute_u_oneplus(
+            # TODO: Can this closure over spacings be made more compact?
+            #  (Confusing to first define a basis eval function that takes
+            #  spacings as arguments, and then define one that doesn't)
+            singleparticle_basis_fn_lvl_one=partial(
+                basis_evaluation_fn, spacings=params.grid_spacings[1]
+            ),
+            grid_pass_fn=grid_pass_fn,
+            grid_shape_lvl_one=params.grid_shapes[1],
+            transform_mode=(
+                params.cell_mode if params.grids_defined_on_unitcube else None
+            ),
+            kernel_stencils=jax.jit(construct_stencils)(params.cell),
+        )
+
+    def calc_energy(positions, charges, cell=None, neighborlist=None):
+        # TODO: Raise an error if cell given if static cell, and if not given if dynamic cell?
         if params.use_neighborlist:
             # TODO: Better error message.
             if neighborlist is None:
@@ -388,7 +480,7 @@ def create_msm(params: MSMParams):
             u_zero = compute_u_zero(
                 positions,
                 charges,
-                cell=params.cell,
+                cell=cell if params.dynamic_cell else params.cell,
                 # TODO: Is weights=1.0 too restrictive?
                 #  (setting to 1.0 enforces that neighbor list contains no duplicates)
                 #  The problem would go away if I added support for neighbor list in
@@ -403,25 +495,29 @@ def create_msm(params: MSMParams):
             u_zero = compute_u_zero(
                 positions,
                 charges,
-                cell=params.cell,
+                cell=cell if params.dynamic_cell else params.cell,
             )
-        u_oneplus = compute_u_oneplus(positions, charges, kernel_stencils)
+        u_oneplus = compute_u_oneplus(
+            positions, charges, cell if params.dynamic_cell else params.cell
+        )
         return u_zero + u_oneplus
 
-    def calc_forces(positions, charges, neighborlist=None):
+    def calc_forces(positions, charges, cell=None, neighborlist=None):
         return -jax.grad(calc_energy, argnums=0)(
-            positions, charges, neighborlist
+            positions, charges, cell, neighborlist
         )
 
-    def calc_energy_and_forces(positions, charges, neighborlist=None):
+    def calc_energy_and_forces(
+        positions, charges, cell=None, neighborlist=None
+    ):
         value, grad = jax.value_and_grad(calc_energy, argnums=0)(
-            positions, charges, neighborlist
+            positions, charges, cell, neighborlist
         )
         return value, -grad
 
-    def calc_charge_gradient(positions, charges, neighborlist=None):
+    def calc_charge_gradient(positions, charges, cell=None, neighborlist=None):
         return jax.grad(calc_energy, argnums=1)(
-            positions, charges, neighborlist
+            positions, charges, cell, neighborlist
         )
 
     # TODO: Option to return fns for short- and long-range part separately?

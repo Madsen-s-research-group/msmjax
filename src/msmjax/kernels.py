@@ -11,7 +11,7 @@
         of Illinois at Urbana-Champaign, 2006.
 """
 
-from typing import Callable, List, Sequence
+from typing import Callable, List, Literal, Sequence
 
 import jax
 import jax.numpy as jnp
@@ -20,6 +20,9 @@ from jax import Array
 from jax.typing import ArrayLike
 
 from msmjax.utils import _divide_zero_safe, _sqrt
+
+# TODO: define somwhere central
+CellMode = Literal["ortho", "general"]
 
 
 class SofteningFunctionOneOverR:
@@ -286,6 +289,8 @@ def make_construct_stencils(
     omega: ArrayLike,
     n_levels_intermed: int,
     include_toplevel: bool,
+    scaled_spacings: ArrayLike,
+    cell_mode: CellMode,
     k_lowest_intermed: Callable[[ArrayLike], Array] = None,
     extents_from_center_intermed: tuple[int, ...] = None,
     k_toplevel: Callable[[ArrayLike], Array] = None,
@@ -313,7 +318,16 @@ def make_construct_stencils(
             "are required when include_toplevel = True."
         )
 
-    def construct_stencils(spacings_or_gridcell_lowest: ArrayLike):
+    def construct_stencils(cell: ArrayLike):
+        if cell_mode == "ortho":
+            spacings_or_gridcell_lowest = scaled_spacings * jnp.diag(cell)
+        elif cell_mode == "general":
+            spacings_or_gridcell_lowest = (
+                cell * scaled_spacings[:, jnp.newaxis]
+            )
+        else:
+            raise ValueError("Invalid cell_mode")
+
         # Placeholder for level zero (l = 0), at which there is no grid:
         stencils = [None]
 
