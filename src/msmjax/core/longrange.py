@@ -541,8 +541,8 @@ def make_compute_u_oneplus(
         # corresponding to all parameters except ``kernel_stencils`` set to
         # zero.
         tangents_zeroed = (
-            onp.zeros(positions.shape, dtype=float),  # TODO: jnp?
-            onp.zeros(charges.shape, dtype=float),  # TODO: jnp?
+            jnp.zeros(positions.shape, dtype=float),
+            jnp.zeros(charges.shape, dtype=float),
             kernel_stencils_dot,
         )
         _, kernel_stencils_tangent_out = jax.jvp(
