@@ -9,10 +9,8 @@ from jax.typing import ArrayLike
 
 from msmjax.bspline.basis import create_bspline_basis_element
 from msmjax.bspline.coefficients import compute_J_zeroplus
-from msmjax.core.longrange import special_periodic_convolve
-
-# TODO: define somewhere central
-ConvMeth = Literal["direct", "fft"]
+from msmjax.core.longrange import special_periodic_convolve_scipy
+from msmjax.utils.general import ConvMeth
 
 
 def _find_n_gridpoints_1d(
@@ -389,13 +387,13 @@ def create_all_grid_to_grid_ops(
         conv_meth = convolution_methods[lvl]
         if conv_meth == "scipy-direct":
             interact = partial(
-                special_periodic_convolve,
+                special_periodic_convolve_scipy,
                 pbc=pbc,
                 method="direct",
             )
         elif conv_meth == "scipy-fft":
             interact = partial(
-                special_periodic_convolve,
+                special_periodic_convolve_scipy,
                 pbc=pbc,
                 method="fft",
             )

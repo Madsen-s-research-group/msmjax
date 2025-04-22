@@ -1,9 +1,14 @@
+from typing import Literal
+
 import jax
 import jax.numpy as jnp
 from jax import numpy as jnp
 
+# Type definitions
+CellMode = Literal["ortho", "general"]  # TODO: "general" -> "triclinic"
+ConvMeth = Literal["scipy-direct", "scipy-fft"]
 
-# TODO: centralize this function in one place (originally taken from bspline_basis)
+
 def _divide_zero_safe(
     numerator: jnp.ndarray,
     denominator: jnp.ndarray,

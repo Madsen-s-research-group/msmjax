@@ -29,12 +29,7 @@ from msmjax.kernels import (
     make_construct_stencils,
     split_one_over_r,
 )
-
-# TODO: This should be defined elsewhere, since the longrange part will likely
-#  also use it
-# TODO: Name that is meaningful in all places where this is used?
-CellMode = Literal["ortho", "general"]
-ConvMeth = Literal["scipy-direct", "scipy-fft"]
+from msmjax.utils.general import CellMode, ConvMeth
 
 
 class CustomJSONEncoder(json.JSONEncoder):

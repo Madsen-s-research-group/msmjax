@@ -20,8 +20,7 @@ import numpy as onp
 from jax import Array
 from jax.typing import ArrayLike
 
-# TODO: Define in some global typedef or utils module?
-CellMode = Literal["ortho", "general"]
+from msmjax.utils.general import CellMode
 
 
 def _anterpolate(
@@ -141,7 +140,7 @@ def _interpolate_energy_charge_gradient(
 
 
 @partial(jax.jit, static_argnames=["pbc", "method"])
-def special_periodic_convolve(
+def special_periodic_convolve_scipy(
     data: ArrayLike,
     kernel: ArrayLike,
     pbc: Sequence[bool],
@@ -287,7 +286,7 @@ def make_grid_pass_fn(
               consumed by the :math:`l`-th element of ``ìnteraction_fns``
     """
     # TODO: Don't take interaction_fns as a parameter at all and default to
-    #  always using special_periodic_convolve? In this case, pbc and conv_meth
+    #  always using special_periodic_convolve_scipy? In this case, pbc and conv_meth
     #  would need to be added as parameters.
     if (
         not len(restriction_fns)

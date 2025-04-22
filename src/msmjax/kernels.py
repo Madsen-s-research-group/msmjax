@@ -19,10 +19,7 @@ import numpy as onp
 from jax import Array
 from jax.typing import ArrayLike
 
-from msmjax.utils.misc import _divide_zero_safe, _sqrt
-
-# TODO: define somwhere central
-CellMode = Literal["ortho", "general"]
+from msmjax.utils.general import CellMode, _divide_zero_safe, _sqrt
 
 
 class SoftenerOneOverR:

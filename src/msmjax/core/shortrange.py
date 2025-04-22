@@ -20,11 +20,10 @@ from jax import Array
 from jax.typing import ArrayLike
 
 from msmjax.jax_md import space
-from msmjax.utils.misc import _divide_zero_safe
+from msmjax.utils.general import CellMode, _divide_zero_safe
 
 # TODO: This should be defined elsewhere, since the longrange part will likely
 #  also use it
-CellMode = Literal["ortho", "general"]
 KernelFn = Callable[[ArrayLike], Array]
 
 
@@ -49,6 +48,7 @@ def _gen_supercell(
             - array of charges after replication,
             - unit cell after replication.
     """
+    # TODO: Leave here or move to utils?
     n_particles, n_dim = positions.shape
     M = onp.prod(supercell_diag)
     tile_positions = jnp.tile(positions, (M, 1))

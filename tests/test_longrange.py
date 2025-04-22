@@ -13,7 +13,7 @@ from msmjax.utils.convenience import (
     set_up_kernels_grids_and_stencils,
     suggest_msm_params,
 )
-from msmjax.utils.misc import path_input_structures
+from msmjax.utils.general import path_input_structures
 
 # jax.config.update("jax_enable_x64", True) # TODO
 
