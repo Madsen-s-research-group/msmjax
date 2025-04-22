@@ -150,10 +150,10 @@ class MSMParams:
 
 def set_up_msm_params_static_cell(
     cell: ArrayLike,
-    cell_mode: CellMode,
-    pbc: Sequence[bool],
     level_one_spacings: float | ArrayLike,
     level_zero_cutoff: float,
+    pbc: Sequence[bool],
+    cell_mode: CellMode,
     p: int = None,
     mu: int = None,
     n_particles: int = None,
@@ -180,7 +180,7 @@ def set_up_msm_params_static_cell(
     #  pre-adjustment. Is this a problem? Which behavior is less surprising?
     alpha = int(onp.max(level_zero_cutoff / level_one_spacings))
     if p is None:
-        p = suggest_p(alpha)
+        p = suggest_p(alpha)  # TODO: does this have to be a separate function?
     # See section "1. Preprocessing" of the article
     # TODO: Allow different mus for each level? (The article suggests
     #  mu >= 3*p/2 for the highest grid level)
@@ -210,7 +210,7 @@ def set_up_msm_params_static_cell(
                     "Either specify max_splitting_level directly, "
                     "or n_particles."
                 )
-            # TODO: Replace/rework this very old grid level determination function
+            # TODO: Warn/raise if max_splitting_level and n_particles are both given?
             # TODO: Print a message that max_level is being determined automatically?
             max_splitting_level = suggest_max_grid_level_nonperiodic(
                 side_lengths=side_lengths,
@@ -225,12 +225,16 @@ def set_up_msm_params_static_cell(
         2**lvl * level_zero_cutoff for lvl in range(max_splitting_level)
     ] + [onp.inf]
 
+    # TODO: Move this further up? (before the grid level and spacing
+    #  determinations, such that those operate on already-scaled side lengths
+    #  and spacings) -> One problem with this is that
+    #  suggest_max_grid_level_nonperiodic takes the cutoff as argument, which
+    #  then would need to be scaled as well...
     if cell_mode == "ortho":
         grids_defined_on_unitcube = False
     elif cell_mode == "general":
         grids_defined_on_unitcube = True
-        # TODO: Scale side lengths and spacings.
-        #  Is overwriting the variables the way to go though?
+        # TODO: Is overwriting the variables the way to go?
         level_one_spacings /= side_lengths
         side_lengths = onp.ones_like(level_one_spacings)
     else:
@@ -247,6 +251,10 @@ def set_up_msm_params_static_cell(
 
     # TODO: These stencil sizes can be too small for non-ortho cells
     stencil_extents_from_center = [None]
+    # TODO: Is +1 necessary?
+    #  (I guess depends on how we have previously defined/rounded/int-cast alpha...)
+    # TODO: Centralize this determination of the minimum intermediate stencil
+    #  extents for a given cell in a function (that should handle both ortho and triclinic case)?
     extents_intermediate = (2 * alpha + 1,) * n_dim
     if pbc.any():
         stencil_extents_from_center += [extents_intermediate] * max_grid_level
@@ -283,7 +291,17 @@ def set_up_msm_params_static_cell(
     )
 
 
-def set_up_msm_params_dyn_cell():
+def set_up_msm_params_dyn_cell(
+    reference_cell: ArrayLike,
+    reference_level_one_spacings: float | ArrayLike,
+    level_zero_cutoff: float,
+    pbc: Sequence[bool],
+    cell_mode: CellMode,
+    strain_limits: tuple[float, float] = None,
+    stencil_extents_from_center=None,
+    **kwargs,  # TODO: name (highlight that they will be passed to static-cell setup fn?)
+):
+
     pass  # TODO
 
 
@@ -425,7 +443,9 @@ def create_msm(params: MSMParams):
                 charges,
                 cell=cell if params.dynamic_cell else params.cell,
             )
-        u_oneplus = compute_u_oneplus(positions, charges, params.cell)
+        u_oneplus = compute_u_oneplus(
+            positions, charges, cell if params.dynamic_cell else params.cell
+        )
         return u_zero + u_oneplus
 
     def calc_forces(positions, charges, cell=None, neighborlist=None):

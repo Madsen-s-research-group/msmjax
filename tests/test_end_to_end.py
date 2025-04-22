@@ -88,10 +88,10 @@ def test_nonperiodic_cubic(fixture_nonperiodic_cubic):
 
     msm_params = set_up_msm_params_static_cell(
         cell=cell,
-        cell_mode=cell_mode,
-        pbc=pbc,
         level_one_spacings=level_one_spacings,
         level_zero_cutoff=level_zero_cutoff,
+        pbc=pbc,
+        cell_mode=cell_mode,
         n_particles=n_particles,
     )
     _, calc_forces, _, _ = create_msm(msm_params)
@@ -118,10 +118,10 @@ def test_nonperiodic_ortho_diff_sides(fixture_nonperiodic_ortho_diff_sides):
 
     msm_params = set_up_msm_params_static_cell(
         cell=cell,
-        cell_mode=cell_mode,
-        pbc=pbc,
         level_one_spacings=level_one_spacings,
         level_zero_cutoff=level_zero_cutoff,
+        pbc=pbc,
+        cell_mode=cell_mode,
         n_particles=n_particles,
     )
     _, calc_forces, _, _ = create_msm(msm_params)
@@ -148,10 +148,10 @@ def test_nonperiodic_triclinic(fixture_nonperiodic_triclinic):
 
     msm_params = set_up_msm_params_static_cell(
         cell=cell,
-        cell_mode=cell_mode,
-        pbc=pbc,
         level_one_spacings=level_one_spacings,
         level_zero_cutoff=level_zero_cutoff,
+        pbc=pbc,
+        cell_mode=cell_mode,
         n_particles=n_particles,
     )
     _, calc_forces, _, _ = create_msm(msm_params)
@@ -178,10 +178,10 @@ def test_periodic_cubic(fixture_periodic_cubic):
 
     msm_params = set_up_msm_params_static_cell(
         cell=cell,
-        cell_mode=cell_mode,
-        pbc=pbc,
         level_one_spacings=level_one_spacings,
         level_zero_cutoff=level_zero_cutoff,
+        pbc=pbc,
+        cell_mode=cell_mode,
         n_particles=n_particles,
     )
     _, calc_forces, _, _ = create_msm(msm_params)
@@ -208,10 +208,10 @@ def test_periodic_ortho_diff_sides(fixture_periodic_ortho_diff_sides):
 
     msm_params = set_up_msm_params_static_cell(
         cell=cell,
-        cell_mode=cell_mode,
-        pbc=pbc,
         level_one_spacings=level_one_spacings,
         level_zero_cutoff=level_zero_cutoff,
+        pbc=pbc,
+        cell_mode=cell_mode,
         n_particles=n_particles,
     )
     _, calc_forces, _, _ = create_msm(msm_params)
@@ -238,10 +238,10 @@ def test_periodic_triclinic(fixture_periodic_triclinic):
 
     msm_params = set_up_msm_params_static_cell(
         cell=cell,
-        cell_mode=cell_mode,
-        pbc=pbc,
         level_one_spacings=level_one_spacings,
         level_zero_cutoff=level_zero_cutoff,
+        pbc=pbc,
+        cell_mode=cell_mode,
         n_particles=n_particles,
     )
     _, calc_forces, _, _ = create_msm(msm_params)
