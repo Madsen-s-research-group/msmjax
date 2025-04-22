@@ -346,6 +346,7 @@ def set_up_msm_params_dyn_cell(
 
     params.dynamic_cell = True
     params.grids_defined_on_unitcube = True
+    params.cell = None
     params.grid_spacings = [
         (None if spacings is None else spacings / side_lengths)
         for spacings in params.grid_spacings
