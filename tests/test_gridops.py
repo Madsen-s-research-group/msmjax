@@ -32,3 +32,48 @@ from msmjax.bspline.gridops import (
     make_prolongation_operator,
     make_restriction_operator,
 )
+from msmjax.core.longrange import _anterpolate
+
+
+@pytest.mark.xfail(reason="Test not written yet")
+def basis_particle_out_of_bounds():
+    # TODO: test that the basis_eval_fn returns nan if a particle is located
+    #  outside the cell along a non-periodic direction
+    raise ValueError
+
+
+@pytest.mark.xfail(reason="Test not written yet")
+def test_anterpolate_explicit_loop():
+    # TODO: Right place for this? Here or in tests for core.longrange?
+    raise ValueError
+
+
+@pytest.mark.xfail(reason="Test not written yet")
+def test_gridcharges_sum_total():
+    # TODO: Right place for this? Here or in tests for core.longrange?
+    raise ValueError
+
+
+@pytest.mark.xfail(reason="Test not written yet")
+def test_gridcharges_restrict_vs_anterpolate_all_levels():
+    # TODO: Right place for this? Here or in tests for core.longrange?
+    raise ValueError
+
+
+@pytest.mark.xfail(reason="Test not written yet")
+def test_restrict_explicit_matmul():
+    raise ValueError
+
+
+@pytest.mark.xfail(reason="Test not written yet")
+def test_prolongate_explicit_matmul():
+    raise ValueError
+
+
+@pytest.mark.xfail(reason="Test not written yet")
+def test_particle_exactly_at_the_edge():
+    # TODO: Test that there is no information loss when a particle is located
+    #  at the very edge of the permissible range. But how to test? Calculate
+    #  some (which?) quantity on a larger-than-necessary grid and check that
+    #  the end result is unchanged?
+    raise ValueError

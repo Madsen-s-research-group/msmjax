@@ -321,7 +321,10 @@ def make_eval_pair_pot_neighborlist(
     kernel_fn: KernelFn,
     pbc: Sequence[bool],
     cell_mode: Optional[CellMode] = None,
-    safe_eval_distance: float = 1.0,  # TODO: test? (how?)
+    # TODO: test? (how?)
+    #  -> During setup, raise an error if kernel_fn(safe_eval_distance) is nan?
+    #  -> For two different valid values of safe_eval_distance, check that outputs are identical
+    safe_eval_distance: float = 1.0,
 ) -> Callable[
     [
         ArrayLike,

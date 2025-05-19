@@ -164,18 +164,18 @@ def make_construct_stencils(
 ) -> Callable[[ArrayLike], list[Array]]:
 
     if n_levels_intermed < 0:
-        raise ValueError("n_levels_intermediate must be >= 0")
+        raise ValueError("n_levels_intermed must be >= 0")
     if n_levels_intermed == 0 and not include_toplevel:
         raise ValueError(
-            "n_levels_intermediate = 0 and include_toplevel = False "
+            "n_levels_intermed = 0 and include_toplevel = False "
             "at the same is not allowed (this would mean that "
             "there isn't a single grid level)."
         )
     args_intermediate = [k_lowest_intermed, extents_from_center_intermed]
     if n_levels_intermed > 0 and any([x is None for x in args_intermediate]):
         raise ValueError(
-            "k_lvl_1 and sizes_intermediate "
-            "are required when n_levels_intermediate > 0."
+            "k_lowest_intermed and extents_from_center_intermed "
+            "are required when n_levels_intermed > 0."
         )
     args_toplevel = [k_toplevel, grid_shape_toplevel]
     if include_toplevel and any([x is None for x in args_toplevel]):
