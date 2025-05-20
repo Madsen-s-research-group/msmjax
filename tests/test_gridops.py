@@ -12,6 +12,7 @@
 """
 
 import os
+from functools import partial
 
 from msmjax.bspline.coefficients import compute_J_zeroplus
 
@@ -33,8 +34,11 @@ from msmjax.bspline.gridops import (
     make_basis_evaluation_fn,
     make_prolongation_operator,
     make_restriction_operator,
+    set_up_grids_all_levels,
 )
 from msmjax.core.longrange import _anterpolate
+
+TOL = 5.0e-6
 
 
 @pytest.fixture(params=[4, 6], scope="module")
@@ -68,6 +72,39 @@ def fixture_box(request):
     return side_lengths, pbc
 
 
+@pytest.fixture(scope="module")
+def fixture_particle_config(fixture_box):
+    side_lengths, _ = fixture_box
+    # Corresponding to a particle density of 1.0:
+    n_particles = int(onp.prod(side_lengths))
+    n_dim = len(side_lengths)
+    rng = onp.random.default_rng(n_dim)
+    positions = rng.uniform(0.0, side_lengths, size=(n_particles, n_dim))
+    # In these tests, the charges don't need to sum to zero, even in the
+    # periodic case, and it makes for a slightly stronger test if they don't.
+    charges = rng.uniform(-1.0, 1.0, size=n_particles)
+    return positions, charges
+
+
+@pytest.fixture(scope="module")
+def fixture_grid_params(fixture_p, fixture_box):
+    p = fixture_p
+    side_lengths, pbc = fixture_box
+    spacings = onp.where(pbc, side_lengths / 4, 1.0)
+    # Use sufficiently many levels that reduction to one grid point (periodic
+    # case) or to the minimum number of grid points determined by the basis
+    # function support (non-periodic case) is achieved:
+    max_grid_level = int(onp.ceil(onp.log2(side_lengths / spacings).max()) + 2)
+    shapes_all_levels, spacings_all_levels = set_up_grids_all_levels(
+        side_lengths=side_lengths,
+        level_one_spacings=spacings,
+        pbc=pbc,
+        max_grid_level=max_grid_level,
+        p=p,
+    )
+    return shapes_all_levels, spacings_all_levels
+
+
 @pytest.mark.xfail(reason="Test not written yet")
 def basis_particle_out_of_bounds():
     # TODO: test that the basis_eval_fn returns nan if a particle is located
@@ -87,7 +124,6 @@ def test_gridcharges_sum_total():
     raise ValueError
 
 
-@pytest.mark.xfail(reason="Test not written yet")
 def test_gridcharges_restrict_vs_anterpolate_all_levels(
     fixture_particle_config, fixture_box, fixture_grid_params, fixture_p
 ):
@@ -104,23 +140,15 @@ def test_gridcharges_restrict_vs_anterpolate_all_levels(
         eval_basis = make_basis_evaluation_fn(
             grid_shape=grid_shape, p=p, pbc=pbc
         )
+        eval_basis = partial(eval_basis, spacings=spacings_all_levels[lvl])
         # TODO: jit or not?
-        basis_vals, basis_inds = jax.jit(eval_basis)(
-            pos, spacings_all_levels[lvl]
-        )
+        basis_vals, basis_inds = jax.jit(jax.vmap(eval_basis))(pos)
         # TODO: jit or not?
         gridcharges_from_anterpolate.append(
             _anterpolate(basis_vals, basis_inds, chg, grid_shape)
         )
 
-    # TODO
-    # for grid in fixture_grids[1:]:
-    #     anterpolate = jax.jit(create_anterpolation_operator(grid))
-    #     gridcharges_from_anterpolate.append(
-    #         anterpolate(positions=pos, charges=chg)
-    #     )
-
-    for lvl in range(1, max_level + 1):
+    for lvl in range(1, max_level):
         restrict = make_restriction_operator(
             grid_shape_in=shapes_all_levels[lvl],
             grid_shape_out=shapes_all_levels[lvl + 1],
@@ -132,6 +160,7 @@ def test_gridcharges_restrict_vs_anterpolate_all_levels(
         assert onp.allclose(
             jax.jit(restrict)(gridcharges_from_anterpolate[lvl]),
             gridcharges_from_anterpolate[lvl + 1],
+            atol=TOL,
         )
 
 
