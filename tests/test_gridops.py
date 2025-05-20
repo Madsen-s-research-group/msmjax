@@ -14,8 +14,6 @@
 import os
 from functools import partial
 
-from msmjax.bspline.coefficients import compute_J_zeroplus
-
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 
 from pathlib import Path
