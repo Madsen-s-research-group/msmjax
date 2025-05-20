@@ -124,7 +124,7 @@ def test_gridcharges_sum_total():
     raise ValueError
 
 
-def test_gridcharges_restrict_vs_anterpolate_all_levels(
+def test_gridcharges_restrict_vs_anterpolate(
     fixture_particle_config, fixture_box, fixture_grid_params, fixture_p
 ):
     # TODO: Right place for this? Here or in tests for core.longrange?

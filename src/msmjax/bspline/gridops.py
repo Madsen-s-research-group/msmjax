@@ -120,7 +120,11 @@ def make_basis_evaluation_fn(
         elif (~pbc).all():
             return positional_idx - p // 2
         else:
-            raise ValueError  # TODO: mixed BCs
+            return jnp.where(
+                pbc[:, jnp.newaxis],
+                positional_idx,
+                positional_idx - p // 2,
+            )
 
     def to_positional_idx(zero_aligned_idx):
         if pbc.all():
@@ -128,7 +132,11 @@ def make_basis_evaluation_fn(
         elif (~pbc).all():
             return zero_aligned_idx + p // 2
         else:
-            raise ValueError  # TODO: mixed BCs
+            return jnp.where(
+                pbc[:, jnp.newaxis],
+                zero_aligned_idx,
+                zero_aligned_idx + p // 2,
+            )
 
     bspline_basis_element = create_bspline_basis_element(order=p - 1)
 
