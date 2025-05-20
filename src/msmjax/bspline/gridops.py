@@ -413,6 +413,7 @@ def suggest_max_grid_level_nonperiodic(
     level_zero_cutoff: float,
     p: int,
 ):
+    # TODO: name
     # TODO: Put this function in this module or in some utils?
 
     # 1. Find level at which spacing becomes larger than side length.
@@ -454,6 +455,7 @@ def suggest_max_grid_level_nonperiodic(
 def find_spacings_and_max_level_periodic(
     side_lengths, target_level_one_spacings
 ):
+    # TODO: name
     # TODO: Put this function in this module or in some utils?
 
     side_lengths = onp.array(side_lengths)
