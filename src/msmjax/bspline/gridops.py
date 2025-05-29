@@ -20,15 +20,18 @@ def _find_n_gridpoints_1d(
         raise ValueError("p must be even")
 
     if is_periodic:
+        # This checks that h = length * 2**(-n) or h = (length / 3) * 2**(-n),
+        # with an integer exponent n.
+        exponent_one = onp.log2(length / h)
+        exponent_three = onp.log2(length / (3 * h))
         if not (
-            onp.isclose(length % h, 0.0)
-            or onp.isclose(length % h, h)
-            or onp.isclose(h % length, 0.0)
-            or onp.isclose(h % length, length)
+            onp.isclose(exponent_one, onp.round(exponent_one, 0))
+            or onp.isclose(exponent_three, onp.round(exponent_three, 0))
         ):
             raise ValueError(
-                "Along any periodic axis, the grid spacing must either evenly "
-                "divide the box length or be a multiple thereof."
+                "Along any periodic axis, the grid spacing must be a power "
+                "of two times either the box length or the box length "
+                "divided by three."
             )
         return int(onp.ceil(length / h))
     else:

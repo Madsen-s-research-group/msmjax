@@ -281,9 +281,6 @@ def test_periodic_ortho_diff_sides(fixture_periodic_ortho_diff_sides):
     assert onp.allclose(forces_msm, forces_msm_dyncell, atol=ATOL)
 
 
-@pytest.mark.xfail(
-    reason="grid size reduction to below three (or one) undefined"
-)
 def test_periodic_triclinic(fixture_periodic_triclinic):
     # TODO: cell mode and pbc are specific to the structure fixture
     cell_mode = "triclinic"  # TODO
