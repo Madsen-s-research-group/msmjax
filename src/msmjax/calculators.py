@@ -243,19 +243,17 @@ def set_up_msm_params_base(
     #  should there be a standalone function for finding it?
     #  That way, in set_up_msm_params_dyn_cell, we wouldn't need to set this
     #  attribute on the params after creating them with set_up_msm_params_base.
-    stencil_extents_from_center = [None]
-    extents_intermediate = determine_min_kernel_stencil_size(
-        cell, level_one_spacings, 2 * level_zero_cutoff
+    include_toplevel = not pbc.any()
+    stencil_extents_from_center = find_stencil_extents_all_levels(
+        cell=cell,
+        level_one_spacings=level_one_spacings,
+        level_zero_cutoff=level_zero_cutoff,
+        n_levels_intermed=(
+            max_grid_level - 1 if include_toplevel else max_grid_level
+        ),
+        include_toplevel=include_toplevel,
+        grid_shape_toplevel=gridshapes_all_levels[-1],
     )
-    if pbc.any():
-        stencil_extents_from_center += [extents_intermediate] * max_grid_level
-    else:
-        stencil_extents_from_center += [extents_intermediate] * (
-            max_grid_level - 1
-        )
-        stencil_extents_from_center += [
-            tuple(onp.array(gridshapes_all_levels[-1]) - 1)
-        ]
 
     if isinstance(convolution_methods, str):
         convolution_methods = [None] + [convolution_methods] * max_grid_level
@@ -280,6 +278,30 @@ def set_up_msm_params_base(
         n_dim=n_dim,
     )
     return params
+
+
+def find_stencil_extents_all_levels(
+    cell,
+    level_one_spacings,
+    level_zero_cutoff,
+    n_levels_intermed: int,
+    include_toplevel: bool,
+    grid_shape_toplevel: tuple[int, ...] = None,
+):
+    stencil_extents_from_center = [None]
+    extents_intermediate = determine_min_kernel_stencil_size(
+        cell, level_one_spacings, 2 * level_zero_cutoff
+    )
+    # TODO: Clipping of stencils to grid size along non-periodic directions in mixed-periodicity cases?
+    #  -> Probably best to do this inside special_periodic_convolve_scipy since
+    #     it is there that the shapes of the data arrays (=grid shapes) and the
+    #     kernel stencils, and the pbc are the most conveniently available in one place.
+    stencil_extents_from_center += [extents_intermediate] * n_levels_intermed
+    if include_toplevel:
+        stencil_extents_from_center += [
+            tuple(onp.array(grid_shape_toplevel) - 1)
+        ]
+    return stencil_extents_from_center
 
 
 def set_up_msm_params_static_cell(

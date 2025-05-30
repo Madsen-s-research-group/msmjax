@@ -238,6 +238,9 @@ def make_construct_stencils(
 def determine_min_kernel_stencil_size(
     cell: ArrayLike, spacings: ArrayLike, cutoff: float
 ):
+    # TODO: Right module for this function? utils? bspline.gridops? core.longrange?
+    #  (whichever it will be, currently it's probably not in the right one...)
+
     # TODO: Should the parameter names for spacings and r_cut suggest one
     #  specific grid level? In principle, if they're given at the same level,
     #  it does not matter which, since both are doubled at each level.
