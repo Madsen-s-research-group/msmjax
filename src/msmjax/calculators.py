@@ -156,6 +156,30 @@ def _suggest_p(alpha):
     return list_of_ps[idx_optimal_p]
 
 
+def find_stencil_extents_all_levels(
+    cell,
+    level_one_spacings,
+    level_zero_cutoff,
+    n_levels_intermed: int,
+    include_toplevel: bool,
+    grid_shape_toplevel: tuple[int, ...] = None,
+):
+    stencil_extents_from_center = [None]
+    extents_intermediate = determine_min_kernel_stencil_size(
+        cell, level_one_spacings, 2 * level_zero_cutoff
+    )
+    # TODO: Clipping of stencils to grid size along non-periodic directions in mixed-periodicity cases?
+    #  -> Probably best to do this inside special_periodic_convolve_scipy since
+    #     it is there that the shapes of the data arrays (=grid shapes) and the
+    #     kernel stencils, and the pbc are the most conveniently available in one place.
+    stencil_extents_from_center += [extents_intermediate] * n_levels_intermed
+    if include_toplevel:
+        stencil_extents_from_center += [
+            tuple(onp.array(grid_shape_toplevel) - 1)
+        ]
+    return stencil_extents_from_center
+
+
 def set_up_msm_params_base(
     cell: ArrayLike,
     level_one_spacings: float | ArrayLike,
@@ -280,30 +304,6 @@ def set_up_msm_params_base(
     return params
 
 
-def find_stencil_extents_all_levels(
-    cell,
-    level_one_spacings,
-    level_zero_cutoff,
-    n_levels_intermed: int,
-    include_toplevel: bool,
-    grid_shape_toplevel: tuple[int, ...] = None,
-):
-    stencil_extents_from_center = [None]
-    extents_intermediate = determine_min_kernel_stencil_size(
-        cell, level_one_spacings, 2 * level_zero_cutoff
-    )
-    # TODO: Clipping of stencils to grid size along non-periodic directions in mixed-periodicity cases?
-    #  -> Probably best to do this inside special_periodic_convolve_scipy since
-    #     it is there that the shapes of the data arrays (=grid shapes) and the
-    #     kernel stencils, and the pbc are the most conveniently available in one place.
-    stencil_extents_from_center += [extents_intermediate] * n_levels_intermed
-    if include_toplevel:
-        stencil_extents_from_center += [
-            tuple(onp.array(grid_shape_toplevel) - 1)
-        ]
-    return stencil_extents_from_center
-
-
 def set_up_msm_params_static_cell(
     cell: ArrayLike,
     level_one_spacings: float | ArrayLike,
@@ -402,6 +402,133 @@ def set_up_msm_params_dyn_cell(
 
     # TODO: add passed_args to params
 
+    return params
+
+
+def set_up_msm_params(
+    cell: ArrayLike,
+    level_one_spacings: float | ArrayLike,
+    *,  # TODO: Is it useful to have keyword-only arguments? Which ones? (all?)
+    level_zero_cutoff: float,
+    pbc: Sequence[bool],
+    cell_mode: CellMode,
+    p: int = None,
+    mu: int = None,
+    n_particles: int = None,
+    max_splitting_level: int = None,
+    supercell_diag: Sequence[int] = None,
+    use_neighborlist: bool = None,  # TODO: neighborlist_format? prefactor?
+    convolution_methods: ConvMeth | Sequence[ConvMeth] = "scipy-fft",
+):
+    # TODO: Unify set_up_msm_params_static_cell and set_up_msm_params_dyn_cell
+    #  into this function?
+
+    cell = onp.asarray(cell)
+    n_dim = cell.shape[0]
+    side_lengths = onp.linalg.norm(cell, axis=1)
+    level_one_spacings = onp.asarray(level_one_spacings)
+    if onp.ndim(level_one_spacings) == 0:
+        level_one_spacings = onp.full(n_dim, level_one_spacings)
+    pbc = onp.asarray(pbc, dtype=bool)
+
+    # TODO: In periodic case, the spacings are adjusted further down, so this
+    #  step calculates alpha and thus p and mu from the initial spacings
+    #  pre-adjustment. Is this a problem? Which behavior is less surprising?
+    alpha = int(onp.max(level_zero_cutoff / level_one_spacings))
+    if p is None:
+        p = _suggest_p(
+            alpha
+        )  # TODO: does this have to be a separate function?
+    # See section "1. Preprocessing" of the article
+    # TODO: Allow different mus for each level? (The article suggests
+    #  mu >= 3*p/2 for the highest grid level)
+    if mu is None:
+        mu = max(int(4 * alpha + p // 2), 3 * p // 2)
+
+    if pbc.any():
+        if max_splitting_level is not None:
+            raise ValueError(
+                "Leave max_splitting_level unfilled if at least one direction "
+                "is periodic. It is determined automatically."
+            )
+        (
+            adjusted_spacings,
+            max_splitting_level,
+        ) = find_spacings_and_max_level_periodic(
+            side_lengths[pbc], level_one_spacings[pbc]
+        )
+        level_one_spacings[onp.where(pbc)[0]] = adjusted_spacings
+        max_grid_level = max_splitting_level - 1
+    else:
+        if max_splitting_level is None:
+            if n_particles is None:
+                raise ValueError(
+                    "n_particles is required for the automatic determination "
+                    "of the number of grid levels in non-periodic systems. "
+                    "Either specify max_splitting_level directly, "
+                    "or n_particles."
+                )
+            # TODO: Warn/raise if max_splitting_level and n_particles are both given?
+            # TODO: Print a message that max_level is being determined automatically?
+            max_splitting_level = suggest_max_grid_level_nonperiodic(
+                side_lengths=side_lengths,
+                n_particles=n_particles,
+                level_one_spacings=level_one_spacings,
+                level_zero_cutoff=level_zero_cutoff,
+                p=p,
+            )
+        max_grid_level = max_splitting_level
+
+    cutoffs_all_levels = [
+        2**lvl * level_zero_cutoff for lvl in range(max_splitting_level)
+    ] + [onp.inf]
+
+    gridshapes_all_levels, spacings_all_levels = set_up_grids_all_levels(
+        side_lengths=side_lengths,
+        level_one_spacings=level_one_spacings,
+        pbc=pbc,
+        max_grid_level=max_grid_level,
+        p=p,
+    )
+
+    # TODO: Should stencil_extents_from_center be an (optional) argument and
+    #  should there be a standalone function for finding it?
+    #  That way, in set_up_msm_params_dyn_cell, we wouldn't need to set this
+    #  attribute on the params after creating them with set_up_msm_params_base.
+    include_toplevel = not pbc.any()
+    stencil_extents_from_center = find_stencil_extents_all_levels(
+        cell=cell,
+        level_one_spacings=level_one_spacings,
+        level_zero_cutoff=level_zero_cutoff,
+        n_levels_intermed=(
+            max_grid_level - 1 if include_toplevel else max_grid_level
+        ),
+        include_toplevel=include_toplevel,
+        grid_shape_toplevel=gridshapes_all_levels[-1],
+    )
+
+    if isinstance(convolution_methods, str):
+        convolution_methods = [None] + [convolution_methods] * max_grid_level
+
+    params = MSMParams(
+        p=p,
+        mu=mu,
+        max_splitting_level=max_splitting_level,
+        max_grid_level=max_grid_level,
+        cutoffs=cutoffs_all_levels,
+        cell=cell,
+        cell_mode=cell_mode,
+        pbc=pbc,
+        dynamic_cell=None,
+        supercell_diag=supercell_diag,
+        use_neighborlist=use_neighborlist,
+        grids_defined_on_unitcube=None,  # TODO
+        grid_shapes=gridshapes_all_levels,
+        grid_spacings=spacings_all_levels,  # TODO
+        stencil_extents_from_center=stencil_extents_from_center,
+        convolution_methods=convolution_methods,
+        n_dim=n_dim,
+    )
     return params
 
 
