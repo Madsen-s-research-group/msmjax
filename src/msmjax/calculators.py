@@ -168,7 +168,7 @@ def set_up_msm_params_base(
     n_particles: int = None,
     max_splitting_level: int = None,
     supercell_diag: Sequence[int] = None,
-    use_neighborlist: bool = None,
+    use_neighborlist: bool = None,  # TODO: neighborlist_format? prefactor?
     convolution_methods: ConvMeth | Sequence[ConvMeth] = "scipy-fft",
 ):
     cell = onp.asarray(cell)
@@ -177,7 +177,7 @@ def set_up_msm_params_base(
     level_one_spacings = onp.asarray(level_one_spacings)
     if onp.ndim(level_one_spacings) == 0:
         level_one_spacings = onp.full(n_dim, level_one_spacings)
-    pbc = onp.asarray(pbc)
+    pbc = onp.asarray(pbc, dtype=bool)
 
     # TODO: In periodic case, the spacings are adjusted further down, so this
     #  step calculates alpha and thus p and mu from the initial spacings
@@ -239,6 +239,10 @@ def set_up_msm_params_base(
         p=p,
     )
 
+    # TODO: Should stencil_extents_from_center be an (optional) argument and
+    #  should there be a standalone function for finding it?
+    #  That way, in set_up_msm_params_dyn_cell, we wouldn't need to set this
+    #  attribute on the params after creating them with set_up_msm_params_base.
     stencil_extents_from_center = [None]
     extents_intermediate = determine_min_kernel_stencil_size(
         cell, level_one_spacings, 2 * level_zero_cutoff
@@ -288,6 +292,8 @@ def set_up_msm_params_static_cell(
     #  arguments, but currently includes everything that is not None (convolution_methods as well)
     passed_args = {k: v for k, v in locals().items() if v is not None}
 
+    # TODO: check if cutoff fits?
+
     params = set_up_msm_params_base(
         cell,
         level_one_spacings,
@@ -326,6 +332,7 @@ def set_up_msm_params_dyn_cell(
     #  arguments, but currently includes everything that is not None (convolution_methods as well)
     passed_args = {k: v for k, v in locals().items() if v is not None}
 
+    # TODO: what happens if both are None?
     if (
         stretch_ratio_limits is not None
         and stencil_extents_from_center is not None
@@ -346,6 +353,10 @@ def set_up_msm_params_dyn_cell(
         # TODO: explain this in docstring, then remove comment
         #   strain_limits[0] => cell at max compression => determines stencil sizes
         #   strain_limits[1] => cell at max extension => determines grid spacing
+        # TODO: Does the way stretch_ratio_limits is used below really make sense?
+        # TODO: Should it be: level_one_spacings=reference_level_one_spacings * min(1 / stretch_ratio_limits[1], stretch_ratio_limits[0])?
+        #  Or: level_one_spacings = reference_level_one_spacings / stretch_ratio_limits[1],
+        #  followed by calling set_up_msm_params_base with stretch_ratio_limits[0] * level_one_spacings
         params = set_up_msm_params_base(
             cell=reference_cell * stretch_ratio_limits[0],
             level_one_spacings=reference_level_one_spacings
@@ -363,6 +374,7 @@ def set_up_msm_params_dyn_cell(
         (None if spacings is None else spacings / side_lengths)
         for spacings in params.grid_spacings
     ]
+    # TODO: could this be moved up, inside the "if stretch_ratio_limits is None" check?
     if stencil_extents_from_center is not None:
         params.stencil_extents_from_center = stencil_extents_from_center
 
