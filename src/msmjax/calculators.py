@@ -429,11 +429,10 @@ def set_up_msm_params(
     supercell_diag: Sequence[int] = None,
     use_neighborlist: bool = False,  # TODO: neighborlist_format? prefactor?
     neighborlist_prefactor: float = None,
-    extents_intermediate: tuple[int, ...] = None,  # TODO: name
+    intermediate_kernel_stencil_extents: tuple[int, ...] = None,
     convolution_methods: ConvMeth | Sequence[ConvMeth] = "scipy-fft",
 ):
-    # TODO: Unify set_up_msm_params_static_cell and set_up_msm_params_dyn_cell
-    #  into this function?
+    # TODO: error if neighborlist_prefactor not given but use_neighborlist = True
 
     cell = onp.asarray(cell)
     n_dim = cell.shape[0]
@@ -448,9 +447,7 @@ def set_up_msm_params(
     #  pre-adjustment. Is this a problem? Which behavior is less surprising?
     alpha = int(onp.max(level_zero_cutoff / level_one_spacings))
     if p is None:
-        p = _suggest_p(
-            alpha
-        )  # TODO: does this have to be a separate function?
+        p = _suggest_p(alpha)
     # See section "1. Preprocessing" of the article
     # TODO: Allow different mus for each level? (The article suggests
     #  mu >= 3*p/2 for the highest grid level)
@@ -508,16 +505,20 @@ def set_up_msm_params(
     #     it is there that the shapes of the data arrays (=grid shapes) and the
     #     kernel stencils, and the pbc are the most conveniently available in one place.
     stencil_extents_from_center = [None]
-    if extents_intermediate is None:
-        extents_intermediate = determine_min_kernel_stencil_size(
-            cell, level_one_spacings, 2 * level_zero_cutoff
+    if intermediate_kernel_stencil_extents is None:
+        intermediate_kernel_stencil_extents = (
+            determine_min_kernel_stencil_size(
+                cell, level_one_spacings, 2 * level_zero_cutoff
+            )
         )
     if pbc.any():
-        stencil_extents_from_center += [extents_intermediate] * max_grid_level
+        stencil_extents_from_center += [
+            intermediate_kernel_stencil_extents
+        ] * max_grid_level
     else:
-        stencil_extents_from_center += [extents_intermediate] * (
-            max_grid_level - 1
-        )
+        stencil_extents_from_center += [
+            intermediate_kernel_stencil_extents
+        ] * (max_grid_level - 1)
         stencil_extents_from_center += [
             tuple(onp.array(gridshapes_all_levels[-1]) - 1)
         ]
@@ -591,8 +592,6 @@ def create_msm(params: MSMParams):
     #  - same for J
     omega, _ = compute_coeffs_with_truncation(params.p, params.mu)
 
-    # TODO: compute_u_oneplus must include transformation to unit cube
-    #  if cell_mode == "general"
     (
         restriction_fns,
         prolongation_fns,
@@ -671,7 +670,9 @@ def create_msm(params: MSMParams):
         )
 
     def calc_energy(positions, charges, cell=None, neighborlist=None):
-        # TODO: Raise an error if cell given if static cell, and if not given if dynamic cell?
+        # TODO: Raise an error if
+        #  - cell arg is given, but static and ortho cell (cell_mode="ortho" and dynamic_cell=False),
+        #  - cell arg is not given, but dynamic cell?
         if params.use_neighborlist:
             # TODO: Better error message.
             if neighborlist is None:
