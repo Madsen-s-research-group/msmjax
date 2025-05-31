@@ -343,7 +343,7 @@ def make_grid_pass_fn(
 def make_compute_u_oneplus(
     singleparticle_basis_fn_lvl_one: Callable[
         [ArrayLike], tuple[Array, Array]
-    ],
+    ],  # TODO: name? consistent with manuscript?
     grid_pass_fn: Callable[[ArrayLike, Sequence[ArrayLike | None]], Array],
     grid_shape_lvl_one: tuple[int, ...],
     transform_mode: CellMode | None = None,  # TODO: name

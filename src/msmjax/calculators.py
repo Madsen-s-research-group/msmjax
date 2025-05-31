@@ -73,6 +73,7 @@ class CustomJSONDecoder(json.JSONDecoder):
 
 @dataclasses.dataclass
 class MSMParams:
+    # TODO: make frozen?
     # -------------------------------------------------------------------------
     # Basic MSM settings
     # -------------------------------------------------------------------------
@@ -93,6 +94,7 @@ class MSMParams:
     # -------------------------------------------------------------------------
     supercell_diag: Sequence[int]  # TODO: Check cutoff fits? (If yes, where?)
     use_neighborlist: bool  # TODO: Interaction with `supercell_diag`?
+    neighborlist_prefactor: float
     # -------------------------------------------------------------------------
     # Long-range evaluation
     # -------------------------------------------------------------------------
@@ -416,7 +418,6 @@ def set_up_msm_params_dyn_cell(
 def set_up_msm_params(
     cell: ArrayLike,
     level_one_spacings: float | ArrayLike,
-    *,  # TODO: Is it useful to have keyword-only arguments? Which ones? (all?)
     level_zero_cutoff: float,
     pbc: Sequence[bool],
     cell_mode: CellMode,
@@ -426,9 +427,10 @@ def set_up_msm_params(
     n_particles: int = None,
     max_splitting_level: int = None,
     supercell_diag: Sequence[int] = None,
-    use_neighborlist: bool = None,  # TODO: neighborlist_format? prefactor?
-    convolution_methods: ConvMeth | Sequence[ConvMeth] = "scipy-fft",
+    use_neighborlist: bool = False,  # TODO: neighborlist_format? prefactor?
+    neighborlist_prefactor: float = None,
     extents_intermediate: tuple[int, ...] = None,  # TODO: name
+    convolution_methods: ConvMeth | Sequence[ConvMeth] = "scipy-fft",
 ):
     # TODO: Unify set_up_msm_params_static_cell and set_up_msm_params_dyn_cell
     #  into this function?
@@ -545,6 +547,7 @@ def set_up_msm_params(
         dynamic_cell=dynamic_cell,
         supercell_diag=supercell_diag,
         use_neighborlist=use_neighborlist,
+        neighborlist_prefactor=neighborlist_prefactor,
         grids_defined_on_unitcube=grids_defined_on_unitcube,
         grid_shapes=gridshapes_all_levels,
         grid_spacings=spacings_all_levels,
@@ -677,12 +680,7 @@ def create_msm(params: MSMParams):
                 positions,
                 charges,
                 cell=cell if params.dynamic_cell else params.cell,
-                # TODO: Is weights=1.0 too restrictive?
-                #  (setting to 1.0 enforces that neighbor list contains no duplicates)
-                #  The problem would go away if I added support for neighbor list in
-                #  matrix format and add a parameter 'neighborlist_format' such that
-                #  users are forced to think about what they are using.
-                weights=1.0,
+                weights=params.neighborlist_prefactor,
                 neighborlist=neighborlist,
             )
         else:
