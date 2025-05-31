@@ -468,40 +468,35 @@ def find_spacings_and_max_level_periodic(
 ):
     # TODO: name
     # TODO: Put this function in this module or in some utils?
+    # TODO: This could probably benefit from writing down the formulas being
+    #  implemented, either in the docstring or a comment
 
     side_lengths = onp.array(side_lengths)
     target_level_one_spacings = onp.array(target_level_one_spacings)
 
-    ells_raw_one = onp.log2(side_lengths / target_level_one_spacings) + 1
-    candidate_ells_one = onp.column_stack(
-        [
-            onp.floor(ells_raw_one).astype(int),
-            onp.ceil(ells_raw_one).astype(int),
-        ]
+    raw_ells_one_based = onp.log2(side_lengths / target_level_one_spacings) + 1
+    candidate_ells_one_based = onp.column_stack(
+        [onp.floor(raw_ells_one_based), onp.ceil(raw_ells_one_based)]
     )
     candidate_spacings_one_based = side_lengths[:, onp.newaxis] / 2 ** (
-        onp.ceil(candidate_ells_one) - 1
+        candidate_ells_one_based - 1
     )
-    ells_raw_three = (
+    raw_ells_three_based = (
         onp.log2(side_lengths / (3 * target_level_one_spacings)) + 2
     )
-    candidate_ells_three = onp.column_stack(
-        [
-            onp.floor(ells_raw_three).astype(int),
-            onp.ceil(ells_raw_three).astype(int),
-        ]
+    candidate_ells_three_based = onp.column_stack(
+        [onp.floor(raw_ells_three_based), onp.ceil(raw_ells_three_based)]
     )
     candidate_spacings_three_based = side_lengths[:, onp.newaxis] / (
-        3 * 2 ** (candidate_ells_three - 2)
+        3 * 2 ** (candidate_ells_three_based - 2)
     )
 
     candidate_spacings = onp.concatenate(
         [candidate_spacings_one_based, candidate_spacings_three_based], axis=1
     )
     candidate_ells = onp.concatenate(
-        [candidate_ells_one, candidate_ells_three], axis=1
-    )
-
+        [candidate_ells_one_based, candidate_ells_three_based], axis=1
+    ).astype(int)
     deviations = onp.abs(
         candidate_spacings - target_level_one_spacings[:, onp.newaxis]
     )
@@ -510,5 +505,6 @@ def find_spacings_and_max_level_periodic(
     adjusted_spacings = candidate_spacings[
         onp.arange(candidate_spacings.shape[0]), inds_best_match
     ]
+    max_ell_across_directions = int(max(ells))
 
-    return adjusted_spacings, int(max(ells))
+    return adjusted_spacings, max_ell_across_directions
