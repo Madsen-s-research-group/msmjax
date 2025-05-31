@@ -428,7 +428,7 @@ def set_up_msm_params(
     supercell_diag: Sequence[int] = None,
     use_neighborlist: bool = None,  # TODO: neighborlist_format? prefactor?
     convolution_methods: ConvMeth | Sequence[ConvMeth] = "scipy-fft",
-    extents_intermediate: tuple[int, ...] = None,  # TODO
+    extents_intermediate: tuple[int, ...] = None,  # TODO: name
 ):
     # TODO: Unify set_up_msm_params_static_cell and set_up_msm_params_dyn_cell
     #  into this function?
