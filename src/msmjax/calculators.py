@@ -420,6 +420,7 @@ def set_up_msm_params(
     level_zero_cutoff: float,
     pbc: Sequence[bool],
     cell_mode: CellMode,
+    dynamic_cell: bool,
     p: int = None,
     mu: int = None,
     n_particles: int = None,
@@ -500,22 +501,6 @@ def set_up_msm_params(
         p=p,
     )
 
-    # TODO: Should stencil_extents_from_center be an (optional) argument and
-    #  should there be a standalone function for finding it?
-    #  That way, in set_up_msm_params_dyn_cell, we wouldn't need to set this
-    #  attribute on the params after creating them with set_up_msm_params_base.
-    # include_toplevel = not pbc.any()
-    # stencil_extents_from_center = find_stencil_extents_all_levels(
-    #     cell=cell,
-    #     level_one_spacings=level_one_spacings,
-    #     level_zero_cutoff=level_zero_cutoff,
-    #     n_levels_intermed=(
-    #         max_grid_level - 1 if include_toplevel else max_grid_level
-    #     ),
-    #     include_toplevel=include_toplevel,
-    #     grid_shape_toplevel=gridshapes_all_levels[-1],
-    # )
-
     # TODO: Clipping of stencils to grid size along non-periodic directions in mixed-periodicity cases?
     #  -> Probably best to do this inside special_periodic_convolve_scipy since
     #     it is there that the shapes of the data arrays (=grid shapes) and the
@@ -535,6 +520,16 @@ def set_up_msm_params(
             tuple(onp.array(gridshapes_all_levels[-1]) - 1)
         ]
 
+    if dynamic_cell or cell_mode == "triclinic":
+        grids_defined_on_unitcube = True
+        side_lengths = onp.linalg.norm(cell, axis=1)
+        spacings_all_levels = [
+            (None if spacings is None else spacings / side_lengths)
+            for spacings in spacings_all_levels
+        ]
+    elif cell_mode == "ortho":
+        grids_defined_on_unitcube = False
+
     if isinstance(convolution_methods, str):
         convolution_methods = [None] + [convolution_methods] * max_grid_level
 
@@ -547,12 +542,12 @@ def set_up_msm_params(
         cell=cell,
         cell_mode=cell_mode,
         pbc=pbc,
-        dynamic_cell=None,
+        dynamic_cell=dynamic_cell,
         supercell_diag=supercell_diag,
         use_neighborlist=use_neighborlist,
-        grids_defined_on_unitcube=None,  # TODO
+        grids_defined_on_unitcube=grids_defined_on_unitcube,
         grid_shapes=gridshapes_all_levels,
-        grid_spacings=spacings_all_levels,  # TODO
+        grid_spacings=spacings_all_levels,
         stencil_extents_from_center=stencil_extents_from_center,
         convolution_methods=convolution_methods,
         n_dim=n_dim,
