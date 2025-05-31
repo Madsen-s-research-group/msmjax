@@ -460,6 +460,14 @@ def suggest_max_grid_level_nonperiodic(
     if len(levels_with_fewer_points) > 0:
         max_grid_level = min(max_grid_level, min(levels_with_fewer_points))
 
+    if max_grid_level < 1:
+        raise ValueError(
+            "Automatic determination of the number of grid levels for "
+            "non-periodic system resulted in an invalid value less than 1. "
+            "Are you using a a too large (compared to the simulation cell) "
+            "level-one grid spacing or level-zero cutoff?"
+        )
+
     return int(max_grid_level)
 
 
@@ -505,6 +513,16 @@ def find_spacings_and_max_level_periodic(
     adjusted_spacings = candidate_spacings[
         onp.arange(candidate_spacings.shape[0]), inds_best_match
     ]
-    max_ell_across_directions = int(max(ells))
+    max_splitting_level = int(max(ells))
 
-    return adjusted_spacings, max_ell_across_directions
+    # Remember that in periodic cases the highest grid level that is actually
+    # evaluated is one less than the highest splitting level we just determined
+    if (max_splitting_level - 1) < 1:
+        raise ValueError(
+            "Automatic determination of the number of grid levels for "
+            "periodic system resulted in an invalid value less than 1. "
+            "Are you using a a too large (compared to the unit cell) "
+            "level-one grid spacing?"
+        )
+
+    return adjusted_spacings, max_splitting_level
