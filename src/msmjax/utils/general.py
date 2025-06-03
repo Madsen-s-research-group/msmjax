@@ -71,3 +71,41 @@ def get_max_cutoff_3d(cell: jnp.ndarray):
         )
         / 2.0
     )
+
+
+def get_max_cutoff_for_mic(cell: ArrayLike):
+    """Get the maximum cutoff value that fits into a given cell.
+
+    I.e., the maximum cutoff inside which distances calculated using the
+    minimum-image convention (MIC) are guaranteed to be calculated correctly.
+
+    Args:
+        cell: Array representing unit cell, shape `(n_dim, n_dim)`.
+
+    Raises:
+        ValueError: If `cell` has invalid spatiol dimension.
+
+    Returns:
+        Cutoff radius
+    """
+    # TODO: Move to core.shortrange or leave in utils?
+    n_dim = cell.shape[0]
+
+    if n_dim == 1:
+        length = cell[0, 0]
+        return 0.5 * length
+    elif n_dim == 2:
+        cell_area = jnp.linalg.norm(jnp.cross(cell[0], cell[1]))
+        side_lengths = jnp.linalg.norm(cell, axis=1)
+        return 0.5 * cell_area / jnp.max(side_lengths)
+    elif n_dim == 3:
+        cell_volume = jnp.abs(jnp.linalg.det(cell))
+        face_areas = jnp.array(
+            [
+                jnp.linalg.norm(jnp.cross(cell[i], cell[j]))
+                for i, j in zip(*jnp.triu_indices(n_dim, k=1))
+            ]
+        )
+        return 0.5 * cell_volume / jnp.max(face_areas)
+    else:
+        raise ValueError("Number of dimensions must be 1, 2 or 3.")

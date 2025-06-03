@@ -19,6 +19,7 @@ from msmjax.bspline.gridops import (
 )
 from msmjax.core.longrange import make_compute_u_oneplus, make_grid_pass_fn
 from msmjax.core.shortrange import (
+    _gen_supercell,
     make_compute_u_zero,
     make_eval_pair_pot,
     make_eval_pair_pot_neighborlist,
@@ -29,7 +30,7 @@ from msmjax.kernels import (
     make_construct_stencils,
     split_one_over_r,
 )
-from msmjax.utils.general import CellMode, ConvMeth
+from msmjax.utils.general import CellMode, ConvMeth, get_max_cutoff_for_mic
 
 
 class CustomJSONEncoder(json.JSONEncoder):
@@ -724,3 +725,51 @@ def create_msm(params: MSMParams):
         calc_energy_and_forces,
         calc_charge_gradient,
     )
+
+
+def check_cutoffs_and_spacings(cell: ArrayLike, params: MSMParams):
+    if onp.any(params.pbc):
+        placeholder_positions = onp.zeros((10, cell.shape[0]))
+        placeholder_charges = onp.zeros((10,))
+        _, _, supercell = _gen_supercell(
+            placeholder_positions,
+            placeholder_charges,
+            cell,
+            params.supercell_diag,
+        )
+        # TODO: Explain what is done here
+        trial_cells = [
+            supercell * onp.where(params.pbc, 1.0, factor)[:, onp.newaxis]
+            for factor in [1.0e3, 1.0e4]
+        ]
+        trial_cutoffs = [get_max_cutoff_for_mic(c) for c in trial_cells]
+        if not onp.allclose(*trial_cutoffs):
+            raise ValueError(
+                "Something went wrong while checking if the cutoff fits."
+            )
+        max_allowed_cutoff = trial_cutoffs[0]
+        if not params.cutoffs[0] <= max_allowed_cutoff:
+            # TODO: message; raise at all, or just return False?
+            raise ValueError(
+                "The cutoff radius is too large for the cell. "
+                "Consider reducing it or making a supercell (either via "
+                "supercell_diag or manually)."
+            )
+
+    if params.grids_defined_on_unitcube:
+        level_one_spacings = params.grid_spacings[1] @ cell
+    else:
+        level_one_spacings = params.grid_spacings[1]
+
+    # TODO: check at all levels, not just level 1?
+    min_required_stencil_size = determine_min_kernel_stencil_size(
+        cell=cell, spacings=level_one_spacings, cutoff=params.cutoffs[1]
+    )
+    if not (
+        onp.array(params.stencil_extents_from_center[1])
+        >= onp.array(min_required_stencil_size)
+    ).all():
+        # TODO: message; raise at all, or just return False?
+        raise ValueError
+
+    return level_one_spacings
