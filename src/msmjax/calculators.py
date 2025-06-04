@@ -760,19 +760,18 @@ def check_cutoffs_and_spacings(cell: ArrayLike, params: MSMParams):
         max_allowed_cutoff = trial_cutoffs[0]
         if not params.cutoffs[0] <= max_allowed_cutoff:
             raise ValueError(
-                f"Level-zero cutoff radius too large for the given cell: "
+                f"Level-zero cutoff radius too large for the given cell:\n"
                 f"It is {params.cutoffs[0]}, but the cell can only "
                 f"accommodate {max_allowed_cutoff}.\n"
                 f"Consider reducing the cutoff or making a larger supercell "
                 f"(either via supercell_diag or manually)."
             )
 
-    if params.grids_defined_on_unitcube:
-        level_one_spacings = params.grid_spacings[1] @ cell
-    else:
-        level_one_spacings = params.grid_spacings[1]
-
     # TODO: check at all levels, not just level 1?
+    level_one_spacings = params.grid_spacings[1]
+    if params.grids_defined_on_unitcube:
+        level_one_spacings *= onp.linalg.norm(cell, axis=1)
+
     min_required_stencil_size = determine_min_kernel_stencil_size(
         cell=cell, spacings=level_one_spacings, cutoff=params.cutoffs[1]
     )
@@ -780,7 +779,14 @@ def check_cutoffs_and_spacings(cell: ArrayLike, params: MSMParams):
     if not (
         onp.array(given_stencil_size) >= onp.array(min_required_stencil_size)
     ).all():
-        # TODO: Error message
-        raise ValueError(f"{given_stencil_size} < {min_required_stencil_size}")
+        raise ValueError(
+            f"The kernel stencil is too small to cover the cutoff for the "
+            f"given cell:\n"
+            f"It is {given_stencil_size}, but needs to be (along each "
+            f"component separately) at least {min_required_stencil_size}.\n"
+            f"Try increasing the value of intermediate_kernel_stencil_extents "
+            f"during setup, and make sure the cell is not unreasonably "
+            f"compressed or deformed."
+        )
 
     return level_one_spacings
