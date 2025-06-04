@@ -6,6 +6,7 @@ from typing import Literal, Sequence
 
 import jax
 import numpy as onp
+from babel.messages.frontend import parse_mapping
 from jax.typing import ArrayLike
 
 import msmjax
@@ -561,6 +562,9 @@ def set_up_msm_params(
 
 
 def create_msm(params: MSMParams):
+    if not params.dynamic_cell:
+        _ = check_cutoffs_and_spacings(params.cell, params)
+
     kernel_fns = split_one_over_r(
         max_level=params.max_splitting_level,
         level_zero_cutoff=params.cutoffs[0],
@@ -737,10 +741,16 @@ def check_cutoffs_and_spacings(cell: ArrayLike, params: MSMParams):
             cell,
             params.supercell_diag,
         )
-        # TODO: Explain what is done here
+        # A simple way of taking only directions with periodicity into account
+        # in the cutoff determination is to make the cell vectors very large
+        # (effectively infinite) along nonperiodic directions before
+        # calculating the maximum allowed cutoff as if fully periodic.
+        # We repeat this procedure for two different large elongation factors
+        # and check that the resulting cutoffs are the same, to ensure that a
+        # sufficient elongation of the cell was used.
         trial_cells = [
-            supercell * onp.where(params.pbc, 1.0, factor)[:, onp.newaxis]
-            for factor in [1.0e3, 1.0e4]
+            supercell * onp.where(params.pbc, 1.0, elongation)[:, onp.newaxis]
+            for elongation in [1.0e3, 1.0e4]
         ]
         trial_cutoffs = [get_max_cutoff_for_mic(c) for c in trial_cells]
         if not onp.allclose(*trial_cutoffs):
@@ -749,11 +759,12 @@ def check_cutoffs_and_spacings(cell: ArrayLike, params: MSMParams):
             )
         max_allowed_cutoff = trial_cutoffs[0]
         if not params.cutoffs[0] <= max_allowed_cutoff:
-            # TODO: message; raise at all, or just return False?
             raise ValueError(
-                "The cutoff radius is too large for the cell. "
-                "Consider reducing it or making a supercell (either via "
-                "supercell_diag or manually)."
+                f"Level-zero cutoff radius too large for the given cell: "
+                f"It is {params.cutoffs[0]}, but the cell can only "
+                f"accommodate {max_allowed_cutoff}.\n"
+                f"Consider reducing the cutoff or making a larger supercell "
+                f"(either via supercell_diag or manually)."
             )
 
     if params.grids_defined_on_unitcube:
@@ -765,11 +776,11 @@ def check_cutoffs_and_spacings(cell: ArrayLike, params: MSMParams):
     min_required_stencil_size = determine_min_kernel_stencil_size(
         cell=cell, spacings=level_one_spacings, cutoff=params.cutoffs[1]
     )
+    given_stencil_size = params.stencil_extents_from_center[1]
     if not (
-        onp.array(params.stencil_extents_from_center[1])
-        >= onp.array(min_required_stencil_size)
+        onp.array(given_stencil_size) >= onp.array(min_required_stencil_size)
     ).all():
-        # TODO: message; raise at all, or just return False?
-        raise ValueError
+        # TODO: Error message
+        raise ValueError(f"{given_stencil_size} < {min_required_stencil_size}")
 
     return level_one_spacings
