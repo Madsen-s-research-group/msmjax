@@ -767,26 +767,30 @@ def check_cutoffs_and_spacings(cell: ArrayLike, params: MSMParams):
                 f"(either via supercell_diag or manually)."
             )
 
-    # TODO: check at all levels, not just level 1?
+    for lvl in range(1, params.max_grid_level + 1):
+        spacings = params.grid_spacings[lvl]
+        if params.grids_defined_on_unitcube:
+            spacings *= onp.linalg.norm(cell, axis=1)
+        min_required_stencil_size = determine_min_kernel_stencil_size(
+            cell=cell, spacings=spacings, cutoff=params.cutoffs[lvl]
+        )
+        given_stencil_size = params.stencil_extents_from_center[lvl]
+        if not (
+            onp.array(given_stencil_size)
+            >= onp.array(min_required_stencil_size)
+        ).all():
+            raise ValueError(
+                f"The kernel stencil at level {lvl} is too small to cover the "
+                f"cutoff for the given cell:\n"
+                f"It is {given_stencil_size}, but needs to be (component-"
+                f"wise) at least {min_required_stencil_size}.\n"
+                f"Try increasing intermediate_kernel_stencil_extents "
+                f"during setup, and make sure the cell is not unreasonably "
+                f"compressed or distorted."
+            )
+
     level_one_spacings = params.grid_spacings[1]
     if params.grids_defined_on_unitcube:
         level_one_spacings *= onp.linalg.norm(cell, axis=1)
-
-    min_required_stencil_size = determine_min_kernel_stencil_size(
-        cell=cell, spacings=level_one_spacings, cutoff=params.cutoffs[1]
-    )
-    given_stencil_size = params.stencil_extents_from_center[1]
-    if not (
-        onp.array(given_stencil_size) >= onp.array(min_required_stencil_size)
-    ).all():
-        raise ValueError(
-            f"The kernel stencil is too small to cover the cutoff for the "
-            f"given cell:\n"
-            f"It is {given_stencil_size}, but needs to be (along each "
-            f"component separately) at least {min_required_stencil_size}.\n"
-            f"Try increasing the value of intermediate_kernel_stencil_extents "
-            f"during setup, and make sure the cell is not unreasonably "
-            f"compressed or deformed."
-        )
 
     return level_one_spacings
