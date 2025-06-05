@@ -8,7 +8,7 @@ import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Tuple
+from typing import Sequence, Tuple
 
 import ase.io
 import jax
@@ -250,6 +250,113 @@ def evaluate_structure_with_lammps_p3m(
                 [lammps_executable, "-in", filename_lammps_in],
                 stdout=subprocess.DEVNULL,
             )
+            energy = parse_energy_from_lammps_log(filename_lammps_log)
+            forces = ase.io.read(filename_lammps_dump).calc.results["forces"]
+
+    return CONVERSION_FACTOR * energy, CONVERSION_FACTOR * forces
+
+
+def make_lammps_input_text_msm(
+    filename_data,
+    filename_dump,
+    pbc: Sequence[bool],
+    cutoff: float,
+    accuracy: float,
+    max_neighbors_one_atom: int | None,
+):
+    """Write LAMMPS input script"""
+    if max_neighbors_one_atom is None:
+        neigh_line = ""
+    else:
+        neigh_line = f"neigh_modify one {int(max_neighbors_one_atom)}"
+
+    pbcstring = " ".join(["p" if periodic else "f" for periodic in pbc])
+
+    text = f"""# 1) Initialization
+units metal
+dimension 3
+boundary {pbcstring}
+atom_style charge
+pair_style coul/msm {cutoff:f}
+pair_modify table 0
+kspace_style msm {accuracy:.10g}
+{neigh_line}
+neigh_modify page 6000000    # TODO: make dependent on neigh_line
+
+# 2) System definition
+read_data {filename_data}
+kspace_style msm {accuracy:.10g}  # need to reinitialize after reading data to work for triclinic cells
+
+# 3) Simulation settings
+mass 1 1
+pair_coeff * *
+
+# 4) Output settings
+thermo 1
+thermo_style custom pe
+dump mydmp all custom 1 {filename_dump} id type x y z fx fy fz
+
+# 5) Run
+run 0
+"""
+    return text
+
+
+def eval_lammps_msm(
+    positions: npt.ArrayLike,
+    charges: npt.ArrayLike,
+    cell: npt.ArrayLike,
+    pbc: Sequence[bool],
+    lammps_executable: str = "lmp",
+    cutoff: float = 10.0,
+    accuracy: float = 1.0e-5,
+    max_neighbors_one_atom: int | None = None,
+    show_stdout=False,
+) -> Tuple[float, np.ndarray]:
+    """Wrapper to compute periodic electrostatic energy, forces in LAMMPS with p3m
+
+    Args:
+        positions: Array of article positions, shape `(n_particles, 3)`
+        charges: Array of particle charges, `(n_particles,)`
+        cell: Unit cell
+        lammps_executable: Path to LAMMPS executable
+        max_neighbors_one_atom: Maximum number of neighbors of a single atom.
+            Supplied to LAMMPS via `neigh_modify one` if given. You may need
+            to increase this value if you're getting errors.
+
+    Returns:
+        energy, forces
+    """
+    filename_lammps_data = "structure.data"
+    filename_lammps_dump = "dump.lammpstrj"
+    filename_lammps_log = "log.lammps"
+    filename_lammps_in = "input.lammps"
+
+    with tempfile.TemporaryDirectory() as folder_name:
+        with dir_context(folder_name):
+            write_lammps_data(
+                filename=filename_lammps_data,
+                cell=cell,
+                positions=positions,
+                charges=charges,
+            )
+            lammps_input_text = make_lammps_input_text_msm(
+                filename_data=filename_lammps_data,
+                filename_dump=filename_lammps_dump,
+                pbc=pbc,
+                cutoff=cutoff,
+                accuracy=accuracy,
+                max_neighbors_one_atom=max_neighbors_one_atom,
+            )
+            with open(filename_lammps_in, "w") as f:
+                f.write(lammps_input_text)
+
+            subprocess_args = [lammps_executable, "-in", filename_lammps_in]
+            if show_stdout:
+                subprocess.run(subprocess_args)
+            else:
+                subprocess.run(subprocess_args, stdout=subprocess.DEVNULL)
+
             energy = parse_energy_from_lammps_log(filename_lammps_log)
             forces = ase.io.read(filename_lammps_dump).calc.results["forces"]
 

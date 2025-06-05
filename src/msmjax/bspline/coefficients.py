@@ -421,7 +421,7 @@ def compute_J_zeroplus(p: int) -> np.ndarray:
     if p < 2 or p % 2 != 0:
         raise ValueError("p must be a positive even integer")
     n = np.arange(0, p // 2 + 1)
-    return 2 ** (1 - p) * comb(p, p // 2 + n)
+    return 2.0 ** (1 - p) * comb(p, p // 2 + n)
 
 
 if __name__ == "__main__":

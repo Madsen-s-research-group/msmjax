@@ -535,7 +535,7 @@ def check_cutoffs_and_spacings(cell: ArrayLike, params: MSMParams):
             )
 
     for lvl in range(1, params.max_grid_level + 1):
-        spacings = params.grid_spacings[lvl]
+        spacings = params.grid_spacings[lvl].copy()
         if params.grids_defined_on_unitcube:
             spacings *= onp.linalg.norm(cell, axis=1)
         min_required_stencil_size = determine_min_kernel_stencil_size(
@@ -556,7 +556,7 @@ def check_cutoffs_and_spacings(cell: ArrayLike, params: MSMParams):
                 f"compressed or distorted."
             )
 
-    level_one_spacings = params.grid_spacings[1]
+    level_one_spacings = params.grid_spacings[1].copy()
     if params.grids_defined_on_unitcube:
         level_one_spacings *= onp.linalg.norm(cell, axis=1)
 
