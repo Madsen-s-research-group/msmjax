@@ -131,6 +131,42 @@ def dir_context(dir_name: Path):
         os.chdir(cwd)
 
 
+def write_lammps_data(filename, cell, positions, charges) -> None:
+    """Write structure as LAMMPS data file"""
+    n_particles = positions.shape[0]
+    n_dims = positions.shape[1]
+    atoms = Atoms(
+        symbols=["X"] * n_particles,
+        cell=cell,
+        positions=positions,
+        charges=charges,
+        pbc=[True] * n_dims,
+    )
+    ase.io.write(filename, atoms, format="lammps-data", atom_style="charge")
+
+
+def parse_energy_from_lammps_log(filename) -> float:
+    """Get the energy from LAMMPS log file"""
+    with open(filename, "r") as f:
+        for line in f:
+            if "PotEng" in line:
+                line_poteng = f.readline()
+                energy = float(line_poteng.strip())
+                return energy
+
+    raise ValueError("EOF reached without finding energy")
+
+
+# We want to calculate the value of (q_i * q_j) / r_{ij}, in whatever units
+# q_i, q_j, r_i, r_j are supplied in, and whatever quantities they might actually
+# represent.
+# LAMMPS calculates energy = (1 / (4 * pi * epsilon_0)) * ((q_i * q_j) / r_{ij}),
+# with (for style `units metal`) q_i, q_j in units of elementary charge,
+# r_i, r_j in Angstrom, and energy in eV. Plugging in the values for epsilon_0,
+# Angstrom, eV, Coulomb, in SI units, the conversion factor is:
+CONVERSION_FACTOR = (4 * onp.pi) * 8.8541878128 / 1.602176634 / 10**3
+
+
 def make_lammps_input_text(
     filename_data, filename_dump, max_neighbors_one_atom
 ):
@@ -168,42 +204,6 @@ run 0
     return text
 
 
-def write_lammps_data(filename, cell, positions, charges) -> None:
-    """Write structure as LAMMPS data file"""
-    n_particles = positions.shape[0]
-    n_dims = positions.shape[1]
-    atoms = Atoms(
-        symbols=["X"] * n_particles,
-        cell=cell,
-        positions=positions,
-        charges=charges,
-        pbc=[True] * n_dims,
-    )
-    ase.io.write(filename, atoms, format="lammps-data", atom_style="charge")
-
-
-def parse_energy_from_lammps_log(filename) -> float:
-    """Get the energy from LAMMPS log file"""
-    with open(filename, "r") as f:
-        for line in f:
-            if "PotEng" in line:
-                line_poteng = f.readline()
-                energy = float(line_poteng.strip())
-                return energy
-
-    raise ValueError("EOF reached without finding energy")
-
-
-# We want to calculate the value of (q_i * q_j) / r_{ij}, in whatever units
-# q_i, q_j, r_i, r_j are supplied in, and whatever quantities they might actually
-# represent.
-# LAMMPS calculates energy = (1 / (4 * pi * epsilon_0)) * ((q_i * q_j) / r_{ij}),
-# with (for style `units metal`) q_i, q_j in units of elementary charge,
-# r_i, r_j in Angstrom, and energy in eV. Plugging in the values for epsilon_0,
-# Angstrom, eV, Coulomb, in SI units, the conversion factor is:
-CONVERSION_FACTOR = (4 * onp.pi) * 8.8541878128 / 1.602176634 / 10**3
-
-
 def evaluate_structure_with_lammps_p3m(
     positions: npt.ArrayLike,
     charges: npt.ArrayLike,
@@ -225,6 +225,8 @@ def evaluate_structure_with_lammps_p3m(
     Returns:
         energy, forces
     """
+    # TODO: Change to the newer version of this function, with interface
+    #  similar to eval_lammps_msm
     filename_lammps_data = "structure.data"
     filename_lammps_dump = "dump.lammpstrj"
     filename_lammps_log = "log.lammps"
