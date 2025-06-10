@@ -499,11 +499,43 @@ def create_msm(
     # TODO: Option to return fns for short- and long-range part separately?
     # TODO: calc_stress in dynamic-cell case
 
+    if not params.dynamic_cell:
+        return (
+            calc_energy,
+            calc_forces,
+            calc_energy_and_forces,
+            calc_charge_gradient,
+        )
+
+    def calc_energy_from_scaled(
+        scaled_positions, charges, cell, neighborlist=None
+    ):
+        positions = scaled_positions @ cell
+        return calc_energy(positions, charges, cell, neighborlist)
+
+    def calc_stress(positions, charges, cell, neighborlist=None):
+        # TODO: attribution?
+        n_dim = positions.shape[1]
+        scaled_positions = jnp.linalg.solve(cell.T, positions.T).T
+
+        def deformation_energy(epsilon):
+            return calc_energy_from_scaled(
+                scaled_positions,
+                charges,
+                cell @ (jnp.eye(n_dim) + 0.5 * (epsilon + epsilon.T)),
+                neighborlist,
+            )
+
+        return jax.grad(deformation_energy)(jnp.zeros_like(cell)) / jnp.fabs(
+            jnp.linalg.det(cell)
+        )
+
     return (
         calc_energy,
         calc_forces,
         calc_energy_and_forces,
         calc_charge_gradient,
+        calc_stress,
     )
 
 
