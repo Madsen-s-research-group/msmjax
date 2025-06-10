@@ -8,12 +8,7 @@ import jax
 import numpy as onp
 import pytest
 
-from msmjax.calculators import (
-    create_msm,
-    set_up_msm_params,
-    set_up_msm_params_dyn_cell,
-    set_up_msm_params_static_cell,
-)
+from msmjax.calculators import create_msm, set_up_msm_params
 from msmjax.utils.benchmarking import calc_relative_rmse_percent
 
 # For closeness checks to pass in single precision
@@ -314,6 +309,7 @@ def test_periodic_triclinic(fixture_periodic_triclinic):
     # TODO: spacings and cutoff should be defined outside (fixtures?)
     level_one_spacings = 1.0
     level_zero_cutoff = 3.0
+    supercell_diag = (2, 2, 2)  # The triclinic cell requires replication
 
     cell = fixture_periodic_triclinic["cell"]
     pos = fixture_periodic_triclinic["positions"]
@@ -330,6 +326,7 @@ def test_periodic_triclinic(fixture_periodic_triclinic):
         cell_mode=cell_mode,
         dynamic_cell=False,
         n_particles=n_particles,
+        supercell_diag=supercell_diag,  # TODO: Automatic? Consistent handling in all tests?
     )
     calc_energy, calc_forces, _, _ = create_msm(params_staticcell)
     energy_msm_staticcell = jax.jit(calc_energy)(pos, chg)
@@ -345,6 +342,7 @@ def test_periodic_triclinic(fixture_periodic_triclinic):
         cell_mode=cell_mode,
         dynamic_cell=True,
         n_particles=n_particles,
+        supercell_diag=supercell_diag,  # TODO: Automatic? Consistent handling in all tests?
     )
     calc_energy, calc_forces, _, _ = create_msm(params_dyncell)
     energy_msm_dyncell = jax.jit(calc_energy)(pos, chg, cell)

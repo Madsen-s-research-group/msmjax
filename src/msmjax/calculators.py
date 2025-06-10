@@ -500,13 +500,16 @@ def create_msm(params: MSMParams):
 
 def check_cutoffs_and_spacings(cell: ArrayLike, params: MSMParams):
     if onp.any(params.pbc):
-        placeholder_positions = onp.zeros((10, cell.shape[0]))
+        n_dim = cell.shape[0]
+        placeholder_positions = onp.zeros((10, n_dim))
         placeholder_charges = onp.zeros((10,))
+        supercell_diag = (
+            (1,) * n_dim
+            if params.supercell_diag is None
+            else params.supercell_diag
+        )
         _, _, supercell = _gen_supercell(
-            placeholder_positions,
-            placeholder_charges,
-            cell,
-            params.supercell_diag,
+            placeholder_positions, placeholder_charges, cell, supercell_diag
         )
         # A simple way of taking only directions with periodicity into account
         # in the cutoff determination is to make the cell vectors very large
