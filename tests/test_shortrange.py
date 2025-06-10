@@ -13,6 +13,8 @@
 
 import os
 
+from msmjax.utils.general import get_max_cutoff_for_mic
+
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 
 from functools import partial
@@ -149,28 +151,8 @@ def shortrange_quadratic_potential(r, r_cut):
     return jnp.where(r < r_cut, (r - r_cut) ** 2, 0.0)
 
 
-def get_max_cutoff_3d(cell: jnp.ndarray):
-    """Get the maximum cutoff value that fits into a 3D cell.
-
-    Args:
-        cell: Cell, shape=(3, 3).
-
-    Returns:
-        Cutoff radius
-    """
-    # TODO: move this function to some utils?
-    return jnp.min(
-        jnp.fabs(
-            jnp.linalg.det(cell)
-            / jnp.array(
-                [
-                    jnp.linalg.norm(jnp.cross(i, j))
-                    for i, j in zip(cell, jnp.roll(cell, 1, axis=0))
-                ]
-            )
-        )
-        / 2.0
-    )
+def shortrange_gauss_potential(r, r_cut):
+    return jnp.where(r < r_cut, jnp.exp(-r * r), 0.0)
 
 
 @pytest.mark.parametrize(
@@ -186,7 +168,7 @@ def test_compute_distance_vectors(fixture_structure, fixture_pbc):
     """
     pos, chg, cell, cell_mode = fixture_structure
     pos, chg = pos[:30], chg[:30]
-    max_cutoff = get_max_cutoff_3d(cell)
+    max_cutoff = get_max_cutoff_for_mic(cell)
     (i, j) = jnp.triu_indices(pos.shape[0], k=1)
 
     displacement_fn = _concretize_displacement_fn(
@@ -222,7 +204,7 @@ def test_compute_distance_vectors_outside_cell(
     """
     pos, chg, cell, cell_mode = fixture_structure
     pos, chg = pos[:50], chg[:50]
-    max_cutoff = get_max_cutoff_3d(cell)
+    max_cutoff = get_max_cutoff_for_mic(cell)
     (i, j) = jnp.triu_indices(pos.shape[0], k=1)
     displacement_fn = _concretize_displacement_fn(
         pbc=onp.array(fixture_pbc), cell_mode=cell_mode
@@ -298,7 +280,8 @@ def test_pair_term_with_and_without_supercell(fixture_structure):
     pos, chg, cell, cell_mode = fixture_structure
     pbc = (True, True, True)
     kernel_fn = partial(
-        shortrange_quadratic_potential, r_cut=(0.99 * get_max_cutoff_3d(cell))
+        shortrange_quadratic_potential,
+        r_cut=(0.99 * get_max_cutoff_for_mic(cell)),
     )
     pair_term_fn = make_eval_pair_pot(
         kernel_fn=kernel_fn, pbc=pbc, cell_mode=cell_mode
@@ -327,7 +310,8 @@ def test_pair_term_supercell_correct_multiple(
     pos, chg, cell, cell_mode = fixture_structure
     pbc = (True, True, True)
     kernel_fn = partial(
-        shortrange_quadratic_potential, r_cut=(0.99 * get_max_cutoff_3d(cell))
+        shortrange_quadratic_potential,
+        r_cut=(0.99 * get_max_cutoff_for_mic(cell)),
     )
     pair_term_fn = make_eval_pair_pot(
         kernel_fn=kernel_fn, pbc=pbc, cell_mode=cell_mode
@@ -368,7 +352,7 @@ def test_pair_term_periodic_wrap_vs_replicate(
 
     kernel_fn = partial(
         shortrange_quadratic_potential,
-        r_cut=cutoff_multiplier * get_max_cutoff_3d(cell),
+        r_cut=cutoff_multiplier * get_max_cutoff_for_mic(cell),
     )
 
     n_repeats_explicit = (3, 3, 3)
@@ -423,7 +407,7 @@ def test_pair_term_with_and_without_neighborlist(
     (In the latter case relying on the potential having its cutoff built in.)
     """
     pos, chg, cell, cell_mode = fixture_structure
-    cutoff = float(get_max_cutoff_3d(cell))
+    cutoff = float(get_max_cutoff_for_mic(cell))
     kernel_fn_no_cutoff = lambda r: 1.0
     kernel_fn_cutoff = lambda r: jnp.where(
         r < cutoff, kernel_fn_no_cutoff(r), 0.0
@@ -453,7 +437,7 @@ def test_pair_term_with_and_without_neighborlist(
 def test_pair_term_ignore_placeholders(fixture_structure, fixture_pbc):
     """Test that placeholder indices in the neighbor list have no effect."""
     pos, chg, cell, cell_mode = fixture_structure
-    cutoff = float(get_max_cutoff_3d(cell))
+    cutoff = float(get_max_cutoff_for_mic(cell))
     kernel_fn = partial(shortrange_quadratic_potential, r_cut=cutoff)
     compute_pair_term_nbl = make_eval_pair_pot_neighborlist(
         kernel_fn=kernel_fn, pbc=fixture_pbc, cell_mode=cell_mode
@@ -491,7 +475,7 @@ def test_pair_term_compare_explicit_loop(fixture_structure, fixture_pbc):
     pos = pos[:n_particles]
     chg = chg[:n_particles]
     kernel_fn = partial(
-        shortrange_quadratic_potential, r_cut=get_max_cutoff_3d(cell)
+        shortrange_quadratic_potential, r_cut=get_max_cutoff_for_mic(cell)
     )
     kernel_fn_prime = jax.grad(kernel_fn)
 
@@ -523,6 +507,43 @@ def test_pair_term_compare_explicit_loop(fixture_structure, fixture_pbc):
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
     indirect=True,
 )
+def test_pair_term_extra_uncharged(fixture_structure, fixture_pbc):
+    pos, chg, cell, cell_mode = fixture_structure
+    max_cutoff = get_max_cutoff_for_mic(cell)
+    kernel_fn_charges = partial(
+        shortrange_quadratic_potential, r_cut=max_cutoff
+    )
+    kernel_fn_no_charges = partial(
+        shortrange_gauss_potential, r_cut=max_cutoff
+    )
+
+    compute_pair_term_charges = make_eval_pair_pot(
+        kernel_fn=kernel_fn_charges, pbc=fixture_pbc, cell_mode=cell_mode
+    )
+    compute_pair_term_no_charges = make_eval_pair_pot(
+        kernel_fn=kernel_fn_no_charges, pbc=fixture_pbc, cell_mode=cell_mode
+    )
+    energy_charges = compute_pair_term_charges(pos, chg, cell)
+    energy_no_charges = compute_pair_term_no_charges(
+        pos, onp.ones_like(chg, dtype=float), cell
+    )
+
+    compute_pair_term_combined = make_eval_pair_pot(
+        kernel_fn=kernel_fn_charges,
+        pbc=fixture_pbc,
+        cell_mode=cell_mode,
+        extra_uncharged_kernel_fn=kernel_fn_no_charges,
+    )
+    energy_combined = compute_pair_term_combined(pos, chg, cell)
+
+    assert onp.isclose(energy_charges + energy_no_charges, energy_combined)
+
+
+@pytest.mark.parametrize(
+    "fixture_structure",
+    ["fixture_structure_cubic", "fixture_structure_nonortho"],
+    indirect=True,
+)
 def test_u_zero_pair_term(fixture_structure, fixture_pbc):
     """Test the pair term contribution to U0
 
@@ -530,7 +551,7 @@ def test_u_zero_pair_term(fixture_structure, fixture_pbc):
     zero. In this case, U0 should equal the result of the pair term alone.
     """
     pos, chg, cell, cell_mode = fixture_structure
-    max_cutoff = get_max_cutoff_3d(cell)
+    max_cutoff = get_max_cutoff_for_mic(cell)
     k_0 = partial(shortrange_quadratic_potential, r_cut=0.99 * max_cutoff)
     kernel_fns = [k_0] + [lambda x: 0.0] * 2
     pair_map_fn = partial(
@@ -582,7 +603,7 @@ def test_u_zero_with_and_without_neighborlist(fixture_structure, fixture_pbc):
     (In the latter case relying on the potential having its cutoff built in.)
     """
     pos, chg, cell, cell_mode = fixture_structure
-    cutoff = 0.75 * float(get_max_cutoff_3d(cell))
+    cutoff = 0.75 * float(get_max_cutoff_for_mic(cell))
 
     kernel_fns_no_cutoff = [lambda r: 1.0, lambda r: 0.5, lambda r: 0.25]
     pair_map_fn_nbl = partial(
