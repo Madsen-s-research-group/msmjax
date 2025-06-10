@@ -226,7 +226,7 @@ def make_eval_pair_pot(
     pbc: Sequence[bool],
     cell_mode: Optional[CellMode] = None,
     supercell_diag: Optional[Sequence[int]] = None,
-    extra_uncharged_kernel_fn: Optional[KernelFn] = None,  # TODO: name
+    extra_uncharged_interaction: Optional[KernelFn] = None,  # TODO: docstring
 ) -> Callable[[ArrayLike, ArrayLike, Optional[ArrayLike]], Array]:
     """Transform interaction kernel into function acting on a particle system.
 
@@ -314,14 +314,14 @@ def make_eval_pair_pot(
         charged_pair_term = (
             0.5 * (qi_qj * _generalized_diagonal_mask(kernel_fn(dr_ij))).sum()
         )
-        if extra_uncharged_kernel_fn is None:
+        if extra_uncharged_interaction is None:
             return charged_pair_term
         else:
             return (
                 charged_pair_term
                 + 0.5
                 * _generalized_diagonal_mask(
-                    extra_uncharged_kernel_fn(dr_ij)
+                    extra_uncharged_interaction(dr_ij)
                 ).sum()
             )
 
@@ -336,6 +336,7 @@ def make_eval_pair_pot_neighborlist(
     #  -> During setup, raise an error if kernel_fn(safe_eval_distance) is nan?
     #  -> For two different valid values of safe_eval_distance, check that outputs are identical
     safe_eval_distance: float = 1.0,
+    extra_uncharged_interaction: Optional[KernelFn] = None,  # TODO: docstring
 ) -> Callable[
     [
         ArrayLike,
@@ -432,9 +433,20 @@ def make_eval_pair_pot_neighborlist(
         # can be safely evaluated
         dr_ij = jnp.where(is_not_placeholder, dr_ij, safe_eval_distance)
         qi_qj = charges[i] * charges[j]
-        return jnp.where(
+        charged_pair_term = jnp.where(
             is_not_placeholder, weights * qi_qj * kernel_fn(dr_ij), 0.0
         ).sum()
+        if extra_uncharged_interaction is None:
+            return charged_pair_term
+        else:
+            return (
+                charged_pair_term
+                + jnp.where(
+                    is_not_placeholder,
+                    weights * extra_uncharged_interaction(dr_ij),
+                    0.0,
+                ).sum()
+            )
 
     return compute_energy
 

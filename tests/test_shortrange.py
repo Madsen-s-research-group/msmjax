@@ -259,8 +259,8 @@ def test_error_supercell_nonperiodic(pbc, supercell_diag):
         make_eval_pair_pot(
             kernel_fn=partial(shortrange_quadratic_potential, r_cut=1.0),
             pbc=pbc,
-            supercell_diag=supercell_diag,
             cell_mode=None,
+            supercell_diag=supercell_diag,
         )
 
 
@@ -386,8 +386,8 @@ def test_pair_term_periodic_wrap_vs_replicate(
     pair_term_fn_wrap = make_eval_pair_pot(
         kernel_fn=kernel_fn,
         pbc=(True, True, True),
-        supercell_diag=supercell_diag,
         cell_mode=cell_mode,
+        supercell_diag=supercell_diag,
     )
     energy_wrap = pair_term_fn_wrap(pos, chg, cell)
 
@@ -508,14 +508,16 @@ def test_pair_term_compare_explicit_loop(fixture_structure, fixture_pbc):
     indirect=True,
 )
 def test_pair_term_extra_uncharged(fixture_structure, fixture_pbc):
+    """Test the extra uncharged interaction option.
+
+    This is done by comparing the result for the pair term calculated with the
+    option with the sum of two evaluations without the option, one of which
+    uses charges that are all one.
+    """
     pos, chg, cell, cell_mode = fixture_structure
-    max_cutoff = get_max_cutoff_for_mic(cell)
-    kernel_fn_charges = partial(
-        shortrange_quadratic_potential, r_cut=max_cutoff
-    )
-    kernel_fn_no_charges = partial(
-        shortrange_gauss_potential, r_cut=max_cutoff
-    )
+    cutoff = float(get_max_cutoff_for_mic(cell))
+    kernel_fn_charges = partial(shortrange_quadratic_potential, r_cut=cutoff)
+    kernel_fn_no_charges = partial(shortrange_gauss_potential, r_cut=cutoff)
 
     compute_pair_term_charges = make_eval_pair_pot(
         kernel_fn=kernel_fn_charges, pbc=fixture_pbc, cell_mode=cell_mode
@@ -532,9 +534,61 @@ def test_pair_term_extra_uncharged(fixture_structure, fixture_pbc):
         kernel_fn=kernel_fn_charges,
         pbc=fixture_pbc,
         cell_mode=cell_mode,
-        extra_uncharged_kernel_fn=kernel_fn_no_charges,
+        extra_uncharged_interaction=kernel_fn_no_charges,
     )
     energy_combined = compute_pair_term_combined(pos, chg, cell)
+
+    assert onp.isclose(energy_charges + energy_no_charges, energy_combined)
+
+
+@pytest.mark.parametrize(
+    "fixture_structure",
+    ["fixture_structure_cubic", "fixture_structure_nonortho"],
+    indirect=True,
+)
+def test_pair_term_extra_uncharged_with_neighborlist(
+    fixture_structure, fixture_pbc
+):
+    """Test the extra uncharged interaction option, with neighborlist.
+
+    This is done by comparing the result for the pair term calculated with the
+    option with the sum of two evaluations without the option, one of which
+    uses charges that are all one.
+    """
+    pos, chg, cell, cell_mode = fixture_structure
+    cutoff = float(get_max_cutoff_for_mic(cell))
+    nbl = neighbour_list(
+        "ij", cutoff=cutoff, positions=pos, cell=cell, pbc=fixture_pbc
+    )
+    kernel_fn_charges = partial(shortrange_quadratic_potential, r_cut=cutoff)
+    kernel_fn_no_charges = partial(shortrange_gauss_potential, r_cut=cutoff)
+
+    compute_pair_term_charges = make_eval_pair_pot_neighborlist(
+        kernel_fn=kernel_fn_charges, pbc=fixture_pbc, cell_mode=cell_mode
+    )
+    compute_pair_term_no_charges = make_eval_pair_pot_neighborlist(
+        kernel_fn=kernel_fn_no_charges, pbc=fixture_pbc, cell_mode=cell_mode
+    )
+    energy_charges = compute_pair_term_charges(
+        pos, chg, cell=cell, neighborlist=nbl, weights=0.5
+    )
+    energy_no_charges = compute_pair_term_no_charges(
+        pos,
+        onp.ones_like(chg, dtype=float),
+        cell=cell,
+        neighborlist=nbl,
+        weights=0.5,
+    )
+
+    compute_pair_term_combined = make_eval_pair_pot_neighborlist(
+        kernel_fn=kernel_fn_charges,
+        pbc=fixture_pbc,
+        cell_mode=cell_mode,
+        extra_uncharged_interaction=kernel_fn_no_charges,
+    )
+    energy_combined = compute_pair_term_combined(
+        pos, chg, cell=cell, neighborlist=nbl, weights=0.5
+    )
 
     assert onp.isclose(energy_charges + energy_no_charges, energy_combined)
 
