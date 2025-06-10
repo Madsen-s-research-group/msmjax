@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import Literal, Sequence
 
 import jax
+import jax.numpy as jnp
 import numpy as onp
-from babel.messages.frontend import parse_mapping
 from jax.typing import ArrayLike
 
 import msmjax
@@ -31,7 +31,12 @@ from msmjax.kernels import (
     make_construct_stencils,
     split_one_over_r,
 )
-from msmjax.utils.general import CellMode, ConvMeth, get_max_cutoff_for_mic
+from msmjax.utils.general import (
+    CellMode,
+    ConvMeth,
+    KernelFn,
+    get_max_cutoff_for_mic,
+)
 
 
 class CustomJSONEncoder(json.JSONEncoder):
@@ -328,7 +333,9 @@ def set_up_msm_params(
     return params
 
 
-def create_msm(params: MSMParams):
+def create_msm(
+    params: MSMParams, extra_uncharged_interaction: KernelFn | None = None
+):
     if not params.dynamic_cell:
         _ = check_cutoffs_and_spacings(params.cell, params)
 
@@ -345,6 +352,7 @@ def create_msm(params: MSMParams):
                 make_eval_pair_pot_neighborlist,
                 pbc=params.pbc,
                 cell_mode=params.cell_mode,
+                extra_uncharged_interaction=extra_uncharged_interaction,
             ),
         )
     else:
@@ -357,6 +365,7 @@ def create_msm(params: MSMParams):
                 pbc=params.pbc,
                 cell_mode=params.cell_mode,
                 supercell_diag=params.supercell_diag,
+                extra_uncharged_interaction=extra_uncharged_interaction,
             ),
         )
 
