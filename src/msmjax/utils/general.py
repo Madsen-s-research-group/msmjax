@@ -49,30 +49,6 @@ def _sqrt_jvp(primals, tangents):
     return (primal_out, tangent_out)
 
 
-def get_max_cutoff_3d(cell: jnp.ndarray):
-    """Get the maximum cutoff value that fits into a 3D cell.
-
-    Args:
-        cell: Cell, shape=(3, 3).
-
-    Returns:
-        Cutoff radius
-    """
-    # TODO: Move to core.shortrange or leave in utils?
-    return jnp.min(
-        jnp.fabs(
-            jnp.linalg.det(cell)
-            / jnp.array(
-                [
-                    jnp.linalg.norm(jnp.cross(i, j))
-                    for i, j in zip(cell, jnp.roll(cell, 1, axis=0))
-                ]
-            )
-        )
-        / 2.0
-    )
-
-
 def get_max_cutoff_for_mic(cell: ArrayLike):
     """Get the maximum cutoff value that fits into a given cell.
 

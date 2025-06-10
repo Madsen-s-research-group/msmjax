@@ -241,10 +241,16 @@ def determine_min_kernel_stencil_size(
     # TODO: Right module for this function? utils? bspline.gridops? core.longrange?
     #  (whichever it will be, currently it's probably not in the right one...)
 
+    # TODO: Rename? If I also use this for determination of supercell_diag, it
+    #  should probably have a different name. Something like
+    #  "find_covering_grid_size" maybe. In which case, it should also maybe
+    #  ceil() instead of .astype(int), and external callers should take care
+    #  of subtracting 1 if the application is to get minimum stencil extents.
+
     # TODO: Should the parameter names for spacings and r_cut suggest one
     #  specific grid level? In principle, if they're given at the same level,
     #  it does not matter which, since both are doubled at each level.
-    #  But OTOH, the risk of inadvertently passing the level-ONE spacing and
+    #  But OTOH, the risk of inadvertently passing the level-ONE spacing
     #  together with the level-ZERO cutoff should be minimized
 
     # TODO: unit test this function
@@ -286,6 +292,7 @@ def determine_min_kernel_stencil_size(
         / onp.linalg.norm(cell, axis=1)[:, onp.newaxis]
         * onp.atleast_1d(spacings)[:, onp.newaxis]
     )
+    # TODO: Is it really correct to take the diagonal?
     spacings_transformed = onp.diag(single_grid_cell @ inverse)
 
     # The maximum taken from the precomputed cutoff sphere points may be
