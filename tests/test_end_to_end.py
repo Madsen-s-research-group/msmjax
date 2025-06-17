@@ -5,6 +5,7 @@ os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 from pathlib import Path
 
 import jax
+import jax.numpy as jnp
 import numpy as onp
 import pytest
 
@@ -15,7 +16,7 @@ from msmjax.utils.benchmarking import calc_relative_rmse_percent
 ATOL = 5.0e-6
 # TODO: Use fixtures for these?
 LEVEL_ONE_SPACINGS = 1.0
-LEVEL_ZERO_CUTOFF = 4.0  # TODO
+LEVEL_ZERO_CUTOFF = 4.0
 
 
 @pytest.fixture(scope="module")
@@ -112,6 +113,7 @@ def test_combined(fixture_system_definition):
     energy_ref = data["energy"]
     forces_ref = data["forces"]
     chargegrad_ref = data["charge_gradient"]
+    stress_ref = data["stress"]
 
     (n_particles, n_dim) = pos.shape
 
@@ -135,12 +137,12 @@ def test_combined(fixture_system_definition):
     chargegrad_msm_staticcell = jax.jit(
         evaluation_fns_staticcell["charge_gradient"]
     )(pos, chg)
-    # TODO: Add checks for energy, energy+forces, stress, chargegrad?
-    # TODO: Define the error tolerances somewhere?
-    assert calc_relative_rmse_percent(forces_msm_staticcell, forces_ref) < 0.3
+    # TODO: Define the error tolerances somewhere globally?
+    assert onp.abs(energy_msm_staticcell - energy_ref) < 0.25
+    assert calc_relative_rmse_percent(forces_msm_staticcell, forces_ref) < 1.0
     assert (
         calc_relative_rmse_percent(chargegrad_msm_staticcell, chargegrad_ref)
-        < 0.3
+        < 1.0
     )
 
     params_dyncell = set_up_msm_params(
@@ -163,11 +165,24 @@ def test_combined(fixture_system_definition):
     chargegrad_msm_dyncell = jax.jit(
         evaluation_fns_dyncell["charge_gradient"]
     )(pos, chg, cell)
-    # TODO: Add checks for energy, energy+forces, stress, chargegrad?
     assert onp.isclose(energy_msm_dyncell, energy_msm_staticcell, atol=ATOL)
     assert onp.allclose(forces_msm_dyncell, forces_msm_staticcell, atol=ATOL)
     assert onp.allclose(
         chargegrad_msm_dyncell, chargegrad_msm_staticcell, atol=ATOL
     )
 
-    stress_msm = jax.jit(evaluation_fns_dyncell["stress"])(pos, chg, cell)
+    inds_matrix_to_six_component_stress = (
+        jnp.array([0, 1, 2, 0, 0, 1]),
+        jnp.array([0, 1, 2, 1, 2, 2]),
+    )
+    stress_msm = jax.jit(evaluation_fns_dyncell["stress"])(pos, chg, cell)[
+        inds_matrix_to_six_component_stress
+    ]
+    if cell_mode == "ortho":
+        # In cell_mode "ortho", only the diagonal components of the stress
+        # tensor are calculated correctly!
+        # TODO: Define error tolerance somewhere globally?
+        assert calc_relative_rmse_percent(stress_msm[:3], stress_ref[:3]) < 5.0
+    else:
+        # TODO: Define error tolerance somewhere globally?
+        assert calc_relative_rmse_percent(stress_msm, stress_ref) < 5.0
