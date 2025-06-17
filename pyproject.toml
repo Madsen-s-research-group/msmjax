@@ -51,7 +51,7 @@ dynamic = ["version"]
 readme = "README.md"
 
 [project.optional-dependencies]
-test = ["pytest", "pytest-datadir"]
+test = ["pytest", "pytest-datadir", "matscipy"]
 doc = ["sphinx", "sphinx-autodoc-typehints", "sphinx-rtd-theme"]
 
 [tool.setuptools.packages.find]

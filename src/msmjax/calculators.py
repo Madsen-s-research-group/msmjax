@@ -540,6 +540,9 @@ def create_msm(
 
 
 def check_cutoffs_and_spacings(cell: ArrayLike, params: MSMParams):
+    # TODO: Name maybe `check_cutoffs_and_calculate_spacings` or similar? To
+    #  avoid the impression that this checks the spacings in any way, because
+    #  it doesn't.
     if onp.any(params.pbc):
         n_dim = cell.shape[0]
         placeholder_positions = onp.zeros((10, n_dim))
