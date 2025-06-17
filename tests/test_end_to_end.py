@@ -96,9 +96,13 @@ def test_nonperiodic_cubic(fixture_nonperiodic_cubic):
         dynamic_cell=False,
         n_particles=n_particles,
     )
-    calc_energy, calc_forces, _, _ = create_msm(params_staticcell)
-    energy_msm_staticcell = jax.jit(calc_energy)(pos, chg)
-    forces_msm_staticcell = jax.jit(calc_forces)(pos, chg)
+    evaluation_fns_staticcell = create_msm(params_staticcell)
+    energy_msm_staticcell = jax.jit(evaluation_fns_staticcell["energy"])(
+        pos, chg
+    )
+    forces_msm_staticcell = jax.jit(evaluation_fns_staticcell["forces"])(
+        pos, chg
+    )
     # TODO: Define the error tolerances somewhere?
     assert calc_relative_rmse_percent(forces_msm_staticcell, forces_ref) < 1.0
 
@@ -112,8 +116,9 @@ def test_nonperiodic_cubic(fixture_nonperiodic_cubic):
         n_particles=n_particles,
     )
     calc_energy, calc_forces, _, _, _ = create_msm(params_dyncell)
-    energy_msm_dyncell = jax.jit(calc_energy)(pos, chg, cell)
-    forces_msm_dyncell = jax.jit(calc_forces)(pos, chg, cell)
+    evaluation_fns_dyncell = create_msm(params_staticcell)
+    energy_msm_dyncell = jax.jit(evaluation_fns_dyncell["energy"])(pos, chg)
+    forces_msm_dyncell = jax.jit(evaluation_fns_dyncell["forces"])(pos, chg)
     assert onp.isclose(energy_msm_dyncell, energy_msm_staticcell, atol=ATOL)
     assert onp.allclose(forces_msm_dyncell, forces_msm_staticcell, atol=ATOL)
 
@@ -142,9 +147,13 @@ def test_nonperiodic_ortho_diff_sides(fixture_nonperiodic_ortho_diff_sides):
         dynamic_cell=False,
         n_particles=n_particles,
     )
-    calc_energy, calc_forces, _, _ = create_msm(params_staticcell)
-    energy_msm_staticcell = jax.jit(calc_energy)(pos, chg)
-    forces_msm_staticcell = jax.jit(calc_forces)(pos, chg)
+    evaluation_fns_staticcell = create_msm(params_staticcell)
+    energy_msm_staticcell = jax.jit(evaluation_fns_staticcell["energy"])(
+        pos, chg
+    )
+    forces_msm_staticcell = jax.jit(evaluation_fns_staticcell["forces"])(
+        pos, chg
+    )
     # TODO: Define the error tolerances somewhere?
     assert calc_relative_rmse_percent(forces_msm_staticcell, forces_ref) < 1.0
 
@@ -157,9 +166,9 @@ def test_nonperiodic_ortho_diff_sides(fixture_nonperiodic_ortho_diff_sides):
         dynamic_cell=True,
         n_particles=n_particles,
     )
-    calc_energy, calc_forces, _, _, _ = create_msm(params_dyncell)
-    energy_msm_dyncell = jax.jit(calc_energy)(pos, chg, cell)
-    forces_msm_dyncell = jax.jit(calc_forces)(pos, chg, cell)
+    evaluation_fns_dyncell = create_msm(params_staticcell)
+    energy_msm_dyncell = jax.jit(evaluation_fns_dyncell["energy"])(pos, chg)
+    forces_msm_dyncell = jax.jit(evaluation_fns_dyncell["forces"])(pos, chg)
     assert onp.isclose(energy_msm_dyncell, energy_msm_staticcell, atol=ATOL)
     assert onp.allclose(forces_msm_dyncell, forces_msm_staticcell, atol=ATOL)
 
@@ -188,9 +197,13 @@ def test_nonperiodic_triclinic(fixture_nonperiodic_triclinic):
         dynamic_cell=False,
         n_particles=n_particles,
     )
-    calc_energy, calc_forces, _, _ = create_msm(params_staticcell)
-    energy_msm_staticcell = jax.jit(calc_energy)(pos, chg)
-    forces_msm_staticcell = jax.jit(calc_forces)(pos, chg)
+    evaluation_fns_staticcell = create_msm(params_staticcell)
+    energy_msm_staticcell = jax.jit(evaluation_fns_staticcell["energy"])(
+        pos, chg
+    )
+    forces_msm_staticcell = jax.jit(evaluation_fns_staticcell["forces"])(
+        pos, chg
+    )
     # TODO: Define the error tolerances somewhere?
     assert calc_relative_rmse_percent(forces_msm_staticcell, forces_ref) < 1.0
 
@@ -203,9 +216,9 @@ def test_nonperiodic_triclinic(fixture_nonperiodic_triclinic):
         dynamic_cell=True,
         n_particles=n_particles,
     )
-    calc_energy, calc_forces, _, _, _ = create_msm(params_dyncell)
-    energy_msm_dyncell = jax.jit(calc_energy)(pos, chg, cell)
-    forces_msm_dyncell = jax.jit(calc_forces)(pos, chg, cell)
+    evaluation_fns_dyncell = create_msm(params_staticcell)
+    energy_msm_dyncell = jax.jit(evaluation_fns_dyncell["energy"])(pos, chg)
+    forces_msm_dyncell = jax.jit(evaluation_fns_dyncell["forces"])(pos, chg)
     assert onp.isclose(energy_msm_dyncell, energy_msm_staticcell, atol=ATOL)
     assert onp.allclose(forces_msm_dyncell, forces_msm_staticcell, atol=ATOL)
 
@@ -234,9 +247,13 @@ def test_periodic_cubic(fixture_periodic_cubic):
         dynamic_cell=False,
         n_particles=n_particles,
     )
-    calc_energy, calc_forces, _, _ = create_msm(params_staticcell)
-    energy_msm_staticcell = jax.jit(calc_energy)(pos, chg)
-    forces_msm_staticcell = jax.jit(calc_forces)(pos, chg)
+    evaluation_fns_staticcell = create_msm(params_staticcell)
+    energy_msm_staticcell = jax.jit(evaluation_fns_staticcell["energy"])(
+        pos, chg
+    )
+    forces_msm_staticcell = jax.jit(evaluation_fns_staticcell["forces"])(
+        pos, chg
+    )
     # TODO: Define the error tolerances somewhere?
     assert calc_relative_rmse_percent(forces_msm_staticcell, forces_ref) < 1.0
 
@@ -249,9 +266,9 @@ def test_periodic_cubic(fixture_periodic_cubic):
         dynamic_cell=True,
         n_particles=n_particles,
     )
-    calc_energy, calc_forces, _, _, _ = create_msm(params_dyncell)
-    energy_msm_dyncell = jax.jit(calc_energy)(pos, chg, cell)
-    forces_msm_dyncell = jax.jit(calc_forces)(pos, chg, cell)
+    evaluation_fns_dyncell = create_msm(params_staticcell)
+    energy_msm_dyncell = jax.jit(evaluation_fns_dyncell["energy"])(pos, chg)
+    forces_msm_dyncell = jax.jit(evaluation_fns_dyncell["forces"])(pos, chg)
     assert onp.isclose(energy_msm_dyncell, energy_msm_staticcell, atol=ATOL)
     assert onp.allclose(forces_msm_dyncell, forces_msm_staticcell, atol=ATOL)
 
@@ -280,9 +297,13 @@ def test_periodic_ortho_diff_sides(fixture_periodic_ortho_diff_sides):
         dynamic_cell=False,
         n_particles=n_particles,
     )
-    calc_energy, calc_forces, _, _ = create_msm(params_staticcell)
-    energy_msm_staticcell = jax.jit(calc_energy)(pos, chg)
-    forces_msm_staticcell = jax.jit(calc_forces)(pos, chg)
+    evaluation_fns_staticcell = create_msm(params_staticcell)
+    energy_msm_staticcell = jax.jit(evaluation_fns_staticcell["energy"])(
+        pos, chg
+    )
+    forces_msm_staticcell = jax.jit(evaluation_fns_staticcell["forces"])(
+        pos, chg
+    )
     # TODO: Define the error tolerances somewhere?
     assert calc_relative_rmse_percent(forces_msm_staticcell, forces_ref) < 1.0
 
@@ -295,9 +316,9 @@ def test_periodic_ortho_diff_sides(fixture_periodic_ortho_diff_sides):
         dynamic_cell=True,
         n_particles=n_particles,
     )
-    calc_energy, calc_forces, _, _, _ = create_msm(params_dyncell)
-    energy_msm_dyncell = jax.jit(calc_energy)(pos, chg, cell)
-    forces_msm_dyncell = jax.jit(calc_forces)(pos, chg, cell)
+    evaluation_fns_dyncell = create_msm(params_staticcell)
+    energy_msm_dyncell = jax.jit(evaluation_fns_dyncell["energy"])(pos, chg)
+    forces_msm_dyncell = jax.jit(evaluation_fns_dyncell["forces"])(pos, chg)
     assert onp.isclose(energy_msm_dyncell, energy_msm_staticcell, atol=ATOL)
     assert onp.allclose(forces_msm_dyncell, forces_msm_staticcell, atol=ATOL)
 
@@ -328,9 +349,13 @@ def test_periodic_triclinic(fixture_periodic_triclinic):
         n_particles=n_particles,
         supercell_diag=supercell_diag,  # TODO: Automatic? Consistent handling in all tests?
     )
-    calc_energy, calc_forces, _, _ = create_msm(params_staticcell)
-    energy_msm_staticcell = jax.jit(calc_energy)(pos, chg)
-    forces_msm_staticcell = jax.jit(calc_forces)(pos, chg)
+    evaluation_fns_staticcell = create_msm(params_staticcell)
+    energy_msm_staticcell = jax.jit(evaluation_fns_staticcell["energy"])(
+        pos, chg
+    )
+    forces_msm_staticcell = jax.jit(evaluation_fns_staticcell["forces"])(
+        pos, chg
+    )
     # TODO: Define the error tolerances somewhere?
     assert calc_relative_rmse_percent(forces_msm_staticcell, forces_ref) < 1.0
 
@@ -344,8 +369,8 @@ def test_periodic_triclinic(fixture_periodic_triclinic):
         n_particles=n_particles,
         supercell_diag=supercell_diag,  # TODO: Automatic? Consistent handling in all tests?
     )
-    calc_energy, calc_forces, _, _, _ = create_msm(params_dyncell)
-    energy_msm_dyncell = jax.jit(calc_energy)(pos, chg, cell)
-    forces_msm_dyncell = jax.jit(calc_forces)(pos, chg, cell)
+    evaluation_fns_dyncell = create_msm(params_staticcell)
+    energy_msm_dyncell = jax.jit(evaluation_fns_dyncell["energy"])(pos, chg)
+    forces_msm_dyncell = jax.jit(evaluation_fns_dyncell["forces"])(pos, chg)
     assert onp.isclose(energy_msm_dyncell, energy_msm_staticcell, atol=ATOL)
     assert onp.allclose(forces_msm_dyncell, forces_msm_staticcell, atol=ATOL)

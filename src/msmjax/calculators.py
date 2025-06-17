@@ -497,15 +497,16 @@ def create_msm(
         )
 
     # TODO: Option to return fns for short- and long-range part separately?
-    # TODO: calc_stress in dynamic-cell case
+
+    evaluation_functions = {
+        "energy": calc_energy,
+        "forces": calc_forces,
+        "energy_and_forces": calc_energy_and_forces,
+        "charge_gradient": calc_charge_gradient,
+    }
 
     if not params.dynamic_cell:
-        return (
-            calc_energy,
-            calc_forces,
-            calc_energy_and_forces,
-            calc_charge_gradient,
-        )
+        return evaluation_functions
 
     def calc_energy_from_scaled(
         scaled_positions, charges, cell, neighborlist=None
@@ -530,13 +531,8 @@ def create_msm(
             jnp.linalg.det(cell)
         )
 
-    return (
-        calc_energy,
-        calc_forces,
-        calc_energy_and_forces,
-        calc_charge_gradient,
-        calc_stress,
-    )
+    evaluation_functions["stress"] = calc_stress
+    return evaluation_functions
 
 
 def check_cutoffs_and_spacings(cell: ArrayLike, params: MSMParams):
