@@ -131,7 +131,10 @@ def test_combined(fixture_system_definition):
     forces_msm_staticcell = jax.jit(evaluation_fns_staticcell["forces"])(
         pos, chg
     )
-    # TODO: Add checks for energy, stress, chargegrad
+    chargegrad_msm_staticcell = jax.jit(
+        evaluation_fns_staticcell["charge_gradient"]
+    )(pos, chg)
+    # TODO: Add checks for energy, energy+forces, stress, chargegrad?
     # TODO: Define the error tolerances somewhere?
     assert calc_relative_rmse_percent(forces_msm_staticcell, forces_ref) < 1.0
 
@@ -145,10 +148,21 @@ def test_combined(fixture_system_definition):
         n_particles=n_particles,
         supercell_diag=supercell_diag,
     )
-    calc_energy, calc_forces, _, _, _ = create_msm(params_dyncell)
-    evaluation_fns_dyncell = create_msm(params_staticcell)
-    energy_msm_dyncell = jax.jit(evaluation_fns_dyncell["energy"])(pos, chg)
-    forces_msm_dyncell = jax.jit(evaluation_fns_dyncell["forces"])(pos, chg)
-    # TODO: Add checks for energy, stress, chargegrad
+    evaluation_fns_dyncell = create_msm(params_dyncell)
+    energy_msm_dyncell = jax.jit(evaluation_fns_dyncell["energy"])(
+        pos, chg, cell
+    )
+    forces_msm_dyncell = jax.jit(evaluation_fns_dyncell["forces"])(
+        pos, chg, cell
+    )
+    chargegrad_msm_dyncell = jax.jit(
+        evaluation_fns_dyncell["charge_gradient"]
+    )(pos, chg, cell)
+    # TODO: Add checks for energy, energy+forces, stress, chargegrad?
     assert onp.isclose(energy_msm_dyncell, energy_msm_staticcell, atol=ATOL)
     assert onp.allclose(forces_msm_dyncell, forces_msm_staticcell, atol=ATOL)
+    assert onp.allclose(
+        chargegrad_msm_dyncell, chargegrad_msm_staticcell, atol=ATOL
+    )
+
+    stress_msm = jax.jit(evaluation_fns_dyncell["stress"])(pos, chg, cell)

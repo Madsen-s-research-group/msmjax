@@ -454,6 +454,11 @@ def create_msm(
         # TODO: Raise an error if
         #  - cell arg is given, but static and ortho cell (cell_mode="ortho" and dynamic_cell=False),
         #  - cell arg is not given, but dynamic cell?
+        if params.dynamic_cell and cell is None:
+            raise ValueError(
+                "MSM was set up with `dynamic_cell=True`, "
+                "but no cell argument given to the evaluation function"
+            )
         if params.use_neighborlist:
             # TODO: Better error message.
             if neighborlist is None:
