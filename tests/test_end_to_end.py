@@ -15,7 +15,7 @@ from msmjax.utils.benchmarking import calc_relative_rmse_percent
 ATOL = 5.0e-6
 # TODO: Use fixtures for these?
 LEVEL_ONE_SPACINGS = 1.0
-LEVEL_ZERO_CUTOFF = 3.0
+LEVEL_ZERO_CUTOFF = 4.0  # TODO
 
 
 @pytest.fixture(scope="module")
@@ -57,7 +57,7 @@ def fixture_periodic_cubic(fixture_datadir):
     data = onp.load(fixture_datadir / "periodic_cubic.npz")
     pbc = (True,) * 3
     cell_mode = "ortho"
-    supercell_diag = None
+    supercell_diag = (2, 2, 2)
     return data, pbc, cell_mode, supercell_diag
 
 
@@ -68,7 +68,7 @@ def fixture_periodic_ortho_diff_sides(fixture_datadir):
     )
     pbc = (True,) * 3
     cell_mode = "ortho"
-    supercell_diag = None
+    supercell_diag = (1, 1, 2)
     return data, pbc, cell_mode, supercell_diag
 
 
@@ -111,6 +111,7 @@ def test_combined(fixture_system_definition):
     cell = data["cell"]
     energy_ref = data["energy"]
     forces_ref = data["forces"]
+    chargegrad_ref = data["charge_gradient"]
 
     (n_particles, n_dim) = pos.shape
 
@@ -136,7 +137,11 @@ def test_combined(fixture_system_definition):
     )(pos, chg)
     # TODO: Add checks for energy, energy+forces, stress, chargegrad?
     # TODO: Define the error tolerances somewhere?
-    assert calc_relative_rmse_percent(forces_msm_staticcell, forces_ref) < 1.0
+    assert calc_relative_rmse_percent(forces_msm_staticcell, forces_ref) < 0.3
+    assert (
+        calc_relative_rmse_percent(chargegrad_msm_staticcell, chargegrad_ref)
+        < 0.3
+    )
 
     params_dyncell = set_up_msm_params(
         cell=cell,

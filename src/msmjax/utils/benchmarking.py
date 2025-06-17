@@ -147,6 +147,7 @@ def write_lammps_data(filename, cell, positions, charges) -> None:
 
 def parse_energy_from_lammps_log(filename) -> float:
     """Get the energy from LAMMPS log file"""
+    # TODO: unify with the other log parser function?
     with open(filename, "r") as f:
         for line in f:
             if "PotEng" in line:
@@ -155,6 +156,34 @@ def parse_energy_from_lammps_log(filename) -> float:
                 return energy
 
     raise ValueError("EOF reached without finding energy")
+
+
+def parse_lammps_log(filename) -> tuple[float, onp.ndarray]:
+    """Get energy and other results from LAMMPS log file"""
+    # TODO: unify with the other log parser function?
+    with open(filename, "r") as f:
+        for line in f:
+            if "PotEng" in line:
+                line_header = line
+                line_values = f.readline()
+                resultsdict = {
+                    k: float(v)
+                    for k, v in zip(line_header.split(), line_values.split())
+                }
+                energy = resultsdict["PotEng"]
+                # TODO: minus or not?
+                stress = -onp.array(
+                    [
+                        resultsdict[k]
+                        for k in ["Pxx", "Pyy", "Pzz", "Pxy", "Pxz", "Pyz"]
+                    ]
+                )
+                return energy, stress
+
+    raise ValueError(
+        "Error parsing LAMMPS log file: EOF reached without finding thermo "
+        "output line"
+    )
 
 
 # We want to calculate the value of (q_i * q_j) / r_{ij}, in whatever units
@@ -166,9 +195,15 @@ def parse_energy_from_lammps_log(filename) -> float:
 # Angstrom, eV, Coulomb, in SI units, the conversion factor is:
 CONVERSION_FACTOR = (4 * onp.pi) * 8.8541878128 / 1.602176634 / 10**3
 
+# TODO: Explain where this value comes from
+CONVERSION_FACTOR_STRESS = 4.334_488_014_869e-08
 
-def make_lammps_input_text(
-    filename_data, filename_dump, max_neighbors_one_atom
+
+def make_lammps_input_text_pppm(
+    filename_data,
+    filename_dump,
+    accuracy: float,
+    max_neighbors_one_atom: int | None,
 ):
     """Write LAMMPS input script"""
     if max_neighbors_one_atom is None:
@@ -182,21 +217,23 @@ dimension 3
 boundary p p p
 atom_style charge
 pair_style coul/long 10.0
-kspace_style pppm 1e-5
+kspace_style pppm {accuracy:.10g}
 {neigh_line}
 
 # 2) System definition
 read_data {filename_data}
-kspace_style pppm 1e-5  # need to reinitialize after reading data to work for triclinic cells
+kspace_style pppm {accuracy:.10g}  # need to reinitialize after reading data to work for triclinic cells
 
 # 3) Simulation settings
 mass 1 1
 pair_coeff * *
 
 # 4) Output settings
+compute 1 all pressure NULL virial
+compute peratom all pe/atom
 thermo 1
-thermo_style custom pe
-dump mydmp all custom 1 {filename_dump} id type x y z fx fy fz
+thermo_style custom pe pxx pyy pzz pxy pxz pyz
+dump mydmp all custom 1 {filename_dump} id type x y z fx fy fz c_peratom
 
 # 5) Run
 run 0
@@ -204,13 +241,15 @@ run 0
     return text
 
 
-def evaluate_structure_with_lammps_p3m(
+def eval_lammps_pppm(
     positions: npt.ArrayLike,
     charges: npt.ArrayLike,
     cell: npt.ArrayLike,
     lammps_executable: str = "lmp",
-    max_neighbors_one_atom: int = None,
-) -> Tuple[float, np.ndarray]:
+    accuracy: float = 1.0e-5,
+    max_neighbors_one_atom: int | None = None,
+    show_stdout=False,
+) -> Tuple[float, np.ndarray, np.ndarray, np.ndarray]:
     """Wrapper to compute periodic electrostatic energy, forces in LAMMPS with p3m
 
     Args:
@@ -240,22 +279,37 @@ def evaluate_structure_with_lammps_p3m(
                 positions=positions,
                 charges=charges,
             )
-            lammps_input_text = make_lammps_input_text(
+            lammps_input_text = make_lammps_input_text_pppm(
                 filename_data=filename_lammps_data,
                 filename_dump=filename_lammps_dump,
+                accuracy=accuracy,
                 max_neighbors_one_atom=max_neighbors_one_atom,
             )
             with open(filename_lammps_in, "w") as f:
                 f.write(lammps_input_text)
 
-            subprocess.run(
-                [lammps_executable, "-in", filename_lammps_in],
-                stdout=subprocess.DEVNULL,
-            )
-            energy = parse_energy_from_lammps_log(filename_lammps_log)
-            forces = ase.io.read(filename_lammps_dump).calc.results["forces"]
+            subprocess_args = [lammps_executable, "-in", filename_lammps_in]
+            if show_stdout:
+                subprocess.run(subprocess_args)
+            else:
+                subprocess.run(subprocess_args, stdout=subprocess.DEVNULL)
 
-    return CONVERSION_FACTOR * energy, CONVERSION_FACTOR * forces
+            energy, stress = parse_lammps_log(filename_lammps_log)
+            atoms_loaded_dump = ase.io.read(filename_lammps_dump)
+            forces = atoms_loaded_dump.calc.results["forces"]
+            # TODO: Make sure the formula for this is actually correct
+            #  (especially considering interactions of atoms with their own
+            #  images under pbc?)
+            energy_peratom = atoms_loaded_dump.arrays["c_peratom"].squeeze()
+            charge_gradient = 2 * energy_peratom / charges
+
+    # TODO: stress unit conversion
+    return (
+        CONVERSION_FACTOR * energy,
+        CONVERSION_FACTOR * forces,
+        CONVERSION_FACTOR * charge_gradient,
+        CONVERSION_FACTOR_STRESS * stress,
+    )
 
 
 def make_lammps_input_text_msm(
