@@ -13,6 +13,9 @@ from msmjax.utils.benchmarking import calc_relative_rmse_percent
 
 # For closeness checks to pass in single precision
 ATOL = 5.0e-6
+# TODO: Use fixtures for these?
+LEVEL_ONE_SPACINGS = 1.0
+LEVEL_ZERO_CUTOFF = 3.0
 
 
 @pytest.fixture(scope="module")
@@ -22,54 +25,125 @@ def fixture_datadir() -> Path:
 
 @pytest.fixture(scope="module")
 def fixture_nonperiodic_cubic(fixture_datadir):
-    # TODO: return the NpzFile instance
-    #  or directly pos, chg, cell, energy_ref, forces_ref, ...?
-    return onp.load(fixture_datadir / "nonperiodic_cubic.npz")
+    data = onp.load(fixture_datadir / "nonperiodic_cubic.npz")
+    cell_mode = "ortho"
+    pbc = (False,) * 3
+    return data, cell_mode, pbc
 
 
 @pytest.fixture(scope="module")
 def fixture_nonperiodic_ortho_diff_sides(fixture_datadir):
-    # TODO: return the NpzFile instance
-    #  or directly pos, chg, cell, energy_ref, forces_ref, ...?
-    return onp.load(
+    data = onp.load(
         fixture_datadir / "nonperiodic_ortho-different-sidelengths.npz"
     )
+    cell_mode = "ortho"
+    pbc = (False,) * 3
+    return data, cell_mode, pbc
 
 
 @pytest.fixture(scope="module")
 def fixture_nonperiodic_triclinic(fixture_datadir):
-    # TODO: return the NpzFile instance
-    #  or directly pos, chg, cell, energy_ref, forces_ref, ...?
-    return onp.load(fixture_datadir / "nonperiodic_triclinic.npz")
+    data = onp.load(fixture_datadir / "nonperiodic_triclinic.npz")
+    cell_mode = "triclinic"
+    pbc = (False,) * 3
+    return data, cell_mode, pbc
 
 
 @pytest.fixture(scope="module")
 def fixture_periodic_cubic(fixture_datadir):
-    # TODO: return the NpzFile instance
-    #  or directly pos, chg, cell, energy_ref, forces_ref, ...?
-    return onp.load(fixture_datadir / "periodic_cubic.npz")
+    data = onp.load(fixture_datadir / "periodic_cubic.npz")
+    cell_mode = "ortho"
+    pbc = (True,) * 3
+    return data, cell_mode, pbc
 
 
 @pytest.fixture(scope="module")
 def fixture_periodic_ortho_diff_sides(fixture_datadir):
-    # TODO: return the NpzFile instance
-    #  or directly pos, chg, cell, energy_ref, forces_ref, ...?
-    return onp.load(
+    data = onp.load(
         fixture_datadir / "periodic_ortho-different-sidelengths.npz"
     )
+    cell_mode = "ortho"
+    pbc = (True,) * 3
+    return data, cell_mode, pbc
 
 
 @pytest.fixture(scope="module")
 def fixture_periodic_triclinic(fixture_datadir):
-    # TODO: return the NpzFile instance
-    #  or directly pos, chg, cell, energy_ref, forces_ref, ...?
-    return onp.load(fixture_datadir / "periodic_triclinic.npz")
+    data = onp.load(fixture_datadir / "periodic_triclinic.npz")
+    cell_mode = "triclinic"
+    pbc = (True,) * 3
+    return data, cell_mode, pbc
 
 
-# TODO: Test static/dynamic cell?
 # TODO: Test different grid spacings along different axes?
 # TODO: Test with/without neighbor list?
 # TODO: Test serialization/deserialization of MSMParams (in this module or elsewhere?)
+
+
+@pytest.fixture(scope="module")
+def fixture_system_definition(request):
+    """Helper fixture for requesting a specific structure and setup"""
+    return request.getfixturevalue(request.param)
+
+
+@pytest.mark.parametrize(
+    "fixture_system_definition",
+    [
+        "fixture_nonperiodic_cubic",
+        "fixture_nonperiodic_ortho_diff_sides",
+        "fixture_nonperiodic_triclinic",
+        "fixture_periodic_cubic",
+        "fixture_periodic_ortho_diff_sides",
+        "fixture_periodic_triclinic",
+    ],
+    indirect=True,
+)
+def test_combined(fixture_system_definition):
+    data, cell_mode, pbc = fixture_system_definition
+    pos = data["positions"]
+    chg = data["charges"]
+    cell = data["cell"]
+    energy_ref = data["energy"]
+    forces_ref = data["forces"]
+
+    (n_particles, n_dim) = pos.shape
+
+    params_staticcell = set_up_msm_params(
+        cell=cell,
+        level_one_spacings=LEVEL_ONE_SPACINGS,
+        level_zero_cutoff=LEVEL_ZERO_CUTOFF,
+        pbc=pbc,
+        cell_mode=cell_mode,
+        dynamic_cell=False,
+        n_particles=n_particles,
+    )
+    evaluation_fns_staticcell = create_msm(params_staticcell)
+    energy_msm_staticcell = jax.jit(evaluation_fns_staticcell["energy"])(
+        pos, chg
+    )
+    forces_msm_staticcell = jax.jit(evaluation_fns_staticcell["forces"])(
+        pos, chg
+    )
+    # TODO: Add checks for energy, stress, chargegrad
+    # TODO: Define the error tolerances somewhere?
+    assert calc_relative_rmse_percent(forces_msm_staticcell, forces_ref) < 1.0
+
+    params_dyncell = set_up_msm_params(
+        cell=cell,
+        level_one_spacings=LEVEL_ONE_SPACINGS,
+        level_zero_cutoff=LEVEL_ZERO_CUTOFF,
+        pbc=pbc,
+        cell_mode=cell_mode,
+        dynamic_cell=True,
+        n_particles=n_particles,
+    )
+    calc_energy, calc_forces, _, _, _ = create_msm(params_dyncell)
+    evaluation_fns_dyncell = create_msm(params_staticcell)
+    energy_msm_dyncell = jax.jit(evaluation_fns_dyncell["energy"])(pos, chg)
+    forces_msm_dyncell = jax.jit(evaluation_fns_dyncell["forces"])(pos, chg)
+    # TODO: Add checks for energy, stress, chargegrad
+    assert onp.isclose(energy_msm_dyncell, energy_msm_staticcell, atol=ATOL)
+    assert onp.allclose(forces_msm_dyncell, forces_msm_staticcell, atol=ATOL)
 
 
 def test_nonperiodic_cubic(fixture_nonperiodic_cubic):
