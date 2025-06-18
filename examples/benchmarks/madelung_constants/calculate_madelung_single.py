@@ -83,10 +83,14 @@ if __name__ == "__main__":
     print("#" * 72)
     print()
 
-    RANGE_OF_CUTOFFS = (
-        onp.concatenate([onp.arange(2, 3.21, 0.2), onp.arange(3.2, 4.41, 0.4)])
-        * d_min_cation_anion
-    )
+    # TODO:
+    # RANGE_OF_CUTOFFS = (
+    #     onp.concatenate([onp.arange(2, 3.21, 0.2), onp.arange(3.2, 4.41, 0.4)])
+    #     * d_min_cation_anion
+    # )
+    # TODO: increase back to larger value for production
+    # RANGE_OF_CUTOFFS = onp.arange(2, 4.01, 0.25) * d_min_cation_anion
+    RANGE_OF_CUTOFFS = onp.arange(2, 3.26, 0.25) * d_min_cation_anion
 
     # Try starting with a grid spacing equal to the minimum cation-anion distance.
     # But if this is more than half the (smallest) lattice constant, use half the
@@ -120,14 +124,14 @@ if __name__ == "__main__":
             dynamic_cell=False,
         )
         # TODO: one value per direction?
-        actual_h = tmp_msm_params.grid_spacings[1][0]
+        actual_spacings = tmp_msm_params.grid_spacings[1]
         if tmp_msm_params.grids_defined_on_unitcube:
             # TODO: introduce `scaled_grid_spacings` to do away with the need for this?
             # TODO: one value per direction?
-            actual_h *= side_lengths[0]
+            actual_spacings *= side_lengths
         print(
-            f"- Actual spacing after adjusting for pbcs: "
-            f"h/d_min = {actual_h / d_min_cation_anion:.2f}"
+            f"- Actual spacings (along each direction) after adjusting for "
+            f"pbcs: h/d_min = {actual_spacings / d_min_cation_anion}"
         )
         # print(f"- {p=}:") # TODO
 
@@ -153,7 +157,7 @@ if __name__ == "__main__":
 
             msm_params = set_up_msm_params(
                 cell=cell,
-                level_one_spacings=actual_h,
+                level_one_spacings=actual_spacings,
                 level_zero_cutoff=level_zero_cutoff,
                 p=p,
                 pbc=PBC,
@@ -185,10 +189,8 @@ if __name__ == "__main__":
         results = pd.DataFrame(
             data={
                 "compound": [structurekey] * len(RANGE_OF_CUTOFFS),
-                # TODO: save multiple spacing values in triclinic cases?
-                "level_one_gridspacing": onp.full_like(
-                    RANGE_OF_CUTOFFS, actual_h
-                ),
+                # TODO: Save multiple spacing values?
+                "level_one_gridspacing": actual_spacings[0],
                 "p": onp.full_like(RANGE_OF_CUTOFFS, p, dtype=int),
                 "max_grid_level": onp.full_like(
                     RANGE_OF_CUTOFFS, msm_params.max_grid_level, dtype=int
@@ -199,7 +201,10 @@ if __name__ == "__main__":
                 "madelung_value": madelung_consts_calculated,
             }
         )
-        outfile = outdir / ("results_" + f"h-{actual_h:.2f}_p-{p}" + ".csv")
+        # TODO: Multiple spacing values (one per direction)?
+        outfile = outdir / (
+            "results_" + f"h-{actual_spacings[0]:.2f}_p-{p}" + ".csv"
+        )
         print(f"- Saving results to {outfile}.")
         results.to_csv(outfile, index=False)
         list_of_resultsfiles.append(outfile)
@@ -244,7 +249,7 @@ if __name__ == "__main__":
 
     for suffix in ["png", "pdf"]:
         outfile_plot = outdir / (
-            "madelung_const_vs_cutoff_symlog" + "." + suffix
+            "madelung_const_vs_cutoff_symlogscale" + "." + suffix
         )
         print(f"- Saving plot to {outfile_plot}")
         fig.savefig(outfile_plot)
@@ -254,22 +259,24 @@ if __name__ == "__main__":
     LINEWIDTH_TWIN_AXES = 1.5  # TODO: define earlier?
 
     fig, ax = plt.subplots()
-    ax.set_title(STRUCTURES_INFO[structurekey]["nice_label"])
+    fig.subplots_adjust(top=0.725)
+    # ax.set_title(STRUCTURES_INFO[structurekey]["nice_label"])  # TODO
+    fig.suptitle(STRUCTURES_INFO[structurekey]["nice_label"])
     ax.set_xlabel(r"$r_{\text{cut}}^{(0)}$ / $d_{\text{min}}$")
     ax.set_ylabel(r"$|M - M_{\text{ref}}|$")
 
     twin1 = ax.twiny()
+    twin1.tick_params(axis="x", width=LINEWIDTH_TWIN_AXES, pad=0)
     twin2 = ax.twiny()
-    twin2.spines["top"].set_position(("axes", 1.1))
+    twin2.spines["top"].set_position(("axes", 1.08))
+    twin2.tick_params(axis="x", width=LINEWIDTH_TWIN_AXES, pad=0)
     twin3 = ax.twiny()
-    twin3.spines["top"].set_position(("axes", 1.2))
+    twin3.spines["top"].set_position(("axes", 1.16))
+    twin3.tick_params(axis="x", width=LINEWIDTH_TWIN_AXES, pad=0)
+    twin3.set_xlabel(r"largest included cutoff / $d_{\text{min}}$")
     axes_twin = [twin1, twin2, twin3]
 
-    # TODO: axis label for (one of) the twin axes
-
-    # TODO: different marker styles
-    # TODO: Second x-axis that shows the largest effective cutoff in the system?
-
+    # TODO: different marker styles?
     for resultsfile, ax_twin in zip(list_of_resultsfiles, axes_twin):
         loaded = pd.read_csv(resultsfile)
         h = loaded["level_one_gridspacing"].values[0]
@@ -299,14 +306,12 @@ if __name__ == "__main__":
         ax_twin.spines["top"].set_color(graph.get_color())
         ax_twin.spines["top"].set_linewidth(LINEWIDTH_TWIN_AXES)
         ax_twin.tick_params(axis="x", colors=graph.get_color())
-        ax_twin.tick_params(
-            axis="x", width=LINEWIDTH_TWIN_AXES, colors=graph.get_color()
-        )
     ax.set_yscale("log")
     ax.legend()
-    fig.tight_layout()  # TODO
 
     for suffix in ["png", "pdf"]:
-        outfile_plot = outdir / ("madelung_const_vs_cutoff_log" + "." + suffix)
+        outfile_plot = outdir / (
+            "madelung_const_vs_cutoff_logscale" + "." + suffix
+        )
         print(f"- Saving plot to {outfile_plot}")
         fig.savefig(outfile_plot)
