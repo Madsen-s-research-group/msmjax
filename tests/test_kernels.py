@@ -20,16 +20,13 @@ from typing import Callable, List
 import jax
 import jax.numpy as jnp
 import pytest
+from jax import config
 
 from msmjax.kernels import SoftenerOneOverR, split_one_over_r
 
 # TODO: Set this and no preallocate in a consistent way (either both via
-#  environment variable, or both via jax.config.update)
-jax.config.update("jax_enable_x64", True)
-
-# TODO: Some of the tests in this module take extremely long (high derivatives
-#  are expensive to evaluate) => don't go to as high derivatives? Bbut make
-#  sure that the things supposed to be tested still get tested...
+#  environment variable, or both via config.update)
+config.update("jax_enable_x64", True)
 
 
 @pytest.fixture(scope="module")
@@ -106,12 +103,12 @@ def test_softening_function_continuity_at_one(
     """
     # Check the function itself
     target = 1.0
-    assert jnp.isclose(fixture_softening_function(1.0), target)
+    assert jnp.isclose(jax.jit(fixture_softening_function)(1.0), target)
     # ...and its derivatives.
     for k in range(1, fixture_softening_function.order):
         target *= -k
         assert jnp.isclose(
-            fixture_softening_function_derivatives[k](1.0), target
+            jax.jit(fixture_softening_function_derivatives[k])(1.0), target
         )
 
 
@@ -123,13 +120,10 @@ def test_softening_function_derivatives_at_zero(
     The condition being tested is a theoretical requirement on the softening
     function proposed in Ref. [1] and contained in Section II.A thereof.
 
-    Since this test involves derivatives of very high order, it is restricted
-    to only lower-order softening functions for run time reasons.
-
     For high orders p, this takes a long time.
     """
     for dgamma in fixture_softening_function_derivatives[1::2]:
-        assert jnp.isclose(dgamma(0.0), 0.0)
+        assert jnp.isclose(jax.jit(dgamma)(0.0), 0.0)
 
 
 def test_softening_function_high_deriv_vanishes_globally(
@@ -145,9 +139,9 @@ def test_softening_function_high_deriv_vanishes_globally(
     """
     range_of_rho = jnp.linspace(0.0, 0.99, 100)
     assert jnp.allclose(
-        jax.vmap(fixture_softening_function_derivatives[2 * fixture_p])(
-            range_of_rho
-        ),
+        jax.jit(
+            jax.vmap(fixture_softening_function_derivatives[2 * fixture_p])
+        )(range_of_rho),
         0.0,
     )
 
