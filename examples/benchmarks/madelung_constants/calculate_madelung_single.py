@@ -84,7 +84,7 @@ if __name__ == "__main__":
     print()
 
     RANGE_OF_CUTOFFS = (
-        onp.concatenate([onp.arange(2, 3.61, 0.2), onp.arange(3.6, 5.21, 0.4)])
+        onp.concatenate([onp.arange(2, 3.21, 0.2), onp.arange(3.2, 4.41, 0.4)])
         * d_min_cation_anion
     )
 
@@ -97,14 +97,14 @@ if __name__ == "__main__":
 
     list_of_spacings = [
         base_grid_spacing,
-        base_grid_spacing,
         0.5 * base_grid_spacing,
-        0.5 * base_grid_spacing,
+        0.25 * base_grid_spacing,
     ]
-    list_of_ps = [4, 6, 6, 8]
+    # list_of_ps = [4, 6, 6, 8]  # TODO
+    p = 6  # TODO
     list_of_resultsfiles = []
 
-    for h, p in zip(list_of_spacings, list_of_ps):
+    for h in list_of_spacings:
         print(
             f"- Tentative grid spacing: h/d_min = {h / d_min_cation_anion:.2f}"
         )
@@ -113,7 +113,7 @@ if __name__ == "__main__":
             cell=cell,
             level_one_spacings=h,
             level_zero_cutoff=RANGE_OF_CUTOFFS[0],  # Does not matter here
-            p=p,
+            p=4,  # Does not matter here
             pbc=PBC,
             cell_mode=STRUCTURES_INFO[structurekey]["cell_mode"],
             supercell_diag=None,  # Does not matter here
@@ -129,7 +129,7 @@ if __name__ == "__main__":
             f"- Actual spacing after adjusting for pbcs: "
             f"h/d_min = {actual_h / d_min_cation_anion:.2f}"
         )
-        print(f"- {p=}:")
+        # print(f"- {p=}:") # TODO
 
         madelung_consts_calculated = []
         highest_level_cutoffs = []
@@ -217,14 +217,11 @@ if __name__ == "__main__":
 
     for resultsfile in list_of_resultsfiles:
         loaded = pd.read_csv(resultsfile)
-
         h = loaded["level_one_gridspacing"].values[0]
         p = loaded["p"].values[0]
         d_min_cation_anion = loaded["d_min"].values[0]
-
         cutoffs = loaded["level_zero_cutoff"].values
         madelung_values = loaded["madelung_value"].values
-
         cutoffs_relative = cutoffs / d_min_cation_anion
         target_value = STRUCTURES_INFO[loaded["compound"].values[0]][
             "target_value"
@@ -252,42 +249,62 @@ if __name__ == "__main__":
         print(f"- Saving plot to {outfile_plot}")
         fig.savefig(outfile_plot)
 
+    # TODO: define earlier? Solve differently (tight_layout...)?
+    FIGSIZE = (6.4, 5.6)
+    LINEWIDTH_TWIN_AXES = 1.5  # TODO: define earlier?
+
     fig, ax = plt.subplots()
     ax.set_title(STRUCTURES_INFO[structurekey]["nice_label"])
     ax.set_xlabel(r"$r_{\text{cut}}^{(0)}$ / $d_{\text{min}}$")
     ax.set_ylabel(r"$|M - M_{\text{ref}}|$")
 
+    twin1 = ax.twiny()
+    twin2 = ax.twiny()
+    twin2.spines["top"].set_position(("axes", 1.1))
+    twin3 = ax.twiny()
+    twin3.spines["top"].set_position(("axes", 1.2))
+    axes_twin = [twin1, twin2, twin3]
+
+    # TODO: axis label for (one of) the twin axes
+
     # TODO: different marker styles
     # TODO: Second x-axis that shows the largest effective cutoff in the system?
 
-    for resultsfile in list_of_resultsfiles:
+    for resultsfile, ax_twin in zip(list_of_resultsfiles, axes_twin):
         loaded = pd.read_csv(resultsfile)
-
         h = loaded["level_one_gridspacing"].values[0]
         p = loaded["p"].values[0]
         d_min_cation_anion = loaded["d_min"].values[0]
-
         cutoffs = loaded["level_zero_cutoff"].values
+        cutoffs_at_max_level = loaded["highest_cutoff"]
         madelung_values = loaded["madelung_value"].values
-
         cutoffs_relative = cutoffs / d_min_cation_anion
+        cutoffs_at_max_level_relative = (
+            cutoffs_at_max_level / d_min_cation_anion
+        )
         target_value = STRUCTURES_INFO[loaded["compound"].values[0]][
             "target_value"
         ]
         deviations = madelung_values - target_value
-
-        linthresh = min(linthresh, min(onp.abs(deviations)))
-
         label = (
             f"$h_1 = {h / d_min_cation_anion:.2f} \, " + r"d_{\text{min}}$,"
         )
         label += " " + f"$p = {p}$"
-
-        ax.plot(cutoffs_relative, onp.abs(deviations), marker="x", label=label)
-
+        (graph,) = ax.plot(
+            cutoffs_relative, onp.abs(deviations), marker="x", label=label
+        )
+        ax_twin.scatter(
+            cutoffs_at_max_level_relative, onp.abs(deviations), marker="none"
+        )
+        ax_twin.spines["top"].set_color(graph.get_color())
+        ax_twin.spines["top"].set_linewidth(LINEWIDTH_TWIN_AXES)
+        ax_twin.tick_params(axis="x", colors=graph.get_color())
+        ax_twin.tick_params(
+            axis="x", width=LINEWIDTH_TWIN_AXES, colors=graph.get_color()
+        )
     ax.set_yscale("log")
-
     ax.legend()
+    fig.tight_layout()  # TODO
 
     for suffix in ["png", "pdf"]:
         outfile_plot = outdir / ("madelung_const_vs_cutoff_log" + "." + suffix)
