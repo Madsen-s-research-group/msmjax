@@ -5,7 +5,7 @@ import numpy as onp
 # From https://doi.org/10.1063/1.1744060
 STRUCTURES_INFO = {
     "NaCl-conventional": {
-        "structurefile": "NaCl-conventional.xyz",
+        "structurefile": "NaCl-conventional.extxyz",
         "cell_mode": "ortho",
         "cation_symbol": "Na",
         "anion_symbol": "Cl",
@@ -15,7 +15,7 @@ STRUCTURES_INFO = {
         "nice_label": "NaCl (conventional)",
     },
     "NaCl-primitive": {
-        "structurefile": "NaCl-primitive.xyz",
+        "structurefile": "NaCl-primitive.extxyz",
         "cell_mode": "triclinic",
         "cation_symbol": "Na",
         "anion_symbol": "Cl",
@@ -25,7 +25,7 @@ STRUCTURES_INFO = {
         "nice_label": "NaCl (primitive)",
     },
     "CsCl": {
-        "structurefile": "CsCl.xyz",
+        "structurefile": "CsCl.extxyz",
         "cell_mode": "ortho",
         "cation_symbol": "Cs",
         "anion_symbol": "Cl",
@@ -35,7 +35,7 @@ STRUCTURES_INFO = {
         "nice_label": "CsCl",
     },
     "ZnS-zincblende": {
-        "structurefile": "ZnS-zincblende.xyz",
+        "structurefile": "ZnS-zincblende.extxyz",
         "cell_mode": "ortho",
         "cation_symbol": "Zn",
         "anion_symbol": "S",
@@ -45,7 +45,7 @@ STRUCTURES_INFO = {
         "nice_label": "ZnS (zincblende)",
     },
     "ZnS-wurtzite": {
-        "structurefile": "ZnS-wurtzite.xyz",
+        "structurefile": "ZnS-wurtzite.extxyz",
         "cell_mode": "triclinic",
         "cation_symbol": "Zn",
         "anion_symbol": "S",
@@ -55,7 +55,7 @@ STRUCTURES_INFO = {
         "nice_label": "ZnS (wurtzite)",
     },
     "CaF2": {
-        "structurefile": "CaF2.xyz",
+        "structurefile": "CaF2.extxyz",
         "cell_mode": "ortho",
         "cation_symbol": "Ca",
         "anion_symbol": "F",
