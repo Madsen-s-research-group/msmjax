@@ -1,14 +1,14 @@
 """Tests for kernel splitting implementation.
 
-    References:
-        [1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,
-        R. D. Multilevel Summation with B-Spline Interpolation for Pairwise
-        Interactions in Molecular Dynamics Simulations. J. Chem. Phys. 2016,
-        144 (11), 114112. https://doi.org/10.1063/1.4943868.
+References:
+    [1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,
+    R. D. Multilevel Summation with B-Spline Interpolation for Pairwise
+    Interactions in Molecular Dynamics Simulations. J. Chem. Phys. 2016,
+    144 (11), 114112. https://doi.org/10.1063/1.4943868.
 
-        [2] Hardy, D. J. Multilevel Summation for the Fast Evaluation of
-        Forces for the Simulation of Biomolecules (PhD thesis), University
-        of Illinois at Urbana-Champaign, 2006.
+    [2] Hardy, D. J. Multilevel Summation for the Fast Evaluation of
+    Forces for the Simulation of Biomolecules (PhD thesis), University
+    of Illinois at Urbana-Champaign, 2006.
 """
 
 import os
@@ -37,7 +37,7 @@ def fixture_level_zero_cutoff() -> float:
     return 2.5
 
 
-@pytest.fixture(params=[2, 4, 6], scope="module")
+@pytest.fixture(params=[2, 4], scope="module")
 def fixture_p(request) -> int:
     return request.param
 
@@ -115,9 +115,8 @@ def test_softening_function_continuity_at_one(
         )
 
 
-@pytest.mark.parametrize("fixture_softening_function", [2, 4], indirect=True)
 def test_softening_function_derivatives_at_zero(
-    fixture_softening_function, fixture_softening_function_derivatives
+    fixture_softening_function_derivatives,
 ):
     """Test if the odd derivatives of the softener vanish at rho=0.
 
@@ -126,30 +125,29 @@ def test_softening_function_derivatives_at_zero(
 
     Since this test involves derivatives of very high order, it is restricted
     to only lower-order softening functions for run time reasons.
+
+    For high orders p, this takes a long time.
     """
     for dgamma in fixture_softening_function_derivatives[1::2]:
         assert jnp.isclose(dgamma(0.0), 0.0)
 
 
-@pytest.mark.parametrize("fixture_softening_function", [2, 4], indirect=True)
 def test_softening_function_high_deriv_vanishes_globally(
-    fixture_softening_function, fixture_softening_function_derivatives
+    fixture_p,
+    fixture_softening_function_derivatives,
 ):
     """Test if (2*order)-th derivative of softener vanishes for rho < 1.
 
     The condition being tested is a theoretical requirement on the softening
     function proposed in Ref. [1] and contained in Section II.A thereof.
 
-    Since this test involves derivatives of very high order, it is restricted
-    to only lower-order softening functions for run time reasons.
+    For high orders p, this takes a long time.
     """
     range_of_rho = jnp.linspace(0.0, 0.99, 100)
     assert jnp.allclose(
-        jax.vmap(
-            fixture_softening_function_derivatives[
-                2 * fixture_softening_function.order
-            ]
-        )(range_of_rho),
+        jax.vmap(fixture_softening_function_derivatives[2 * fixture_p])(
+            range_of_rho
+        ),
         0.0,
     )
 

@@ -3,14 +3,14 @@
 from contextlib import nullcontext
 
 import jax
-import jax.config
 import numpy as np
 import pytest
+from jax import config
 from scipy.interpolate import BSpline
 
 from msmjax.bspline.basis import create_bspline_basis_element
 
-jax.config.update("jax_enable_x64", True)
+config.update("jax_enable_x64", True)
 
 
 @pytest.fixture(params=[3, 5, 7])

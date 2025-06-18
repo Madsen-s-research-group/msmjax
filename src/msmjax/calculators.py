@@ -586,6 +586,8 @@ def check_cutoffs_and_spacings(cell: ArrayLike, params: MSMParams):
         spacings = params.grid_spacings[lvl].copy()
         if params.grids_defined_on_unitcube:
             spacings *= onp.linalg.norm(cell, axis=1)
+        # TODO: How to handle that the highest-level cutoff is inf in
+        #  non-periodic cases? (Doesn't cause an error, but a warning)
         min_required_stencil_size = determine_min_kernel_stencil_size(
             cell=cell, spacings=spacings, cutoff=params.cutoffs[lvl]
         )
