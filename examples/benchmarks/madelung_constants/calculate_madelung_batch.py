@@ -117,7 +117,7 @@ print()
 # %%
 def suggest_supercell_diag(cell, cutoff):
     # TODO: Put into utils?
-    # TODO: Explain what is being done here (why + 1)
+    # TODO: Explain what is being done here (Why * 2? Why + 1?)
     side_lengths = onp.linalg.norm(cell, axis=1)
     supercell_diag = determine_min_kernel_stencil_size(
         cell=cell, spacings=side_lengths, cutoff=2 * cutoff
@@ -137,7 +137,6 @@ reference_level_one_spacings = reference_side_lengths / n_divisions
 # TODO: loop over cutoff values?
 LEVEL_ZERO_CUTOFF = 5.0
 
-# TODO: print what we're doing here?
 print(
     "- Determining the necessary supercell size to accommodate the "
     "short-range cutoff for all cells to be evaluated."
@@ -151,8 +150,6 @@ common_supercell_diag = tuple(
     onp.array(supercell_diags_all_structures).max(axis=0).tolist()
 )
 print(f"- Found {common_supercell_diag}.")
-
-# TODO: print what we're doing here
 print(
     "- Determining the stencil size (measured from, and not including, the "
     "point at the center) required to accommodate the cutoffs during grid part "
@@ -182,11 +179,12 @@ msm_params = set_up_msm_params(
     supercell_diag=common_supercell_diag,
     intermediate_kernel_stencil_extents=common_stencil_extents_intermed,
 )
-calc_energy, _, _, _, _ = create_msm(msm_params)
-calc_energy_batch = jax.jit(jax.vmap(calc_energy))
-all_energies_msm = calc_energy_batch(
-    all_positions_padded, all_charges_padded, all_cells
-)
+evaluation_fns = create_msm(msm_params)
+calc_energy_batch = jax.jit(jax.vmap(evaluation_fns["energy"]))
+# TODO
+# all_energies_msm = calc_energy_batch(
+#     all_positions_padded, all_charges_padded, all_cells
+# )
 
 # %%
 # It's generally a good idea to (re-)check that the cutoffs fit and the
@@ -200,6 +198,10 @@ for structure, cell, d_min in zip(all_structures, all_cells, all_d_min):
     print(f"  {structure + ':':<18} h_1/d_min = {actual_spacings / d_min}")
 
 # %%
+all_energies_msm = calc_energy_batch(
+    all_positions_padded, all_charges_padded, all_cells
+)
+
 deviations = []
 for structure, energy, atoms in zip(
     all_structures, all_energies_msm, all_atoms
