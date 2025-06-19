@@ -31,9 +31,9 @@ INDIR_STRUCTURES = Path("input_structures/")
 PBC = (True,) * 3
 
 # %%
-# TODO: turn into command-line arg
-OUTDIR = Path("out_batch/")
+OUTDIR = Path("out_batch/")  # TODO: Turn into command-line arg?
 OUTDIR.mkdir(exist_ok=True, parents=True)
+resultsfile = OUTDIR / "results.csv"
 
 # %%
 n_dim = 3
@@ -111,27 +111,6 @@ all_positions_padded = onp.array(all_positions_padded)
 all_charges_padded = onp.array(all_charges_padded)
 all_cells = onp.array(all_cells)
 
-# %%
-# TODO: remove? (now that I've scaled the structures to d_min = 1)
-# all_d_min = []
-# for structure, atoms in zip(all_structures, all_atoms):
-#     d = find_min_cation_anion_distance(
-#         atoms,
-#         cation_symbol=STRUCTURES_INFO[structure]["cation_symbol"],
-#         anion_symbol=STRUCTURES_INFO[structure]["anion_symbol"],
-#     )
-#     all_d_min.append(d)
-# all_d_min = onp.array(all_d_min)
-# d_min_global = min(all_d_min)
-#
-# print(
-#     f"- The shortest cation-anion distance among all structures is "
-#     + f"{min(all_d_min):.2f} Å for: "
-#     + ", ".join(onp.array(all_structures)[all_d_min == d_min_global])
-#     + "."
-# )
-# print()
-
 
 # %%
 def suggest_supercell_diag(cell, cutoff):
@@ -146,18 +125,10 @@ def suggest_supercell_diag(cell, cutoff):
 
 
 # %%
-# TODO: somewhat arbitrary choices
-# TODO: print n_divisions or number of grid points somewhere?
-# TODO: Remove?
-# n_divisions = 4
-# reference_cell = all_cells[0]
-# reference_side_lengths = onp.linalg.norm(reference_cell, axis=1)
-# reference_level_one_spacings = reference_side_lengths / n_divisions
-
 cell_largest_structure = all_cells[onp.argmax(all_numbers_of_atoms)]
 # TODO: make clear that this is the d_min of one to which we have scaled all structures
 d_min = 1.0
-target_reference_spacing = 0.5 * d_min  # TODO: reduce to d_min/2?
+target_reference_spacing = d_min  # TODO: reduce to d_min/2?
 
 # TODO: explanation
 prelim_msm_params = set_up_msm_params(
@@ -175,13 +146,10 @@ reference_spacings = onp.linalg.norm(
 ) / onp.array(n_gridpoints)
 print(reference_spacings)  # TODO
 
-# TODO: loop over cutoff values?
-# LEVEL_ZERO_CUTOFF = 5.0
-for level_zero_cutoff in [2.0, 3.0, 4.0, 5.0, 6.0]:
+for i, level_zero_cutoff in enumerate([2.0, 3.0, 4.0, 5.0, 6.0]):
     print("#" * 72)
     print(f"level_zero_cutoff = {level_zero_cutoff:.2f}")
     print("#" * 72)
-
     print(
         "- Determining the necessary supercell size to accommodate the "
         "short-range cutoff for all cells to be evaluated."
@@ -202,11 +170,9 @@ for level_zero_cutoff in [2.0, 3.0, 4.0, 5.0, 6.0]:
     )
     stencil_extents_intermed_all_structures = []
     for cell in all_cells:
+        # TODO: explanation?
         side_lengths = onp.linalg.norm(cell, axis=1)
-        # spacings = side_lengths / n_divisions # TODO
-        spacings = side_lengths / onp.array(n_gridpoints)  # TODO
-        # TODO: I think it is a problem that the spacing is not adapted to the
-        #  cell (like above with side_lengths / n_divisions)
+        spacings = side_lengths / onp.array(n_gridpoints)
         stencil_extents = determine_min_kernel_stencil_size(
             cell=cell, spacings=spacings, cutoff=2 * level_zero_cutoff
         )
@@ -227,17 +193,7 @@ for level_zero_cutoff in [2.0, 3.0, 4.0, 5.0, 6.0]:
         supercell_diag=common_supercell_diag,
         intermediate_kernel_stencil_extents=common_stencil_extents_intermed,
     )
-    evaluation_fns = create_msm(msm_params)
-    calc_energy_batch = jax.jit(jax.vmap(evaluation_fns["energy"]))
-    # TODO
-    # all_energies_msm = calc_energy_batch(
-    #     all_positions_padded, all_charges_padded, all_cells
-    # )
-
-    # %%
-    # TODO: move up (to right after where msm_params are created)
-    # It's generally a good idea to (re-)check that the cutoffs fit and the
-    # spacings are reasonable for all cell shapes to be evaluated:
+    # TODO: Do not repeat this output for every cutoff value?
     print(
         "- With the given settings, the actual level-one spacings for all "
         "structures are:"
@@ -247,11 +203,12 @@ for level_zero_cutoff in [2.0, 3.0, 4.0, 5.0, 6.0]:
         print(f"  {structure + ':':<18} h_1/d_min = {actual_spacings / d_min}")
 
     # %%
+    evaluation_fns = create_msm(msm_params)
+    calc_energy_batch = jax.jit(jax.vmap(evaluation_fns["energy"]))
     all_energies_msm = calc_energy_batch(
         all_positions_padded, all_charges_padded, all_cells
     )
-
-    deviations = []
+    errors = []
     for structure, energy, atoms in zip(
         all_structures, all_energies_msm, all_atoms
     ):
@@ -264,10 +221,49 @@ for level_zero_cutoff in [2.0, 3.0, 4.0, 5.0, 6.0]:
             anion_symbol=STRUCTURES_INFO[structure]["anion_symbol"],
         )
         m_ref = STRUCTURES_INFO[structure]["target_value"]
-        deviations.append(m_calculated - m_ref)
+        errors.append(m_calculated - m_ref)
 
-    print(deviations)
+    results_tmp = pd.DataFrame(
+        data={
+            "structure": all_structures,
+            "level_zero_cutoff": onp.full(
+                len(all_structures), level_zero_cutoff
+            ),
+            "error": errors,
+        }
+    )
+    print(f"- Writing results to {resultsfile}.")
+    if i == 0:
+        results_tmp.to_csv(resultsfile, index=False, mode="w")
+    else:
+        results_tmp.to_csv(resultsfile, index=False, mode="a", header=False)
     print()
 
 # %%
-# TODO: make plot
+markerlist = ["v", "^", "s", "o", "d", "p"]
+results = pd.read_csv(resultsfile)
+unique_structurekeys = results["structure"].unique()
+fig, ax = plt.subplots()
+ax.set_xlabel(r"$r_{\text{cut}}^{(0)}$ / $d_{\text{min}}$")
+ax.set_yscale("log")
+ax.set_ylabel(r"$|M - M_{\text{ref}}|$")
+for structurekey, marker in zip(unique_structurekeys, markerlist):
+    selection = results.loc[
+        results.structure == structurekey,
+        ["level_zero_cutoff", "error"],
+    ]
+    ax.plot(
+        selection.level_zero_cutoff,
+        onp.abs(selection.error),
+        label=STRUCTURES_INFO[structurekey]["nice_label"],
+        marker=marker,
+        markerfacecolor="none",
+        markersize=10,
+    )
+ax.legend()
+for suffix in ["png", "pdf"]:
+    outfile_plot = OUTDIR / (
+        "madelung_consts_batch_vs_cutoff_logscale" + "." + suffix
+    )
+    print(f"- Saving plot to {outfile_plot}")
+    fig.savefig(outfile_plot)

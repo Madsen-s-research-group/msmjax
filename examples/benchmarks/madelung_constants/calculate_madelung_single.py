@@ -188,6 +188,7 @@ if __name__ == "__main__":
 
         results = pd.DataFrame(
             data={
+                # TODO: The key should be called "structure", not "compound"
                 "compound": [structurekey] * len(RANGE_OF_CUTOFFS),
                 # TODO: Save multiple spacing values?
                 "level_one_gridspacing": actual_spacings[0],
