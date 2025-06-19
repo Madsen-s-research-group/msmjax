@@ -83,14 +83,7 @@ if __name__ == "__main__":
     print("#" * 72)
     print()
 
-    # TODO:
-    # RANGE_OF_CUTOFFS = (
-    #     onp.concatenate([onp.arange(2, 3.21, 0.2), onp.arange(3.2, 4.41, 0.4)])
-    #     * d_min_cation_anion
-    # )
-    # TODO: increase back to larger value for production
-    # RANGE_OF_CUTOFFS = onp.arange(2, 4.01, 0.25) * d_min_cation_anion
-    RANGE_OF_CUTOFFS = onp.arange(2, 3.26, 0.25) * d_min_cation_anion
+    RANGE_OF_CUTOFFS = onp.arange(2, 4.01, 0.25) * d_min_cation_anion
 
     # Try starting with a grid spacing equal to the minimum cation-anion distance.
     # But if this is more than half the (smallest) lattice constant, use half the
@@ -294,6 +287,7 @@ if __name__ == "__main__":
             "target_value"
         ]
         deviations = madelung_values - target_value
+        # TODO: Include the number of grid levels in the label?
         label = (
             f"$h_1 = {h / d_min_cation_anion:.2f} \, " + r"d_{\text{min}}$,"
         )
