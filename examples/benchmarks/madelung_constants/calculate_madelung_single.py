@@ -260,13 +260,13 @@ if __name__ == "__main__":
     ax.set_ylabel(r"$|M - M_{\text{ref}}|$")
 
     twin1 = ax.twiny()
-    twin1.tick_params(axis="x", width=LINEWIDTH_TWIN_AXES, pad=0)
+    twin1.tick_params(axis="x", width=LINEWIDTH_TWIN_AXES, pad=-1)
     twin2 = ax.twiny()
     twin2.spines["top"].set_position(("axes", 1.08))
-    twin2.tick_params(axis="x", width=LINEWIDTH_TWIN_AXES, pad=0)
+    twin2.tick_params(axis="x", width=LINEWIDTH_TWIN_AXES, pad=-1)
     twin3 = ax.twiny()
     twin3.spines["top"].set_position(("axes", 1.16))
-    twin3.tick_params(axis="x", width=LINEWIDTH_TWIN_AXES, pad=0)
+    twin3.tick_params(axis="x", width=LINEWIDTH_TWIN_AXES, pad=-1)
     twin3.set_xlabel(r"largest included cutoff / $d_{\text{min}}$")
     axes_twin = [twin1, twin2, twin3]
 

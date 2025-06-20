@@ -334,7 +334,10 @@ def set_up_msm_params(
 
 
 def create_msm(
-    params: MSMParams, extra_uncharged_interaction: KernelFn | None = None
+    params: MSMParams,
+    part: Literal["total", "shortrange", "longrange"] = "total",
+    use_custom_derivatives_for_longrange: bool = True,
+    extra_uncharged_interaction: KernelFn | None = None,
 ):
     if not params.dynamic_cell:
         _ = check_cutoffs_and_spacings(params.cell, params)
@@ -433,6 +436,7 @@ def create_msm(
             grid_shape_lvl_one=params.grid_shapes[1],
             transform_mode=params.cell_mode,
             kernel_stencil_construction_fn=construct_stencils,
+            use_custom_derivatives=use_custom_derivatives_for_longrange,
         )
     else:
         compute_u_oneplus = make_compute_u_oneplus(
@@ -448,6 +452,7 @@ def create_msm(
                 params.cell_mode if params.grids_defined_on_unitcube else None
             ),
             kernel_stencils=jax.jit(construct_stencils)(params.cell),
+            use_custom_derivatives=use_custom_derivatives_for_longrange,
         )
 
     def calc_energy(positions, charges, cell=None, neighborlist=None):
@@ -481,7 +486,14 @@ def create_msm(
         u_oneplus = compute_u_oneplus(
             positions, charges, cell if params.dynamic_cell else params.cell
         )
-        return u_zero + u_oneplus
+        if part == "total":
+            return u_zero + u_oneplus
+        elif part == "shortrange":
+            return u_zero
+        elif part == "longrange":
+            return u_oneplus
+        else:
+            raise ValueError("Illegal value for argument `part`.")
 
     def calc_forces(positions, charges, cell=None, neighborlist=None):
         return -jax.grad(calc_energy, argnums=0)(

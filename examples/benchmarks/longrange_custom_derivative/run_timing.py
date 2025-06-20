@@ -13,83 +13,27 @@ import jax
 import numpy as onp
 from natsort import natsorted
 
-from msmjax.benchmark_tools import get_metadata, path_input_structures
-from msmjax.convenience import (
-    set_up_kernels_grids_and_stencils,
-    suggest_msm_params,
-)
-from msmjax.core.longrange import make_compute_u_oneplus, make_grid_pass_fn
-from msmjax.gridops_multidim import create_all_grid_to_grid_ops
+from msmjax.calculators import MSMParams, create_msm, set_up_msm_params
+from msmjax.utils.benchmarking import path_input_structures
 
 # MSM cutoff to grid spacing ratio parameter
+# TODO: command-line arg?
 ALPHA = 3.0
 
 
 def make_model_timing_fn(
-    cell,
-    n_particles,
-    pbc,
-    msm_params_in: dict,
-    use_custom_derivatives: bool,
+    params: MSMParams,
     quantity: str,
-    convolution_methods=None,
-    repeat=10,
-    number=100,
-) -> tuple[Callable, dict]:
+    repeat: int = 10,
+    number: int = 100,
+    **kwargs,  # TODO: more informative variable name (clarifying that they will be passed to create_msm)
+) -> Callable:
     """Set up an MSM model, return a function to time it on one structure,
     and a dictionary of model information."""
-    ############################################################################
-    # TODO: Begin of setup that might still be subject to API changes
-    ############################################################################
-    box_lengths = onp.diag(cell)
-    msm_params_full = suggest_msm_params(
-        box_lengths=box_lengths,
-        pbc=pbc,
-        n_particles=n_particles,
-        **msm_params_in,
-    )
-    kernel_fns, grids, kernel_stencils = set_up_kernels_grids_and_stencils(
-        box_lengths=box_lengths, pbc=pbc, **msm_params_full
-    )
-    grid_shapes = [None if g is None else g.shape for g in grids]
-    kernel_stencil_shapes = [
-        None if k is None else k.shape for k in kernel_stencils
-    ]
-    setup_info = {
-        "box_lengths": onp.asarray(box_lengths).tolist(),
-        "pbc": onp.asarray(pbc).tolist(),
-        "n_particles": n_particles,
-        "msm_params": msm_params_full,
-        "convolution_methods": convolution_methods,
-        "grid_shapes": grid_shapes,
-        "kernel_stencil_shapes": kernel_stencil_shapes,
-    }
-
-    restriction_fns, prolongation_fns, interaction_fns = (
-        create_all_grid_to_grid_ops(grids, convolution_methods)
-    )
-    grid_pass_fn = make_grid_pass_fn(
-        restriction_fns, prolongation_fns, interaction_fns
-    )
-    ############################################################################
-    # TODO: End of setup that might still be subject to API changes
-    ############################################################################
-
-    _compute_u_oneplus = make_compute_u_oneplus(
-        singleparticle_basis_fn_lvl_one=grids[
-            1
-        ].evaluate_bspline_basis_one_particle,
-        grid_pass_fn=grid_pass_fn,
-        grid_shape_lvl_one=grids[1].shape,
-        use_custom_derivatives=use_custom_derivatives,
-    )
-
-    # The raw functions coming out of make_compute_u_oneplus take parameters
-    # (positions, charges, kernel_stencils). Make the signature compatible with
-    # what the timing function expects:
+    evaluation_fns = create_msm(params, **kwargs)
 
     def compute_energy(positions, charges, cell):
-        return _compute_u_oneplus(positions, charges, kernel_stencils)
+        return evaluation_fns["energy"](positions, charges, cell)
 
     if quantity == "energy":
         target_fn = compute_energy
@@ -137,7 +81,7 @@ def make_model_timing_fn(
 
         return min(mean_times_per_call)
 
-    return time_model_eval, setup_info
+    return time_model_eval
 
 
 if __name__ == "__main__":
@@ -158,12 +102,13 @@ if __name__ == "__main__":
     baseoutdir = Path(args.outdir)
     baseoutdir.mkdir(parents=True)
 
-    metadata = get_metadata()
-    with open(baseoutdir / "metadata.json", "w") as f:
-        json.dump(metadata, f, indent=2)
-
+    # TODO: Starting at higher numbers of particles is necessary in non-periodic
+    #  case, otherwise the cutoff condition will result in zero grid levels.
+    #  But this is not necessary in periodic case -> still treat the same?
+    # TODO: Related, but more general: The definition of the numbers of
+    #  particles for which to run the benchmark could probably be streamlined
     for npz_file in natsorted(path_input_structures.glob("structures_*.npz"))[
-        ::3
+        3::4
     ]:
         structures = onp.load(npz_file)
         pos = structures["positions"][0]
@@ -186,13 +131,11 @@ if __name__ == "__main__":
         volume = onp.linalg.det(cell)
         n_dim = pos.shape[1]
         avg_particle_spacing = (volume / n_particles) ** (1.0 / n_dim)
-        msm_params_in = {
-            "level_one_gridspacing": avg_particle_spacing,
-            "alpha": ALPHA,
-        }
+        level_one_spacing = avg_particle_spacing
+        level_zero_cutoff = ALPHA * level_one_spacing
 
         for pbc in [(False, False, False), (True, True, True)]:
-            for use_custom_derivatives in [False, True]:
+            for custom_derivatives in [False, True]:
                 for quantity in [
                     "energy",
                     "dr",
@@ -200,29 +143,33 @@ if __name__ == "__main__":
                     "energy_and_dr_and_dq",
                 ]:
                     label = "pbc-" + "".join([str(p)[0] for p in pbc])
-                    label += "__" + (
-                        "customjvp"
-                        if use_custom_derivatives
-                        else "defaultgrad"
-                    )
+                    if custom_derivatives:
+                        label += "__customjvp"
+                    else:
+                        label += "__defaultgrad"
                     label += "__" + quantity
                     outdir = baseoutdir / label
                     outdir.mkdir(parents=True, exist_ok=True)
 
-                    timing_fn, info = make_model_timing_fn(
+                    msm_params = set_up_msm_params(
                         cell=cell,
-                        n_particles=n_particles,
+                        level_one_spacings=avg_particle_spacing,
+                        level_zero_cutoff=level_zero_cutoff,
                         pbc=pbc,
-                        use_custom_derivatives=use_custom_derivatives,
+                        cell_mode="ortho",
+                        dynamic_cell=False,
+                        n_particles=n_particles,
+                    )
+                    timing_fn = make_model_timing_fn(
+                        params=msm_params,
+                        part="longrange",
+                        use_custom_derivatives_for_longrange=custom_derivatives,
                         quantity=quantity,
-                        convolution_methods="scipy-fft",
-                        msm_params_in=msm_params_in,
                     )
                     min_time = timing_fn(pos, chg, cell)
                     print(label + ":", min_time * 1000, "ms")
-                    with open(
-                        outdir / f"info_n_particles_{n_particles}.json", "w"
-                    ) as f:
-                        json.dump(info, f)
+                    msm_params.save_json(
+                        outdir / f"msm_params_n_particles_{n_particles}.json"
+                    )
                     with open(outdir / "times_vs_n_particles.txt", "a+") as f:
                         f.write(f"{n_particles:>5} {min_time:.6f}\n")

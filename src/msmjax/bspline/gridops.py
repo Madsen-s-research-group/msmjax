@@ -427,6 +427,13 @@ def suggest_max_grid_level_nonperiodic(
     # TODO: name
     # TODO: Put this function in this module or in some utils?
 
+    error_message = (
+        "Automatic determination of the number of grid levels for "
+        "non-periodic system resulted in an invalid value less than 1. "
+        "Are you using a a too large (compared to the simulation cell) "
+        "level-one grid spacing or level-zero cutoff?"
+    )
+
     # 1. Find level at which spacing becomes larger than side length.
     #    This corresponds to the point where the number of grid points cannot
     #    be reduced any further by adding another level, and serves as an upper
@@ -442,6 +449,9 @@ def suggest_max_grid_level_nonperiodic(
     level_from_cutoff = onp.log2(side_lengths / level_zero_cutoff).astype(int)
     level_from_cutoff = max(level_from_cutoff)
     max_grid_level = min(max_grid_level, level_from_cutoff)
+
+    if max_grid_level < 1:
+        raise ValueError(error_message)
 
     # 3. Find (if achievable) the level where n_gridpoints <= sqrt(n_particles)
     shapes_all_levels, _ = set_up_grids_all_levels(
@@ -461,12 +471,7 @@ def suggest_max_grid_level_nonperiodic(
         max_grid_level = min(max_grid_level, min(levels_with_fewer_points))
 
     if max_grid_level < 1:
-        raise ValueError(
-            "Automatic determination of the number of grid levels for "
-            "non-periodic system resulted in an invalid value less than 1. "
-            "Are you using a a too large (compared to the simulation cell) "
-            "level-one grid spacing or level-zero cutoff?"
-        )
+        raise ValueError(error_message)
 
     return int(max_grid_level)
 
