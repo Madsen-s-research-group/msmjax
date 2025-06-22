@@ -107,9 +107,27 @@ if __name__ == "__main__":
     #  But this is not necessary in periodic case -> still treat the same?
     # TODO: Related, but more general: The definition of the numbers of
     #  particles for which to run the benchmark could probably be streamlined
-    for npz_file in natsorted(path_input_structures.glob("structures_*.npz"))[
-        3::4
+    # for npz_file in natsorted(path_input_structures.glob("structures_*.npz"))[
+    #     3::4
+    # ]:
+    for n_particles in [
+        500,
+        1000,
+        1500,
+        2000,
+        2500,
+        3000,
+        3500,
+        4000,
+        4500,
+        5000,
+        6000,
+        7000,
+        8000,
+        9000,
+        10000,
     ]:
+        npz_file = path_input_structures / f"structures_{n_particles}.npz"
         structures = onp.load(npz_file)
         pos = structures["positions"][0]
         chg = structures["charges"][0]
@@ -122,7 +140,7 @@ if __name__ == "__main__":
         pos = jax.device_put(pos)
         chg = jax.device_put(chg)
         cell = jax.device_put(cell)
-        n_particles = pos.shape[0]
+        # n_particles = pos.shape[0]    # TODO
 
         print("-" * 80)
         print(f"{n_particles=}")
@@ -134,13 +152,15 @@ if __name__ == "__main__":
         level_one_spacing = avg_particle_spacing
         level_zero_cutoff = ALPHA * level_one_spacing
 
-        for pbc in [(False, False, False), (True, True, True)]:
+        # for pbc in [(False, False, False), (True, True, True)]: # TODO
+        for pbc in [(True, True, True)]:
+            # for custom_derivatives in [False, True]:  # TODO
             for custom_derivatives in [False, True]:
                 for quantity in [
-                    "energy",
+                    # "energy", # TODO
                     "dr",
-                    "dq",
-                    "energy_and_dr_and_dq",
+                    # "dq", # TODO
+                    # "energy_and_dr_and_dq",   # TODO
                 ]:
                     label = "pbc-" + "".join([str(p)[0] for p in pbc])
                     if custom_derivatives:
