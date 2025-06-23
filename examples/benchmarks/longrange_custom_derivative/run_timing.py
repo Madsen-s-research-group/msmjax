@@ -2,49 +2,21 @@ import os
 
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 
-import timeit
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, Callable, Tuple
 
 import jax
 import numpy as onp
 from matplotlib import pyplot as plt
 
 from msmjax.calculators import create_msm, set_up_msm_params
-from msmjax.utils.benchmarking import path_input_structures
+from msmjax.utils.benchmarking import make_timed_eval, path_input_structures
 
 # MSM cutoff to grid spacing ratio parameter
-# TODO: command-line arg?
+# TODO: command-line arg? (But note that increasing the cutoff also
+#  necessitates starting from a higher particle number in order to get at least
+#  one grid level in non-periodic cases!)
 ALPHA = 3.0
-
-
-def make_timed_eval(
-    fn: Callable, repeat: int = 10, number: int = 100
-) -> Callable:
-    # TODO: Move this function to utils?
-    jitted_fn = jax.jit(fn)
-
-    def time_model_eval(*args, **kwargs) -> Tuple[float, Any]:
-        # If the output is a container type, we cannot call
-        # block_until_ready() on it directly, but first need to flatten
-        # it down to one of the leaf arrays.
-        fn_to_time = lambda: jax.tree.flatten(jitted_fn(*args, **kwargs))[0][
-            0
-        ].block_until_ready()
-
-        # Call once to ensure jit-compilation
-        output = fn_to_time()
-
-        times_per_loop = timeit.repeat(
-            fn_to_time, repeat=repeat, number=number
-        )
-        mean_times_per_call = onp.array(times_per_loop) / number
-
-        return min(mean_times_per_call), output
-
-    return time_model_eval
-
 
 if __name__ == "__main__":
     parser = ArgumentParser()

@@ -6,9 +6,10 @@ import socket
 import subprocess
 import sys
 import tempfile
+import timeit
 from datetime import datetime
 from pathlib import Path
-from typing import Sequence, Tuple
+from typing import Any, Callable, Sequence, Tuple
 
 import ase.io
 import jax
@@ -93,6 +94,7 @@ def get_metadata(additional_repository_paths: dict = None):
 
 
 def time_set_of_structures(structures, pbc, setup_fn, **setup_fn_kwargs):
+    # TODO: unused?
     timed_calc, info = setup_fn(
         structures=structures,
         pbc=pbc,
@@ -457,3 +459,30 @@ if __name__ == "__main__":
     print()
     print(f"energy: {energy}")
     print(f"forces: {forces}")
+
+
+def make_timed_eval(
+    fn: Callable, repeat: int = 10, number: int = 100
+) -> Callable:
+    # TODO: Move this function to utils?
+    jitted_fn = jax.jit(fn)
+
+    def time_model_eval(*args, **kwargs) -> Tuple[float, Any]:
+        # If the output is a container type, we cannot call
+        # block_until_ready() on it directly, but first need to flatten
+        # it down to one of the leaf arrays.
+        fn_to_time = lambda: jax.tree.flatten(jitted_fn(*args, **kwargs))[0][
+            0
+        ].block_until_ready()
+
+        # Call once to ensure jit-compilation
+        output = fn_to_time()
+
+        times_per_loop = timeit.repeat(
+            fn_to_time, repeat=repeat, number=number
+        )
+        mean_times_per_call = onp.array(times_per_loop) / number
+
+        return min(mean_times_per_call), output
+
+    return time_model_eval
