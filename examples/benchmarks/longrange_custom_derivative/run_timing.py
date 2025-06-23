@@ -2,17 +2,16 @@ import os
 
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 
-
 import timeit
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable, Tuple
 
 import jax
 import numpy as onp
 from matplotlib import pyplot as plt
 
-from msmjax.calculators import MSMParams, create_msm, set_up_msm_params
+from msmjax.calculators import create_msm, set_up_msm_params
 from msmjax.utils.benchmarking import path_input_structures
 
 # MSM cutoff to grid spacing ratio parameter
@@ -20,65 +19,29 @@ from msmjax.utils.benchmarking import path_input_structures
 ALPHA = 3.0
 
 
-def make_model_timing_fn(
-    params: MSMParams,
-    quantity: str,
-    repeat: int = 10,
-    number: int = 100,
-    **kwargs,  # TODO: more informative variable name (clarifying that they will be passed to create_msm)
+def make_timed_eval(
+    fn: Callable, repeat: int = 10, number: int = 100
 ) -> Callable:
-    """Set up an MSM model, return a function to time it on one structure,
-    and a dictionary of model information."""
-    evaluation_fns = create_msm(params, **kwargs)
+    # TODO: Move this function to utils?
+    jitted_fn = jax.jit(fn)
 
-    def compute_energy(positions, charges, cell):
-        return evaluation_fns["energy"](positions, charges, cell)
-
-    if quantity == "energy":
-        target_fn = compute_energy
-    elif quantity == "dr":
-        target_fn = jax.grad(compute_energy, argnums=0)
-    elif quantity == "dq":
-        target_fn = jax.grad(compute_energy, argnums=1)
-    elif quantity == "energy_and_dr":
-        target_fn = jax.value_and_grad(compute_energy, argnums=0)
-    elif quantity == "energy_and_dq":
-        target_fn = jax.value_and_grad(compute_energy, argnums=1)
-    elif quantity == "energy_and_dr_and_dq":
-        target_fn = jax.value_and_grad(compute_energy, argnums=(0, 1))
-    else:
-        print("Illegal option")
-
-    target_fn = jax.jit(target_fn)
-
-    def time_model_eval(positions, charges, cell) -> float:
-        """Time an MSM model on one structure using ``timeit.repeat()`` and
-        return the minimum value out of ``repeat`` loops."""
-        if quantity in [
-            "energy_and_dr",
-            "energy_and_dq",
-            "energy_and_dr_and_dq",
-        ]:
-            # If the output is a container type, we cannot call
-            # block_until_ready() on it directly, but first need to flatten
-            # it down to one of the leaf arrays.
-            fn_to_time = lambda: jax.tree.flatten(
-                target_fn(positions, charges, cell)
-            )[0][0].block_until_ready()
-        else:
-            fn_to_time = lambda: target_fn(
-                positions, charges, cell
-            ).block_until_ready()
+    def time_model_eval(*args, **kwargs) -> Tuple[float, Any]:
+        # If the output is a container type, we cannot call
+        # block_until_ready() on it directly, but first need to flatten
+        # it down to one of the leaf arrays.
+        fn_to_time = lambda: jax.tree.flatten(jitted_fn(*args, **kwargs))[0][
+            0
+        ].block_until_ready()
 
         # Call once to ensure jit-compilation
-        fn_to_time()
+        output = fn_to_time()
 
         times_per_loop = timeit.repeat(
             fn_to_time, repeat=repeat, number=number
         )
         mean_times_per_call = onp.array(times_per_loop) / number
 
-        return min(mean_times_per_call)
+        return min(mean_times_per_call), output
 
     return time_model_eval
 
@@ -101,8 +64,7 @@ if __name__ == "__main__":
     baseoutdir = Path(args.outdir)
     baseoutdir.mkdir(parents=True)
 
-    # for n_particles in [500, 1500, 2500, 3500, 4500, 6000, 8000, 10000]:  # TODO
-    for n_particles in [500, 1500, 3500]:
+    for n_particles in [500, 1500, 2500, 3500, 4500, 6000, 8000, 10000]:
         npz_file = path_input_structures / f"structures_{n_particles}.npz"
         structures = onp.load(npz_file)
         pos = structures["positions"][0]
@@ -155,14 +117,26 @@ if __name__ == "__main__":
                         dynamic_cell=False,
                         n_particles=n_particles,
                     )
-                    timing_fn = make_model_timing_fn(
-                        params=msm_params,
+                    msm_evaluation_fns = create_msm(
+                        msm_params,
                         part="longrange",
                         use_custom_derivatives_for_longrange=custom_derivatives,
-                        quantity=quantity,
                     )
-                    min_time = timing_fn(pos, chg, cell)
-                    print(dirname + ":", min_time * 1000, "ms")
+                    if quantity == "energy":
+                        fn = msm_evaluation_fns["energy"]
+                    elif quantity == "dr":
+                        fn = msm_evaluation_fns["forces"]
+                    elif quantity == "dq":
+                        fn = msm_evaluation_fns["charge_gradient"]
+                    elif quantity == "energy_and_dr_and_dq":
+                        fn = jax.value_and_grad(
+                            msm_evaluation_fns["energy"], argnums=(0, 1)
+                        )
+                    else:
+                        raise ValueError("Unknown quantity")
+                    timing_fn = make_timed_eval(fn)
+                    min_time, _ = timing_fn(pos, chg)
+                    print(f"{dirname}: {min_time * 1000:.2f} ms")
                     msm_params.save_json(
                         outdir / f"msm_params_n_particles_{n_particles}.json"
                     )
@@ -256,8 +230,7 @@ if __name__ == "__main__":
             bbox_transform=axs[0].transAxes,
         )
 
-        # TODO: print message that saving plot
         for suffix in ["png", "pdf"]:
             filename_plot = filename_without_suffix + "." + suffix
-            print(f"Saving plot to {filename_plot}.")
+            print(f"Saving plot to {filename_plot}")
             fig.savefig(baseoutdir / filename_plot)
