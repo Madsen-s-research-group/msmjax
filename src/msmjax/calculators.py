@@ -595,15 +595,29 @@ def check_cutoffs_and_spacings(cell: ArrayLike, params: MSMParams):
             )
 
     for lvl in range(1, params.max_grid_level + 1):
+        given_stencil_size = params.stencil_extents_from_center[lvl]
+
+        if (
+            lvl == params.max_grid_level == params.max_splitting_level
+            and not onp.any(params.pbc)
+        ):
+            if not onp.all(
+                onp.array(given_stencil_size)
+                >= onp.array(params.grid_shapes[lvl]) - 1
+            ):
+                raise ValueError(
+                    "Kernel stencil at highest level must cover the entire "
+                    "grid in cases without periodicity."
+                )  # TODO: better message
+            continue
+
         spacings = params.grid_spacings[lvl].copy()
+        # TODO: do away with this by introducing a scaled_gridspacing attribute?
         if params.grids_defined_on_unitcube:
             spacings *= onp.linalg.norm(cell, axis=1)
-        # TODO: How to handle that the highest-level cutoff is inf in
-        #  non-periodic cases? (Doesn't cause an error, but a warning)
         min_required_stencil_size = determine_min_kernel_stencil_size(
             cell=cell, spacings=spacings, cutoff=params.cutoffs[lvl]
         )
-        given_stencil_size = params.stencil_extents_from_center[lvl]
         if not (
             onp.array(given_stencil_size)
             >= onp.array(min_required_stencil_size)
