@@ -15,17 +15,33 @@ from matscipy.neighbours import neighbour_list
 from tqdm import tqdm
 
 from msmjax.calculators import create_msm, set_up_msm_params
-from msmjax.utils.benchmarking import make_timed_eval, path_input_structures
+from msmjax.utils.benchmarking import (
+    calc_relative_rmse_percent,
+    make_timed_eval,
+    path_input_structures,
+)
 
 # TODO: Command-line args or parameter file for all these things?
 
-N_PARTICLES = 10000
-PBC = (False, False, False)
 # TODO: Explicitly compute as the average particle spacing instead?
 LEVEL_ONE_SPACING = 1.0
-QUANTITY = "energy"
+# TODO: Define not just one, but a list of quantities? (Would avoid
+#  neighbor list recomputations)
+# QUANTITY = "energy"
+QUANTITY = "forces"
+
+PBC = (False, False, False)
+INDIR = Path("reference_results/") / "nonperiodic"
+# TODO: add (option for) periodic and slab structures
 
 LIST_OF_PS = [4, 6, 8]
+
+LABELMAP_QUANTITIES = {
+    "energy": "energies",
+    "forces": "forces",
+    "charge_gradient": "chargegrads",
+    "stress": "stresses",
+}
 
 
 def build_neighborlists(set_of_positions, set_of_cells, cutoff, pbc):
@@ -76,11 +92,12 @@ if __name__ == "__main__":
 
     baseoutdir = Path(cmd_args.outdir)
     baseoutdir.mkdir(parents=True)
-    npz_file = path_input_structures / f"structures_{N_PARTICLES}.npz"
-    structures = onp.load(npz_file)
-    n_structures = len(structures["cells"])
+    structures = onp.load(INDIR / "structures.npz")
+    n_structures = structures["positions"].shape[0]
+    n_particles = structures["positions"].shape[1]
+    reference_results = onp.load(INDIR / "results.npz")
 
-    resultsfile = baseoutdir / "results.csv"
+    outfile = baseoutdir / "results.csv"
 
     # TODO: This restriction is only sensible and necessary in non-periodic case
     cell = jax.device_put(structures["cells"][0])
@@ -114,11 +131,12 @@ if __name__ == "__main__":
                 pbc=PBC,
                 cell_mode="ortho",
                 dynamic_cell=False,
-                n_particles=N_PARTICLES,
+                n_particles=n_particles,
                 use_neighborlist=True,
                 neighborlist_prefactor=0.5,  # for no-duplicate neighbor list
             )
             msm_evaluation_fns = create_msm(msm_params)
+            # TODO: repeat and number as command-line args?
             timing_fn = make_timed_eval(
                 msm_evaluation_fns[QUANTITY], repeat=5, number=50
             )
@@ -126,7 +144,6 @@ if __name__ == "__main__":
             all_calculation_results = []
             print(f"- Starting timing loop over {n_structures} structures")
             for idx_structure in tqdm(range(n_structures)):
-                # TODO: double precision?
                 pos = jax.device_put(structures["positions"][idx_structure])
                 chg = jax.device_put(structures["charges"][idx_structure])
                 nbl = jax.device_put(neighborlists[idx_structure])
@@ -136,22 +153,30 @@ if __name__ == "__main__":
                 )
                 all_times.append(min_time)
                 all_calculation_results.append(calculation_result)
+            all_times = jnp.array(all_times)
+            all_calculation_results = jnp.array(all_calculation_results)
 
+            # TODO: error in percent or not?
+            error = calc_relative_rmse_percent(
+                all_calculation_results,
+                reference_results[LABELMAP_QUANTITIES[QUANTITY]],
+            )
             # TODO: What (else) to save? quantity? pbc?
             results_tmp = pd.DataFrame(
                 data={
-                    "n_particles": N_PARTICLES,
+                    "n_particles": n_particles,
                     "level_zero_cutoff": level_zero_cutoff,
                     "p": p,
-                    "time": onp.mean(all_times),
-                    # "error": error, # TODO
+                    "quantity": QUANTITY,
+                    "time": all_times.mean(),
+                    "error": error,
                 },
                 index=[0],
             )
-            print(f"- Writing results to {resultsfile}.")
-            if not resultsfile.is_file():
-                results_tmp.to_csv(resultsfile, index=False, mode="w")
+            print(f"- Writing results to {outfile}.")
+            if not outfile.is_file():
+                results_tmp.to_csv(outfile, index=False, mode="w")
             else:
                 results_tmp.to_csv(
-                    resultsfile, index=False, mode="a", header=False
+                    outfile, index=False, mode="a", header=False
                 )
