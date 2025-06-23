@@ -59,9 +59,9 @@ if __name__ == "__main__":
         default=False,
         help="Flag indicating that double precision should be used",
     )
-    args = parser.parse_args()
+    cmd_args = parser.parse_args()
 
-    baseoutdir = Path(args.outdir)
+    baseoutdir = Path(cmd_args.outdir)
     baseoutdir.mkdir(parents=True)
 
     for n_particles in [500, 1500, 2500, 3500, 4500, 6000, 8000, 10000]:
@@ -70,7 +70,7 @@ if __name__ == "__main__":
         pos = structures["positions"][0]
         chg = structures["charges"][0]
         cell = structures["cells"][0]
-        if args.jax_enable_x64:
+        if cmd_args.jax_enable_x64:
             jax.config.update("jax_enable_x64", True)
             pos = pos.astype(onp.float64)
             chg = chg.astype(onp.float64)
@@ -140,7 +140,6 @@ if __name__ == "__main__":
                     msm_params.save_json(
                         outdir / f"msm_params_n_particles_{n_particles}.json"
                     )
-                    # TODO: Print message that results are being saved
                     with open(outdir / "times_vs_n_particles.txt", "a+") as f:
                         f.write(f"{n_particles:>5} {min_time:.6f}\n")
 
@@ -149,8 +148,6 @@ if __name__ == "__main__":
     print("-" * 80)
     print(f"Making plots")
     print("-" * 80)
-
-    # TODO: Remove the separate jupyter notebook, now that the plotting is handled inside the script itself
 
     default_colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
     markerlist = ["o", "s", "D"]
