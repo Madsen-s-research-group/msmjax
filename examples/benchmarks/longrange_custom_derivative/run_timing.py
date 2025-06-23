@@ -85,11 +85,11 @@ def make_model_timing_fn(
 
 
 if __name__ == "__main__":
-    parser = parser = ArgumentParser()
+    parser = ArgumentParser()
     parser.add_argument(
         "--outdir",
         type=str,
-        help="Output directory. If it exists, it will not be overwritten.",
+        help="Output directory. Existing outputs will not be overwritten.",
     )
     parser.add_argument(
         "--jax_enable_x64",
@@ -102,31 +102,7 @@ if __name__ == "__main__":
     baseoutdir = Path(args.outdir)
     baseoutdir.mkdir(parents=True)
 
-    # TODO: Starting at higher numbers of particles is necessary in non-periodic
-    #  case, otherwise the cutoff condition will result in zero grid levels.
-    #  But this is not necessary in periodic case -> still treat the same?
-    # TODO: Related, but more general: The definition of the numbers of
-    #  particles for which to run the benchmark could probably be streamlined
-    # for npz_file in natsorted(path_input_structures.glob("structures_*.npz"))[
-    #     3::4
-    # ]:
-    for n_particles in [
-        500,
-        1000,
-        1500,
-        2000,
-        2500,
-        3000,
-        3500,
-        4000,
-        4500,
-        5000,
-        6000,
-        7000,
-        8000,
-        9000,
-        10000,
-    ]:
+    for n_particles in [500, 1500, 2500, 3500, 4500, 6000, 8000, 10000]:
         npz_file = path_input_structures / f"structures_{n_particles}.npz"
         structures = onp.load(npz_file)
         pos = structures["positions"][0]
@@ -140,7 +116,6 @@ if __name__ == "__main__":
         pos = jax.device_put(pos)
         chg = jax.device_put(chg)
         cell = jax.device_put(cell)
-        # n_particles = pos.shape[0]    # TODO
 
         print("-" * 80)
         print(f"{n_particles=}")
@@ -152,23 +127,23 @@ if __name__ == "__main__":
         level_one_spacing = avg_particle_spacing
         level_zero_cutoff = ALPHA * level_one_spacing
 
-        # for pbc in [(False, False, False), (True, True, True)]: # TODO
-        for pbc in [(True, True, True)]:
-            # for custom_derivatives in [False, True]:  # TODO
+        for pbc in [(False, False, False), (True, True, True)]:
             for custom_derivatives in [False, True]:
-                for quantity in [
-                    # "energy", # TODO
-                    "dr",
-                    # "dq", # TODO
-                    # "energy_and_dr_and_dq",   # TODO
-                ]:
-                    label = "pbc-" + "".join([str(p)[0] for p in pbc])
-                    if custom_derivatives:
-                        label += "__customjvp"
+                for quantity in ["energy", "dr", "dq", "energy_and_dr_and_dq"]:
+                    dirname = "pbc-" + "".join([str(p)[0] for p in pbc])
+                    if quantity == "energy":
+                        dirname += "__energy"
+                        if custom_derivatives:
+                            # No need to run the energy evaluation twice, in
+                            # both the default and custom derivative branches
+                            # of the loop.
+                            continue
                     else:
-                        label += "__defaultgrad"
-                    label += "__" + quantity
-                    outdir = baseoutdir / label
+                        if custom_derivatives:
+                            dirname += "__customjvp" + "__" + quantity
+                        else:
+                            dirname += "__defaultgrad" + "__" + quantity
+                    outdir = baseoutdir / dirname
                     outdir.mkdir(parents=True, exist_ok=True)
 
                     msm_params = set_up_msm_params(
@@ -187,9 +162,11 @@ if __name__ == "__main__":
                         quantity=quantity,
                     )
                     min_time = timing_fn(pos, chg, cell)
-                    print(label + ":", min_time * 1000, "ms")
+                    print(dirname + ":", min_time * 1000, "ms")
                     msm_params.save_json(
                         outdir / f"msm_params_n_particles_{n_particles}.json"
                     )
                     with open(outdir / "times_vs_n_particles.txt", "a+") as f:
                         f.write(f"{n_particles:>5} {min_time:.6f}\n")
+
+    # TODO: Add plotting directly to this script rather than separate Jupyter notebook
