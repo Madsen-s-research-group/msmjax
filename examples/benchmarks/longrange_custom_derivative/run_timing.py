@@ -3,7 +3,6 @@ import os
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 
 
-import json
 import timeit
 from argparse import ArgumentParser
 from pathlib import Path
@@ -11,7 +10,7 @@ from typing import Callable
 
 import jax
 import numpy as onp
-from natsort import natsorted
+from matplotlib import pyplot as plt
 
 from msmjax.calculators import MSMParams, create_msm, set_up_msm_params
 from msmjax.utils.benchmarking import path_input_structures
@@ -102,7 +101,8 @@ if __name__ == "__main__":
     baseoutdir = Path(args.outdir)
     baseoutdir.mkdir(parents=True)
 
-    for n_particles in [500, 1500, 2500, 3500, 4500, 6000, 8000, 10000]:
+    # for n_particles in [500, 1500, 2500, 3500, 4500, 6000, 8000, 10000]:  # TODO
+    for n_particles in [500, 1500, 3500]:
         npz_file = path_input_structures / f"structures_{n_particles}.npz"
         structures = onp.load(npz_file)
         pos = structures["positions"][0]
@@ -134,9 +134,9 @@ if __name__ == "__main__":
                     if quantity == "energy":
                         dirname += "__energy"
                         if custom_derivatives:
-                            # No need to run the energy evaluation twice, in
-                            # both the default and custom derivative branches
-                            # of the loop.
+                            # No need to run the undifferentiated energy
+                            # evaluation itself twice, in both the default
+                            # and custom derivative branches of the loop.
                             continue
                     else:
                         if custom_derivatives:
@@ -166,7 +166,98 @@ if __name__ == "__main__":
                     msm_params.save_json(
                         outdir / f"msm_params_n_particles_{n_particles}.json"
                     )
+                    # TODO: Print message that results are being saved
                     with open(outdir / "times_vs_n_particles.txt", "a+") as f:
                         f.write(f"{n_particles:>5} {min_time:.6f}\n")
 
-    # TODO: Add plotting directly to this script rather than separate Jupyter notebook
+    print()
+
+    print("-" * 80)
+    print(f"Making plots")
+    print("-" * 80)
+
+    # TODO: Remove the separate jupyter notebook, now that the plotting is handled inside the script itself
+
+    default_colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    markerlist = ["o", "s", "D"]
+    plt.rcParams["font.size"] = 14
+
+    pbc_labels = ["pbc-FFF", "pbc-TTT"]
+    labelmap_quantities = {
+        "dr": r"$\nabla_i U^{1+}$",
+        "dq": r"$\frac{\partial U^{1+}}{\partial q_i}$",
+        "energy_and_dr_and_dq": r"$\left(U^{1+}, \, \nabla_i U^{1+}, \, \frac{\partial U^{1+}}{\partial q_i}\right)$",
+    }
+    labelmap_customderivs = {
+        "energy": "$U^{1+}$",
+        "defaultgrad": "default autodiff",
+        "customjvp": "opt. derivative",
+    }
+
+    for lbl_pbc in pbc_labels:
+        filename_without_suffix = (
+            "timing_default_vs_custom_grad" + "__" + lbl_pbc
+        )
+        fig, axs = plt.subplots(
+            nrows=3,
+            ncols=1,
+            sharex=True,
+            figsize=(6.4, 7.4),
+        )
+        axs[-1].set_xlabel("number of particles / $10^3$")
+        for (quantity_identifier, quantity_nice_label), ax in zip(
+            labelmap_quantities.items(), axs
+        ):
+            ax.set_title(quantity_nice_label, x=0.05, y=0.75, ha="left")
+            ax.set_ylabel("time / ms")
+
+            for (deriv_identifier, deriv_nice_label), color, marker in zip(
+                labelmap_customderivs.items(), default_colors, markerlist
+            ):
+                dirname = "__".join([lbl_pbc, deriv_identifier])
+                if deriv_identifier != "energy":
+                    dirname += "__" + quantity_identifier
+                resultsdir = baseoutdir / dirname
+                try:
+                    nbs_particles = onp.loadtxt(
+                        resultsdir / "times_vs_n_particles.txt",
+                        usecols=0,
+                        dtype=int,
+                    )
+                    times = onp.loadtxt(
+                        resultsdir / "times_vs_n_particles.txt",
+                        usecols=1,
+                        dtype=float,
+                    )
+                except FileNotFoundError:
+                    continue
+                ax.plot(
+                    nbs_particles / 1000,
+                    times * 1000,
+                    label=deriv_nice_label,
+                    marker=marker,
+                    color=color,
+                    markerfacecolor="none",
+                    markeredgewidth=1.5,
+                )
+
+            ax.set_xlim(0, ax.get_xlim()[1])
+            ax.set_ylim(0, ax.get_ylim()[1])
+
+        plt.subplots_adjust(
+            left=0.13, right=0.99, bottom=0.09, top=0.925, hspace=0.075
+        )
+        fig.align_ylabels()
+        axs[0].legend(
+            ncols=3,
+            handletextpad=0.25,
+            columnspacing=0.5,
+            bbox_to_anchor=(0.975, 1.3),
+            bbox_transform=axs[0].transAxes,
+        )
+
+        # TODO: print message that saving plot
+        for suffix in ["png", "pdf"]:
+            filename_plot = filename_without_suffix + "." + suffix
+            print(f"Saving plot to {filename_plot}.")
+            fig.savefig(baseoutdir / filename_plot)
