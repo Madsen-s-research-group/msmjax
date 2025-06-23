@@ -27,8 +27,8 @@ from msmjax.utils.benchmarking import (
 LEVEL_ONE_SPACING = 1.0
 # TODO: Define not just one, but a list of quantities? (Would avoid
 #  neighbor list recomputations)
-# QUANTITY = "energy"
-QUANTITY = "forces"
+QUANTITY = "energy"
+# QUANTITY = "forces"
 
 PBC = (False, False, False)
 INDIR = Path("reference_results/") / "nonperiodic"
@@ -99,8 +99,9 @@ if __name__ == "__main__":
 
     outfile = baseoutdir / "results.csv"
 
-    # TODO: This restriction is only sensible and necessary in non-periodic case
+    # All structures are assumed to have the same cell
     cell = jax.device_put(structures["cells"][0])
+    # TODO: This restriction is only sensible and necessary in non-periodic case
     half_sidelength = 0.5 * cell[0, 0]
     range_of_alphas = onp.arange(
         3.0, min(half_sidelength / LEVEL_ONE_SPACING, 8.01), 1.0
@@ -133,7 +134,7 @@ if __name__ == "__main__":
                 dynamic_cell=False,
                 n_particles=n_particles,
                 use_neighborlist=True,
-                neighborlist_prefactor=0.5,  # for no-duplicate neighbor list
+                neighborlist_prefactor=1.0,  # for no-duplicate neighbor list
             )
             msm_evaluation_fns = create_msm(msm_params)
             # TODO: repeat and number as command-line args?
@@ -151,6 +152,7 @@ if __name__ == "__main__":
                 min_time, calculation_result = timing_fn(
                     pos, chg, neighborlist=nbl
                 )
+                # TODO: if quantity == "stress", reduce to 6-component format
                 all_times.append(min_time)
                 all_calculation_results.append(calculation_result)
             all_times = jnp.array(all_times)
