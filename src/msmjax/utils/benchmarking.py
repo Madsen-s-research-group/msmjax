@@ -429,6 +429,10 @@ def calc_relative_rmse_percent(y_pred, y_true):
     return calc_rmse(y_pred, y_true) / y_true.std() * 100
 
 
+def calc_relative_rmse(y_pred, y_true):
+    return calc_rmse(y_pred, y_true) / y_true.std()
+
+
 def plot_parity_line(ax, **kwargs):
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
@@ -439,32 +443,9 @@ def plot_parity_line(ax, **kwargs):
     return p
 
 
-if __name__ == "__main__":
-    LAMMPS_EXECUTABLE = "/home/florian/Downloads/lammps-static/bin/lmp"
-
-    structures = onp.load(path_input_structures / "structures_500.npz")
-    idx = 0
-    pos = structures["positions"][idx]
-    chg = structures["charges"][idx]
-    cell = structures["cells"][idx]
-
-    energy, forces = evaluate_structure_with_lammps_p3m(
-        positions=pos,
-        charges=chg,
-        cell=cell,
-        lammps_executable=LAMMPS_EXECUTABLE,
-        max_neighbors_one_atom=10000,
-    )
-
-    print()
-    print(f"energy: {energy}")
-    print(f"forces: {forces}")
-
-
 def make_timed_eval(
     fn: Callable, repeat: int = 10, number: int = 100
 ) -> Callable:
-    # TODO: Move this function to utils?
     jitted_fn = jax.jit(fn)
 
     def time_model_eval(*args, **kwargs) -> Tuple[float, Any]:

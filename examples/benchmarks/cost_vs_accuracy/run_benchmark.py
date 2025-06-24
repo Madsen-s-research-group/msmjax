@@ -16,7 +16,7 @@ from tqdm import tqdm
 
 from msmjax.calculators import create_msm, set_up_msm_params
 from msmjax.utils.benchmarking import (
-    calc_relative_rmse_percent,
+    calc_relative_rmse,
     make_timed_eval,
 )
 
@@ -24,8 +24,6 @@ from msmjax.utils.benchmarking import (
 
 # TODO: Explicitly compute as the average particle spacing instead?
 LEVEL_ONE_SPACING = 1.0
-# TODO: Define not just one, but a list of quantities? (Would avoid
-#  neighbor list recomputations)
 
 # TODO: add (option for) periodic and slab structures
 PBC = (False, False, False)
@@ -126,14 +124,13 @@ if __name__ == "__main__":
 
     # All structures are assumed to have the same cell
     cell = jax.device_put(structures["cells"][0])
-    half_sidelength = 0.5 * max(onp.linalg.norm(cell, axis=1))
+    side_lengths = onp.linalg.norm(cell, axis=1)
     range_of_alphas = onp.arange(3.0, 8.01, 1.0)
-    # TODO: Restrict the cutoffs to less than half the side length in PBC cases
-    #  as well, because if I need to use supercell_diag that is not compatible
-    #  with neighbor list
-    if not onp.any(PBC):
+    # TODO: If I add slab structures, add a similar check that only takes the
+    #  periodic x-y directions into account
+    if onp.array(PBC).all() or (onp.logical_not(PBC)).all():
         range_of_alphas = range_of_alphas[
-            range_of_alphas < half_sidelength / LEVEL_ONE_SPACING
+            range_of_alphas <= 0.5 * max(side_lengths) / LEVEL_ONE_SPACING
         ]
     range_of_cutoffs = range_of_alphas * LEVEL_ONE_SPACING
 
@@ -192,7 +189,7 @@ if __name__ == "__main__":
                 all_calculation_results = jnp.array(all_calculation_results)
 
                 # TODO: error in percent or not?
-                error = calc_relative_rmse_percent(
+                relative_rmse = calc_relative_rmse(
                     all_calculation_results,
                     reference_results[LABELMAP_QUANTITIES[quantity]],
                 )
@@ -204,7 +201,7 @@ if __name__ == "__main__":
                         "p": p,
                         "quantity": quantity,
                         "time": all_times.mean(),
-                        "error": error,
+                        "relative_rmse": relative_rmse,
                     },
                     index=[0],
                 )
