@@ -10,7 +10,6 @@ import jax.numpy as jnp
 import numpy as onp
 import pandas as pd
 from jaxlib.xla_extension import XlaRuntimeError
-from matplotlib import pyplot as plt
 from matscipy.neighbours import neighbour_list
 from tqdm import tqdm
 
@@ -18,7 +17,6 @@ from msmjax.calculators import create_msm, set_up_msm_params
 from msmjax.utils.benchmarking import (
     calc_relative_rmse_percent,
     make_timed_eval,
-    path_input_structures,
 )
 
 # TODO: Command-line args or parameter file for all these things?
@@ -30,9 +28,11 @@ LEVEL_ONE_SPACING = 1.0
 QUANTITY = "energy"
 # QUANTITY = "forces"
 
-PBC = (False, False, False)
-INDIR = Path("reference_results/") / "nonperiodic"
 # TODO: add (option for) periodic and slab structures
+# PBC = (False, False, False)
+# INDIR = Path("reference_results/") / "nonperiodic"
+PBC = (True, True, True)
+INDIR = Path("reference_results/") / "periodic"
 
 LIST_OF_PS = [4, 6, 8]
 
@@ -102,10 +102,12 @@ if __name__ == "__main__":
     # All structures are assumed to have the same cell
     cell = jax.device_put(structures["cells"][0])
     # TODO: This restriction is only sensible and necessary in non-periodic case
-    half_sidelength = 0.5 * cell[0, 0]
-    range_of_alphas = onp.arange(
-        3.0, min(half_sidelength / LEVEL_ONE_SPACING, 8.01), 1.0
-    )
+    half_sidelength = 0.5 * max(onp.linalg.norm(cell, axis=1))
+    range_of_alphas = onp.arange(3.0, 8.01, 1.0)
+    if not onp.any(PBC):
+        range_of_alphas = range_of_alphas[
+            range_of_alphas < half_sidelength / LEVEL_ONE_SPACING
+        ]
     range_of_cutoffs = range_of_alphas * LEVEL_ONE_SPACING
 
     print(f"- Range of cutoffs is {range_of_cutoffs}")
@@ -182,3 +184,4 @@ if __name__ == "__main__":
                 results_tmp.to_csv(
                     outfile, index=False, mode="a", header=False
                 )
+        print()
