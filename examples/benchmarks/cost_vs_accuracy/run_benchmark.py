@@ -3,14 +3,15 @@ import os
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 
 from argparse import ArgumentParser
+from functools import partial
 from pathlib import Path
 
 import jax
 import jax.numpy as jnp
+import matscipy.neighbours
 import numpy as onp
 import pandas as pd
 from jaxlib.xla_extension import XlaRuntimeError
-from matscipy.neighbours import neighbour_list
 from tqdm import tqdm
 
 from msmjax.calculators import create_msm, set_up_msm_params
@@ -25,14 +26,12 @@ from msmjax.utils.benchmarking import (
 LEVEL_ONE_SPACING = 1.0
 # TODO: Define not just one, but a list of quantities? (Would avoid
 #  neighbor list recomputations)
-QUANTITY = "energy"
-# QUANTITY = "forces"
 
 # TODO: add (option for) periodic and slab structures
-# PBC = (False, False, False)
-# INDIR = Path("reference_results/") / "nonperiodic"
-PBC = (True, True, True)
-INDIR = Path("reference_results/") / "periodic"
+PBC = (False, False, False)
+INDIR = Path("reference_results/") / "nonperiodic"
+# PBC = (True, True, True)
+# INDIR = Path("reference_results/") / "periodic"
 
 LIST_OF_PS = [4, 6, 8]
 
@@ -44,41 +43,67 @@ LABELMAP_QUANTITIES = {
 }
 
 
+@partial(jax.jit, static_argnums=2)
+def remove_duplicates_from_neighborlist(neighborlist, fill_value, size):
+    without_duplicates = jnp.unique(
+        jnp.sort(jnp.column_stack([neighborlist[0], neighborlist[1]]), axis=1),
+        axis=0,
+        size=size,
+        fill_value=fill_value,
+    )
+    return (without_duplicates[:, 0], without_duplicates[:, 1])
+
+
 def build_neighborlists(set_of_positions, set_of_cells, cutoff, pbc):
-    neighbor_lists = []
-    sizes = []
     n_structures = len(set_of_positions)
+    n_particles = set_of_positions.shape[1]
+
+    neighborlists_raw = []
     print(f"- Building neighbor lists for {n_structures} structures")
     for pos, cll in tqdm(
         zip(set_of_positions, set_of_cells), total=n_structures
     ):
-        nbl = neighbour_list(
+        nbl = matscipy.neighbours.neighbour_list(
             "ij", cutoff=cutoff, positions=pos, cell=cll, pbc=pbc
         )
-        nbl_no_duplicates = jnp.unique(
-            jnp.sort(jnp.column_stack([nbl[0], nbl[1]]), axis=1), axis=0
-        )
-        nbl_no_duplicates = (nbl_no_duplicates[:, 0], nbl_no_duplicates[:, 1])
-        neighbor_lists.append(nbl_no_duplicates)
-        sizes.append(len(nbl_no_duplicates[0]))
-    target_size = max(sizes)
-    n_particles = set_of_positions.shape[1]
+        neighborlists_raw.append(nbl)
+
+    # Pad to common max length
+    max_size = max([len(nbl[0]) for nbl in neighborlists_raw])
     placeholder_index = n_particles
-    for idx_structure in range(len(neighbor_lists)):
-        i, j = neighbor_lists[idx_structure]
-        padding = target_size - len(i)
-        neighbor_lists[idx_structure] = (
+    for idx_structure in range(n_structures):
+        i, j = neighborlists_raw[idx_structure]
+        padding = max_size - len(i)
+        neighborlists_raw[idx_structure] = (
             jnp.pad(i, (0, padding), constant_values=placeholder_index),
             jnp.pad(j, (0, padding), constant_values=placeholder_index),
         )
-    print("- Finished building neighbor lists")
-    return neighbor_lists
+
+    max_size_nodupes = max_size // 2
+    neighborlists_nodupes = [
+        remove_duplicates_from_neighborlist(
+            nbl, fill_value=placeholder_index, size=max_size_nodupes
+        )
+        for nbl in neighborlists_raw
+    ]
+    print("- Done building neighbor lists")
+
+    return neighborlists_nodupes
 
 
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument(
+        "--quantity",
+        required=True,
+        type=str,
+        choices=LABELMAP_QUANTITIES.keys(),
+        nargs="+",
+        help="Quantity or quantities to evaluate for the benchmark",
+    )
+    parser.add_argument(
         "--outdir",
+        required=True,
         type=str,
         help="Output directory. Existing outputs will not be overwritten.",
     )
@@ -101,9 +126,11 @@ if __name__ == "__main__":
 
     # All structures are assumed to have the same cell
     cell = jax.device_put(structures["cells"][0])
-    # TODO: This restriction is only sensible and necessary in non-periodic case
     half_sidelength = 0.5 * max(onp.linalg.norm(cell, axis=1))
     range_of_alphas = onp.arange(3.0, 8.01, 1.0)
+    # TODO: Restrict the cutoffs to less than half the side length in PBC cases
+    #  as well, because if I need to use supercell_diag that is not compatible
+    #  with neighbor list
     if not onp.any(PBC):
         range_of_alphas = range_of_alphas[
             range_of_alphas < half_sidelength / LEVEL_ONE_SPACING
@@ -140,48 +167,53 @@ if __name__ == "__main__":
             )
             msm_evaluation_fns = create_msm(msm_params)
             # TODO: repeat and number as command-line args?
-            timing_fn = make_timed_eval(
-                msm_evaluation_fns[QUANTITY], repeat=5, number=50
-            )
-            all_times = []
-            all_calculation_results = []
-            print(f"- Starting timing loop over {n_structures} structures")
-            for idx_structure in tqdm(range(n_structures)):
-                pos = jax.device_put(structures["positions"][idx_structure])
-                chg = jax.device_put(structures["charges"][idx_structure])
-                nbl = jax.device_put(neighborlists[idx_structure])
-                # TODO: try-except out-of-memory errors?
-                min_time, calculation_result = timing_fn(
-                    pos, chg, neighborlist=nbl
+            for quantity in cmd_args.quantity:
+                print(f"- Evaluating quantity: {quantity}")
+                timing_fn = make_timed_eval(
+                    msm_evaluation_fns[quantity], repeat=5, number=20
                 )
-                # TODO: if quantity == "stress", reduce to 6-component format
-                all_times.append(min_time)
-                all_calculation_results.append(calculation_result)
-            all_times = jnp.array(all_times)
-            all_calculation_results = jnp.array(all_calculation_results)
+                all_times = []
+                all_calculation_results = []
+                print(f"- Starting timing loop over {n_structures} structures")
+                for idx_structure in tqdm(range(n_structures)):
+                    pos = jax.device_put(
+                        structures["positions"][idx_structure]
+                    )
+                    chg = jax.device_put(structures["charges"][idx_structure])
+                    nbl = jax.device_put(neighborlists[idx_structure])
+                    # TODO: try-except out-of-memory errors?
+                    min_time, calculation_result = timing_fn(
+                        pos, chg, neighborlist=nbl
+                    )
+                    # TODO: if quantity == "stress", reduce to 6-component format
+                    all_times.append(min_time)
+                    all_calculation_results.append(calculation_result)
+                all_times = jnp.array(all_times)
+                all_calculation_results = jnp.array(all_calculation_results)
 
-            # TODO: error in percent or not?
-            error = calc_relative_rmse_percent(
-                all_calculation_results,
-                reference_results[LABELMAP_QUANTITIES[QUANTITY]],
-            )
-            # TODO: What (else) to save? quantity? pbc?
-            results_tmp = pd.DataFrame(
-                data={
-                    "n_particles": n_particles,
-                    "level_zero_cutoff": level_zero_cutoff,
-                    "p": p,
-                    "quantity": QUANTITY,
-                    "time": all_times.mean(),
-                    "error": error,
-                },
-                index=[0],
-            )
-            print(f"- Writing results to {outfile}.")
-            if not outfile.is_file():
-                results_tmp.to_csv(outfile, index=False, mode="w")
-            else:
-                results_tmp.to_csv(
-                    outfile, index=False, mode="a", header=False
+                # TODO: error in percent or not?
+                error = calc_relative_rmse_percent(
+                    all_calculation_results,
+                    reference_results[LABELMAP_QUANTITIES[quantity]],
                 )
+                # TODO: What (else) to save? quantity? pbc?
+                results_tmp = pd.DataFrame(
+                    data={
+                        "n_particles": n_particles,
+                        "level_zero_cutoff": level_zero_cutoff,
+                        "p": p,
+                        "quantity": quantity,
+                        "time": all_times.mean(),
+                        "error": error,
+                    },
+                    index=[0],
+                )
+                print(f"- Writing results to {outfile}.")
+                if not outfile.is_file():
+                    results_tmp.to_csv(outfile, index=False, mode="w")
+                else:
+                    results_tmp.to_csv(
+                        outfile, index=False, mode="a", header=False
+                    )
+            print()
         print()
