@@ -1,4 +1,10 @@
-# %%
+"""Script to calculate Madelung constants with MSM in batch mode.
+
+I.e., demonstrates how to handle a number of structures with different cell
+sizes and shapes, and containing different numbers of atoms, using the same
+evaluation function compiled only once.
+"""
+
 import os
 
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
@@ -42,13 +48,16 @@ def suggest_supercell_diag(cell, cutoff):
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser()
+    parser = ArgumentParser(
+        description="Calculate Madelung constant with MSM with different "
+        "parameter settings, for multiple structures at once."
+    )
     parser.add_argument(
         "--outdir",
         type=str,
         required=True,
         help="Directory to save results to. If it exists already, "
-        "the script will terminate.",
+        "it will not be overwritten and the script will terminate.",
     )
     args = parser.parse_args()
     outdir = Path(args.outdir)

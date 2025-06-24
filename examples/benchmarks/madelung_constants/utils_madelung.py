@@ -1,3 +1,7 @@
+"""Utilities for Madelung constant benchmark."""
+
+# TODO: references?
+
 import math
 
 import numpy as onp

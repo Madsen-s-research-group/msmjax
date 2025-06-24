@@ -1,3 +1,9 @@
+"""Script to calculate Madelung constants with MSM in single-structure mode.
+
+I.e., the evaluation function is set up and compiled specifically for the one
+structure it is going to be evaluated on.
+"""
+
 import os
 
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
@@ -25,7 +31,10 @@ INDIR_STRUCTURES = Path("input_structures/")
 PBC = (True,) * 3
 
 if __name__ == "__main__":
-    parser = ArgumentParser()  # TODO: help message
+    parser = ArgumentParser(
+        description="Calculate Madelung constant with MSM with different "
+        "parameter settings for a single structure."
+    )
     parser.add_argument(
         "--structure",
         type=str,
@@ -181,8 +190,7 @@ if __name__ == "__main__":
 
         results = pd.DataFrame(
             data={
-                # TODO: The key should be called "structure", not "compound"
-                "compound": [structurekey] * len(RANGE_OF_CUTOFFS),
+                "structure": [structurekey] * len(RANGE_OF_CUTOFFS),
                 # TODO: Save multiple spacing values?
                 "level_one_gridspacing": actual_spacings[0],
                 "p": onp.full_like(RANGE_OF_CUTOFFS, p, dtype=int),
@@ -204,57 +212,11 @@ if __name__ == "__main__":
         list_of_resultsfiles.append(outfile)
         print()
 
-    fig, ax = plt.subplots()
-    ax.set_title(STRUCTURES_INFO[structurekey]["nice_label"])
-    ax.set_xlabel(r"$r_{\text{cut}}^{(0)}$ / $d_{\text{min}}$")
-    ax.set_ylabel(r"$M - M_{\text{ref}}$")
-
-    linthresh = 1.0
-
-    # TODO: different marker styles
-    # TODO: Second x-axis that shows the largest effective cutoff in the system?
-
-    for resultsfile in list_of_resultsfiles:
-        loaded = pd.read_csv(resultsfile)
-        h = loaded["level_one_gridspacing"].values[0]
-        p = loaded["p"].values[0]
-        d_min_cation_anion = loaded["d_min"].values[0]
-        cutoffs = loaded["level_zero_cutoff"].values
-        madelung_values = loaded["madelung_value"].values
-        cutoffs_relative = cutoffs / d_min_cation_anion
-        target_value = STRUCTURES_INFO[loaded["compound"].values[0]][
-            "target_value"
-        ]
-        deviations = madelung_values - target_value
-
-        linthresh = min(linthresh, min(onp.abs(deviations)))
-
-        label = (
-            f"$h_1 = {h / d_min_cation_anion:.2f} \, " + r"d_{\text{min}}$,"
-        )
-        label += " " + f"$p = {p}$"
-
-        ax.plot(cutoffs_relative, deviations, marker="x", label=label)
-        ax.axhline(0.0, color="black", zorder=-10)
-
-    ax.set_yscale("symlog", linthresh=linthresh)
-
-    ax.legend()
-
-    for suffix in ["png", "pdf"]:
-        outfile_plot = outdir / (
-            "madelung_const_vs_cutoff_symlogscale" + "." + suffix
-        )
-        print(f"- Saving plot to {outfile_plot}")
-        fig.savefig(outfile_plot)
-
-    # TODO: define earlier? Solve differently (tight_layout...)?
     FIGSIZE = (6.4, 5.6)
-    LINEWIDTH_TWIN_AXES = 1.5  # TODO: define earlier?
+    LINEWIDTH_TWIN_AXES = 1.5
 
     fig, ax = plt.subplots()
     fig.subplots_adjust(top=0.725)
-    # ax.set_title(STRUCTURES_INFO[structurekey]["nice_label"])  # TODO
     fig.suptitle(STRUCTURES_INFO[structurekey]["nice_label"])
     ax.set_xlabel(r"$r_{\text{cut}}^{(0)}$ / $d_{\text{min}}$")
     ax.set_ylabel(r"$|M - M_{\text{ref}}|$")
@@ -283,7 +245,7 @@ if __name__ == "__main__":
         cutoffs_at_max_level_relative = (
             cutoffs_at_max_level / d_min_cation_anion
         )
-        target_value = STRUCTURES_INFO[loaded["compound"].values[0]][
+        target_value = STRUCTURES_INFO[loaded["structure"].values[0]][
             "target_value"
         ]
         deviations = madelung_values - target_value
@@ -305,8 +267,6 @@ if __name__ == "__main__":
     ax.legend()
 
     for suffix in ["png", "pdf"]:
-        outfile_plot = outdir / (
-            "madelung_const_vs_cutoff_logscale" + "." + suffix
-        )
+        outfile_plot = outdir / ("madelung_const_vs_cutoff" + "." + suffix)
         print(f"- Saving plot to {outfile_plot}")
         fig.savefig(outfile_plot)
