@@ -106,7 +106,6 @@ if __name__ == "__main__":
         0.5 * base_grid_spacing,
         0.25 * base_grid_spacing,
     ]
-    # list_of_ps = [4, 6, 6, 8]  # TODO
     p = 6  # TODO
     list_of_resultsfiles = []
 
@@ -125,28 +124,28 @@ if __name__ == "__main__":
             supercell_diag=None,  # Does not matter here
             dynamic_cell=False,
         )
-        # TODO: one value per direction?
         actual_spacings = tmp_msm_params.grid_spacings[1]
         if tmp_msm_params.grids_defined_on_unitcube:
             # TODO: introduce `scaled_grid_spacings` to do away with the need for this?
             # TODO: one value per direction?
             actual_spacings *= side_lengths
+        formatted = ", ".join(
+            [f"{x:.2f}" for x in actual_spacings / d_min_cation_anion]
+        )
         print(
             f"- Actual spacings (along each direction) after adjusting for "
-            f"pbcs: h/d_min = {actual_spacings / d_min_cation_anion}"
+            f"pbcs: h/d_min = ({formatted})"
         )
-        # print(f"- {p=}:") # TODO
 
         madelung_consts_calculated = []
         highest_level_cutoffs = []
 
+        print("- Running for different cutoffs:")
         for level_zero_cutoff in (progressbar := tqdm(RANGE_OF_CUTOFFS)):
             progressbar.set_postfix_str(
                 f"r_cut_0/d_min = {level_zero_cutoff / d_min_cation_anion:.2f}"
             )
 
-            # TODO: Use the suggest_supercell_diag currently used in
-            #  calculate_madelung_consts_batch.py here as well?
             # Determine the necessary cell replication for the current cutoff.
             # First for an orthorhombic cell:
             supercell_diag = onp.ceil(
@@ -232,8 +231,10 @@ if __name__ == "__main__":
     twin3.set_xlabel(r"largest included cutoff / $d_{\text{min}}$")
     axes_twin = [twin1, twin2, twin3]
 
-    # TODO: different marker styles?
-    for resultsfile, ax_twin in zip(list_of_resultsfiles, axes_twin):
+    list_of_markers = ["x", "o", "s"]
+    for resultsfile, ax_twin, marker in zip(
+        list_of_resultsfiles, axes_twin, list_of_markers
+    ):
         loaded = pd.read_csv(resultsfile)
         h = loaded["level_one_gridspacing"].values[0]
         p = loaded["p"].values[0]
@@ -255,7 +256,11 @@ if __name__ == "__main__":
         )
         label += " " + f"$p = {p}$"
         (graph,) = ax.plot(
-            cutoffs_relative, onp.abs(deviations), marker="x", label=label
+            cutoffs_relative,
+            onp.abs(deviations),
+            marker=marker,
+            label=label,
+            markerfacecolor="none",
         )
         ax_twin.scatter(
             cutoffs_at_max_level_relative, onp.abs(deviations), marker="none"
