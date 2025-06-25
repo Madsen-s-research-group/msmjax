@@ -38,6 +38,10 @@ if __name__ == "__main__":
     )
     cmd_args = parser.parse_args()
 
+    if cmd_args.jax_enable_x64:
+        jax.config.update("jax_enable_x64", True)
+        print("- Running JAX in double-precision mode.")
+
     baseoutdir = Path(cmd_args.outdir)
     baseoutdir.mkdir(parents=True)
 
@@ -47,11 +51,6 @@ if __name__ == "__main__":
         pos = structures["positions"][0]
         chg = structures["charges"][0]
         cell = structures["cells"][0]
-        if cmd_args.jax_enable_x64:
-            jax.config.update("jax_enable_x64", True)
-            pos = pos.astype(onp.float64)
-            chg = chg.astype(onp.float64)
-            cell = cell.astype(onp.float64)
         pos = jax.device_put(pos)
         chg = jax.device_put(chg)
         cell = jax.device_put(cell)

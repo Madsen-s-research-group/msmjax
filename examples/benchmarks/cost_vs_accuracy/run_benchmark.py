@@ -24,10 +24,12 @@ from msmjax.utils.benchmarking import (
 LEVEL_ONE_SPACING = 1.0
 
 # TODO: add (option for) periodic and slab structures
-PBC = (False, False, False)
-INDIR = Path("reference_data/") / "nonperiodic"
+# PBC = (False, False, False)
+# INDIR = Path("reference_data/") / "nonperiodic"
 # PBC = (True, True, True)
 # INDIR = Path("reference_data/") / "periodic"
+
+DATADIR = Path("reference_data")
 
 LIST_OF_PS = [4, 6, 8]
 
@@ -36,6 +38,10 @@ LABELMAP_QUANTITIES = {
     "forces": "forces",
     "charge_gradient": "chargegrads",
     "stress": "stresses",
+}
+MAP_STRUCTURETYPES = {
+    "nonperiodic": {"indir": DATADIR / "nonperiodic", "pbc": (False,) * 3},
+    "periodic": {"indir": DATADIR / "periodic", "pbc": (True,) * 3},
 }
 
 
@@ -50,7 +56,9 @@ def remove_duplicates_from_neighborlist(neighborlist, fill_value, size):
     return (without_duplicates[:, 0], without_duplicates[:, 1])
 
 
-def build_neighborlists(set_of_positions, set_of_cells, cutoff, pbc):
+def build_duplicate_free_neighborlists(
+    set_of_positions, set_of_cells, cutoff, pbc
+):
     n_structures = len(set_of_positions)
     n_particles = set_of_positions.shape[1]
 
@@ -90,6 +98,12 @@ def build_neighborlists(set_of_positions, set_of_cells, cutoff, pbc):
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument(
+        "--structuretype",
+        required=True,
+        type=str,
+        choices=["nonperiodic", "periodic"],
+    )
+    parser.add_argument(
         "--quantity",
         required=True,
         type=str,
@@ -111,12 +125,22 @@ if __name__ == "__main__":
     )
     cmd_args = parser.parse_args()
 
+    if cmd_args.jax_enable_x64:
+        jax.config.update("jax_enable_x64", True)
+        print("- Running JAX in double-precision mode.")
+
     baseoutdir = Path(cmd_args.outdir)
     baseoutdir.mkdir(parents=True)
-    structures = onp.load(INDIR / "structures.npz")
+    structuretype = cmd_args.structuretype
+    structures = onp.load(
+        MAP_STRUCTURETYPES[structuretype]["indir"] / "structures.npz"
+    )
     n_structures = structures["positions"].shape[0]
     n_particles = structures["positions"].shape[1]
-    reference_results = onp.load(INDIR / "reference_results.npz")
+    reference_results = onp.load(
+        MAP_STRUCTURETYPES[structuretype]["indir"] / "reference_results.npz"
+    )
+    pbc = MAP_STRUCTURETYPES[structuretype]["pbc"]
 
     outfile = baseoutdir / "results.csv"
 
@@ -126,7 +150,7 @@ if __name__ == "__main__":
     range_of_alphas = onp.arange(3.0, 8.01, 1.0)
     # TODO: If I add slab structures, add a similar check that only takes the
     #  periodic x-y directions into account
-    if onp.array(PBC).all() or (onp.logical_not(PBC)).all():
+    if onp.array(pbc).all() or (onp.logical_not(pbc)).all():
         range_of_alphas = range_of_alphas[
             range_of_alphas <= 0.5 * max(side_lengths) / LEVEL_ONE_SPACING
         ]
@@ -139,11 +163,11 @@ if __name__ == "__main__":
         print("#" * 80)
         print(f"- r_cut_0 = {level_zero_cutoff:.2f}")
         print("#" * 80)
-        neighborlists = build_neighborlists(
+        neighborlists = build_duplicate_free_neighborlists(
             structures["positions"],
             structures["cells"],
             level_zero_cutoff,
-            pbc=PBC,
+            pbc=pbc,
         )
         print()
         for p in LIST_OF_PS:
@@ -153,7 +177,7 @@ if __name__ == "__main__":
                 level_one_spacings=LEVEL_ONE_SPACING,
                 level_zero_cutoff=level_zero_cutoff,
                 p=p,
-                pbc=PBC,
+                pbc=pbc,
                 cell_mode="ortho",
                 dynamic_cell=False,
                 n_particles=n_particles,
@@ -165,7 +189,7 @@ if __name__ == "__main__":
             for quantity in cmd_args.quantity:
                 print(f"- Evaluating quantity: {quantity}")
                 timing_fn = make_timed_eval(
-                    msm_evaluation_fns[quantity], repeat=5, number=20
+                    msm_evaluation_fns[quantity], repeat=5, number=10
                 )
                 all_times = []
                 all_calculation_results = []
@@ -210,3 +234,8 @@ if __name__ == "__main__":
                     )
             print()
         print()
+
+    print(
+        "- Finished running benchmark. "
+        "You can use 'make_plots.ipynb' to plot the results."
+    )
