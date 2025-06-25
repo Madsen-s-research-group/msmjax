@@ -49,11 +49,15 @@ if __name__ == "__main__":
         help="Directory to save results to. If it exists already, "
         "the script will terminate.",
     )
+    parser.add_argument(
+        "-p", type=int, required=True, help="Interpolation order."
+    )
     # TODO: Make the order p a command-line argument?
     args = parser.parse_args()
     structurekey = args.structure
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True)
+    p = args.p
 
     structurefile = (
         INDIR_STRUCTURES / STRUCTURES_INFO[structurekey]["structurefile"]
@@ -106,35 +110,41 @@ if __name__ == "__main__":
         0.5 * base_grid_spacing,
         0.25 * base_grid_spacing,
     ]
-    p = 6  # TODO
+    list_of_result_file_names = [
+        "results_base_spacing.csv",
+        "results_half_base_spacing.csv",
+        "results_quarter_base_spacing.csv",
+    ]
     list_of_resultsfiles = []
 
-    for h in list_of_spacings:
+    for h, result_file_name in zip(
+        list_of_spacings, list_of_result_file_names
+    ):
         print(
             f"- Tentative grid spacing: h/d_min = {h / d_min_cation_anion:.2f}"
         )
-        # TODO: Explain why this is done:
+        # Set up a temporary MSM parameters object in order to obtain the
+        # actual (pbc-adjusted) grid spacings, so we can print them:
         tmp_msm_params = set_up_msm_params(
             cell=cell,
             level_one_spacings=h,
-            level_zero_cutoff=RANGE_OF_CUTOFFS[0],  # Does not matter here
-            p=4,  # Does not matter here
+            level_zero_cutoff=RANGE_OF_CUTOFFS[0],  # does not matter for this
+            p=4,  # does not matter for this
             pbc=PBC,
             cell_mode=STRUCTURES_INFO[structurekey]["cell_mode"],
-            supercell_diag=None,  # Does not matter here
+            supercell_diag=None,  # does not matter for this
             dynamic_cell=False,
         )
         actual_spacings = tmp_msm_params.grid_spacings[1]
         if tmp_msm_params.grids_defined_on_unitcube:
             # TODO: introduce `scaled_grid_spacings` to do away with the need for this?
-            # TODO: one value per direction?
             actual_spacings *= side_lengths
-        formatted = ", ".join(
+        formatted_scaled_spacings = ", ".join(
             [f"{x:.2f}" for x in actual_spacings / d_min_cation_anion]
         )
         print(
             f"- Actual spacings (along each direction) after adjusting for "
-            f"pbcs: h/d_min = ({formatted})"
+            f"pbcs: h/d_min = ({formatted_scaled_spacings})"
         )
 
         madelung_consts_calculated = []
@@ -190,8 +200,9 @@ if __name__ == "__main__":
         results = pd.DataFrame(
             data={
                 "structure": [structurekey] * len(RANGE_OF_CUTOFFS),
-                # TODO: Save multiple spacing values?
-                "level_one_gridspacing": actual_spacings[0],
+                "level_one_gridspacing_a": actual_spacings[0],
+                "level_one_gridspacing_b": actual_spacings[1],
+                "level_one_gridspacing_c": actual_spacings[2],
                 "p": onp.full_like(RANGE_OF_CUTOFFS, p, dtype=int),
                 "max_grid_level": onp.full_like(
                     RANGE_OF_CUTOFFS, msm_params.max_grid_level, dtype=int
@@ -202,10 +213,7 @@ if __name__ == "__main__":
                 "madelung_value": madelung_consts_calculated,
             }
         )
-        # TODO: Multiple spacing values (one per direction)?
-        outfile = outdir / (
-            "results_" + f"h-{actual_spacings[0]:.2f}_p-{p}" + ".csv"
-        )
+        outfile = outdir / result_file_name
         print(f"- Saving results to {outfile}.")
         results.to_csv(outfile, index=False)
         list_of_resultsfiles.append(outfile)
@@ -236,9 +244,12 @@ if __name__ == "__main__":
         list_of_resultsfiles, axes_twin, list_of_markers
     ):
         loaded = pd.read_csv(resultsfile)
-        h = loaded["level_one_gridspacing"].values[0]
+        h_1_a = loaded["level_one_gridspacing_a"].values[0]
+        h_1_b = loaded["level_one_gridspacing_b"].values[0]
+        h_1_c = loaded["level_one_gridspacing_c"].values[0]
         p = loaded["p"].values[0]
         d_min_cation_anion = loaded["d_min"].values[0]
+        n_levels = loaded["max_grid_level"].values[0]
         cutoffs = loaded["level_zero_cutoff"].values
         cutoffs_at_max_level = loaded["highest_cutoff"]
         madelung_values = loaded["madelung_value"].values
@@ -251,10 +262,13 @@ if __name__ == "__main__":
         ]
         deviations = madelung_values - target_value
         # TODO: Include the number of grid levels in the label?
-        label = (
-            f"$h_1 = {h / d_min_cation_anion:.2f} \, " + r"d_{\text{min}}$,"
+        formatted_scaled_spacings = ", ".join(
+            [f"{x / d_min_cation_anion:.2f}" for x in (h_1_a, h_1_b, h_1_c)]
         )
-        label += " " + f"$p = {p}$"
+        label = (
+            f"$h_1 = ({formatted_scaled_spacings}) \, " + r"d_{\text{min}}$"
+        )
+        label += " $\Longrightarrow$ " + f"{n_levels} grid level(s)"
         (graph,) = ax.plot(
             cutoffs_relative,
             onp.abs(deviations),
