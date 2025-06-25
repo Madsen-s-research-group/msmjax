@@ -25,11 +25,7 @@ from utils_madelung import (
     find_min_cation_anion_distance,
 )
 
-from msmjax.calculators import (
-    check_cutoffs_and_spacings,
-    create_msm,
-    set_up_msm_params,
-)
+from msmjax.calculators import create_msm, set_up_msm_params
 from msmjax.kernels import determine_min_kernel_stencil_size
 
 INDIR_STRUCTURES = Path("input_structures/")
@@ -146,13 +142,22 @@ if __name__ == "__main__":
 
     d_min = 1.0  # We previously scaled all structures to d_min = 1.0
 
-    n_gridpoints_level_one = 4  # TODO: command-line arg?
+    # What matters ultimately in setting up a variable-cell evaluation is
+    # not the grid spacing, but the number of grid points. This number is
+    # fixed at setup time, and results in grid spacings that scale with the
+    # input cell at evaluation time. Here, we choose, somewhat arbitrarily,
+    # 4 subdivisions along each direction, and will check further down
+    # whether the resulting grid spacing is reasonable (less than,
+    # or approximately equal to, d_min) for all structures to be evaluated,
+    # even the one with the largest cell.
+    n_gridpoints_level_one = (4, 4, 4)
     reference_cell = all_cells[0]
     reference_spacings = (
         onp.linalg.norm(reference_cell, axis=1) / n_gridpoints_level_one
     )
 
-    # TODO: explanation
+    # Set up a temporary MSM parameters object in order to obtain the
+    # actual (pbc-adjusted) grid spacings, so we can print them:
     tmp_msm_params = set_up_msm_params(
         cell=reference_cell,
         level_one_spacings=reference_spacings,
@@ -166,7 +171,11 @@ if __name__ == "__main__":
         "structures are:"
     )
     for structure, cell in zip(all_structures, all_cells):
-        # actual_spacings = check_cutoffs_and_spacings(cell, tmp_msm_params)
+        # For a dynamic-cell model, the grid spacings are defined w.r.t. to
+        # the unit cube, so we multiply by the side lenghts of the current cell
+        # to get the actual grid spacings.
+        # TODO: Introducing a `scaled_spacings` attribute of MSMParams would
+        #  eliminate the need for this and possible confusion surrounding it
         actual_spacings = tmp_msm_params.grid_spacings[1] * onp.linalg.norm(
             cell, axis=1
         )
@@ -198,7 +207,6 @@ if __name__ == "__main__":
         )
         stencil_extents_intermed_all_structures = []
         for cell in all_cells:
-            # TODO: explanation?
             side_lengths = onp.linalg.norm(cell, axis=1)
             spacings = side_lengths / onp.array(n_gridpoints_level_one)
             stencil_extents = determine_min_kernel_stencil_size(
@@ -213,7 +221,7 @@ if __name__ == "__main__":
         print(f"- Found {common_stencil_extents_intermed}.")
 
         msm_params = set_up_msm_params(
-            cell=reference_cell,  # TODO: name "reference_spacings"?
+            cell=reference_cell,
             level_one_spacings=reference_spacings,
             level_zero_cutoff=level_zero_cutoff,
             p=p,
