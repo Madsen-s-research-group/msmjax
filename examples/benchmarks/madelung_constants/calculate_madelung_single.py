@@ -52,7 +52,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "-p", type=int, required=True, help="Interpolation order."
     )
-    # TODO: Make the order p a command-line argument?
     args = parser.parse_args()
     structurekey = args.structure
     outdir = Path(args.outdir)

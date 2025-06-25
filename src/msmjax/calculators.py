@@ -634,6 +634,7 @@ def check_cutoffs_and_spacings(cell: ArrayLike, params: MSMParams):
 
     level_one_spacings = params.grid_spacings[1].copy()
     if params.grids_defined_on_unitcube:
+        # TODO: introduce a `scaled_spacings` attribute of MSMParams?
         level_one_spacings *= onp.linalg.norm(cell, axis=1)
 
     return level_one_spacings
