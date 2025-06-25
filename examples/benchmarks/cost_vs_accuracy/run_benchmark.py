@@ -1,3 +1,5 @@
+"""Analyze cost-accuracy tradeoff for different MSM parameter settings."""
+
 import os
 
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
@@ -22,12 +24,6 @@ from msmjax.utils.benchmarking import (
 
 # TODO: Explicitly compute as the average particle spacing instead?
 LEVEL_ONE_SPACING = 1.0
-
-# TODO: add (option for) periodic and slab structures
-# PBC = (False, False, False)
-# INDIR = Path("reference_data/") / "nonperiodic"
-# PBC = (True, True, True)
-# INDIR = Path("reference_data/") / "periodic"
 
 DATADIR = Path("reference_data")
 
@@ -96,7 +92,10 @@ def build_duplicate_free_neighborlists(
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser()
+    parser = ArgumentParser(
+        description="Analyze cost-accuracy tradeoff for "
+        "different MSM parameter settings."
+    )
     parser.add_argument(
         "--structuretype",
         required=True,
