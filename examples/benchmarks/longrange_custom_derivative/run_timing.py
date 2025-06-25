@@ -1,3 +1,5 @@
+"""Benchmark custom-derivative rules for the MSM's long-range part $U^{1+}$"""
+
 import os
 
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
@@ -19,7 +21,10 @@ from msmjax.utils.benchmarking import make_timed_eval, path_input_structures
 ALPHA = 3.0
 
 if __name__ == "__main__":
-    parser = ArgumentParser()
+    parser = ArgumentParser(
+        description="Benchmark the custom-derivative rules for the long-range "
+        "energy contribution of the MSM."
+    )
     parser.add_argument(
         "--outdir",
         type=str,
