@@ -20,16 +20,14 @@ from msmjax.utils.benchmarking import (
     make_timed_eval,
 )
 
-# TODO: Command-line args or parameter file for all these things?
-
 # TODO: Explicitly compute as the average particle spacing instead?
 LEVEL_ONE_SPACING = 1.0
 
 # TODO: add (option for) periodic and slab structures
 PBC = (False, False, False)
-INDIR = Path("reference_results/") / "nonperiodic"
+INDIR = Path("reference_data/") / "nonperiodic"
 # PBC = (True, True, True)
-# INDIR = Path("reference_results/") / "periodic"
+# INDIR = Path("reference_data/") / "periodic"
 
 LIST_OF_PS = [4, 6, 8]
 
@@ -118,7 +116,7 @@ if __name__ == "__main__":
     structures = onp.load(INDIR / "structures.npz")
     n_structures = structures["positions"].shape[0]
     n_particles = structures["positions"].shape[1]
-    reference_results = onp.load(INDIR / "results.npz")
+    reference_results = onp.load(INDIR / "reference_results.npz")
 
     outfile = baseoutdir / "results.csv"
 
@@ -163,7 +161,7 @@ if __name__ == "__main__":
                 neighborlist_prefactor=1.0,  # for no-duplicate neighbor list
             )
             msm_evaluation_fns = create_msm(msm_params)
-            # TODO: repeat and number as command-line args?
+            # TODO: Add "repeat" and "number" as command-line args?
             for quantity in cmd_args.quantity:
                 print(f"- Evaluating quantity: {quantity}")
                 timing_fn = make_timed_eval(
@@ -188,12 +186,10 @@ if __name__ == "__main__":
                 all_times = jnp.array(all_times)
                 all_calculation_results = jnp.array(all_calculation_results)
 
-                # TODO: error in percent or not?
                 relative_rmse = calc_relative_rmse(
                     all_calculation_results,
                     reference_results[LABELMAP_QUANTITIES[quantity]],
                 )
-                # TODO: What (else) to save? quantity? pbc?
                 results_tmp = pd.DataFrame(
                     data={
                         "n_particles": n_particles,
