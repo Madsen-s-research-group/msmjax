@@ -223,7 +223,7 @@ if __name__ == "__main__":
     LINEWIDTH_TWIN_AXES = 1.5
 
     fig, ax = plt.subplots()
-    fig.subplots_adjust(top=0.725)
+    fig.subplots_adjust(top=0.75)
     fig.suptitle(STRUCTURES_INFO[structurekey]["nice_label"])
     ax.set_xlabel(r"$r_{\text{cut}}^{(0)}$ / $d_{\text{min}}$")
     ax.set_ylabel(r"$|M - M_{\text{ref}}|$")
