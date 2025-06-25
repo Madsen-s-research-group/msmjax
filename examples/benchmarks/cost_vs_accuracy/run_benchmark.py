@@ -204,6 +204,9 @@ if __name__ == "__main__":
                         pos, chg, neighborlist=nbl
                     )
                     # TODO: if quantity == "stress", reduce to 6-component format
+                    # TODO: Also need to set up with dynamic_cell = True, and
+                    #  pass cell when calling timing_fn, if stress is to be
+                    #  evaluated.
                     all_times.append(min_time)
                     all_calculation_results.append(calculation_result)
                 all_times = jnp.array(all_times)
