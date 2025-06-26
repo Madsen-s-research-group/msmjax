@@ -13,7 +13,6 @@ import jax.numpy as jnp
 import matscipy.neighbours
 import numpy as onp
 import pandas as pd
-from jaxlib.xla_extension import XlaRuntimeError
 from tqdm import tqdm
 
 from msmjax.calculators import create_msm, set_up_msm_params
@@ -199,7 +198,8 @@ if __name__ == "__main__":
                     )
                     chg = jax.device_put(structures["charges"][idx_structure])
                     nbl = jax.device_put(neighborlists[idx_structure])
-                    # TODO: try-except out-of-memory errors?
+                    # TODO: try-except out-of-memory errors? (at which loop
+                    #  level though?)
                     min_time, calculation_result = timing_fn(
                         pos, chg, neighborlist=nbl
                     )
