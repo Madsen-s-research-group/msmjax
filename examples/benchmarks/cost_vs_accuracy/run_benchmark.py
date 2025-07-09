@@ -10,6 +10,8 @@ from pathlib import Path
 
 import jax
 import jax.numpy as jnp
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import matscipy.neighbours
 import numpy as onp
 import pandas as pd
@@ -136,6 +138,10 @@ if __name__ == "__main__":
     baseoutdir = Path(cmd_args.outdir)
     baseoutdir.mkdir(parents=True)
     structuretype = cmd_args.structuretype
+    # TODO: Inconsistent: As currently written, all quantities, even those that
+    #  do not require it, will be evaluated with dynamic cell if stress is
+    #  among the requested quantities.
+    #  This will skew the times (but does it really matter?)
     use_dynamic_cell = "stress" in cmd_args.quantity
     structures = onp.load(
         MAP_STRUCTURETYPES[structuretype]["indir"] / "structures.npz"
@@ -253,7 +259,64 @@ if __name__ == "__main__":
             print()
         print()
 
-    print(
-        "- Finished running benchmark. "
-        "You can use 'make_plots.ipynb' to plot the results."
-    )
+    print("- Finished running benchmark.")
+    print()
+
+    markerlist = ["x", "o", "s", "d", "v", "^"]
+    # Settings for annotating the data points with the cutoff value:
+    # See https://matplotlib.org/stable/users/explain/artists/transforms_tutorial.html#using-offset-transforms-to-create-a-shadow-effect for the handling of the annotation offsets from the data points
+    ha = "center"
+    va = "top"
+    dx, dy = -3 / 72.0, -4 / 72.0  # x and y offsets in points
+
+    results_all = pd.read_csv(outfile)
+    for quantity in results_all["quantity"].unique():
+        unique_ps = results_all.loc[
+            results_all["quantity"] == quantity, "p"
+        ].unique()
+        unique_ps = onp.sort(unique_ps)
+
+        fig, ax = plt.subplots()
+        ax.set_title("Evaluated quantity: " + quantity)
+        ax.set_xlabel("RMSE divided by STD of reference results")
+        ax.set_ylabel("time / ms")
+        ax.set_xscale("log")
+        offset = mpl.transforms.ScaledTranslation(dx, dy, fig.dpi_scale_trans)
+        annotations_transform = ax.transData + offset
+        for p, marker in zip(unique_ps, markerlist):
+            selection = results_all.loc[
+                (
+                    (results_all["p"] == p)
+                    & (results_all["quantity"] == quantity)
+                )
+            ]
+            cutoffs = selection.level_zero_cutoff
+            errors = selection.relative_rmse
+            times = selection.time * 10**3
+            graph = ax.plot(
+                errors,
+                times,
+                marker=marker,
+                markerfacecolor="none",
+                label=f"p = {p}, varying cutoffs",
+            )
+            for r_cut, err, t in zip(cutoffs, errors, times):
+                xy = (err, t)
+                ax.annotate(
+                    str(r_cut),
+                    xy,
+                    xytext=xy,
+                    textcoords=annotations_transform,
+                    ha=ha,
+                    va=va,
+                    color=graph[0].get_color(),
+                )
+
+        ax.set_ylim(0.0, ax.get_ylim()[1])
+        ax.legend()
+
+        filename_without_suffix = f"cost_vs_accuracy_{quantity}"
+        for suffix in [".png", ".pdf"]:
+            outfile = baseoutdir / (filename_without_suffix + suffix)
+            print(f"- Saving plot to: {outfile}")
+            fig.savefig(outfile)
