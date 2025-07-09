@@ -138,11 +138,6 @@ if __name__ == "__main__":
     baseoutdir = Path(cmd_args.outdir)
     baseoutdir.mkdir(parents=True)
     structuretype = cmd_args.structuretype
-    # TODO: Inconsistent: As currently written, all quantities, even those that
-    #  do not require it, will be evaluated with dynamic cell if stress is
-    #  among the requested quantities.
-    #  This will skew the times (but does it really matter?)
-    use_dynamic_cell = "stress" in cmd_args.quantity
     structures = onp.load(
         MAP_STRUCTURETYPES[structuretype]["indir"] / "structures.npz"
     )
@@ -183,22 +178,23 @@ if __name__ == "__main__":
         print()
         for p in LIST_OF_PS:
             print(f"- p = {p}:")
-            msm_params = set_up_msm_params(
-                cell=cell,
-                level_one_spacings=LEVEL_ONE_SPACING,
-                level_zero_cutoff=level_zero_cutoff,
-                p=p,
-                pbc=pbc,
-                cell_mode="ortho",
-                dynamic_cell=use_dynamic_cell,
-                n_particles=n_particles,
-                use_neighborlist=True,
-                neighborlist_prefactor=1.0,  # for no-duplicate neighbor list
-            )
-            msm_evaluation_fns = create_msm(msm_params)
-            # TODO: Add "repeat" and "number" as command-line args?
             for quantity in cmd_args.quantity:
                 print(f"- Evaluating quantity: {quantity}")
+                use_dynamic_cell = quantity == "stress"
+                msm_params = set_up_msm_params(
+                    cell=cell,
+                    level_one_spacings=LEVEL_ONE_SPACING,
+                    level_zero_cutoff=level_zero_cutoff,
+                    p=p,
+                    pbc=pbc,
+                    cell_mode="ortho",
+                    dynamic_cell=use_dynamic_cell,
+                    n_particles=n_particles,
+                    use_neighborlist=True,
+                    neighborlist_prefactor=1.0,  # duplicate-free neighbor list
+                )
+                msm_evaluation_fns = create_msm(msm_params)
+                # TODO: Add "repeat" and "number" as command-line args?
                 timing_fn = make_timed_eval(
                     msm_evaluation_fns[quantity], repeat=5, number=10
                 )
@@ -221,10 +217,6 @@ if __name__ == "__main__":
                         min_time, calculation_result = timing_fn(
                             pos, chg, neighborlist=nbl
                         )
-                    # TODO: if quantity == "stress", reduce to 6-component format
-                    # TODO: Also need to set up with dynamic_cell = True, and
-                    #  pass cell when calling timing_fn, if stress is to be
-                    #  evaluated.
                     if quantity == "stress":
                         calculation_result = calculation_result[
                             inds_matrix_to_six_component_stress
