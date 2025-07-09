@@ -90,6 +90,12 @@ def build_duplicate_free_neighborlists(
     return neighborlists_nodupes
 
 
+# TODO: move to utils?
+inds_matrix_to_six_component_stress = (
+    jnp.array([0, 1, 2, 0, 0, 1]),
+    jnp.array([0, 1, 2, 1, 2, 2]),
+)
+
 if __name__ == "__main__":
     parser = ArgumentParser(
         description="Analyze cost-accuracy tradeoff for "
@@ -130,6 +136,7 @@ if __name__ == "__main__":
     baseoutdir = Path(cmd_args.outdir)
     baseoutdir.mkdir(parents=True)
     structuretype = cmd_args.structuretype
+    use_dynamic_cell = "stress" in cmd_args.quantity
     structures = onp.load(
         MAP_STRUCTURETYPES[structuretype]["indir"] / "structures.npz"
     )
@@ -177,7 +184,7 @@ if __name__ == "__main__":
                 p=p,
                 pbc=pbc,
                 cell_mode="ortho",
-                dynamic_cell=False,
+                dynamic_cell=use_dynamic_cell,
                 n_particles=n_particles,
                 use_neighborlist=True,
                 neighborlist_prefactor=1.0,  # for no-duplicate neighbor list
@@ -200,13 +207,22 @@ if __name__ == "__main__":
                     nbl = jax.device_put(neighborlists[idx_structure])
                     # TODO: try-except out-of-memory errors? (at which loop
                     #  level though?)
-                    min_time, calculation_result = timing_fn(
-                        pos, chg, neighborlist=nbl
-                    )
+                    if use_dynamic_cell:
+                        min_time, calculation_result = timing_fn(
+                            pos, chg, cell=cell, neighborlist=nbl
+                        )
+                    else:
+                        min_time, calculation_result = timing_fn(
+                            pos, chg, neighborlist=nbl
+                        )
                     # TODO: if quantity == "stress", reduce to 6-component format
                     # TODO: Also need to set up with dynamic_cell = True, and
                     #  pass cell when calling timing_fn, if stress is to be
                     #  evaluated.
+                    if quantity == "stress":
+                        calculation_result = calculation_result[
+                            inds_matrix_to_six_component_stress
+                        ]
                     all_times.append(min_time)
                     all_calculation_results.append(calculation_result)
                 all_times = jnp.array(all_times)
