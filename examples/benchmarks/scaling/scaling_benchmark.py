@@ -28,43 +28,35 @@ from msmjax.utils.benchmarking import (
 # TODO: Explicitly compute as the average particle spacing instead?
 LEVEL_ONE_SPACING = 1.0
 
-# particle_nums_no_replicate = onp.arange(3000, 15001, 3000)
-# particle_nums_replicate_2x2x2 = (
-#     onp.array([2500, 3500, 4500, 6000, 8000, 10000]) * 2**3
-# )
-# particle_nums_replicate_3x3x3 = (
-#     onp.array([4000, 5500, 7000, 9000, 12000, 15000]) * 3**3
-# )
-#
-# particle_nums_all = onp.concatenate(
-#     [
-#         particle_nums_no_replicate,
-#         particle_nums_replicate_2x2x2,
-#         particle_nums_replicate_3x3x3,
-#     ]
-# )
-
-# supercell_diags_all =     # TODO
-
 
 def structure_generator():
-    particle_nums_no_replicate = onp.arange(3000, 15001, 3000)
-    particle_nums_replicate_2x2x2 = onp.array(
-        [2500, 3500, 4500, 6000, 8000, 10000]
-    )
-    particle_nums_replicate_3x3x3 = onp.array(
-        [4000, 5500, 7000, 9000, 12000, 15000]
-    )
+    for repeats, unrepeated_particle_nums in zip(
+        [None, 2, 3],
+        [
+            [3000, 6000, 9000, 12000, 15000],
+            [2500, 3500, 4500, 6000, 8000, 10000],
+            [4000, 5000, 7000, 9000, 12000, 15000],
+        ],
+    ):
+        for n_particles_original in unrepeated_particle_nums:
+            structures = onp.load(
+                path_input_structures
+                / f"structures_{n_particles_original}.npz"
+            )
+            # TODO: .astype(onp.float64)?
+            # TODO: jax.device_put (where?)
+            pos = jax.device_put(structures["positions"][0])
+            chg = jax.device_put(structures["charges"][0])
+            cell = jax.device_put(structures["cells"][0])
+            if repeats is not None:
+                pos, chg, cell = _gen_supercell(
+                    pos, chg, cell, supercell_diag=[repeats] * 3
+                )
+            yield pos, chg, cell
 
 
 if __name__ == "__main__":
     pass  # TODO
 
-    # print(particle_nums_all)
-    #
-    # print()
-    #
-    # mygen = (n for n in particle_nums_all)
-    #
-    # for n_particles in mygen:
-    #     print(n_particles)
+    for pos, chg, cell in structure_generator():
+        print(pos.shape)
