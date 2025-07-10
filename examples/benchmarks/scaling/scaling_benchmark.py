@@ -20,7 +20,6 @@ from tqdm import tqdm
 from msmjax.calculators import create_msm, set_up_msm_params
 from msmjax.core.shortrange import _gen_supercell, make_eval_pair_pot
 from msmjax.utils.benchmarking import (
-    calc_relative_rmse,
     make_timed_eval,
     path_input_structures,
 )
@@ -164,6 +163,7 @@ if __name__ == "__main__":
     for pos, chg, cell in structure_generator():
         n_particles = pos.shape[0]
         print(f"- n_particles = {n_particles}")
+
         neighborlist = build_duplicate_free_neighborlists(
             [pos], [cell], LEVEL_ZERO_CUTOFF, pbc=PBC
         )[0]
@@ -180,12 +180,12 @@ if __name__ == "__main__":
             neighborlist_prefactor=1.0,  # duplicate-free neighbor list
         )
         msm_evaluation_fns = create_msm(msm_params)
+        fn = msm_evaluation_fns[QUANTITY]
+
         # TODO: Add "repeat" and "number" as command-line args?
-        timing_fn = make_timed_eval(
-            msm_evaluation_fns[QUANTITY], repeat=10, number=15
-        )
-        min_time, _ = timing_fn(pos, chg, neighborlist=neighborlist)
-        print(f"- time = {min_time * 1000:.2f} ms")
+        timing_fn = make_timed_eval(fn, repeat=10, number=15)
+        time, _ = timing_fn(pos, chg, neighborlist=neighborlist)
+        print(f"- time = {time * 1000:.2f} ms")
 
         results_tmp = pd.DataFrame(
             data={
@@ -193,7 +193,7 @@ if __name__ == "__main__":
                 "level_zero_cutoff": LEVEL_ZERO_CUTOFF,
                 "p": P,
                 "quantity": QUANTITY,
-                "time": min_time,
+                "time": time,
             },
             index=[0],
         )
