@@ -18,7 +18,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from msmjax.calculators import create_msm, set_up_msm_params
-from msmjax.core.shortrange import _gen_supercell
+from msmjax.core.shortrange import _gen_supercell, make_eval_pair_pot
 from msmjax.utils.benchmarking import (
     calc_relative_rmse,
     make_timed_eval,
@@ -27,6 +27,33 @@ from msmjax.utils.benchmarking import (
 
 # TODO: Explicitly compute as the average particle spacing instead?
 LEVEL_ONE_SPACING = 1.0
+# TODO: Also run, or offer the option to run, with periodicity
+PBC = (False, False, False)
+# TODO: define where? value(s)?
+LEVEL_ZERO_CUTOFF = 3.0
+P = 4
+# TODO: energy, other quantities?
+QUANTITY = "forces"
+
+
+def coulomb_kernel(r):
+    return 1.0 / r
+
+
+def calc_nonperiodic_ref_energy(positions, charges):
+    # TODO: name
+    n_dim = positions.shape[1]
+    compute_pair_term = make_eval_pair_pot(
+        kernel_fn=coulomb_kernel, pbc=(False,) * n_dim
+    )
+    return compute_pair_term(positions, charges)
+
+
+def calc_nonperiodic_ref_forces(positions, charges):
+    # TODO: name
+    return -jax.grad(calc_nonperiodic_ref_energy, argnums=0)(
+        positions, charges
+    )
 
 
 @partial(jax.jit, static_argnums=2)
@@ -132,16 +159,8 @@ if __name__ == "__main__":
 
     baseoutdir = Path(cmd_args.outdir)
     baseoutdir.mkdir(parents=True)
+    outfile = baseoutdir / "results.csv"
 
-    # TODO: also run/offer the option to run with periodicity
-    PBC = (False, False, False)
-    # TODO: define where? value(s)?
-    LEVEL_ZERO_CUTOFF = 3.0
-    P = 4
-    # TODO
-    QUANTITY = "forces"
-
-    # TODO
     for pos, chg, cell in structure_generator():
         n_particles = pos.shape[0]
         print(f"- n_particles = {n_particles}")
@@ -163,9 +182,25 @@ if __name__ == "__main__":
         msm_evaluation_fns = create_msm(msm_params)
         # TODO: Add "repeat" and "number" as command-line args?
         timing_fn = make_timed_eval(
-            msm_evaluation_fns[QUANTITY], repeat=5, number=10
+            msm_evaluation_fns[QUANTITY], repeat=10, number=15
         )
         min_time, _ = timing_fn(pos, chg, neighborlist=neighborlist)
         print(f"- time = {min_time * 1000:.2f} ms")
+
+        results_tmp = pd.DataFrame(
+            data={
+                "n_particles": n_particles,
+                "level_zero_cutoff": LEVEL_ZERO_CUTOFF,
+                "p": P,
+                "quantity": QUANTITY,
+                "time": min_time,
+            },
+            index=[0],
+        )
+        print(f"- Writing results to {outfile}.")
+        if not outfile.is_file():
+            results_tmp.to_csv(outfile, index=False, mode="w")
+        else:
+            results_tmp.to_csv(outfile, index=False, mode="a", header=False)
 
         print()
