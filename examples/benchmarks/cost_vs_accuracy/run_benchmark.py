@@ -56,11 +56,11 @@ def remove_duplicates_from_neighborlist(neighborlist, fill_value, size):
 def build_duplicate_free_neighborlists(
     set_of_positions, set_of_cells, cutoff, pbc
 ):
+    # TODO: move to utils (used both here and in cost_vs_accuracy benchmark)
     n_structures = len(set_of_positions)
-    n_particles = set_of_positions.shape[1]
 
     neighborlists_raw = []
-    print(f"- Building neighbor lists for {n_structures} structures")
+    print(f"- Building neighbor list(s) for {n_structures} structure(s)")
     for pos, cll in tqdm(
         zip(set_of_positions, set_of_cells), total=n_structures
     ):
@@ -71,7 +71,7 @@ def build_duplicate_free_neighborlists(
 
     # Pad to common max length
     max_size = max([len(nbl[0]) for nbl in neighborlists_raw])
-    placeholder_index = n_particles
+    placeholder_index = max(pos.shape[0] for pos in set_of_positions)
     for idx_structure in range(n_structures):
         i, j = neighborlists_raw[idx_structure]
         padding = max_size - len(i)
@@ -87,7 +87,7 @@ def build_duplicate_free_neighborlists(
         )
         for nbl in neighborlists_raw
     ]
-    print("- Done building neighbor lists")
+    print("- Done building neighbor list(s)")
 
     return neighborlists_nodupes
 

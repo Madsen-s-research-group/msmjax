@@ -1,4 +1,4 @@
-"""Analyze scaling with number of particles."""
+"""Demonstration of scaling of the MSM implementation with particle number."""
 
 import os
 
@@ -29,7 +29,59 @@ from msmjax.utils.benchmarking import (
 LEVEL_ONE_SPACING = 1.0
 
 
+@partial(jax.jit, static_argnums=2)
+def remove_duplicates_from_neighborlist(neighborlist, fill_value, size):
+    # TODO: move to utils (used both here and in cost_vs_accuracy benchmark)
+    without_duplicates = jnp.unique(
+        jnp.sort(jnp.column_stack([neighborlist[0], neighborlist[1]]), axis=1),
+        axis=0,
+        size=size,
+        fill_value=fill_value,
+    )
+    return (without_duplicates[:, 0], without_duplicates[:, 1])
+
+
+def build_duplicate_free_neighborlists(
+    set_of_positions, set_of_cells, cutoff, pbc
+):
+    # TODO: move to utils (used both here and in cost_vs_accuracy benchmark)
+    n_structures = len(set_of_positions)
+
+    neighborlists_raw = []
+    print(f"- Building neighbor list(s) for {n_structures} structure(s)")
+    for pos, cll in tqdm(
+        zip(set_of_positions, set_of_cells), total=n_structures
+    ):
+        nbl = matscipy.neighbours.neighbour_list(
+            "ij", cutoff=cutoff, positions=pos, cell=cll, pbc=pbc
+        )
+        neighborlists_raw.append(nbl)
+
+    # Pad to common max length
+    max_size = max([len(nbl[0]) for nbl in neighborlists_raw])
+    placeholder_index = max(pos.shape[0] for pos in set_of_positions)
+    for idx_structure in range(n_structures):
+        i, j = neighborlists_raw[idx_structure]
+        padding = max_size - len(i)
+        neighborlists_raw[idx_structure] = (
+            jnp.pad(i, (0, padding), constant_values=placeholder_index),
+            jnp.pad(j, (0, padding), constant_values=placeholder_index),
+        )
+
+    max_size_nodupes = max_size // 2
+    neighborlists_nodupes = [
+        remove_duplicates_from_neighborlist(
+            nbl, fill_value=placeholder_index, size=max_size_nodupes
+        )
+        for nbl in neighborlists_raw
+    ]
+    print("- Done building neighbor list(s)")
+
+    return neighborlists_nodupes
+
+
 def structure_generator():
+    # TODO: name
     for repeats, unrepeated_particle_nums in zip(
         [None, 2, 3],
         [
@@ -56,7 +108,64 @@ def structure_generator():
 
 
 if __name__ == "__main__":
-    pass  # TODO
+    parser = ArgumentParser(
+        description="Demonstration of scaling of the MSM implementation "
+        "with particle number."
+    )
+    parser.add_argument(
+        "--outdir",
+        required=True,
+        type=str,
+        help="Output directory. Existing outputs will not be overwritten.",
+    )
+    parser.add_argument(
+        "--jax_enable_x64",
+        action="store_true",
+        default=False,
+        help="Flag indicating that double precision should be used",
+    )
+    cmd_args = parser.parse_args()
 
+    if cmd_args.jax_enable_x64:
+        jax.config.update("jax_enable_x64", True)
+        print("- Running JAX in double-precision mode.")
+
+    baseoutdir = Path(cmd_args.outdir)
+    baseoutdir.mkdir(parents=True)
+
+    # TODO: also run/offer the option to run with periodicity
+    PBC = (False, False, False)
+    # TODO: define where? value(s)?
+    LEVEL_ZERO_CUTOFF = 3.0
+    P = 4
+    # TODO
+    QUANTITY = "forces"
+
+    # TODO
     for pos, chg, cell in structure_generator():
-        print(pos.shape)
+        n_particles = pos.shape[0]
+        print(f"- n_particles = {n_particles}")
+        neighborlist = build_duplicate_free_neighborlists(
+            [pos], [cell], LEVEL_ZERO_CUTOFF, pbc=PBC
+        )[0]
+        msm_params = set_up_msm_params(
+            cell=cell,
+            level_one_spacings=LEVEL_ONE_SPACING,
+            level_zero_cutoff=LEVEL_ZERO_CUTOFF,
+            p=P,
+            pbc=PBC,
+            cell_mode="ortho",
+            dynamic_cell=False,
+            n_particles=n_particles,
+            use_neighborlist=True,
+            neighborlist_prefactor=1.0,  # duplicate-free neighbor list
+        )
+        msm_evaluation_fns = create_msm(msm_params)
+        # TODO: Add "repeat" and "number" as command-line args?
+        timing_fn = make_timed_eval(
+            msm_evaluation_fns[QUANTITY], repeat=5, number=10
+        )
+        min_time, _ = timing_fn(pos, chg, neighborlist=neighborlist)
+        print(f"- time = {min_time * 1000:.2f} ms")
+
+        print()
