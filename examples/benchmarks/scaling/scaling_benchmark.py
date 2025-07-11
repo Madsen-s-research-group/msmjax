@@ -162,6 +162,7 @@ if __name__ == "__main__":
         help="Output directory. Existing outputs will not be overwritten.",
     )
     # TODO: name of this argument
+    # TODO: raise an error if used together with periodic boundary conditions
     parser.add_argument(
         "--exact",
         action="store_true",
@@ -193,9 +194,6 @@ if __name__ == "__main__":
         if cmd_args.exact:
             fn = exact_nonperiodic_evaluation_fns[QUANTITY]
         else:
-            neighborlist = build_duplicate_free_neighborlists(
-                [pos], [cell], LEVEL_ZERO_CUTOFF, pbc=PBC
-            )[0]
             msm_params = set_up_msm_params(
                 cell=cell,
                 level_one_spacings=LEVEL_ONE_SPACING,
@@ -211,33 +209,36 @@ if __name__ == "__main__":
             msm_evaluation_fns = create_msm(msm_params)
             fn = msm_evaluation_fns[QUANTITY]
 
-        # TODO: Add "repeat" and "number" as command-line args?
         try:
-            # TODO: Should the neighbor list build step also be under try-except?
-            #  I probably don't want the whole script to crash if that step already
-            #  runs out of memory (but is it likely to run out of memory earlier
-            #  than the MSM evaluation itself?)
+            # TODO: Add "repeat" and "number" as command-line args?
             timing_fn = make_timed_eval(fn, repeat=10, number=15)
             if cmd_args.exact:
                 time, _ = timing_fn(pos, chg)
             else:
+                neighborlist = build_duplicate_free_neighborlists(
+                    [pos], [cell], LEVEL_ZERO_CUTOFF, pbc=PBC
+                )[0]
                 time, _ = timing_fn(pos, chg, neighborlist=neighborlist)
         except XlaRuntimeError as e:
             if "out of memory" in str(e).lower():
                 print("- Out of memory: skipping the rest of the loop.")
-                break  # TODO: break at which loop level?
+                break
+            else:
+                raise e
         print(f"- time = {time * 1000:.2f} ms")
 
-        results_tmp = pd.DataFrame(
-            data={
-                "n_particles": n_particles,
-                "level_zero_cutoff": LEVEL_ZERO_CUTOFF,  # TODO: not applicable to the exact reference calculation
-                "p": P,  # TODO: not applicable to the exact reference calculation
-                "quantity": QUANTITY,
-                "time": time,
-            },
-            index=[0],
-        )
+        outdata = {
+            "n_particles": n_particles,
+            "quantity": QUANTITY,
+            "time": time,
+        }
+        if cmd_args.exact:
+            outdata["exact"] = True  # TODO: name?
+        else:
+            outdata["exact"] = False  # TODO: name?
+            outdata["level_zero_cutoff"] = LEVEL_ZERO_CUTOFF
+            outdata["p"] = P
+        results_tmp = pd.DataFrame(data=outdata, index=[0])
         print(f"- Writing results to {outfile}.")
         if not outfile.is_file():
             results_tmp.to_csv(outfile, index=False, mode="w")
