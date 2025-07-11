@@ -17,6 +17,15 @@ import numpy as onp
 import pandas as pd
 from tqdm import tqdm
 
+try:
+    # TODO: This might not actually solve the problem in newer JAX versions.
+    #  Check which exception is actually raised in newer versions when running
+    #  out of memory, it might not be the same one!
+    from jaxlib._jax import XlaRuntimeError
+except ModuleNotFoundError:
+    # To work with older JAX versions
+    from jaxlib.xla_extension import XlaRuntimeError
+
 from msmjax.calculators import create_msm, set_up_msm_params
 from msmjax.core.shortrange import _gen_supercell, make_eval_pair_pot
 from msmjax.utils.benchmarking import (
@@ -53,6 +62,12 @@ def calc_nonperiodic_ref_forces(positions, charges):
     return -jax.grad(calc_nonperiodic_ref_energy, argnums=0)(
         positions, charges
     )
+
+
+exact_nonperiodic_evaluation_fns = {
+    "energy": calc_nonperiodic_ref_energy,
+    "forces": calc_nonperiodic_ref_forces,
+}
 
 
 @partial(jax.jit, static_argnums=2)
@@ -121,7 +136,8 @@ def structure_generator():
                 path_input_structures
                 / f"structures_{n_particles_original}.npz"
             )
-            # TODO: .astype(onp.float64)?
+            # TODO: .astype(onp.float64)? (will prob need to be an argument to
+            #  the generator)
             # TODO: jax.device_put (where?)
             pos = jax.device_put(structures["positions"][0])
             chg = jax.device_put(structures["charges"][0])
@@ -144,6 +160,15 @@ if __name__ == "__main__":
         type=str,
         help="Output directory. Existing outputs will not be overwritten.",
     )
+    # TODO: name of this argument
+    parser.add_argument(
+        "--exact",
+        action="store_true",
+        default=False,
+        help="Flag indicating not to use MSM, but exact all-pairs evaluation, "
+        "for comparison. Only available in combination with non-periodic "
+        "boundary conditions.",
+    )
     parser.add_argument(
         "--jax_enable_x64",
         action="store_true",
@@ -164,34 +189,49 @@ if __name__ == "__main__":
         n_particles = pos.shape[0]
         print(f"- n_particles = {n_particles}")
 
-        neighborlist = build_duplicate_free_neighborlists(
-            [pos], [cell], LEVEL_ZERO_CUTOFF, pbc=PBC
-        )[0]
-        msm_params = set_up_msm_params(
-            cell=cell,
-            level_one_spacings=LEVEL_ONE_SPACING,
-            level_zero_cutoff=LEVEL_ZERO_CUTOFF,
-            p=P,
-            pbc=PBC,
-            cell_mode="ortho",
-            dynamic_cell=False,
-            n_particles=n_particles,
-            use_neighborlist=True,
-            neighborlist_prefactor=1.0,  # duplicate-free neighbor list
-        )
-        msm_evaluation_fns = create_msm(msm_params)
-        fn = msm_evaluation_fns[QUANTITY]
+        if cmd_args.exact:
+            fn = exact_nonperiodic_evaluation_fns[QUANTITY]
+        else:
+            neighborlist = build_duplicate_free_neighborlists(
+                [pos], [cell], LEVEL_ZERO_CUTOFF, pbc=PBC
+            )[0]
+            msm_params = set_up_msm_params(
+                cell=cell,
+                level_one_spacings=LEVEL_ONE_SPACING,
+                level_zero_cutoff=LEVEL_ZERO_CUTOFF,
+                p=P,
+                pbc=PBC,
+                cell_mode="ortho",
+                dynamic_cell=False,
+                n_particles=n_particles,
+                use_neighborlist=True,
+                neighborlist_prefactor=1.0,  # duplicate-free neighbor list
+            )
+            msm_evaluation_fns = create_msm(msm_params)
+            fn = msm_evaluation_fns[QUANTITY]
 
         # TODO: Add "repeat" and "number" as command-line args?
-        timing_fn = make_timed_eval(fn, repeat=10, number=15)
-        time, _ = timing_fn(pos, chg, neighborlist=neighborlist)
+        try:
+            # TODO: Should the neighbor list build step also be under try-except?
+            #  I probably don't want the whole script to crash if that step already
+            #  runs out of memory (but is it likely to run out of memory earlier
+            #  than the MSM evaluation itself?)
+            timing_fn = make_timed_eval(fn, repeat=10, number=15)
+            if cmd_args.exact:
+                time, _ = timing_fn(pos, chg)
+            else:
+                time, _ = timing_fn(pos, chg, neighborlist=neighborlist)
+        except XlaRuntimeError as e:
+            if "out of memory" in str(e).lower():
+                print("- Out of memory: skipping the rest of the loop.")
+                break  # TODO: break at which loop level?
         print(f"- time = {time * 1000:.2f} ms")
 
         results_tmp = pd.DataFrame(
             data={
                 "n_particles": n_particles,
-                "level_zero_cutoff": LEVEL_ZERO_CUTOFF,
-                "p": P,
+                "level_zero_cutoff": LEVEL_ZERO_CUTOFF,  # TODO: not applicable to the exact reference calculation
+                "p": P,  # TODO: not applicable to the exact reference calculation
                 "quantity": QUANTITY,
                 "time": time,
             },
