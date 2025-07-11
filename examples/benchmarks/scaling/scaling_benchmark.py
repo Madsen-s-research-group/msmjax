@@ -124,11 +124,12 @@ def build_duplicate_free_neighborlists(
 def structure_generator():
     # TODO: name
     for repeats, unrepeated_particle_nums in zip(
-        [None, 2, 3],
+        [None, 2, 3, 4],
         [
             [3000, 6000, 9000, 12000, 15000],
             [2500, 3500, 4500, 6000, 8000, 10000],
             [4000, 5000, 7000, 9000, 12000, 15000],
+            [8000, 10000, 12000],
         ],
     ):
         for n_particles_original in unrepeated_particle_nums:
