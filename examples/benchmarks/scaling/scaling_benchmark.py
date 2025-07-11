@@ -185,7 +185,7 @@ if __name__ == "__main__":
 
     baseoutdir = Path(cmd_args.outdir)
     baseoutdir.mkdir(parents=True)
-    outfile = baseoutdir / "results.csv"
+    resultsfile = baseoutdir / "results.csv"
 
     for pos, chg, cell in structure_generator():
         n_particles = pos.shape[0]
@@ -225,6 +225,7 @@ if __name__ == "__main__":
                 break
             else:
                 raise e
+
         print(f"- time = {time * 1000:.2f} ms")
 
         outdata = {
@@ -239,10 +240,39 @@ if __name__ == "__main__":
             outdata["level_zero_cutoff"] = LEVEL_ZERO_CUTOFF
             outdata["p"] = P
         results_tmp = pd.DataFrame(data=outdata, index=[0])
-        print(f"- Writing results to {outfile}.")
-        if not outfile.is_file():
-            results_tmp.to_csv(outfile, index=False, mode="w")
+        print(f"- Writing results to {resultsfile}.")
+        if not resultsfile.is_file():
+            results_tmp.to_csv(resultsfile, index=False, mode="w")
         else:
-            results_tmp.to_csv(outfile, index=False, mode="a", header=False)
+            results_tmp.to_csv(
+                resultsfile, index=False, mode="a", header=False
+            )
 
         print()
+
+    print()
+
+    results = pd.read_csv(resultsfile)
+    particle_numbers = results["n_particles"].values
+    times = results["time"].values
+    fig, ax = plt.subplots()
+    ax.set_xlabel("Number of particles")
+    ax.set_ylabel("Time / ms")
+    ax.scatter(particle_numbers, times * 1000)
+    # TODO: legend?
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    filename_without_suffix = f"scaling_{QUANTITY}_loglog"
+    for suffix in [".png", ".pdf"]:
+        outfile_plot = baseoutdir / (filename_without_suffix + suffix)
+        print(f"- Saving plot to: {outfile_plot}")
+        fig.savefig(outfile_plot)
+    ax.set_xscale("linear")
+    ax.set_yscale("linear")
+    ax.set_xlim(0, ax.get_xlim()[1])
+    ax.set_ylim(0, ax.get_ylim()[1])
+    filename_without_suffix = f"scaling_{QUANTITY}"
+    for suffix in [".png", ".pdf"]:
+        outfile_plot = baseoutdir / (filename_without_suffix + suffix)
+        print(f"- Saving plot to: {outfile_plot}")
+        fig.savefig(outfile_plot)
