@@ -37,9 +37,7 @@ from msmjax.utils.benchmarking import (
 LEVEL_ONE_SPACING = 1.0
 # TODO: Also run, or offer the option to run, with periodicity
 PBC = (False, False, False)
-# TODO: define where? value(s)?
-LEVEL_ZERO_CUTOFF = 3.0
-P = 4
+
 # TODO: energy, other quantities?
 QUANTITY = "forces"
 
@@ -155,6 +153,18 @@ if __name__ == "__main__":
         description="Demonstration of scaling of the MSM implementation "
         "with particle number."
     )
+    # TODO: cutoff and p should only be required for MSM and not for exact
+    #  nonperiodic evaluation (in fact, for the latter, they should not be
+    #  allowed, because meaningless and confusing!)
+    parser.add_argument(
+        "--cutoff",
+        type=float,
+        required=True,
+        help="Level-zero cutoff radius of MSM.",
+    )
+    parser.add_argument(
+        "-p", type=int, required=True, help="Interpolation order."
+    )
     parser.add_argument(
         "--outdir",
         required=True,
@@ -182,7 +192,8 @@ if __name__ == "__main__":
     if cmd_args.jax_enable_x64:
         jax.config.update("jax_enable_x64", True)
         print("- Running JAX in double-precision mode.")
-
+    level_zero_cutoff = cmd_args.cutoff
+    p = cmd_args.p
     baseoutdir = Path(cmd_args.outdir)
     baseoutdir.mkdir(parents=True)
     resultsfile = baseoutdir / "results.csv"
@@ -197,8 +208,8 @@ if __name__ == "__main__":
             msm_params = set_up_msm_params(
                 cell=cell,
                 level_one_spacings=LEVEL_ONE_SPACING,
-                level_zero_cutoff=LEVEL_ZERO_CUTOFF,
-                p=P,
+                level_zero_cutoff=level_zero_cutoff,
+                p=p,
                 pbc=PBC,
                 cell_mode="ortho",
                 dynamic_cell=False,
@@ -216,7 +227,7 @@ if __name__ == "__main__":
                 time, _ = timing_fn(pos, chg)
             else:
                 neighborlist = build_duplicate_free_neighborlists(
-                    [pos], [cell], LEVEL_ZERO_CUTOFF, pbc=PBC
+                    [pos], [cell], level_zero_cutoff, pbc=PBC
                 )[0]
                 time, _ = timing_fn(pos, chg, neighborlist=neighborlist)
         except XlaRuntimeError as e:
@@ -237,8 +248,8 @@ if __name__ == "__main__":
             outdata["exact"] = True  # TODO: name?
         else:
             outdata["exact"] = False  # TODO: name?
-            outdata["level_zero_cutoff"] = LEVEL_ZERO_CUTOFF
-            outdata["p"] = P
+            outdata["level_zero_cutoff"] = level_zero_cutoff
+            outdata["p"] = p
         results_tmp = pd.DataFrame(data=outdata, index=[0])
         print(f"- Writing results to {resultsfile}.")
         if not resultsfile.is_file():
