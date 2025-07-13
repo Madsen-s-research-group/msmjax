@@ -35,8 +35,6 @@ from msmjax.utils.benchmarking import (
 
 # TODO: Explicitly compute as the average particle spacing instead?
 LEVEL_ONE_SPACING = 1.0
-# TODO: Also run, or offer the option to run, with periodicity
-PBC = (False, False, False)
 
 # TODO: energy, other quantities?
 QUANTITY = "forces"
@@ -148,6 +146,17 @@ def structure_generator():
             yield pos, chg, cell
 
 
+msmparser = ArgumentParser(add_help=False)
+msmparser.add_argument(
+    "--cutoff",
+    type=float,
+    required=True,
+    help="Level-zero cutoff radius of MSM.",
+)
+msmparser.add_argument(
+    "-p", type=int, required=True, help="Interpolation order."
+)
+
 if __name__ == "__main__":
     parser = ArgumentParser(
         description="Demonstration of scaling of the MSM implementation "
@@ -174,27 +183,20 @@ if __name__ == "__main__":
         # help=TODO,
     )
     # TODO: name of this argument
-    # TODO: raise an error if used together with periodic boundary conditions
     parser_nonperiodic_exact = subparsers.add_parser(
         "nonperiodic-exact",
         help="Do not use MSM, but exact all-pairs evaluation, "
-        "for comparison. Only available in combination with non-periodic "
-        "boundary conditions.",
+        "for comparison. Only possible with non-periodic boundary conditions.",
     )
-    # TODO: Two separate MSM subparsers for nonperiodic and periodic, or a
-    #  single subparser, with a --periodic (or similar) flag?
-    parser_msm = subparsers.add_parser(
+    parser_nonperiodic_msm = subparsers.add_parser(
         "nonperiodic-msm",
-        # help=TODO,
+        parents=[msmparser],
+        help="Benchmark MSM with non-periodic boundary conditions.",
     )
-    parser_msm.add_argument(
-        "--cutoff",
-        type=float,
-        required=True,
-        help="Level-zero cutoff radius of MSM.",
-    )
-    parser_msm.add_argument(
-        "-p", type=int, required=True, help="Interpolation order."
+    parser_periodic_msm = subparsers.add_parser(
+        "periodic-msm",
+        parents=[msmparser],
+        help="Benchmark MSM with periodic boundary conditions.",
     )
 
     cmd_args = parser.parse_args()
@@ -212,6 +214,10 @@ if __name__ == "__main__":
         if cmd_args.algo == "nonperiodic-exact":
             fn = exact_nonperiodic_evaluation_fns[QUANTITY]
         else:
+            if cmd_args.algo == "nonperiodic-msm":
+                pbc = (False, False, False)
+            elif cmd_args.algo == "periodic-msm":
+                pbc = (True, True, True)
             level_zero_cutoff = cmd_args.cutoff
             p = cmd_args.p
             msm_params = set_up_msm_params(
@@ -219,7 +225,7 @@ if __name__ == "__main__":
                 level_one_spacings=LEVEL_ONE_SPACING,
                 level_zero_cutoff=level_zero_cutoff,
                 p=p,
-                pbc=PBC,
+                pbc=pbc,
                 cell_mode="ortho",
                 dynamic_cell=False,
                 n_particles=n_particles,
@@ -236,7 +242,7 @@ if __name__ == "__main__":
                 time, _ = timing_fn(pos, chg)
             else:
                 neighborlist = build_duplicate_free_neighborlists(
-                    [pos], [cell], level_zero_cutoff, pbc=PBC
+                    [pos], [cell], level_zero_cutoff, pbc=pbc
                 )[0]
                 time, _ = timing_fn(pos, chg, neighborlist=neighborlist)
         except XlaRuntimeError as e:
