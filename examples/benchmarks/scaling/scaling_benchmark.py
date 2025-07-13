@@ -157,29 +157,10 @@ if __name__ == "__main__":
     #  nonperiodic evaluation (in fact, for the latter, they should not be
     #  allowed, because meaningless and confusing!)
     parser.add_argument(
-        "--cutoff",
-        type=float,
-        required=True,
-        help="Level-zero cutoff radius of MSM.",
-    )
-    parser.add_argument(
-        "-p", type=int, required=True, help="Interpolation order."
-    )
-    parser.add_argument(
         "--outdir",
         required=True,
         type=str,
         help="Output directory. Existing outputs will not be overwritten.",
-    )
-    # TODO: name of this argument
-    # TODO: raise an error if used together with periodic boundary conditions
-    parser.add_argument(
-        "--exact",
-        action="store_true",
-        default=False,
-        help="Flag indicating not to use MSM, but exact all-pairs evaluation, "
-        "for comparison. Only available in combination with non-periodic "
-        "boundary conditions.",
     )
     parser.add_argument(
         "--jax_enable_x64",
@@ -187,13 +168,39 @@ if __name__ == "__main__":
         default=False,
         help="Flag indicating that double precision should be used",
     )
-    cmd_args = parser.parse_args()
 
+    subparsers = parser.add_subparsers(
+        dest="algo",  # TODO: name
+        # help=TODO,
+    )
+    # TODO: name of this argument
+    # TODO: raise an error if used together with periodic boundary conditions
+    parser_nonperiodic_exact = subparsers.add_parser(
+        "nonperiodic-exact",
+        help="Do not use MSM, but exact all-pairs evaluation, "
+        "for comparison. Only available in combination with non-periodic "
+        "boundary conditions.",
+    )
+    # TODO: Two separate MSM subparsers for nonperiodic and periodic, or a
+    #  single subparser, with a --periodic (or similar) flag?
+    parser_msm = subparsers.add_parser(
+        "nonperiodic-msm",
+        # help=TODO,
+    )
+    parser_msm.add_argument(
+        "--cutoff",
+        type=float,
+        required=True,
+        help="Level-zero cutoff radius of MSM.",
+    )
+    parser_msm.add_argument(
+        "-p", type=int, required=True, help="Interpolation order."
+    )
+
+    cmd_args = parser.parse_args()
     if cmd_args.jax_enable_x64:
         jax.config.update("jax_enable_x64", True)
         print("- Running JAX in double-precision mode.")
-    level_zero_cutoff = cmd_args.cutoff
-    p = cmd_args.p
     baseoutdir = Path(cmd_args.outdir)
     baseoutdir.mkdir(parents=True)
     resultsfile = baseoutdir / "results.csv"
@@ -202,9 +209,11 @@ if __name__ == "__main__":
         n_particles = pos.shape[0]
         print(f"- n_particles = {n_particles}")
 
-        if cmd_args.exact:
+        if cmd_args.algo == "nonperiodic-exact":
             fn = exact_nonperiodic_evaluation_fns[QUANTITY]
         else:
+            level_zero_cutoff = cmd_args.cutoff
+            p = cmd_args.p
             msm_params = set_up_msm_params(
                 cell=cell,
                 level_one_spacings=LEVEL_ONE_SPACING,
@@ -223,7 +232,7 @@ if __name__ == "__main__":
         try:
             # TODO: Add "repeat" and "number" as command-line args?
             timing_fn = make_timed_eval(fn, repeat=10, number=15)
-            if cmd_args.exact:
+            if cmd_args.algo == "nonperiodic-exact":
                 time, _ = timing_fn(pos, chg)
             else:
                 neighborlist = build_duplicate_free_neighborlists(
@@ -244,7 +253,7 @@ if __name__ == "__main__":
             "quantity": QUANTITY,
             "time": time,
         }
-        if cmd_args.exact:
+        if cmd_args.algo == "nonperiodic-exact":
             outdata["exact"] = True  # TODO: name?
         else:
             outdata["exact"] = False  # TODO: name?
