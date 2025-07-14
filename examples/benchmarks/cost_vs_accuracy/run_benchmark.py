@@ -5,20 +5,19 @@ import os
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 
 from argparse import ArgumentParser
-from functools import partial
 from pathlib import Path
 
 import jax
 import jax.numpy as jnp
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import matscipy.neighbours
 import numpy as onp
 import pandas as pd
 from tqdm import tqdm
 
 from msmjax.calculators import create_msm, set_up_msm_params
 from msmjax.utils.benchmarking import (
+    build_duplicate_free_neighborlists,
     calc_relative_rmse,
     make_timed_eval,
 )
@@ -40,56 +39,6 @@ MAP_STRUCTURETYPES = {
     "nonperiodic": {"indir": DATADIR / "nonperiodic", "pbc": (False,) * 3},
     "periodic": {"indir": DATADIR / "periodic", "pbc": (True,) * 3},
 }
-
-
-@partial(jax.jit, static_argnums=2)
-def remove_duplicates_from_neighborlist(neighborlist, fill_value, size):
-    without_duplicates = jnp.unique(
-        jnp.sort(jnp.column_stack([neighborlist[0], neighborlist[1]]), axis=1),
-        axis=0,
-        size=size,
-        fill_value=fill_value,
-    )
-    return (without_duplicates[:, 0], without_duplicates[:, 1])
-
-
-def build_duplicate_free_neighborlists(
-    set_of_positions, set_of_cells, cutoff, pbc
-):
-    # TODO: move to utils (used both here and in cost_vs_accuracy benchmark)
-    n_structures = len(set_of_positions)
-
-    neighborlists_raw = []
-    print(f"- Building neighbor list(s) for {n_structures} structure(s)")
-    for pos, cll in tqdm(
-        zip(set_of_positions, set_of_cells), total=n_structures
-    ):
-        nbl = matscipy.neighbours.neighbour_list(
-            "ij", cutoff=cutoff, positions=pos, cell=cll, pbc=pbc
-        )
-        neighborlists_raw.append(nbl)
-
-    # Pad to common max length
-    max_size = max([len(nbl[0]) for nbl in neighborlists_raw])
-    placeholder_index = max(pos.shape[0] for pos in set_of_positions)
-    for idx_structure in range(n_structures):
-        i, j = neighborlists_raw[idx_structure]
-        padding = max_size - len(i)
-        neighborlists_raw[idx_structure] = (
-            jnp.pad(i, (0, padding), constant_values=placeholder_index),
-            jnp.pad(j, (0, padding), constant_values=placeholder_index),
-        )
-
-    max_size_nodupes = max_size // 2
-    neighborlists_nodupes = [
-        remove_duplicates_from_neighborlist(
-            nbl, fill_value=placeholder_index, size=max_size_nodupes
-        )
-        for nbl in neighborlists_raw
-    ]
-    print("- Done building neighbor list(s)")
-
-    return neighborlists_nodupes
 
 
 # TODO: move to utils?

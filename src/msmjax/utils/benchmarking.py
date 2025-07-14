@@ -8,6 +8,7 @@ import sys
 import tempfile
 import timeit
 from datetime import datetime
+from functools import partial
 from pathlib import Path
 from typing import Any, Callable, Sequence, Tuple
 
@@ -15,10 +16,12 @@ import ase.io
 import jax
 import jax.numpy as jnp
 import jaxlib
+import matscipy.neighbours
 import numpy as np
 import numpy as onp
 import numpy.typing as npt
 from ase import Atoms
+from tqdm import tqdm
 
 path_input_structures = (
     Path(__file__).resolve().parents[3] / "data" / "benchmark" / "structures"
@@ -467,3 +470,56 @@ def make_timed_eval(
         return min(mean_times_per_call), output
 
     return time_model_eval
+
+
+@partial(jax.jit, static_argnums=2)
+def remove_duplicates_from_neighborlist(neighborlist, fill_value, size):
+    # TODO: move to utils (used both here and in cost_vs_accuracy benchmark)
+    without_duplicates = jnp.unique(
+        jnp.sort(jnp.column_stack([neighborlist[0], neighborlist[1]]), axis=1),
+        axis=0,
+        size=size,
+        fill_value=fill_value,
+    )
+    return (without_duplicates[:, 0], without_duplicates[:, 1])
+
+
+def build_duplicate_free_neighborlists(
+    set_of_positions, set_of_cells, cutoff, pbc
+):
+    # TODO: move to utils (used both here and in cost_vs_accuracy benchmark)
+    #  => but that would require installing matscipy even with a
+    #  no-extra options install, for utils.benchmarking to be importable?
+    n_structures = len(set_of_positions)
+
+    neighborlists_raw = []
+    print(f"- Building neighbor list(s) for {n_structures} structure(s)")
+    for pos, cll in tqdm(
+        zip(set_of_positions, set_of_cells), total=n_structures
+    ):
+        nbl = matscipy.neighbours.neighbour_list(
+            "ij", cutoff=cutoff, positions=pos, cell=cll, pbc=pbc
+        )
+        neighborlists_raw.append(nbl)
+
+    # Pad to common max length
+    max_size = max([len(nbl[0]) for nbl in neighborlists_raw])
+    placeholder_index = max(pos.shape[0] for pos in set_of_positions)
+    for idx_structure in range(n_structures):
+        i, j = neighborlists_raw[idx_structure]
+        padding = max_size - len(i)
+        neighborlists_raw[idx_structure] = (
+            jnp.pad(i, (0, padding), constant_values=placeholder_index),
+            jnp.pad(j, (0, padding), constant_values=placeholder_index),
+        )
+
+    max_size_nodupes = max_size // 2
+    neighborlists_nodupes = [
+        remove_duplicates_from_neighborlist(
+            nbl, fill_value=placeholder_index, size=max_size_nodupes
+        )
+        for nbl in neighborlists_raw
+    ]
+    print("- Done building neighbor list(s)")
+
+    return neighborlists_nodupes
