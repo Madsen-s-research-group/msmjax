@@ -19,6 +19,7 @@ from msmjax.calculators import create_msm, set_up_msm_params
 from msmjax.utils.benchmarking import (
     build_duplicate_free_neighborlists,
     calc_relative_rmse,
+    inds_matrix_to_six_component_stress,
     make_timed_eval,
 )
 
@@ -40,12 +41,6 @@ MAP_STRUCTURETYPES = {
     "periodic": {"indir": DATADIR / "periodic", "pbc": (True,) * 3},
 }
 
-
-# TODO: move to utils?
-inds_matrix_to_six_component_stress = (
-    jnp.array([0, 1, 2, 0, 0, 1]),
-    jnp.array([0, 1, 2, 1, 2, 2]),
-)
 
 if __name__ == "__main__":
     parser = ArgumentParser(

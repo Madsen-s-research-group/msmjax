@@ -13,9 +13,6 @@ import numpy as onp
 import pandas as pd
 
 try:
-    # TODO: This might not actually solve the problem in newer JAX versions.
-    #  Check which exception is actually raised in newer versions when running
-    #  out of memory, it might not be the same one!
     from jaxlib._jax import XlaRuntimeError
 except ModuleNotFoundError:
     # To work with older JAX versions
@@ -25,6 +22,8 @@ from msmjax.calculators import create_msm, set_up_msm_params
 from msmjax.core.shortrange import _gen_supercell, make_eval_pair_pot
 from msmjax.utils.benchmarking import (
     build_duplicate_free_neighborlists,
+    calc_nonperiodic_ref_energy,
+    calc_nonperiodic_ref_forces,
     make_timed_eval,
     path_input_structures,
 )
@@ -34,30 +33,6 @@ LEVEL_ONE_SPACING = 1.0
 
 # TODO: energy, other quantities?
 QUANTITY = "forces"
-
-
-def coulomb_kernel(r):
-    return 1.0 / r
-
-
-def calc_nonperiodic_ref_energy(positions, charges):
-    # TODO: name
-    # TODO: move to utils? (used here, in cost-vs-accuracy benchmark, and in
-    #  tests/data/generate_reference_results.ipynb)
-    n_dim = positions.shape[1]
-    compute_pair_term = make_eval_pair_pot(
-        kernel_fn=coulomb_kernel, pbc=(False,) * n_dim
-    )
-    return compute_pair_term(positions, charges)
-
-
-def calc_nonperiodic_ref_forces(positions, charges):
-    # TODO: name
-    # TODO: move to utils? (used here, in cost-vs-accuracy benchmark, and in
-    #  tests/data/generate_reference_results.ipynb)
-    return -jax.grad(calc_nonperiodic_ref_energy, argnums=0)(
-        positions, charges
-    )
 
 
 exact_nonperiodic_evaluation_fns = {
@@ -236,7 +211,8 @@ if __name__ == "__main__":
     ax.set_xlabel("Number of particles")
     ax.set_ylabel("Time / ms")
     ax.scatter(particle_numbers, times * 1000)
-    # TODO: legend?
+    # TODO: Add a legend with MSM settings (or that exact calc was performed)
+    #  and periodic/nonperiodic info in legend?
     ax.set_xscale("log")
     ax.set_yscale("log")
     filename_without_suffix = f"scaling_{QUANTITY}_loglog"

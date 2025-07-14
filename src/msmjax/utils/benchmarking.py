@@ -23,6 +23,8 @@ import numpy.typing as npt
 from ase import Atoms
 from tqdm import tqdm
 
+from msmjax.core.shortrange import make_eval_pair_pot
+
 path_input_structures = (
     Path(__file__).resolve().parents[3] / "data" / "benchmark" / "structures"
 )
@@ -523,3 +525,61 @@ def build_duplicate_free_neighborlists(
     print("- Done building neighbor list(s)")
 
     return neighborlists_nodupes
+
+
+def coulomb_kernel(r):
+    return 1.0 / r
+
+
+def calc_nonperiodic_ref_energy(positions, charges):
+    # TODO: name (calc_exact_nonperiodic_energy?)
+    n_dim = positions.shape[1]
+    compute_pair_term = make_eval_pair_pot(
+        kernel_fn=coulomb_kernel, pbc=(False,) * n_dim
+    )
+    return compute_pair_term(positions, charges)
+
+
+def calc_nonperiodic_ref_forces(positions, charges):
+    # TODO: name (calc_exact_nonperiodic_forces?)
+    return -jax.grad(calc_nonperiodic_ref_energy, argnums=0)(
+        positions, charges
+    )
+
+
+def calc_nonperiodic_ref_chargegrad(positions, charges):
+    # TODO: name (calc_exact_nonperiodic_chargegrad?)
+    # TODO: For a stronger check, don't compute via grad but via
+    #  explicit evaluation of electrostatic potential?
+    return jax.grad(calc_nonperiodic_ref_energy, argnums=1)(positions, charges)
+
+
+# TODO: Any scripts currently still defining this should import from here instead
+inds_matrix_to_six_component_stress = (
+    jnp.array([0, 1, 2, 0, 0, 1]),
+    jnp.array([0, 1, 2, 1, 2, 2]),
+)
+
+
+def calc_nonperiodic_stress_from_virial(positions, forces, cell):
+    # TODO: name
+    volume = jnp.linalg.det(cell)
+    (i, j) = inds_matrix_to_six_component_stress
+    dotproducts = jax.vmap(jnp.dot, in_axes=(1, 1))(
+        positions[:, i], forces[:, j]
+    )
+    return -dotproducts / volume
+
+
+def calc_nonperiodic_reference_results(positions, charges, cell):
+    # TODO: name
+    # The following is less likely to run out of memory than calculating
+    # everything with a single jax.value_and_grad call
+    # TODO: Are the individual jits still necessary?
+    energy = jax.jit(calc_nonperiodic_ref_energy)(positions, charges)
+    forces = jax.jit(calc_nonperiodic_ref_forces)(positions, charges)
+    chargegrad = jax.jit(calc_nonperiodic_ref_chargegrad)(positions, charges)
+    stress = jax.jit(calc_nonperiodic_stress_from_virial)(
+        positions, forces, cell
+    )
+    return energy, forces, chargegrad, stress
