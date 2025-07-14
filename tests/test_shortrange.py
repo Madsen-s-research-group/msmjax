@@ -1,14 +1,14 @@
 """Tests for implementation of evaluation of short-range part.
 
-    References:
-        [1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,
-        R. D. Multilevel Summation with B-Spline Interpolation for Pairwise
-        Interactions in Molecular Dynamics Simulations. J. Chem. Phys. 2016,
-        144 (11), 114112. https://doi.org/10.1063/1.4943868.
+References:
+    [1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,
+    R. D. Multilevel Summation with B-Spline Interpolation for Pairwise
+    Interactions in Molecular Dynamics Simulations. J. Chem. Phys. 2016,
+    144 (11), 114112. https://doi.org/10.1063/1.4943868.
 
-        [2] Hardy, D. J. Multilevel Summation for the Fast Evaluation of
-        Forces for the Simulation of Biomolecules (PhD thesis), University
-        of Illinois at Urbana-Champaign, 2006.
+    [2] Hardy, D. J. Multilevel Summation for the Fast Evaluation of
+    Forces for the Simulation of Biomolecules (PhD thesis), University
+    of Illinois at Urbana-Champaign, 2006.
 """
 
 import os
@@ -421,6 +421,8 @@ def test_pair_term_with_and_without_neighborlist(
     nbl = neighbour_list(
         "ij", cutoff=cutoff, positions=pos, cell=cell, pbc=fixture_pbc
     )
+    # TODO: Also test for a duplicate-free neighbor list? (this would test the
+    #  `weights` keyword)
     assert onp.isclose(
         compute_pair_term(pos, chg, cell),
         compute_pair_term_nbl(
@@ -683,6 +685,8 @@ def test_u_zero_with_and_without_neighborlist(fixture_structure, fixture_pbc):
     nbl = neighbour_list(
         "ij", cutoff=cutoff, positions=pos, cell=cell, pbc=fixture_pbc
     )
+    # TODO: Also test for a duplicate-free neighbor list? (this would test the
+    #  `weights` keyword)
     assert onp.isclose(
         compute_u_zero(pos, chg, cell=cell),
         compute_u_zero_nbl(pos, chg, cell=cell, neighborlist=nbl, weights=0.5),
