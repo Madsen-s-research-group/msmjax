@@ -10,7 +10,10 @@ import numpy as onp
 import pytest
 
 from msmjax.calculators import create_msm, set_up_msm_params
-from msmjax.utils.benchmarking import calc_relative_rmse_percent
+from msmjax.utils.benchmarking import (
+    calc_relative_rmse_percent,
+    inds_matrix_to_six_component_stress,
+)
 
 # For closeness checks to pass in single precision
 ATOL = 5.0e-6
@@ -171,10 +174,6 @@ def test_combined(fixture_system_definition):
         chargegrad_msm_dyncell, chargegrad_msm_staticcell, atol=ATOL
     )
 
-    inds_matrix_to_six_component_stress = (
-        jnp.array([0, 1, 2, 0, 0, 1]),
-        jnp.array([0, 1, 2, 1, 2, 2]),
-    )
     stress_msm = jax.jit(evaluation_fns_dyncell["stress"])(pos, chg, cell)[
         inds_matrix_to_six_component_stress
     ]

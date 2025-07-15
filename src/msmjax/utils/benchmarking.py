@@ -554,7 +554,6 @@ def calc_nonperiodic_ref_chargegrad(positions, charges):
     return jax.grad(calc_nonperiodic_ref_energy, argnums=1)(positions, charges)
 
 
-# TODO: Any scripts currently still defining this should import from here instead
 inds_matrix_to_six_component_stress = (
     jnp.array([0, 1, 2, 0, 0, 1]),
     jnp.array([0, 1, 2, 1, 2, 2]),
@@ -563,6 +562,8 @@ inds_matrix_to_six_component_stress = (
 
 def calc_nonperiodic_stress_from_virial(positions, forces, cell):
     # TODO: name
+    # TODO: Make sure the statement that this holds only for non-periodic cases
+    #  is actually correct
     volume = jnp.linalg.det(cell)
     (i, j) = inds_matrix_to_six_component_stress
     dotproducts = jax.vmap(jnp.dot, in_axes=(1, 1))(
