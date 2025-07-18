@@ -15,9 +15,6 @@ from msmjax.calculators import create_msm, set_up_msm_params
 from msmjax.utils.benchmarking import make_timed_eval, path_input_structures
 
 # MSM cutoff to grid spacing ratio parameter
-# TODO: command-line arg? (But note that increasing the cutoff also
-#  necessitates starting from a higher particle number in order to get at least
-#  one grid level in non-periodic cases!)
 ALPHA = 3.0
 
 if __name__ == "__main__":
@@ -45,7 +42,18 @@ if __name__ == "__main__":
     baseoutdir = Path(cmd_args.outdir)
     baseoutdir.mkdir(parents=True)
 
-    for n_particles in [500, 1500, 2500, 3500, 4500, 6000, 8000, 10000]:
+    for n_particles in [
+        500,
+        1500,
+        2500,
+        3500,
+        4500,
+        6000,
+        8000,
+        10000,
+        12000,
+        15000,
+    ]:
         npz_file = path_input_structures / f"structures_{n_particles}.npz"
         structures = onp.load(npz_file)
         pos = structures["positions"][0]
