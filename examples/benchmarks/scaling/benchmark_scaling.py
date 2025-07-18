@@ -43,12 +43,13 @@ exact_nonperiodic_evaluation_fns = {
 
 def iter_structures(double_precision: bool = False):
     for repeats, unrepeated_particle_nums in zip(
-        [None, 2, 3, 4],
+        [None, 2, 3, 4, 5],
         [
             [3000, 6000, 9000, 12000, 15000],
             [2500, 3500, 4500, 6000, 8000, 10000],
             [4000, 5000, 7000, 9000, 12000, 15000],
             [8000, 10000, 12000, 15000],
+            [10000, 12000],
         ],
     ):
         for n_particles_original in unrepeated_particle_nums:
@@ -174,9 +175,10 @@ if __name__ == "__main__":
                     [pos], [cell], level_zero_cutoff, pbc=pbc
                 )[0]
                 time, _ = timing_fn(pos, chg, neighborlist=neighborlist)
-        except XlaRuntimeError as e:
+        except (XlaRuntimeError, ValueError) as e:
             if "out of memory" in str(e).lower():
                 print("- Out of memory: skipping the rest of the loop.")
+                print()
                 break
             else:
                 raise e

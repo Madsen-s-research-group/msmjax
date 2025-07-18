@@ -15,6 +15,12 @@ import numpy as onp
 import pandas as pd
 from tqdm import tqdm
 
+try:
+    from jaxlib._jax import XlaRuntimeError
+except ModuleNotFoundError:
+    # To work with older JAX versions
+    from jaxlib.xla_extension import XlaRuntimeError
+
 from msmjax.calculators import create_msm, set_up_msm_params
 from msmjax.utils.benchmarking import (
     build_duplicate_free_neighborlists,
@@ -97,10 +103,11 @@ if __name__ == "__main__":
     # All structures are assumed to have the same cell
     cell = jax.device_put(structures["cells"][0])
     side_lengths = onp.linalg.norm(cell, axis=1)
-    range_of_alphas = onp.arange(3.0, 8.01, 1.0)
-    # TODO: If I add slab structures, add a similar check that only takes the
-    #  periodic x-y directions into account
-    if onp.array(pbc).all() or (onp.logical_not(pbc)).all():
+    range_of_alphas = onp.arange(3, 13).astype(float)
+    if not onp.array(pbc).any():
+        # If non-periodic, limit the level-zero cutoffs to below half the side
+        # length, as a larger one would incur an unnecessary amount of
+        # short-range evaluations.
         range_of_alphas = range_of_alphas[
             range_of_alphas <= 0.5 * max(side_lengths) / LEVEL_ONE_SPACING
         ]
@@ -113,18 +120,40 @@ if __name__ == "__main__":
         print("#" * 80)
         print(f"- r_cut_0 = {level_zero_cutoff:.2f}")
         print("#" * 80)
-        neighborlists = build_duplicate_free_neighborlists(
-            structures["positions"],
-            structures["cells"],
-            level_zero_cutoff,
-            pbc=pbc,
-        )
+        try:
+            neighborlists = build_duplicate_free_neighborlists(
+                structures["positions"],
+                structures["cells"],
+                level_zero_cutoff,
+                pbc=pbc,
+            )
+        except (XlaRuntimeError, ValueError) as e:
+            if "out of memory" in str(e).lower():
+                print("- Out of memory: skipping the remaining cutoff values.")
+                print()
+                break
+            else:
+                raise e
         print()
         for p in LIST_OF_PS:
             print(f"- p = {p}:")
             for quantity in cmd_args.quantity:
                 print(f"- Evaluating quantity: {quantity}")
                 use_dynamic_cell = quantity == "stress"
+                if onp.any(pbc):
+                    use_neighborlist = False
+                    supercell_diag = onp.ceil(
+                        2 * level_zero_cutoff / onp.diag(cell)
+                    ).astype(int)
+                    # TODO: double-check this works correctly for slabs
+                    supercell_diag = onp.where(pbc, supercell_diag, 1)
+                    neighborlist_prefactor = None
+                else:
+                    use_neighborlist = True
+                    # A prefactor 1.0 corresponds to a duplicate-free
+                    # neighbor list:
+                    neighborlist_prefactor = 1.0
+                    supercell_diag = None
                 msm_params = set_up_msm_params(
                     cell=cell,
                     level_one_spacings=LEVEL_ONE_SPACING,
@@ -134,8 +163,9 @@ if __name__ == "__main__":
                     cell_mode="ortho",
                     dynamic_cell=use_dynamic_cell,
                     n_particles=n_particles,
-                    use_neighborlist=True,
-                    neighborlist_prefactor=1.0,  # duplicate-free neighbor list
+                    supercell_diag=supercell_diag,
+                    use_neighborlist=use_neighborlist,
+                    neighborlist_prefactor=neighborlist_prefactor,
                 )
                 msm_evaluation_fns = create_msm(msm_params)
                 # TODO: Add "repeat" and "number" as command-line args?
@@ -151,8 +181,6 @@ if __name__ == "__main__":
                     )
                     chg = jax.device_put(structures["charges"][idx_structure])
                     nbl = jax.device_put(neighborlists[idx_structure])
-                    # TODO: try-except out-of-memory errors? (at which loop
-                    #  level though?)
                     if use_dynamic_cell:
                         min_time, calculation_result = timing_fn(
                             pos, chg, cell=cell, neighborlist=nbl

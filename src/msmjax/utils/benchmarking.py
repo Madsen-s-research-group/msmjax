@@ -574,9 +574,8 @@ def calc_nonperiodic_stress_from_virial(positions, forces, cell):
 
 def calc_nonperiodic_reference_results(positions, charges, cell):
     # TODO: name
-    # The following is less likely to run out of memory than calculating
-    # everything with a single jax.value_and_grad call
-    # TODO: Are the individual jits still necessary?
+    # The following is less likely to run out of memory than putting the
+    # whole function under a single jit
     energy = jax.jit(calc_nonperiodic_ref_energy)(positions, charges)
     forces = jax.jit(calc_nonperiodic_ref_forces)(positions, charges)
     chargegrad = jax.jit(calc_nonperiodic_ref_chargegrad)(positions, charges)
