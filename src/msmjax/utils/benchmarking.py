@@ -344,20 +344,23 @@ pair_style coul/msm {cutoff:f}
 pair_modify table 0
 kspace_style msm {accuracy:.10g}
 {neigh_line}
-neigh_modify page 6000000    # TODO: make dependent on neigh_line
+neigh_modify page 6000000
 
 # 2) System definition
 read_data {filename_data}
 kspace_style msm {accuracy:.10g}  # need to reinitialize after reading data to work for triclinic cells
+kspace_modify pressure/scalar no
 
 # 3) Simulation settings
 mass 1 1
 pair_coeff * *
 
 # 4) Output settings
+compute 1 all pressure NULL virial
+compute peratom all pe/atom
 thermo 1
-thermo_style custom pe
-dump mydmp all custom 1 {filename_dump} id type x y z fx fy fz
+thermo_style custom pe pxx pyy pzz pxy pxz pyz
+dump mydmp all custom 1 {filename_dump} id type x y z fx fy fz c_peratom
 
 # 5) Run
 run 0
@@ -371,12 +374,12 @@ def eval_lammps_msm(
     cell: npt.ArrayLike,
     pbc: Sequence[bool],
     lammps_executable: str = "lmp",
-    cutoff: float = 10.0,
+    cutoff: float = 10.0,  # TODO: docstring
     accuracy: float = 1.0e-5,
     max_neighbors_one_atom: int | None = None,
     show_stdout=False,
-) -> Tuple[float, np.ndarray]:
-    """Wrapper to compute periodic electrostatic energy, forces in LAMMPS with p3m
+) -> Tuple[float, np.ndarray, np.ndarray, np.ndarray]:
+    """Wrapper to compute periodic electrostatic energy, forces in LAMMPS with MSM
 
     Args:
         positions: Array of article positions, shape `(n_particles, 3)`
@@ -420,10 +423,21 @@ def eval_lammps_msm(
             else:
                 subprocess.run(subprocess_args, stdout=subprocess.DEVNULL)
 
-            energy = parse_energy_from_lammps_log(filename_lammps_log)
-            forces = ase.io.read(filename_lammps_dump).calc.results["forces"]
+            energy, stress = parse_lammps_log(filename_lammps_log)
+            atoms_loaded_dump = ase.io.read(filename_lammps_dump)
+            forces = atoms_loaded_dump.calc.results["forces"]
+            # TODO: Make sure the formula for this is actually correct
+            #  (especially considering interactions of atoms with their own
+            #  images under pbc?)
+            energy_peratom = atoms_loaded_dump.arrays["c_peratom"].squeeze()
+            charge_gradient = 2 * energy_peratom / charges
 
-    return CONVERSION_FACTOR * energy, CONVERSION_FACTOR * forces
+    return (
+        CONVERSION_FACTOR * energy,
+        CONVERSION_FACTOR * forces,
+        CONVERSION_FACTOR * charge_gradient,
+        CONVERSION_FACTOR_STRESS * stress,
+    )
 
 
 def calc_rmse(y_pred, y_true):

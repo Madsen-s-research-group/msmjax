@@ -45,6 +45,11 @@ LABELMAP_QUANTITIES = {
 MAP_STRUCTURETYPES = {
     "nonperiodic": {"indir": DATADIR / "nonperiodic", "pbc": (False,) * 3},
     "periodic": {"indir": DATADIR / "periodic", "pbc": (True,) * 3},
+    "slab": {"indir": DATADIR / "slab", "pbc": (True, True, False)},
+    "slab-nozdipole": {
+        "indir": DATADIR / "slab-nozdipole",
+        "pbc": (True, True, False),
+    },
 }
 
 
@@ -57,7 +62,7 @@ if __name__ == "__main__":
         "--structuretype",
         required=True,
         type=str,
-        choices=["nonperiodic", "periodic"],
+        choices=MAP_STRUCTURETYPES.keys(),
     )
     parser.add_argument(
         "--quantity",
