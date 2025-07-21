@@ -549,9 +549,13 @@ def calc_nonperiodic_ref_forces(positions, charges):
 
 def calc_nonperiodic_ref_chargegrad(positions, charges):
     # TODO: name (calc_exact_nonperiodic_chargegrad?)
-    # TODO: For a stronger check, don't compute via grad but via
-    #  explicit evaluation of electrostatic potential?
-    return jax.grad(calc_nonperiodic_ref_energy, argnums=1)(positions, charges)
+    n_dim = positions.shape[1]
+    compute_pair_term = make_eval_pair_pot(
+        kernel_fn=coulomb_kernel,
+        pbc=(False,) * n_dim,
+        per_particle=True,
+    )
+    return 2 * compute_pair_term(positions, charges) / charges
 
 
 inds_matrix_to_six_component_stress = (

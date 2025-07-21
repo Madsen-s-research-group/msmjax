@@ -509,6 +509,31 @@ def test_pair_term_compare_explicit_loop(fixture_structure, fixture_pbc):
     ["fixture_structure_cubic", "fixture_structure_nonortho"],
     indirect=True,
 )
+def test_pair_term_per_particle(fixture_structure, fixture_pbc):
+    """Test the option to return per-particle contributions"""
+    pos, chg, cell, cell_mode = fixture_structure
+    cutoff = float(get_max_cutoff_for_mic(cell))
+    kernel_fn = partial(shortrange_quadratic_potential, r_cut=cutoff)
+    compute_pair_term_total = make_eval_pair_pot(
+        kernel_fn=kernel_fn, pbc=fixture_pbc, cell_mode=cell_mode
+    )
+    compute_pair_term_per_particle = make_eval_pair_pot(
+        kernel_fn=kernel_fn,
+        pbc=fixture_pbc,
+        cell_mode=cell_mode,
+        per_particle=True,
+    )
+    assert onp.isclose(
+        compute_pair_term_total(pos, chg, cell),
+        compute_pair_term_per_particle(pos, chg, cell).sum(),
+    )
+
+
+@pytest.mark.parametrize(
+    "fixture_structure",
+    ["fixture_structure_cubic", "fixture_structure_nonortho"],
+    indirect=True,
+)
 def test_pair_term_extra_uncharged(fixture_structure, fixture_pbc):
     """Test the extra uncharged interaction option.
 

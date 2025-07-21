@@ -59,7 +59,7 @@ def get_max_cutoff_for_mic(cell: ArrayLike):
         cell: Array representing unit cell, shape `(n_dim, n_dim)`.
 
     Raises:
-        ValueError: If `cell` has invalid spatiol dimension.
+        ValueError: If `cell` has invalid spatial dimension.
 
     Returns:
         Cutoff radius

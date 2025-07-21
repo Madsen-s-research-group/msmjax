@@ -1,14 +1,14 @@
 """Code for short-range part (that is directly evaluated, without grids).
 
-    References:
-        [1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,
-        R. D. Multilevel Summation with B-Spline Interpolation for Pairwise
-        Interactions in Molecular Dynamics Simulations. J. Chem. Phys. 2016,
-        144 (11), 114112. https://doi.org/10.1063/1.4943868.
+References:
+    [1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,
+    R. D. Multilevel Summation with B-Spline Interpolation for Pairwise
+    Interactions in Molecular Dynamics Simulations. J. Chem. Phys. 2016,
+    144 (11), 114112. https://doi.org/10.1063/1.4943868.
 
-        [2] Hardy, D. J. Multilevel Summation for the Fast Evaluation of
-        Forces for the Simulation of Biomolecules (PhD thesis), University
-        of Illinois at Urbana-Champaign, 2006.
+    [2] Hardy, D. J. Multilevel Summation for the Fast Evaluation of
+    Forces for the Simulation of Biomolecules (PhD thesis), University
+    of Illinois at Urbana-Champaign, 2006.
 """
 
 from functools import partial
@@ -226,7 +226,10 @@ def make_eval_pair_pot(
     pbc: Sequence[bool],
     cell_mode: Optional[CellMode] = None,
     supercell_diag: Optional[Sequence[int]] = None,
-    extra_uncharged_interaction: Optional[KernelFn] = None,  # TODO: docstring
+    per_particle=False,  # TODO: add to docstring
+    extra_uncharged_interaction: Optional[
+        KernelFn
+    ] = None,  # TODO: add to docstring
 ) -> Callable[[ArrayLike, ArrayLike, Optional[ArrayLike]], Array]:
     """Transform interaction kernel into function acting on a particle system.
 
@@ -311,19 +314,15 @@ def make_eval_pair_pot(
         mapped_metric_fn = space.map_product(metric_fn)
         dr_ij = mapped_metric_fn(super_positions, positions)
         qi_qj = charges[:, jnp.newaxis] * super_charges
-        charged_pair_term = (
-            0.5 * (qi_qj * _generalized_diagonal_mask(kernel_fn(dr_ij))).sum()
-        )
-        if extra_uncharged_interaction is None:
-            return charged_pair_term
-        else:
-            return (
-                charged_pair_term
-                + 0.5
-                * _generalized_diagonal_mask(
-                    extra_uncharged_interaction(dr_ij)
-                ).sum()
+        result = 0.5 * (qi_qj * _generalized_diagonal_mask(kernel_fn(dr_ij)))
+        if extra_uncharged_interaction is not None:
+            result += 0.5 * _generalized_diagonal_mask(
+                extra_uncharged_interaction(dr_ij)
             )
+        if per_particle:
+            return result.sum(axis=1)
+        else:
+            return result.sum()
 
     return compute_energy
 
