@@ -531,8 +531,7 @@ def coulomb_kernel(r):
     return 1.0 / r
 
 
-def calc_nonperiodic_ref_energy(positions, charges):
-    # TODO: name (calc_exact_nonperiodic_energy?)
+def calc_exact_nonperiodic_energy(positions, charges):
     n_dim = positions.shape[1]
     compute_pair_term = make_eval_pair_pot(
         kernel_fn=coulomb_kernel, pbc=(False,) * n_dim
@@ -540,15 +539,13 @@ def calc_nonperiodic_ref_energy(positions, charges):
     return compute_pair_term(positions, charges)
 
 
-def calc_nonperiodic_ref_forces(positions, charges):
-    # TODO: name (calc_exact_nonperiodic_forces?)
-    return -jax.grad(calc_nonperiodic_ref_energy, argnums=0)(
+def calc_exact_nonperiodic_forces(positions, charges):
+    return -jax.grad(calc_exact_nonperiodic_energy, argnums=0)(
         positions, charges
     )
 
 
-def calc_nonperiodic_ref_chargegrad(positions, charges):
-    # TODO: name (calc_exact_nonperiodic_chargegrad?)
+def calc_exact_nonperiodic_chargegrad(positions, charges):
     n_dim = positions.shape[1]
     compute_pair_term = make_eval_pair_pot(
         kernel_fn=coulomb_kernel,
@@ -564,8 +561,7 @@ inds_matrix_to_six_component_stress = (
 )
 
 
-def calc_nonperiodic_stress_from_virial(positions, forces, cell):
-    # TODO: name
+def calc_exact_nonperiodic_stress_from_virial(positions, forces, cell):
     # TODO: Make sure the statement that this holds only for non-periodic cases
     #  is actually correct
     volume = jnp.linalg.det(cell)
@@ -577,13 +573,12 @@ def calc_nonperiodic_stress_from_virial(positions, forces, cell):
 
 
 def calc_nonperiodic_reference_results(positions, charges, cell):
-    # TODO: name
     # The following is less likely to run out of memory than putting the
     # whole function under a single jit
-    energy = jax.jit(calc_nonperiodic_ref_energy)(positions, charges)
-    forces = jax.jit(calc_nonperiodic_ref_forces)(positions, charges)
-    chargegrad = jax.jit(calc_nonperiodic_ref_chargegrad)(positions, charges)
-    stress = jax.jit(calc_nonperiodic_stress_from_virial)(
+    energy = jax.jit(calc_exact_nonperiodic_energy)(positions, charges)
+    forces = jax.jit(calc_exact_nonperiodic_forces)(positions, charges)
+    chargegrad = jax.jit(calc_exact_nonperiodic_chargegrad)(positions, charges)
+    stress = jax.jit(calc_exact_nonperiodic_stress_from_virial)(
         positions, forces, cell
     )
     return energy, forces, chargegrad, stress

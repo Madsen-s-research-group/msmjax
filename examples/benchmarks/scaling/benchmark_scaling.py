@@ -22,8 +22,8 @@ from msmjax.calculators import create_msm, set_up_msm_params
 from msmjax.core.shortrange import _gen_supercell, make_eval_pair_pot
 from msmjax.utils.benchmarking import (
     build_duplicate_free_neighborlists,
-    calc_nonperiodic_ref_energy,
-    calc_nonperiodic_ref_forces,
+    calc_exact_nonperiodic_energy,
+    calc_exact_nonperiodic_forces,
     make_timed_eval,
     path_input_structures,
 )
@@ -36,8 +36,8 @@ QUANTITY = "forces"
 
 
 exact_nonperiodic_evaluation_fns = {
-    "energy": calc_nonperiodic_ref_energy,
-    "forces": calc_nonperiodic_ref_forces,
+    "energy": calc_exact_nonperiodic_energy,
+    "forces": calc_exact_nonperiodic_forces,
 }
 
 
