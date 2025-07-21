@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python run_timing.py --outdir out/singleprec
+python benchmark_custom_longrange_derivative.py --outdir out/singleprec
