@@ -4,4 +4,4 @@ python benchmark_cost_vs_accuracy.py \
   --jax_enable_x64 \
   --structuretype slab \
   --quantity energy forces charge_gradient stress \
-  --outdir out/slab
+  --outdir out/slab_doubleprec
