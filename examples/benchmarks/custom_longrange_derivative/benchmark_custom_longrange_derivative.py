@@ -56,9 +56,14 @@ if __name__ == "__main__":
     ]:
         npz_file = path_input_structures / f"structures_{n_particles}.npz"
         structures = onp.load(npz_file)
-        pos = structures["positions"][0]
-        chg = structures["charges"][0]
-        cell = structures["cells"][0]
+        if cmd_args.jax_enable_x64:
+            pos = structures["positions"][0].astype("float64")
+            chg = structures["charges"][0].astype("float64")
+            cell = structures["cells"][0].astype("float64")
+        else:
+            pos = structures["positions"][0]
+            chg = structures["charges"][0]
+            cell = structures["cells"][0]
         pos = jax.device_put(pos)
         chg = jax.device_put(chg)
         cell = jax.device_put(cell)
