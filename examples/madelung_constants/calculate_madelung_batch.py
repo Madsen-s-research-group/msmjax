@@ -271,10 +271,10 @@ if __name__ == "__main__":
         print()
 
     markerlist = ["v", "^", "s", "o", "d", "p"]
-    plt.rcParams["font.size"] = 12
+    plt.rcParams["font.size"] = 10  # TODO
     results = pd.read_csv(resultsfile)
     unique_structurekeys = results["structure"].unique()
-    fig, ax = plt.subplots(figsize=(6.4, 3.6), layout="constrained")
+    fig, ax = plt.subplots(figsize=(6.4, 3.0), layout="constrained")
     ax.set_xlabel(r"$r_{\text{cut}}^{(0)}$ / $d_{\text{min}}$")
     ax.set_yscale("log")
     ax.set_ylabel(r"$|M - M_{\text{ref}}|$")

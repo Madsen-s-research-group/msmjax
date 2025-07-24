@@ -218,11 +218,12 @@ if __name__ == "__main__":
         list_of_resultsfiles.append(outfile)
         print()
 
-    FIGSIZE = (6.4, 5.6)  # TODO: needed at all if I don't include suptitle?
+    # TODO: Is setting the figsize needed at all if I don't include suptitle?
+    FIGSIZE = (6.4, 4.2)  # TODO
     LINEWIDTH_TWIN_AXES = 1.5
-    plt.rcParams["font.size"] = 12
+    plt.rcParams["font.size"] = 10  # TODO
 
-    fig, ax = plt.subplots(layout="constrained")
+    fig, ax = plt.subplots(figsize=FIGSIZE, layout="constrained")
     fig.suptitle(STRUCTURES_INFO[structurekey]["nice_label"])
     ax.set_xlabel(r"$r_{\text{cut}}^{(0)}$ / $d_{\text{min}}$")
     ax.set_ylabel(r"$|M - M_{\text{ref}}|$")
@@ -260,7 +261,6 @@ if __name__ == "__main__":
             "target_value"
         ]
         deviations = madelung_values - target_value
-        # TODO: Include the number of grid levels in the label?
         formatted_scaled_spacings = ", ".join(
             [f"{x / d_min_cation_anion:.2f}" for x in (h_1_a, h_1_b, h_1_c)]
         )
