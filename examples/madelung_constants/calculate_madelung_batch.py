@@ -60,7 +60,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     outdir = Path(args.outdir)
-    outdir.mkdir(exist_ok=True, parents=True)
+    outdir.mkdir(parents=True)
     resultsfile = outdir / "results.csv"
     p = args.p
 
@@ -271,9 +271,10 @@ if __name__ == "__main__":
         print()
 
     markerlist = ["v", "^", "s", "o", "d", "p"]
+    plt.rcParams["font.size"] = 12
     results = pd.read_csv(resultsfile)
     unique_structurekeys = results["structure"].unique()
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(6.4, 3.6), layout="constrained")
     ax.set_xlabel(r"$r_{\text{cut}}^{(0)}$ / $d_{\text{min}}$")
     ax.set_yscale("log")
     ax.set_ylabel(r"$|M - M_{\text{ref}}|$")
@@ -288,7 +289,7 @@ if __name__ == "__main__":
             label=STRUCTURES_INFO[structurekey]["nice_label"],
             marker=marker,
             markerfacecolor="none",
-            markersize=10,
+            # markersize=10,    # TODO
         )
     ax.legend()
     for suffix in ["png", "pdf"]:

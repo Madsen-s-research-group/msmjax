@@ -218,11 +218,11 @@ if __name__ == "__main__":
         list_of_resultsfiles.append(outfile)
         print()
 
-    FIGSIZE = (6.4, 5.6)
+    FIGSIZE = (6.4, 5.6)  # TODO: needed at all if I don't include suptitle?
     LINEWIDTH_TWIN_AXES = 1.5
+    plt.rcParams["font.size"] = 12
 
-    fig, ax = plt.subplots()
-    fig.subplots_adjust(top=0.75)
+    fig, ax = plt.subplots(layout="constrained")
     fig.suptitle(STRUCTURES_INFO[structurekey]["nice_label"])
     ax.set_xlabel(r"$r_{\text{cut}}^{(0)}$ / $d_{\text{min}}$")
     ax.set_ylabel(r"$|M - M_{\text{ref}}|$")
@@ -285,6 +285,8 @@ if __name__ == "__main__":
     ax.legend()
 
     for suffix in ["png", "pdf"]:
-        outfile_plot = outdir / ("madelung_const_vs_cutoff" + "." + suffix)
+        outfile_plot = outdir / (
+            "madelung_const_" + structurekey + "_vs_cutoff" + "." + suffix
+        )
         print(f"- Saving plot to {outfile_plot}")
         fig.savefig(outfile_plot)
