@@ -24,6 +24,7 @@ from ase import Atoms
 from tqdm import tqdm
 
 from msmjax.core.shortrange import make_eval_pair_pot
+from msmjax.utils.general import inds_matrix_to_six_component_stress
 
 path_input_structures = (
     Path(__file__).resolve().parents[3] / "data" / "benchmark" / "structures"
@@ -567,12 +568,6 @@ def calc_exact_nonperiodic_chargegrad(positions, charges):
         per_particle=True,
     )
     return 2 * compute_pair_term(positions, charges) / charges
-
-
-inds_matrix_to_six_component_stress = (
-    jnp.array([0, 1, 2, 0, 0, 1]),
-    jnp.array([0, 1, 2, 1, 2, 2]),
-)
 
 
 def calc_exact_nonperiodic_stress_from_virial(positions, forces, cell):

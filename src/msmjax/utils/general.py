@@ -85,3 +85,9 @@ def get_max_cutoff_for_mic(cell: ArrayLike):
         return 0.5 * cell_volume / jnp.max(face_areas)
     else:
         raise ValueError("Number of dimensions must be 1, 2 or 3.")
+
+
+inds_matrix_to_six_component_stress = (
+    jnp.array([0, 1, 2, 0, 0, 1]),
+    jnp.array([0, 1, 2, 1, 2, 2]),
+)

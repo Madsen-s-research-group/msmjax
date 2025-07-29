@@ -12,7 +12,6 @@ import pytest
 from msmjax.calculators import create_msm, set_up_msm_params
 from msmjax.utils.benchmarking import (
     calc_relative_rmse_percent,
-    inds_matrix_to_six_component_stress,
 )
 
 # For closeness checks to pass in single precision
@@ -88,6 +87,7 @@ def fixture_periodic_triclinic(fixture_datadir):
 # TODO: Test different grid spacings along different axes?
 # TODO: Test with/without neighbor list?
 # TODO: Test serialization/deserialization of MSMParams (in this module or elsewhere?)
+# TODO: Test zero energy and forces for a single isolated particle?
 
 
 @pytest.fixture(scope="module")
@@ -140,7 +140,6 @@ def test_combined(fixture_system_definition):
     chargegrad_msm_staticcell = jax.jit(
         evaluation_fns_staticcell["charge_gradient"]
     )(pos, chg)
-    # TODO: Define the error tolerances somewhere globally?
     assert onp.abs(energy_msm_staticcell - energy_ref) < 0.25
     assert calc_relative_rmse_percent(forces_msm_staticcell, forces_ref) < 1.0
     assert (
@@ -174,14 +173,10 @@ def test_combined(fixture_system_definition):
         chargegrad_msm_dyncell, chargegrad_msm_staticcell, atol=ATOL
     )
 
-    stress_msm = jax.jit(evaluation_fns_dyncell["stress"])(pos, chg, cell)[
-        inds_matrix_to_six_component_stress
-    ]
+    stress_msm = jax.jit(evaluation_fns_dyncell["stress"])(pos, chg, cell)
     if cell_mode == "ortho":
         # In cell_mode "ortho", only the diagonal components of the stress
-        # tensor are calculated correctly!
-        # TODO: Define error tolerance somewhere globally?
-        assert calc_relative_rmse_percent(stress_msm[:3], stress_ref[:3]) < 5.0
+        # tensor are calculated correctly and returned.
+        assert calc_relative_rmse_percent(stress_msm, stress_ref[:3]) < 5.0
     else:
-        # TODO: Define error tolerance somewhere globally?
         assert calc_relative_rmse_percent(stress_msm, stress_ref) < 5.0

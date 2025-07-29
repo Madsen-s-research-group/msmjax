@@ -36,6 +36,7 @@ from msmjax.utils.general import (
     ConvMeth,
     KernelFn,
     get_max_cutoff_for_mic,
+    inds_matrix_to_six_component_stress,
 )
 
 
@@ -544,9 +545,13 @@ def create_msm(
                 neighborlist,
             )
 
-        return jax.grad(deformation_energy)(jnp.zeros_like(cell)) / jnp.fabs(
-            jnp.linalg.det(cell)
-        )
+        stress_matrix = jax.grad(deformation_energy)(
+            jnp.zeros_like(cell)
+        ) / jnp.fabs(jnp.linalg.det(cell))
+        if params.cell_mode == "ortho":
+            return jnp.diag(stress_matrix)
+        elif params.cell_mode == "triclinic":
+            return stress_matrix[inds_matrix_to_six_component_stress]
 
     evaluation_functions["stress"] = calc_stress
     return evaluation_functions

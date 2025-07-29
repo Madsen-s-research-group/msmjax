@@ -25,9 +25,9 @@ from msmjax.calculators import create_msm, set_up_msm_params
 from msmjax.utils.benchmarking import (
     build_duplicate_free_neighborlists,
     calc_relative_rmse,
-    inds_matrix_to_six_component_stress,
     make_timed_eval,
 )
+from msmjax.utils.general import inds_matrix_to_six_component_stress
 
 # TODO: Explicitly compute as the average particle spacing instead?
 LEVEL_ONE_SPACING = 1.0
@@ -159,13 +159,21 @@ if __name__ == "__main__":
                     # neighbor list:
                     neighborlist_prefactor = 1.0
                     supercell_diag = None
+                # TODO: choice of cell mode: "triclinic" is only required when
+                #  evaluating off-diagonal stresses, but makes everything more
+                #  expensive -> separate into two quantities? (stress_diag-only
+                #  and stress, stress_diag and stress_off-diag, or ...)
+                if quantity == "stress":
+                    cell_mode = "triclinic"
+                else:
+                    cell_mode = "ortho"
                 msm_params = set_up_msm_params(
                     cell=cell,
                     level_one_spacings=LEVEL_ONE_SPACING,
                     level_zero_cutoff=level_zero_cutoff,
                     p=p,
                     pbc=pbc,
-                    cell_mode="ortho",  # TODO: "triclinic" for correct off-diagonal stresses?
+                    cell_mode=cell_mode,
                     dynamic_cell=use_dynamic_cell,
                     n_particles=n_particles,
                     supercell_diag=supercell_diag,
