@@ -40,7 +40,8 @@ LABELMAP_QUANTITIES = {
     "energy": "energies",
     "forces": "forces",
     "charge_gradient": "chargegrads",
-    "stress": "stresses",
+    "stress_diag": "stresses",
+    "stress_all": "stresses",
 }
 MAP_STRUCTURETYPES = {
     "nonperiodic": {"indir": DATADIR / "nonperiodic", "pbc": (False,) * 3},
@@ -144,7 +145,6 @@ if __name__ == "__main__":
             print(f"- p = {p}:")
             for quantity in cmd_args.quantity:
                 print(f"- Evaluating quantity: {quantity}")
-                use_dynamic_cell = quantity == "stress"
                 if onp.any(pbc):
                     use_neighborlist = False
                     supercell_diag = onp.ceil(
@@ -159,11 +159,15 @@ if __name__ == "__main__":
                     # neighbor list:
                     neighborlist_prefactor = 1.0
                     supercell_diag = None
-                # TODO: choice of cell mode: "triclinic" is only required when
-                #  evaluating off-diagonal stresses, but makes everything more
-                #  expensive -> separate into two quantities? (stress_diag-only
-                #  and stress, stress_diag and stress_off-diag, or ...)
-                if quantity == "stress":
+                # Dynamic-cell mode is only required when calculating
+                # stresses, and cell_mode = "triclinic" is only required (for
+                # the unit cell shapes included in this example, that is) when
+                # calculating off-diagonal stress components. But these
+                # features make the calculation of all quantities more
+                # expensive, not just of the stresses, so we only turn them on
+                # when needed:
+                use_dynamic_cell = quantity in ["stress_diag", "stress_all"]
+                if quantity == "stress_all":
                     cell_mode = "triclinic"
                 else:
                     cell_mode = "ortho"
@@ -182,8 +186,12 @@ if __name__ == "__main__":
                 )
                 msm_evaluation_fns = create_msm(msm_params)
                 # TODO: Add "repeat" and "number" as command-line args?
+                if quantity in ["stress_diag", "stress_all"]:
+                    eval_fn_key = "stress"
+                else:
+                    eval_fn_key = quantity
                 timing_fn = make_timed_eval(
-                    msm_evaluation_fns[quantity], repeat=5, number=10
+                    msm_evaluation_fns[eval_fn_key], repeat=5, number=10
                 )
                 all_times = []
                 all_calculation_results = []
@@ -202,18 +210,16 @@ if __name__ == "__main__":
                         min_time, calculation_result = timing_fn(
                             pos, chg, neighborlist=nbl
                         )
-                    if quantity == "stress":
-                        calculation_result = calculation_result[
-                            inds_matrix_to_six_component_stress
-                        ]
                     all_times.append(min_time)
                     all_calculation_results.append(calculation_result)
                 all_times = jnp.array(all_times)
                 all_calculation_results = jnp.array(all_calculation_results)
 
+                ref_result = reference_results[LABELMAP_QUANTITIES[quantity]]
+                if quantity == "stress_diag":
+                    ref_result = ref_result[:, :3]
                 relative_rmse = calc_relative_rmse(
-                    all_calculation_results,
-                    reference_results[LABELMAP_QUANTITIES[quantity]],
+                    all_calculation_results, ref_result
                 )
                 results_tmp = pd.DataFrame(
                     data={

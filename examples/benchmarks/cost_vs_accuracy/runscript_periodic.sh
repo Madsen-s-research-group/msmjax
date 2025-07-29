@@ -2,5 +2,5 @@
 
 python benchmark_cost_vs_accuracy.py \
   --structuretype periodic \
-  --quantity energy forces charge_gradient stress \
+  --quantity energy forces charge_gradient stress_diag stress_all \
   --outdir out/periodic
