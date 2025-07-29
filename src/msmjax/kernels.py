@@ -11,7 +11,7 @@ References:
     of Illinois at Urbana-Champaign, 2006.
 """
 
-from typing import Callable, Literal
+from typing import Callable
 
 import jax
 import jax.numpy as jnp
@@ -234,74 +234,3 @@ def make_construct_stencils(
         return stencils
 
     return construct_stencils
-
-
-def determine_min_kernel_stencil_size(
-    cell: ArrayLike, spacings: ArrayLike, cutoff: float
-):
-    # TODO: Right module for this function? utils? bspline.gridops? core.longrange?
-    #  (whichever it will be, currently it's probably not in the right one...)
-
-    # TODO: Rename? If I also use this for determination of supercell_diag, it
-    #  should probably have a different name. Something like
-    #  "find_covering_grid_size" maybe. In which case, it should also maybe
-    #  ceil() instead of .astype(int), and external callers should take care
-    #  of subtracting 1 if the application is to get minimum stencil extents.
-
-    # TODO: Should the parameter names for spacings and r_cut suggest one
-    #  specific grid level? In principle, if they're given at the same level,
-    #  it does not matter which, since both are doubled at each level.
-    #  But OTOH, the risk of inadvertently passing the level-ONE spacing
-    #  together with the level-ZERO cutoff should be minimized
-
-    # TODO: unit test this function
-
-    n_dim = cell.shape[0]
-    inverse = onp.linalg.inv(cell)
-
-    # TODO: Can this be made more generic (same code working for all dimensions)?
-    # TODO: Could this be implemented via the usual max-cutoff formula
-    #  (as implemented in `get_max_cutoff_3d`) instead? (Keep enlarging the
-    #  cell passed to `get_max_cutoff_3d` in discrete steps, corresponding to
-    #  adding an additional grid point, until the cutoff fits)
-    if n_dim == 1:
-        return tuple(onp.atleast_1d(cutoff / spacings).astype(int).tolist())
-    elif n_dim == 2:
-        phis = onp.linspace(0, 2 * onp.pi, 500)
-        points_unitsphere = onp.array([onp.cos(phis), onp.sin(phis)]).T
-    elif n_dim == 3:
-        phis = onp.linspace(0, 2 * onp.pi, 200)
-        thetas = onp.linspace(0, onp.pi, 200)
-        phis, thetas = onp.meshgrid(phis, thetas)
-        phis = phis.ravel()
-        thetas = thetas.ravel()
-        points_unitsphere = onp.array(
-            [
-                onp.cos(phis) * onp.sin(thetas),
-                onp.sin(phis) * onp.sin(thetas),
-                onp.cos(thetas),
-            ]
-        ).T
-    else:
-        raise ValueError("Spatial dimensions greater than 3 not supported.")
-
-    points_at_cutoff = cutoff * points_unitsphere
-    points_at_cutoff_transformed = points_at_cutoff @ inverse
-
-    single_grid_cell = (
-        cell
-        / onp.linalg.norm(cell, axis=1)[:, onp.newaxis]
-        * onp.atleast_1d(spacings)[:, onp.newaxis]
-    )
-    # TODO: Is it really correct to take the diagonal?
-    spacings_transformed = onp.diag(single_grid_cell @ inverse)
-
-    # The maximum taken from the precomputed cutoff sphere points may be
-    # slightly too low, because they incompletely sample the cutoff sphere
-    # => use an additional small tolerance
-    tol = 1.0e-3
-    sizes_from_center = onp.floor(
-        points_at_cutoff_transformed.max(axis=0) / spacings_transformed + tol
-    ).astype(int)
-
-    return tuple(sizes_from_center.tolist())

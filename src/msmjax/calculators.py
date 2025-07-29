@@ -27,7 +27,6 @@ from msmjax.core.shortrange import (
 )
 from msmjax.kernels import (
     SoftenerOneOverR,
-    determine_min_kernel_stencil_size,
     make_construct_stencils,
     split_one_over_r,
 )
@@ -35,6 +34,7 @@ from msmjax.utils.general import (
     CellMode,
     ConvMeth,
     KernelFn,
+    find_covering_grid_extents,
     get_max_cutoff_for_mic,
     inds_matrix_to_six_component_stress,
 )
@@ -175,7 +175,7 @@ def find_stencil_extents_all_levels(
     grid_shape_toplevel: tuple[int, ...] = None,
 ):
     stencil_extents_from_center = [None]
-    extents_intermediate = determine_min_kernel_stencil_size(
+    extents_intermediate = find_covering_grid_extents(
         cell, level_one_spacings, 2 * level_zero_cutoff
     )
     # TODO: Clipping of stencils to grid size along non-periodic directions in mixed-periodicity cases?
@@ -281,10 +281,8 @@ def set_up_msm_params(
     #     kernel stencils, and the pbc are the most conveniently available in one place.
     stencil_extents_from_center = [None]
     if intermediate_kernel_stencil_extents is None:
-        intermediate_kernel_stencil_extents = (
-            determine_min_kernel_stencil_size(
-                cell, level_one_spacings, 2 * level_zero_cutoff
-            )
+        intermediate_kernel_stencil_extents = find_covering_grid_extents(
+            cell, level_one_spacings, 2 * level_zero_cutoff
         )
     if pbc.any():
         stencil_extents_from_center += [
@@ -620,8 +618,8 @@ def check_cutoffs_and_spacings(cell: ArrayLike, params: MSMParams):
         # TODO: do away with this by introducing a scaled_gridspacing attribute?
         if params.grids_defined_on_unitcube:
             spacings *= onp.linalg.norm(cell, axis=1)
-        min_required_stencil_size = determine_min_kernel_stencil_size(
-            cell=cell, spacings=spacings, cutoff=params.cutoffs[lvl]
+        min_required_stencil_size = find_covering_grid_extents(
+            grid_axes=cell, spacings=spacings, cutoff=params.cutoffs[lvl]
         )
         if not (
             onp.array(given_stencil_size)

@@ -2,6 +2,7 @@ from typing import Callable, Literal
 
 import jax
 import jax.numpy as jnp
+import numpy as onp
 from jax import Array
 from jax import numpy as jnp
 from jax._src.basearray import ArrayLike
@@ -10,6 +11,11 @@ from jax._src.basearray import ArrayLike
 CellMode = Literal["ortho", "triclinic"]
 ConvMeth = Literal["scipy-direct", "scipy-fft"]
 KernelFn = Callable[[ArrayLike], Array]
+
+inds_matrix_to_six_component_stress = (
+    jnp.array([0, 1, 2, 0, 0, 1]),
+    jnp.array([0, 1, 2, 1, 2, 2]),
+)
 
 
 def _divide_zero_safe(
@@ -87,7 +93,64 @@ def get_max_cutoff_for_mic(cell: ArrayLike):
         raise ValueError("Number of dimensions must be 1, 2 or 3.")
 
 
-inds_matrix_to_six_component_stress = (
-    jnp.array([0, 1, 2, 0, 0, 1]),
-    jnp.array([0, 1, 2, 1, 2, 2]),
-)
+def find_covering_grid_extents(
+    grid_axes: ArrayLike, spacings: ArrayLike, cutoff: float
+):
+    # TODO: Point out in docstring that when the whole covering of the cutoff
+    #  (i.e. including negative-direction quadrants/octants) would have shape
+    #  2 * s + 1, what this function returns is not the whole thing, but s
+
+    # TODO: Should the parameter names for spacings and r_cut suggest one
+    #  specific grid level? In principle, if they're given at the same level,
+    #  it does not matter which, since both are doubled at each level.
+    #  But OTOH, the risk of inadvertently passing the level-ONE spacing
+    #  together with the level-ZERO cutoff should be minimized
+    #  -> probably ok as is, but maybe point out in docstring
+
+    # TODO: unit test this function
+
+    n_dim = grid_axes.shape[0]
+    inverse = onp.linalg.inv(grid_axes)
+
+    if n_dim == 1:
+        return tuple(onp.atleast_1d(cutoff / spacings).astype(int).tolist())
+    elif n_dim == 2:
+        phis = onp.linspace(0, 2 * onp.pi, 500)
+        points_unitsphere = onp.array([onp.cos(phis), onp.sin(phis)]).T
+    elif n_dim == 3:
+        phis = onp.linspace(0, 2 * onp.pi, 200)
+        thetas = onp.linspace(0, onp.pi, 200)
+        phis, thetas = onp.meshgrid(phis, thetas)
+        phis = phis.ravel()
+        thetas = thetas.ravel()
+        points_unitsphere = onp.array(
+            [
+                onp.cos(phis) * onp.sin(thetas),
+                onp.sin(phis) * onp.sin(thetas),
+                onp.cos(thetas),
+            ]
+        ).T
+    else:
+        raise ValueError("Spatial dimensions greater than 3 not supported.")
+
+    points_at_cutoff = cutoff * points_unitsphere
+    points_at_cutoff_transformed = points_at_cutoff @ inverse
+
+    single_grid_cell = (
+        grid_axes
+        / onp.linalg.norm(grid_axes, axis=1)[:, onp.newaxis]
+        * onp.atleast_1d(spacings)[:, onp.newaxis]
+    )
+    # In the transformed system, grid cells are represented by diagonal
+    # matrices:
+    spacings_transformed = onp.diag(single_grid_cell @ inverse)
+
+    # The maximum taken from the precomputed cutoff sphere points may be
+    # slightly too low, because they incompletely sample the cutoff sphere
+    # => use an additional small tolerance
+    tol = 1.0e-3
+    sizes_from_center = onp.floor(
+        points_at_cutoff_transformed.max(axis=0) / spacings_transformed + tol
+    ).astype(int)
+
+    return tuple(sizes_from_center.tolist())

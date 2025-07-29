@@ -26,19 +26,23 @@ from utils_madelung import (
 )
 
 from msmjax.calculators import create_msm, set_up_msm_params
-from msmjax.kernels import determine_min_kernel_stencil_size
+from msmjax.utils.general import find_covering_grid_extents
 
 INDIR_STRUCTURES = Path("input_structures/")
 PBC = (True,) * 3
 
 
 def suggest_supercell_diag(cell, cutoff):
-    # TODO: Put into utils?
     # TODO: Explain what is being done here (Why * 2? Why + 1?)
     side_lengths = onp.linalg.norm(cell, axis=1)
-    supercell_diag = determine_min_kernel_stencil_size(
-        cell=cell, spacings=side_lengths, cutoff=2 * cutoff
+    # The cutoff is multiplied by two before passing it as argument, because
+    # for the minimum-image convention, the cutoff must not exceed HALF the
+    # side length of the cell.
+    supercell_diag = find_covering_grid_extents(
+        grid_axes=cell, spacings=side_lengths, cutoff=2 * cutoff
     )
+    # +1 because the output of `find_covering_grid_extents` by default does
+    # not include the cell at the center
     supercell_diag = tuple(s + 1 for s in supercell_diag)
     return supercell_diag
 
@@ -209,8 +213,8 @@ if __name__ == "__main__":
         for cell in all_cells:
             side_lengths = onp.linalg.norm(cell, axis=1)
             spacings = side_lengths / onp.array(n_gridpoints_level_one)
-            stencil_extents = determine_min_kernel_stencil_size(
-                cell=cell, spacings=spacings, cutoff=2 * level_zero_cutoff
+            stencil_extents = find_covering_grid_extents(
+                grid_axes=cell, spacings=spacings, cutoff=2 * level_zero_cutoff
             )
             stencil_extents_intermed_all_structures.append(stencil_extents)
         common_stencil_extents_intermed = tuple(
