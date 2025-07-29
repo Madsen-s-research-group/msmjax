@@ -28,9 +28,6 @@ from msmjax.utils.benchmarking import (
     path_input_structures,
 )
 
-# TODO: Explicitly compute as the average particle spacing instead?
-LEVEL_ONE_SPACING = 1.0
-
 # TODO: energy, other quantities?
 QUANTITY = "forces"
 
@@ -139,7 +136,11 @@ if __name__ == "__main__":
         double_precision=cmd_args.jax_enable_x64
     ):
         n_particles = pos.shape[0]
+        n_dim = pos.shape[1]
         print(f"- n_particles = {n_particles}")
+        volume = onp.linalg.det(cell)
+        avg_particle_spacing = (volume / n_particles) ** (1.0 / n_dim)
+        level_one_spacing = avg_particle_spacing
 
         if cmd_args.algo == "nonperiodic-exact":
             fn = exact_nonperiodic_evaluation_fns[QUANTITY]
@@ -152,7 +153,7 @@ if __name__ == "__main__":
             p = cmd_args.p
             msm_params = set_up_msm_params(
                 cell=cell,
-                level_one_spacings=LEVEL_ONE_SPACING,
+                level_one_spacings=level_one_spacing,
                 level_zero_cutoff=level_zero_cutoff,
                 p=p,
                 pbc=pbc,

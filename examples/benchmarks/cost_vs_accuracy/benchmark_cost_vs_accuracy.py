@@ -27,10 +27,6 @@ from msmjax.utils.benchmarking import (
     calc_relative_rmse,
     make_timed_eval,
 )
-from msmjax.utils.general import inds_matrix_to_six_component_stress
-
-# TODO: Explicitly compute as the average particle spacing instead?
-LEVEL_ONE_SPACING = 1.0
 
 DATADIR = Path("reference_data")
 
@@ -109,15 +105,19 @@ if __name__ == "__main__":
     # All structures are assumed to have the same cell
     cell = jax.device_put(structures["cells"][0])
     side_lengths = onp.linalg.norm(cell, axis=1)
+    volume = onp.linalg.det(cell)
+    n_dim = cell.shape[0]
+    avg_particle_spacing = (volume / n_particles) ** (1.0 / n_dim)
+    level_one_spacing = avg_particle_spacing
     range_of_alphas = onp.arange(3, 13).astype(float)
     if not onp.array(pbc).any():
         # If non-periodic, limit the level-zero cutoffs to below half the side
         # length, as a larger one would incur an unnecessary amount of
         # short-range evaluations.
         range_of_alphas = range_of_alphas[
-            range_of_alphas <= 0.5 * max(side_lengths) / LEVEL_ONE_SPACING
+            range_of_alphas <= 0.5 * max(side_lengths) / level_one_spacing
         ]
-    range_of_cutoffs = range_of_alphas * LEVEL_ONE_SPACING
+    range_of_cutoffs = range_of_alphas * level_one_spacing
 
     print(f"- Range of cutoffs is {range_of_cutoffs}")
     print()
@@ -173,7 +173,7 @@ if __name__ == "__main__":
                     cell_mode = "ortho"
                 msm_params = set_up_msm_params(
                     cell=cell,
-                    level_one_spacings=LEVEL_ONE_SPACING,
+                    level_one_spacings=level_one_spacing,
                     level_zero_cutoff=level_zero_cutoff,
                     p=p,
                     pbc=pbc,
