@@ -165,7 +165,7 @@ if __name__ == "__main__":
                     level_zero_cutoff=level_zero_cutoff,
                     p=p,
                     pbc=pbc,
-                    cell_mode="ortho",
+                    cell_mode="ortho",  # TODO: "triclinic" for correct off-diagonal stresses?
                     dynamic_cell=use_dynamic_cell,
                     n_particles=n_particles,
                     supercell_diag=supercell_diag,
