@@ -42,11 +42,6 @@ LABELMAP_QUANTITIES = {
 MAP_STRUCTURETYPES = {
     "nonperiodic": {"indir": DATADIR / "nonperiodic", "pbc": (False,) * 3},
     "periodic": {"indir": DATADIR / "periodic", "pbc": (True,) * 3},
-    "slab": {"indir": DATADIR / "slab", "pbc": (True, True, False)},
-    "slab-nozdipole": {
-        "indir": DATADIR / "slab-nozdipole",
-        "pbc": (True, True, False),
-    },
 }
 
 
@@ -146,11 +141,14 @@ if __name__ == "__main__":
             for quantity in cmd_args.quantity:
                 print(f"- Evaluating quantity: {quantity}")
                 if onp.any(pbc):
+                    # The periodic structures used in this test are small,
+                    # so the cutoff of the direct part usually covers several
+                    # replicas of the unit cell, and the benefit of using a
+                    # neighbor list would be small, if any.
                     use_neighborlist = False
                     supercell_diag = onp.ceil(
                         2 * level_zero_cutoff / onp.diag(cell)
                     ).astype(int)
-                    # TODO: double-check this works correctly for slabs
                     supercell_diag = onp.where(pbc, supercell_diag, 1)
                     neighborlist_prefactor = None
                 else:
