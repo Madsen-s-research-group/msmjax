@@ -28,7 +28,6 @@ from msmjax.utils.benchmarking import (
     path_input_structures,
 )
 
-# TODO: energy, other quantities?
 QUANTITY = "forces"
 
 
@@ -210,12 +209,22 @@ if __name__ == "__main__":
     results = pd.read_csv(resultsfile)
     particle_numbers = results["n_particles"].values
     times = results["time"].values
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(constrained_layout=True)
+    title = cmd_args.algo
+    if cmd_args.algo in ["nonperiodic-msm", "periodic-msm"]:
+        title += (
+            ", "
+            + "$r_{\mathrm{cut}} = "
+            + f"{cmd_args.cutoff}"
+            + " \overline{d}$, "
+            + f"$p = "
+            + f"{cmd_args.p}$"
+        )
+    title += f"; quantity = {QUANTITY}"
+    ax.set_title(title)
     ax.set_xlabel("Number of particles")
     ax.set_ylabel("Time / ms")
     ax.scatter(particle_numbers, times * 1000)
-    # TODO: Add a legend with MSM settings (or that exact calc was performed)
-    #  and periodic/nonperiodic info in legend?
     ax.set_xscale("log")
     ax.set_yscale("log")
     filename_without_suffix = f"scaling_{QUANTITY}_loglog"
