@@ -218,10 +218,9 @@ if __name__ == "__main__":
         list_of_resultsfiles.append(outfile)
         print()
 
-    # TODO: Is setting the figsize needed at all if I don't include suptitle?
-    FIGSIZE = (6.4, 4.2)  # TODO
+    FIGSIZE = (6.4, 4.2)
     LINEWIDTH_TWIN_AXES = 1.5
-    plt.rcParams["font.size"] = 10  # TODO
+    plt.rcParams["font.size"] = 10
 
     fig, ax = plt.subplots(figsize=FIGSIZE, layout="constrained")
     fig.suptitle(STRUCTURES_INFO[structurekey]["nice_label"])
