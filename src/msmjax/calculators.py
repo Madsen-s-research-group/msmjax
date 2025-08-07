@@ -147,25 +147,6 @@ class MSMParams:
         return cls(**params_dict)
 
 
-def _suggest_p(alpha):
-    """Find the interpolation order p that the article recommends.
-
-    The article's criterion for choosing p for a given alpha is heuristic
-    and is stated in section III.B.2.
-
-    Args:
-        alpha: The ratio between level-zero cutoff and level-one grid spacing.
-
-    Returns:
-        Suggested value of interpolation order.
-    """
-    list_of_ps = [4, 6, 8]
-    idx_optimal_p = onp.argmin(
-        onp.abs(onp.asarray(list_of_ps) - (1.25 * alpha + 0.25))
-    )
-    return list_of_ps[idx_optimal_p]
-
-
 def find_stencil_extents_all_levels(
     cell,
     level_one_spacings,
@@ -194,10 +175,10 @@ def set_up_msm_params(
     cell: ArrayLike,
     level_one_spacings: float | ArrayLike,
     level_zero_cutoff: float,
+    p: int,
     pbc: Sequence[bool],
     cell_mode: CellMode,
     dynamic_cell: bool,
-    p: int = None,
     mu: int = None,
     n_particles: int = None,
     max_splitting_level: int = None,
@@ -221,8 +202,6 @@ def set_up_msm_params(
     #  step calculates alpha and thus p and mu from the initial spacings
     #  pre-adjustment. Is this a problem? Which behavior is less surprising?
     alpha = int(onp.max(level_zero_cutoff / level_one_spacings))
-    if p is None:
-        p = _suggest_p(alpha)
     # See section "1. Preprocessing" of the article
     # TODO: Allow different mus for each level? (The article suggests
     #  mu >= 3*p/2 for the highest grid level)

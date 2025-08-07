@@ -32,6 +32,13 @@ DATADIR = Path("reference_data")
 
 LIST_OF_PS = [4, 6, 8]
 
+# TODO: In the case of no periodicity, the stress evaluation function returned
+#  by create_msm is probably less efficient than the exact stress evaluation
+#  via the virial (as implemented by
+#  utils.benchmarking.calc_nonperiodic_reference_results),
+#  especially if forces are being computed anyway.
+#  => write a comment or message saying as much?
+#  Probably should be mentioned in docstring of create_msm as well.
 LABELMAP_QUANTITIES = {
     "energy": "energies",
     "forces": "forces",

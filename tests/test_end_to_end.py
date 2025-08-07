@@ -19,6 +19,7 @@ ATOL = 5.0e-6
 # TODO: Use fixtures for these?
 LEVEL_ONE_SPACINGS = 1.0
 LEVEL_ZERO_CUTOFF = 4.0
+P = 6
 
 
 @pytest.fixture(scope="module")
@@ -124,6 +125,7 @@ def test_combined(fixture_system_definition):
         cell=cell,
         level_one_spacings=LEVEL_ONE_SPACINGS,
         level_zero_cutoff=LEVEL_ZERO_CUTOFF,
+        p=P,
         pbc=pbc,
         cell_mode=cell_mode,
         dynamic_cell=False,
@@ -151,6 +153,7 @@ def test_combined(fixture_system_definition):
         cell=cell,
         level_one_spacings=LEVEL_ONE_SPACINGS,
         level_zero_cutoff=LEVEL_ZERO_CUTOFF,
+        p=P,
         pbc=pbc,
         cell_mode=cell_mode,
         dynamic_cell=True,
