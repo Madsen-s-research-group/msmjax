@@ -1,8 +1,12 @@
+from functools import partial
+
 import ase.units
 import jax
 import jax.numpy as jnp
 import numpy as onp
 from ase.calculators.calculator import Calculator, all_changes
+
+from msmjax.calculators import MSMParams, create_msm
 
 # LJ parameters for Argon taken from:
 # John A. White, J. Chem. Phys. 22 November 1999; 111 (20): 9352–9356. https://doi.org/10.1063/1.479848
@@ -83,3 +87,17 @@ class GenericWrapperCalculator(Calculator):
                 positions=self.atoms.positions, cell=self.atoms.cell[...]
             )
             self.results["stress"] = onp.array(res)
+
+
+def make_charged_lj_evaluation_fns(
+    msm_params: MSMParams, sigma: float, epsilon: float
+):
+    cutoff = msm_params.cutoffs[0]
+    lj_kernel = partial(
+        lennard_jones_potential,
+        sigma=sigma,
+        epsilon=epsilon,
+        r_cut=cutoff,
+        r_onset=0.67 * cutoff,
+    )
+    return create_msm(msm_params, extra_uncharged_interaction=lj_kernel)

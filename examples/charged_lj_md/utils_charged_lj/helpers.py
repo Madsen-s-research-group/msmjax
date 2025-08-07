@@ -188,3 +188,46 @@ def read_traj_and_log(trajfile, logfile):
     log = read_logfile(logfile, stress=True, max_rows=last_not_nan_idx + 1)
 
     return traj, log
+
+
+def make_convert_lj_to_ase(
+    ref_epsilon: float,
+    ref_sigma: float,
+    n_dim: int = 3,
+):
+    """Create function that converts from Lennard-Jones units to ASE units.
+
+    The conversion of times should probably not be trusted.
+
+    Args:
+        ref_epsilon: Depth of Lennard-Jones potential, in ASE's units. Serves as
+            reference value for the energy.
+        ref_sigma: Distance at which the Lennard-Jones potential crosses zero,
+            in ASE's units. Serves as reference value for lengths.
+        ref_mass: Reference mass.
+        n_dim: Spatial dimension.
+    """
+
+    def convert(
+        energy: float = None,
+        length: float = None,
+        density: float = None,
+        pressure: float = None,
+        temperature: float = None,
+    ):
+        out = {}
+
+        if energy is not None:
+            out["energy"] = energy * ref_epsilon
+        if length is not None:
+            out["length"] = length * ref_sigma
+        if density is not None:
+            out["density"] = density / ref_sigma**n_dim
+        if pressure is not None:
+            out["pressure"] = pressure * ref_epsilon / ref_sigma**n_dim
+        if temperature is not None:
+            out["temperature"] = temperature * ref_epsilon / ase.units.kB
+
+        return out
+
+    return convert
