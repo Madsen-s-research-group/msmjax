@@ -2,7 +2,7 @@ import argparse
 import copy
 import time
 import weakref
-from typing import IO, Any, Union
+from typing import IO, Any, Literal, Union
 
 import ase.io
 import numpy as np
@@ -14,9 +14,13 @@ from ase.utils import IOContext
 def md_base_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("--inputstruct", type=str, required=True)
-    parser.add_argument("--timestep_fs", type=float, default=5.0)
-    parser.add_argument("--loginterval_fs", type=float, default=500.0)
-    parser.add_argument("--simtime_ps", type=float, default=10.0)
+    parser.add_argument("--outdir", type=str, required=True)
+    parser.add_argument("--timestep_fs", type=float, required=True)
+    parser.add_argument("--loginterval_fs", type=float, required=True)
+    parser.add_argument("--simtime_ps", type=float, required=True)
+    parser.add_argument(
+        "--ensemble", type=str, choices=["NVE", "NVT", "NPT"], required=True
+    )
     parser.add_argument(
         "--temp_K",
         type=float,
@@ -26,12 +30,9 @@ def md_base_parser() -> argparse.ArgumentParser:
         help="Temperature in K according to which to set initial velocities. If not given, velocities are left at zero or values from input atoms file, if available.",
     )
     parser.add_argument(
-        "--seed",
-        type=int,
-        default=42,
-        # TODO: Is this used only for the initial velocities, or sth else too?
-        help="Random seed for setting the initial velocities.",
+        "--pressure_GPa", type=float, default=None, help="Pressure in GPa"
     )
+
     return parser
 
 
@@ -231,3 +232,41 @@ def make_convert_lj_to_ase(
         return out
 
     return convert
+
+
+def make_md_command(
+    simtime_ps: float,
+    timestep_fs: float,
+    loginterval_fs: float,
+    ensemble: Literal["NVE", "NVT", "NPT"],
+    temp_K: float | None = None,
+    pressure_GPa: float | None = None,
+    filename_md_script=None,
+    filename_input_struct=None,
+    filename_msm_params=None,
+    dirname_out=None,
+):
+
+    command = rf"""python {filename_md_script} \
+    --inputstruct {filename_input_struct} \
+    --msm_params {filename_msm_params} \
+    --outdir {dirname_out} \
+    --timestep_fs {timestep_fs} \
+    --loginterval_fs {loginterval_fs} \
+    --simtime_ps {simtime_ps} \
+    --ensemble {ensemble}"""
+
+    if ensemble in ["NVT", "NPT"]:
+        if temp_K is None:
+            raise ValueError("temperature required in NVT and NPT ensembles")
+        command += " \\\n"
+        command += f"    --temp_K {temp_K}"
+        if ensemble == "NPT":
+            if pressure_GPa is None:
+                raise ValueError("pressure required in NPT ensemble")
+            command += " \\\n"
+            command += f"    --pressure_GPa {pressure_GPa}"
+
+    command += "\n\n"
+
+    return command
