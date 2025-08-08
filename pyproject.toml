@@ -38,22 +38,21 @@ classifiers=[
     "Programming Language :: Python :: 3"
 ]
 dependencies = [
-    "ase>=3.22",
     "numpy>=2.0",
     "scipy>=1.8",
     "sympy>=1.12",
-    "tqdm>=4.63.0",
     "packaging>=23.1",
-    "jax",
-    "jaxlib",
+    "jax>=0.4.25",
 ]
 dynamic = ["version"]
 readme = "README.md"
 
 [project.optional-dependencies]
-test = ["pytest", "pytest-datadir", "matscipy"]
+# TODO: In docs, point out the different dependencies and explain what they're for
+test = ["pytest", "pytest-datadir", "matscipy", "ase"]
 doc = ["sphinx", "sphinx-autodoc-typehints", "sphinx-rtd-theme"]
-examples = ["tqdm", "matplotlib", "pandas"]
+examples = ["tqdm", "matscipy", "matplotlib", "pandas", "ase"]
+benchmarking_utils = ["tqdm", "matscipy"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

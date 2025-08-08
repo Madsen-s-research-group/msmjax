@@ -491,7 +491,6 @@ def make_timed_eval(
 
 @partial(jax.jit, static_argnums=2)
 def remove_duplicates_from_neighborlist(neighborlist, fill_value, size):
-    # TODO: move to utils (used both here and in cost_vs_accuracy benchmark)
     without_duplicates = jnp.unique(
         jnp.sort(jnp.column_stack([neighborlist[0], neighborlist[1]]), axis=1),
         axis=0,
@@ -504,9 +503,6 @@ def remove_duplicates_from_neighborlist(neighborlist, fill_value, size):
 def build_duplicate_free_neighborlists(
     set_of_positions, set_of_cells, cutoff, pbc
 ):
-    # TODO: move to utils (used both here and in cost_vs_accuracy benchmark)
-    #  => but that would require installing matscipy even with a
-    #  no-extra options install, for utils.benchmarking to be importable?
     n_structures = len(set_of_positions)
 
     neighborlists_raw = []

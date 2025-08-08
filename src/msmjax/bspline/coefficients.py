@@ -15,6 +15,7 @@ def old_bspline_basis_equivalent(x, n):
 
     For backwards compatibility only - you would not want to use this in any production setting!
     """
+    # TODO: remove this function (but currently used in build_col_of_B
     knots = np.arange(-(n + 1) / 2, (n + 3) / 2)
     out = BSpline.basis_element(knots)(x)
     out[(x < knots[0]) | (x > knots[-1])] = 0.0
@@ -35,6 +36,7 @@ def calc_Phi(p, u):
     Raises:
         ValueError: If p is not a positive, even integer.
     """
+    # TODO: remove this function (but currently used in build_col_of_B
     if p < 2 or p % 2 != 0:
         raise ValueError("p must be a positive even integer")
     return old_bspline_basis_equivalent(u, p - 1)
