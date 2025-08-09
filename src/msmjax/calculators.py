@@ -318,7 +318,7 @@ def create_msm(
     extra_uncharged_interaction: KernelFn | None = None,
 ):
     if not params.dynamic_cell:
-        _ = check_cutoffs_and_spacings(params.cell, params)
+        _ = check_cutoffs_and_get_actual_spacings(params.cell, params)
 
     kernel_fns = split_one_over_r(
         max_level=params.max_splitting_level,
@@ -534,7 +534,7 @@ def create_msm(
     return evaluation_functions
 
 
-def check_cutoffs_and_spacings(cell: ArrayLike, params: MSMParams):
+def check_cutoffs_and_get_actual_spacings(cell: ArrayLike, params: MSMParams):
     # TODO: Name maybe `check_cutoffs_and_calculate_spacings` or similar? To
     #  avoid the impression that this checks the spacings in any way, because
     #  it doesn't.
@@ -567,7 +567,10 @@ def check_cutoffs_and_spacings(cell: ArrayLike, params: MSMParams):
                 "Something went wrong while checking if the cutoff fits."
             )
         max_allowed_cutoff = trial_cutoffs[0]
-        if not params.cutoffs[0] <= max_allowed_cutoff:
+        if not (
+            (params.cutoffs[0] <= max_allowed_cutoff)
+            or onp.isclose(params.cutoffs[0], max_allowed_cutoff)
+        ):
             raise ValueError(
                 f"Level-zero cutoff radius too large for the given cell:\n"
                 f"It is {params.cutoffs[0]}, but the cell can only "
