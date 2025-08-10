@@ -270,3 +270,46 @@ def make_md_command(
     command += "\n\n"
 
     return command
+
+
+def read_logfile_ase(logfile, stress=False):
+    loaded = np.loadtxt(logfile, skiprows=1)
+    results = {
+        "time_ps": loaded[:, 0],
+        "wall_time": loaded[:, 1],
+        "step": loaded[:, 2].astype(int),
+        "Etot_eV": loaded[:, 3],
+        "Epot_eV": loaded[:, 4],
+        "Ekin_eV": loaded[:, 5],
+        "temp_K": loaded[:, 6],
+    }
+    if stress:
+        results["stress_GPa"] = loaded[:, 7:]
+
+    return results
+
+
+def fold_trajectory_ase(traj):
+    traj_folded = copy.deepcopy(traj)
+    for at in traj_folded:
+        at.wrap()
+    return traj_folded
+
+
+def calculate_moving_average(arr, window_size, pad_with_nan=True):
+    if len(arr) < 2 * window_size // 2:
+        return np.full_like(arr, np.nan)
+
+    moving_average = np.convolve(
+        arr,
+        np.ones(window_size) / window_size,
+        mode="valid",
+    )
+    if pad_with_nan:
+        return np.pad(
+            moving_average,
+            pad_width=(window_size // 2, window_size // 2),
+            mode="constant",
+            constant_values=np.nan,
+        )
+    return moving_average
