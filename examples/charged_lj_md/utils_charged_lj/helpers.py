@@ -239,12 +239,12 @@ def make_md_command(
     timestep_fs: float,
     loginterval_fs: float,
     ensemble: Literal["NVE", "NVT", "NPT"],
+    filename_md_script: str,
+    filename_input_struct: str,
+    filename_msm_params: str,
+    dirname_out: str,
     temp_K: float | None = None,
     pressure_GPa: float | None = None,
-    filename_md_script=None,
-    filename_input_struct=None,
-    filename_msm_params=None,
-    dirname_out=None,
 ):
 
     command = rf"""python {filename_md_script} \
