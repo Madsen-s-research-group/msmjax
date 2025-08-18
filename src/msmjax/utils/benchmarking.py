@@ -70,7 +70,6 @@ def write_lammps_data(filename, cell, positions, charges) -> None:
 
 def parse_energy_from_lammps_log(filename) -> float:
     """Get the energy from LAMMPS log file"""
-    # TODO: unify with the other log parser function?
     with open(filename, "r") as f:
         for line in f:
             if "PotEng" in line:
@@ -83,7 +82,6 @@ def parse_energy_from_lammps_log(filename) -> float:
 
 def parse_lammps_log(filename) -> tuple[float, onp.ndarray]:
     """Get energy and other results from LAMMPS log file"""
-    # TODO: unify with the other log parser function?
     with open(filename, "r") as f:
         for line in f:
             if "PotEng" in line:
@@ -94,7 +92,6 @@ def parse_lammps_log(filename) -> tuple[float, onp.ndarray]:
                     for k, v in zip(line_header.split(), line_values.split())
                 }
                 energy = resultsdict["PotEng"]
-                # TODO: minus or not?
                 stress = -onp.array(
                     [
                         resultsdict[k]
