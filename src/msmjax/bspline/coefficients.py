@@ -1,3 +1,12 @@
+"""Code for coefficients of B-spline interpolation.
+
+References:
+    [1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,
+    R. D. Multilevel Summation with B-Spline Interpolation for Pairwise
+    Interactions in Molecular Dynamics Simulations. J. Chem. Phys. 2016,
+    144 (11), 114112. https://doi.org/10.1063/1.4943868.
+"""
+
 import itertools
 
 import numpy as np
@@ -6,16 +15,9 @@ import sympy
 from scipy.interpolate import BSpline
 from scipy.special import comb
 
-P_INDEX = 6
-MU = 3
-
 
 def old_bspline_basis_equivalent(x, n):
-    """Function with signature of scipy.signal.bspline that works with scipy versions >= 1.13
-
-    For backwards compatibility only - you would not want to use this in any production setting!
-    """
-    # TODO: remove this function (but currently used in build_col_of_B
+    """Function with signature of scipy.signal.bspline that works with scipy versions >= 1.13"""
     knots = np.arange(-(n + 1) / 2, (n + 3) / 2)
     out = BSpline.basis_element(knots)(x)
     out[(x < knots[0]) | (x > knots[-1])] = 0.0
@@ -36,7 +38,6 @@ def calc_Phi(p, u):
     Raises:
         ValueError: If p is not a positive, even integer.
     """
-    # TODO: remove this function (but currently used in build_col_of_B
     if p < 2 or p % 2 != 0:
         raise ValueError("p must be a positive even integer")
     return old_bspline_basis_equivalent(u, p - 1)
@@ -56,8 +57,6 @@ def build_col_of_B(p):
         A vector of p/2 elements with all the non-zero entries in any column
         of the banded matrix B, starting at and including the main diagonal.
     """
-    # TODO: Change this to the JAX implementation of the B-spline used by the
-    #  the rest of the code?
     return calc_Phi(p, np.arange(0, p // 2, dtype=np.float64))
 
 
@@ -424,16 +423,3 @@ def compute_j_zeroplus(p: int) -> np.ndarray:
         raise ValueError("p must be a positive even integer")
     n = np.arange(0, p // 2 + 1)
     return 2.0 ** (1 - p) * comb(p, p // 2 + n)
-
-
-if __name__ == "__main__":
-    omega_prime, c_m = compute_coeffs_with_truncation(p=P_INDEX, mu=MU)
-
-    print("-" * 72)
-    print("p =", P_INDEX, ", mu =", MU)
-    print("-" * 72)
-    print("c_m:")
-    print(c_m[len(c_m) // 2 :])
-    print("omega_prime:")
-    print(omega_prime[len(omega_prime) // 2 :])
-    print("-" * 72)

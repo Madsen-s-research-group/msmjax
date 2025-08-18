@@ -1,3 +1,16 @@
+"""Generic code for long-range part (that is evaluated using grids).
+
+References:
+    [1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,
+    R. D. Multilevel Summation with B-Spline Interpolation for Pairwise
+    Interactions in Molecular Dynamics Simulations. J. Chem. Phys. 2016,
+    144 (11), 114112. https://doi.org/10.1063/1.4943868.
+
+    [2] Hardy, D. J. Multilevel Summation for the Fast Evaluation of
+    Forces for the Simulation of Biomolecules (PhD thesis), University
+    of Illinois at Urbana-Champaign, 2006.
+"""
+
 from functools import partial
 from typing import Callable, Literal, Sequence
 
@@ -49,8 +62,6 @@ def set_up_grids_all_levels(
     if max_grid_level < 1:
         raise ValueError("Need at least one grid level.")
 
-    # TODO: Check same length of side_lengths, level_one_spacings, pbc?
-
     level_one_spacings = onp.asarray(level_one_spacings)
 
     shapes_all_levels = [None]
@@ -84,9 +95,7 @@ def _multiindex_outer(*inds_individual_axes: Array) -> tuple[Array, ...]:
 def _ravel_multi_index_with_invalidation(
     multi_index: tuple[Array, ...], dims: Sequence[int], pbc: Sequence[bool]
 ):
-    # TODO: jit with static pbc?
-    # TODO: function name?
-    pbc = onp.asarray(pbc)  # TODO: onp/jnp?
+    pbc = onp.asarray(pbc)
     all_periodic = pbc.all()
     any_periodic = pbc.any()
     intentionally_out_of_bounds_index = onp.prod(dims)
@@ -102,7 +111,6 @@ def _ravel_multi_index_with_invalidation(
         if any_periodic:
             in_bounds = jnp.logical_or(in_bounds, pbc[:, jnp.newaxis])
         return jnp.where(
-            # TODO: Which axis? Shouldn't it be .all() instead of .any()?
             in_bounds.all(axis=0),
             flat_inds_wrapped,
             intentionally_out_of_bounds_index,
@@ -113,9 +121,6 @@ def make_basis_evaluation_fn(
     grid_shape: tuple[int, ...], p: int, pbc: Sequence[bool]
 ) -> Callable[[Array, Array], tuple[Array, Array]]:
     pbc = onp.asarray(pbc)
-
-    # TODO: External factory function that creates both `zero_align_idx` and
-    #  `to_positional_idx` from `periodic` and `p`. Function names?
 
     def zero_align_idx(positional_idx):
         if pbc.all():
@@ -144,7 +149,6 @@ def make_basis_evaluation_fn(
     bspline_basis_element = create_bspline_basis_element(order=p - 1)
 
     def eval_basis(coords: Array, spacings: Array) -> tuple[Array, Array]:
-        # TODO: should spacing be argument to the closure or to the setup fn?
         r_over_h = coords / spacings
         raw_reference_inds = jnp.ceil(r_over_h).astype(int)
         raw_inds = raw_reference_inds[:, jnp.newaxis] + jnp.arange(
@@ -168,17 +172,8 @@ def make_basis_evaluation_fn(
 
 
 def _make_restrict_1d(n_points_in, n_points_out, p, is_periodic):
-    # TODO: Check n_points_in >= n_points_out? Indicate 'fine' and 'coarse'
-    #  by the variable names somehow?
-    # TODO: Take n_points_in from the shape of the input array?
-
-    # TODO: Variable names? Shouldn't be uppercase, and (lower-case) J is
-    #  already in use as an index further down
     J_zeroplus = compute_j_zeroplus(p)
     J = jnp.concatenate((J_zeroplus[::-1][:-1], J_zeroplus))
-
-    # TODO: External factory function that creates both `zero_align_idx` and
-    #  `to_positional_idx` from `periodic` and `p`. Function names?
 
     def zero_align_idx(positional_idx):
         if is_periodic:
@@ -193,7 +188,6 @@ def _make_restrict_1d(n_points_in, n_points_out, p, is_periodic):
             return zero_aligned_idx + p // 2
 
     def restrict_1d(in_array_fine: jax.Array) -> jax.Array:
-        # TODO: onp backend for these index arrays that could as well be static?
         i = jnp.arange(n_points_out)
         i_aligned = zero_align_idx(i)
         j_aligned = (2 * i_aligned)[:, jnp.newaxis] + jnp.arange(
@@ -210,10 +204,6 @@ def _make_restrict_1d(n_points_in, n_points_out, p, is_periodic):
                 in_array_fine[j],
                 0.0,
             )
-
-        # TODO: check that the output has the same length as axis_target_coarse?
-        # TODO: Handle restricting from one point to one point (see branch `one_to_one_edge_cases`)!
-        #  Also, does "min number of points -> min number of points" (in nonperiodic case) work correctly?
 
         return (selected_source_values * J).sum(axis=1)
 
@@ -248,17 +238,8 @@ def make_restriction_operator(
 
 
 def _make_prolongate_1d(n_points_in, n_points_out, p, is_periodic):
-    # TODO: Check n_points_in <= n_points_out? Indicate 'fine' and 'coarse'
-    #  by the variable names somehow?
-    # TODO: Take n_points_in from the shape of the input array?
-
-    # TODO: Variable names? Shouldn't be uppercase, and (lower-case) J is
-    #  already in use as an index further down
     J_zeroplus = jnp.array(compute_j_zeroplus(p))
     J = jnp.concatenate((J_zeroplus[::-1][:-1], J_zeroplus))
-
-    # TODO: External factory function that creates both `zero_align_idx` and
-    #  `to_positional_idx` from `periodic` and `p`. Function names?
 
     def zero_align_idx(positional_idx):
         if is_periodic:
@@ -322,10 +303,6 @@ def _make_prolongate_1d(n_points_in, n_points_out, p, is_periodic):
             ).sum(axis=1)
         )
 
-        # TODO: check that the output has the same length as axis_target_coarse?
-        # TODO: Handle prolongating from one point to one point (see branch `one_to_one_edge_cases`)!
-        #  Also, does "min number of points -> min number of points" (in nonperiodic case) work correctly?
-
         return result
 
     return prolongate_1d
@@ -367,9 +344,6 @@ def create_all_grid_to_grid_ops(
     """Create all necessary functions that map from grids to grids"""
     max_level_grids = len(grid_shapes) - 1
 
-    # TODO: check grid_shapes and convolution_methods same length
-    # TODO: check pbc same length as the elements of grid_shapes
-
     restriction_fns = [None] * (max_level_grids + 1)
     for lvl in range(2, max_level_grids + 1):
         restrict = make_restriction_operator(
@@ -390,9 +364,6 @@ def create_all_grid_to_grid_ops(
         )
         prolongation_fns[lvl] = prolongate
 
-    # TODO: There might be more efficient ways to compute the convolution on
-    #  the highest level for non-periodic cases (where the stencil is always
-    #  larger than the grid)
     convolution_fns = [None] * (max_level_grids + 1)
     for lvl in range(1, max_level_grids + 1):
         conv_meth = convolution_methods[lvl]
@@ -424,8 +395,6 @@ def suggest_max_grid_level_nonperiodic(
     level_zero_cutoff: float,
     p: int,
 ):
-    # TODO: name
-    # TODO: Put this function in this module or in some utils?
 
     error_message = (
         "Automatic determination of the number of grid levels for "
@@ -443,7 +412,6 @@ def suggest_max_grid_level_nonperiodic(
     )
     max_grid_level = max(upper_limit_per_direction)
 
-    # TODO: better explanation
     # 2. Find the highest level at which the cutoff is not larger than half
     #    the longest side of the cell.
     level_from_cutoff = onp.log2(side_lengths / level_zero_cutoff).astype(int)
@@ -479,11 +447,6 @@ def suggest_max_grid_level_nonperiodic(
 def find_spacings_and_max_level_periodic(
     side_lengths, target_level_one_spacings
 ):
-    # TODO: name
-    # TODO: Put this function in this module or in some utils?
-    # TODO: This could probably benefit from writing down the formulas being
-    #  implemented, either in the docstring or a comment
-
     side_lengths = onp.array(side_lengths)
     target_level_one_spacings = onp.array(target_level_one_spacings)
 
