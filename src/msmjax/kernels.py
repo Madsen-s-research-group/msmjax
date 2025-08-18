@@ -1,4 +1,4 @@
-"""Functionality for splitting interaction kernels into sum of partial kernels.
+"""Code for splitting interaction kernels into sum of partial kernels.
 
 References:
     [1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,
@@ -35,15 +35,11 @@ class SoftenerOneOverR:
             a function of s = rho**2) is equal to order - 1.
     """
 
-    # TODO: The `order` argument must be consistent with the `order` argument
-    #  of the B-spline basis elements.
-
     def __init__(self, order: int):
         if not isinstance(order, (int, onp.integer, jnp.integer)):
             raise ValueError("'order' must be an integer.")
         if order < 1:
             raise ValueError("The expansion must at least be of order one.")
-        # TODO: Should it be checked (at this point) whether the order is even?
         self.order = order
         last_coeff = 1.0
         coeffs = [last_coeff]
@@ -85,9 +81,6 @@ def split_one_over_r(
     Raises:
         ValueError: If the arguments do not make sense.
     """
-    # TODO: Name of `max_level` parameter should be consistent with the rest
-    #  of the code (also make sure that the correct variable name is used in
-    #  docstring)
     if not isinstance(max_level, (int, onp.integer, jnp.integer)):
         raise ValueError("'max_level' must be an integer.")
     if max_level < 1:
@@ -204,7 +197,6 @@ def make_construct_stencils(
             )
             kernel_values_at_gridpoints = k_lowest_intermed(distances_lvl_1)
             stencils.append(
-                # TODO: why "same", not "valid"?
                 _compute_one_stencil(
                     kernel_values_at_gridpoints, omega, mode="same"
                 )
@@ -214,8 +206,6 @@ def make_construct_stencils(
 
         # Top level containing long-range tail (l = L), if included
         if include_toplevel:
-            # TODO: Explain why the sizes are the way they are
-            #  and why mode="valid".
             sizes_toplevel = tuple(
                 (s - 1) + len(omega) // 2 for s in grid_shape_toplevel
             )
