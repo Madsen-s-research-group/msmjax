@@ -1,14 +1,14 @@
 """Generic code for long-range part (that is evaluated using grids).
 
-    References:
-        [1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,
-        R. D. Multilevel Summation with B-Spline Interpolation for Pairwise
-        Interactions in Molecular Dynamics Simulations. J. Chem. Phys. 2016,
-        144 (11), 114112. https://doi.org/10.1063/1.4943868.
+References:
+    [1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,
+    R. D. Multilevel Summation with B-Spline Interpolation for Pairwise
+    Interactions in Molecular Dynamics Simulations. J. Chem. Phys. 2016,
+    144 (11), 114112. https://doi.org/10.1063/1.4943868.
 
-        [2] Hardy, D. J. Multilevel Summation for the Fast Evaluation of
-        Forces for the Simulation of Biomolecules (PhD thesis), University
-        of Illinois at Urbana-Champaign, 2006.
+    [2] Hardy, D. J. Multilevel Summation for the Fast Evaluation of
+    Forces for the Simulation of Biomolecules (PhD thesis), University
+    of Illinois at Urbana-Champaign, 2006.
 """
 
 from functools import partial
@@ -124,8 +124,6 @@ def _interpolate_energy_charge_gradient(
     more efficient computation than default automatic differentiation of
     the energy.
 
-    # TODO: mention the relation to the electrostatic potential at particle positions?
-
     Args:
         gridpotential: Array of grid potential (:math:`e^{l+}` in the language
             of the reference).
@@ -144,7 +142,7 @@ def special_periodic_convolve_scipy(
     data: ArrayLike,
     kernel: ArrayLike,
     pbc: Sequence[bool],
-    method: Literal["direct", "fft"],  # TODO: centralize definition? default?
+    method: Literal["direct", "fft"],
 ) -> Array:
     """Perform a specialized case of convolution with optional wrapping.
 
@@ -217,9 +215,7 @@ def special_periodic_convolve_scipy(
 def make_grid_pass_fn(
     restriction_fns: Sequence[Callable[[ArrayLike], Array]],
     prolongation_fns: Sequence[Callable[[ArrayLike], Array]],
-    interaction_fns: Sequence[
-        Callable[[ArrayLike, ArrayLike], Array]
-    ],  # TODO: name (everywhere)
+    interaction_fns: Sequence[Callable[[ArrayLike, ArrayLike], Array]],
 ) -> Callable[[ArrayLike, Sequence[ArrayLike | None]], Array]:
     """Create a function that makes a pass through all grid levels.
 
@@ -263,7 +259,7 @@ def make_grid_pass_fn(
             Corresponding to the downward arrows on the right side of the
             V-cycle diagram. Input is array of grid potential,
             output is array of potential prolongated to the next lower level.
-        interaction_fns: Sequence of interaction functions (TODO: name),
+        interaction_fns: Sequence of interaction functions,
             one for each level, including placeholders (see above note).
             Corresponding to the horizontal arrows in the V-cycle diagram.
             Inputs are two arrays, grid charge and a kernel coefficient
@@ -285,9 +281,6 @@ def make_grid_pass_fn(
               construct the grid pass function. The :math:`l`-th stencil is
               consumed by the :math:`l`-th element of ``ìnteraction_fns``
     """
-    # TODO: Don't take interaction_fns as a parameter at all and default to
-    #  always using special_periodic_convolve_scipy? In this case, pbc and conv_meth
-    #  would need to be added as parameters.
     if (
         not len(restriction_fns)
         == len(prolongation_fns)
@@ -297,9 +290,6 @@ def make_grid_pass_fn(
             "restriction_fns, prolongation_fns, interaction_fns "
             "must all have same length."
         )
-    # TODO: Variable naming: Is `n_levels` appropriate here? We generally need
-    #  to distinguish the highest splitting level and the highest level
-    #  included in evaluation
     n_levels = len(restriction_fns) - 1
 
     def grid_pass(
@@ -311,7 +301,6 @@ def make_grid_pass_fn(
                 "Expected {} (including a placeholder at level zero), "
                 "got {}.".format(n_levels + 1, len(kernel_stencils))
             )
-        # TODO: list instead of dict?
         gridcharges_all_levels = {1: gridcharge_lvl_one}
 
         # Go up ladder
@@ -343,10 +332,10 @@ def make_grid_pass_fn(
 def make_compute_u_oneplus(
     singleparticle_basis_fn_lvl_one: Callable[
         [ArrayLike], tuple[Array, Array]
-    ],  # TODO: name? consistent with manuscript?
+    ],
     grid_pass_fn: Callable[[ArrayLike, Sequence[ArrayLike | None]], Array],
     grid_shape_lvl_one: tuple[int, ...],
-    transform_mode: CellMode | None = None,  # TODO: name
+    transform_mode: CellMode | None = None,
     kernel_stencils: Sequence[None | ArrayLike] = None,
     kernel_stencil_construction_fn: Callable[
         [ArrayLike], Sequence[ArrayLike | None]
@@ -356,7 +345,7 @@ def make_compute_u_oneplus(
     """Create a function that computes the MSM long-range energy contribution.
 
     The quantity being (approximately) calculated is called :math:`U^{1+}`
-    in the reference article.
+    in reference 1.
 
     Args:
         singleparticle_basis_fn_lvl_one:
@@ -575,10 +564,6 @@ def make_compute_u_oneplus(
         charges: ArrayLike,
         cell: ArrayLike,
     ) -> Array:
-        # TODO: custom derivatives yes or no
-        # TODO: transform positions yes or no
-        # TODO: kernel_stencils or kernel_stencil_construction_fn
-        # TODO: make cell optional?
         if transform_mode is not None:
             positions_to_unitcube = _make_unitcube_transform_fn(cell)
             positions = positions_to_unitcube(positions)

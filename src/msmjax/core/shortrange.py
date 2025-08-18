@@ -1,4 +1,4 @@
-"""Code for short-range part (that is directly evaluated, without grids).
+"""Generic short-range implementation (part evaluated without grids).
 
 References:
     [1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,
@@ -44,7 +44,6 @@ def _gen_supercell(
             - array of charges after replication,
             - unit cell after replication.
     """
-    # TODO: Leave here or move to utils?
     n_particles, n_dim = positions.shape
     M = onp.prod(supercell_diag)
     tile_positions = jnp.tile(positions, (M, 1))
@@ -106,7 +105,6 @@ def _displacement_free(r_1: ArrayLike, r_2: ArrayLike) -> Array:
     Returns:
         Distance vector.
     """
-    # TODO: unit test this on its own?
     return r_1 - r_2
 
 
@@ -128,7 +126,6 @@ def _displacement_ortho(
     Returns:
         Distance vector.
     """
-    # TODO: unit test this on its own?
     delta = r_1 - r_2
     return (
         delta
@@ -154,7 +151,6 @@ def _displacement_general(
     Returns:
         Distance vector.
     """
-    # TODO: unit test this on its own?
     dr = r_1 - r_2
     inv_cell = jnp.linalg.pinv(cell)
     r_1_transf = r_1 @ inv_cell
@@ -186,7 +182,6 @@ def _concretize_displacement_fn(
         on PBCs) a unit cell, that computes the distance vector between them.
     """
     if onp.any(pbc) and cell_mode is None:
-        # TODO: write test for this check
         raise ValueError(
             "If at least one direction is periodic, "
             "you must specify cell_mode."
@@ -226,10 +221,8 @@ def make_eval_pair_pot(
     pbc: Sequence[bool],
     cell_mode: Optional[CellMode] = None,
     supercell_diag: Optional[Sequence[int]] = None,
-    per_particle=False,  # TODO: add to docstring
-    extra_uncharged_interaction: Optional[
-        KernelFn
-    ] = None,  # TODO: add to docstring
+    per_particle=False,
+    extra_uncharged_interaction: Optional[KernelFn] = None,
 ) -> Callable[[ArrayLike, ArrayLike, Optional[ArrayLike]], Array]:
     """Transform interaction kernel into function acting on a particle system.
 
@@ -276,7 +269,6 @@ def make_eval_pair_pot(
         raise ValueError(
             "`supercell_diag` must be equal to one along non-periodic axes"
         )
-    # TODO: check supercell_diag >= 1?
 
     displacement_fn = _concretize_displacement_fn(pbc, cell_mode)
 
@@ -294,7 +286,6 @@ def make_eval_pair_pot(
             Total system energy.
         """
         # TODO: JAX-MD attribution
-        # TODO: test calling without `cell` argument in non-periodic case
         if pbc.any():
             if cell is None:
                 raise ValueError(
@@ -331,11 +322,8 @@ def make_eval_pair_pot_neighborlist(
     kernel_fn: KernelFn,
     pbc: Sequence[bool],
     cell_mode: Optional[CellMode] = None,
-    # TODO: test? (how?)
-    #  -> During setup, raise an error if kernel_fn(safe_eval_distance) is nan?
-    #  -> For two different valid values of safe_eval_distance, check that outputs are identical
     safe_eval_distance: float = 1.0,
-    extra_uncharged_interaction: Optional[KernelFn] = None,  # TODO: docstring
+    extra_uncharged_interaction: Optional[KernelFn] = None,
 ) -> Callable[
     [
         ArrayLike,
@@ -412,10 +400,6 @@ def make_eval_pair_pot_neighborlist(
         Returns:
             Total system energy.
         """
-        # TODO: Support matrix neighbor list format? (would be required for
-        #  evaluating the electrostatic potential). Docstring and signature
-        #  would need to be adapted.
-        # TODO: test calling without `cell` argument in non-periodic case
         if pbc.any():
             if cell is None:
                 raise ValueError(
@@ -468,8 +452,6 @@ def make_compute_u_zero(
 
     which consists of the pair interaction term for level zero, and a
     correction term for self-interaction at the higher levels.
-
-    # TODO: Reference to paper?
 
     This function is a high-level wrapper that constructs the evaluation
     function for :math:`U^0` from two ingredients: The kernel functions
