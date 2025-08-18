@@ -408,7 +408,7 @@ def compute_coeffs_with_truncation(p, mu):
     return omega_prime, c_m
 
 
-def compute_J_zeroplus(p: int) -> np.ndarray:
+def compute_j_zeroplus(p: int) -> np.ndarray:
     """Compute the sequence J of spline-nesting coefficients given by eq. (22).
 
     Args:

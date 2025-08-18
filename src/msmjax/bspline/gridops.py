@@ -8,7 +8,7 @@ from jax import Array
 from jax.typing import ArrayLike
 
 from msmjax.bspline.basis import create_bspline_basis_element
-from msmjax.bspline.coefficients import compute_J_zeroplus
+from msmjax.bspline.coefficients import compute_j_zeroplus
 from msmjax.core.longrange import special_periodic_convolve_scipy
 from msmjax.utils.general import ConvMeth
 
@@ -174,7 +174,7 @@ def _make_restrict_1d(n_points_in, n_points_out, p, is_periodic):
 
     # TODO: Variable names? Shouldn't be uppercase, and (lower-case) J is
     #  already in use as an index further down
-    J_zeroplus = compute_J_zeroplus(p)
+    J_zeroplus = compute_j_zeroplus(p)
     J = jnp.concatenate((J_zeroplus[::-1][:-1], J_zeroplus))
 
     # TODO: External factory function that creates both `zero_align_idx` and
@@ -254,7 +254,7 @@ def _make_prolongate_1d(n_points_in, n_points_out, p, is_periodic):
 
     # TODO: Variable names? Shouldn't be uppercase, and (lower-case) J is
     #  already in use as an index further down
-    J_zeroplus = jnp.array(compute_J_zeroplus(p))
+    J_zeroplus = jnp.array(compute_j_zeroplus(p))
     J = jnp.concatenate((J_zeroplus[::-1][:-1], J_zeroplus))
 
     # TODO: External factory function that creates both `zero_align_idx` and
