@@ -2,9 +2,14 @@
 
 **msmJAX** is an implementation of the multilevel summation method (MSM) with B-spline interpolation for the evaluation of electrostatic interactions in Python, built on Google JAX.
 
+The implementation is mostly based on Ref. 1, with additional inputs from Refs. 2 and 3.
+
+
 ## Installation
 
 ## Getting started
+
+[//]: # (TODO)
 **TODO: Correct link to github pages**
 
 Quick-start tutorials and documentation can be found on the [GitHub pages](TODO).
