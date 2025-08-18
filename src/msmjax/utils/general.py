@@ -1,3 +1,5 @@
+"""General utilities"""
+
 from typing import Callable, Literal
 
 import jax
@@ -41,8 +43,6 @@ def _divide_zero_safe(
 
 @jax.custom_jvp
 def _sqrt(x):
-    # TODO: This reference to our gitlab should not be left in
-    # see https://gitlab.tuwien.ac.at/e165-03-1_theoretische_materialchemie/scripts-et-al/-/wikis/Sqrt-without-trivial-NaN-derivative-for-jax
     return jnp.sqrt(x)
 
 
@@ -70,7 +70,6 @@ def get_max_cutoff_for_mic(cell: ArrayLike):
     Returns:
         Cutoff radius
     """
-    # TODO: Move to core.shortrange or leave in utils?
     n_dim = cell.shape[0]
 
     if n_dim == 1:
@@ -96,19 +95,6 @@ def get_max_cutoff_for_mic(cell: ArrayLike):
 def find_covering_grid_extents(
     grid_axes: ArrayLike, spacings: ArrayLike, cutoff: float
 ):
-    # TODO: Point out in docstring that when the whole covering of the cutoff
-    #  (i.e. including negative-direction quadrants/octants) would have shape
-    #  2 * s + 1, what this function returns is not the whole thing, but s
-
-    # TODO: Should the parameter names for spacings and r_cut suggest one
-    #  specific grid level? In principle, if they're given at the same level,
-    #  it does not matter which, since both are doubled at each level.
-    #  But OTOH, the risk of inadvertently passing the level-ONE spacing
-    #  together with the level-ZERO cutoff should be minimized
-    #  -> probably ok as is, but maybe point out in docstring
-
-    # TODO: unit test this function
-
     n_dim = grid_axes.shape[0]
     inverse = onp.linalg.inv(grid_axes)
 

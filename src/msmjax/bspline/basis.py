@@ -1,5 +1,5 @@
-#!/usr/bin/env python
 """B-spline basis function implementation"""
+
 from functools import partial
 from typing import Callable, Tuple
 

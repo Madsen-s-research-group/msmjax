@@ -1,3 +1,5 @@
+"""Utilities for benchmarking"""
+
 import contextlib
 import os
 import platform
@@ -35,93 +37,6 @@ path_reference_lammps_p3m = (
     / "benchmark"
     / "results_ref_periodic_lammps_p3m"
 )
-
-# TODO: clean up (not all of these functions need to be published)
-
-
-def get_git_commit_id(repository_path):
-    proc = subprocess.run(
-        shlex.split(f"git -C {Path(repository_path).resolve()} show -s"),
-        capture_output=True,
-    )
-    commit_id = proc.stdout.decode("utf8").split()[1]
-    return commit_id
-
-
-def get_git_branch(repository_path):
-    proc = subprocess.run(
-        shlex.split(f"git -C {Path(repository_path).resolve()} status"),
-        capture_output=True,
-    )
-    branch_name = proc.stdout.decode("utf8").split()[2]
-    return branch_name
-
-
-def get_repository_info(path):
-    try:
-        commit_id = get_git_commit_id(path)
-        branch_name = get_git_branch(path)
-        return {"path": path, "branch": branch_name, "commit_id": commit_id}
-    except Exception as e:
-        return {
-            "path": path,
-            "branch": None,
-            "commit_id": None,
-            "exception": repr(e),
-        }
-
-
-def get_metadata(additional_repository_paths: dict = None):
-    metadata = {
-        "timestamp": str(datetime.now()),
-        "system_info": {
-            "hostname": socket.gethostname(),
-            "uname": platform.uname()._asdict(),
-        },
-        "python_info": {"version": sys.version, "path": sys.path},
-        "jax_info": {
-            "jax.__version__": jax.__version__,
-            "jaxlib.__version__": jaxlib.__version__,
-            "jax_device": jax.devices()[0].device_kind,
-        },
-    }
-
-    path_msmjax = str(Path(__file__).resolve().parents[2])
-    repository_info_msmjax = get_repository_info(path_msmjax)
-    metadata["repository_info_msmjax"] = repository_info_msmjax
-
-    if additional_repository_paths is not None:
-        additional_repository_info = {}
-        for label, path in additional_repository_paths.items():
-            additional_repository_info[label] = get_repository_info(path)
-        metadata["additional_repository_info"] = additional_repository_info
-
-    return metadata
-
-
-def time_set_of_structures(structures, pbc, setup_fn, **setup_fn_kwargs):
-    # TODO: unused?
-    timed_calc, info = setup_fn(
-        structures=structures,
-        pbc=pbc,
-        **setup_fn_kwargs,
-    )
-    times_all = []
-    for idx_structure in range(len(structures["positions"])):
-        pos = structures["positions"][idx_structure]
-        chg = structures["charges"][idx_structure]
-        cell = structures["cells"][idx_structure]
-        pos = jax.device_put(pos)
-        chg = jax.device_put(chg)
-        cell = jax.device_put(cell)
-        times_all.append(timed_calc(pos, chg, cell))
-
-    output = {
-        "times": onp.array(times_all).tolist(),
-        "info": info,
-    }
-
-    return output
 
 
 @contextlib.contextmanager
@@ -203,7 +118,6 @@ def parse_lammps_log(filename) -> tuple[float, onp.ndarray]:
 # Angstrom, eV, Coulomb, in SI units, the conversion factor is:
 CONVERSION_FACTOR = (4 * onp.pi) * 8.8541878128 / 1.602176634 / 10**3
 
-# TODO: Explain where this value comes from
 CONVERSION_FACTOR_STRESS = 4.334_488_014_869e-08
 
 
@@ -272,8 +186,6 @@ def eval_lammps_pppm(
     Returns:
         energy, forces
     """
-    # TODO: Change to the newer version of this function, with interface
-    #  similar to eval_lammps_msm
     filename_lammps_data = "structure.data"
     filename_lammps_dump = "dump.lammpstrj"
     filename_lammps_log = "log.lammps"
@@ -305,13 +217,9 @@ def eval_lammps_pppm(
             energy, stress = parse_lammps_log(filename_lammps_log)
             atoms_loaded_dump = ase.io.read(filename_lammps_dump)
             forces = atoms_loaded_dump.calc.results["forces"]
-            # TODO: Make sure the formula for this is actually correct
-            #  (especially considering interactions of atoms with their own
-            #  images under pbc?)
             energy_peratom = atoms_loaded_dump.arrays["c_peratom"].squeeze()
             charge_gradient = 2 * energy_peratom / charges
 
-    # TODO: stress unit conversion
     return (
         CONVERSION_FACTOR * energy,
         CONVERSION_FACTOR * forces,
@@ -375,7 +283,7 @@ def eval_lammps_msm(
     cell: npt.ArrayLike,
     pbc: Sequence[bool],
     lammps_executable: str = "lmp",
-    cutoff: float = 10.0,  # TODO: docstring
+    cutoff: float = 10.0,
     accuracy: float = 1.0e-5,
     max_neighbors_one_atom: int | None = None,
     show_stdout=False,
@@ -427,9 +335,6 @@ def eval_lammps_msm(
             energy, stress = parse_lammps_log(filename_lammps_log)
             atoms_loaded_dump = ase.io.read(filename_lammps_dump)
             forces = atoms_loaded_dump.calc.results["forces"]
-            # TODO: Make sure the formula for this is actually correct
-            #  (especially considering interactions of atoms with their own
-            #  images under pbc?)
             energy_peratom = atoms_loaded_dump.arrays["c_peratom"].squeeze()
             charge_gradient = 2 * energy_peratom / charges
 
@@ -451,16 +356,6 @@ def calc_relative_rmse_percent(y_pred, y_true):
 
 def calc_relative_rmse(y_pred, y_true):
     return calc_rmse(y_pred, y_true) / y_true.std()
-
-
-def plot_parity_line(ax, **kwargs):
-    xlim = ax.get_xlim()
-    ylim = ax.get_ylim()
-    common_lims = (np.min([xlim[0], ylim[0]]), np.max([xlim[1], ylim[1]]))
-    p = ax.plot(common_lims, common_lims, **kwargs)
-    ax.set_xlim(xlim)
-    ax.set_ylim(ylim)
-    return p
 
 
 def make_timed_eval(
@@ -567,8 +462,6 @@ def calc_exact_nonperiodic_chargegrad(positions, charges):
 
 
 def calc_exact_nonperiodic_stress_from_virial(positions, forces, cell):
-    # TODO: Make sure the statement that this holds only for non-periodic cases
-    #  is actually correct
     volume = jnp.linalg.det(cell)
     (i, j) = inds_matrix_to_six_component_stress
     dotproducts = jax.vmap(jnp.dot, in_axes=(1, 1))(
