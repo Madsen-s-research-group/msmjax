@@ -41,9 +41,14 @@ from msmjax.utils.general import (
 
 
 class CustomJSONEncoder(json.JSONEncoder):
-    """Class that extends JSONEncoder to handle different data types."""
+    """Class that extends JSONEncoder to handle different data types.
 
-    # TODO: clinamen2 attribution
+    From Clinamen2:
+    R. Wanzenböck, F. Buchner, P. Kovács, G. K. H. Madsen, and J. Carrete,
+    “Clinamen2: Functional-style evolutionary optimization in Python for
+    atomistic structure searches,” Computer Physics Communications,
+    vol. 297, p. 109065, Apr. 2024, doi: 10.1016/j.cpc.2023.109065.
+    """
 
     def default(self, o):
         """Return a json-izable version of o or delegate on the base class."""
@@ -60,9 +65,14 @@ class CustomJSONEncoder(json.JSONEncoder):
 
 
 class CustomJSONDecoder(json.JSONDecoder):
-    """Class that extends the JSONDecoder to handle different data types."""
+    """Class that extends the JSONDecoder to handle different data types.
 
-    # TODO: clinamen2 attribution
+    From Clinamen2:
+    R. Wanzenböck, F. Buchner, P. Kovács, G. K. H. Madsen, and J. Carrete,
+    “Clinamen2: Functional-style evolutionary optimization in Python for
+    atomistic structure searches,” Computer Physics Communications,
+    vol. 297, p. 109065, Apr. 2024, doi: 10.1016/j.cpc.2023.109065.
+    """
 
     def __init__(self, *args, **kwargs):
         json.JSONDecoder.__init__(
@@ -81,7 +91,6 @@ class CustomJSONDecoder(json.JSONDecoder):
 
 @dataclasses.dataclass
 class MSMParams:
-    # TODO: make frozen?
     # -------------------------------------------------------------------------
     # Basic MSM settings
     # -------------------------------------------------------------------------
@@ -95,18 +104,17 @@ class MSMParams:
     # -------------------------------------------------------------------------
     cell: onp.ndarray
     cell_mode: CellMode
-    pbc: Sequence[bool]  # TODO: type? (for consistent serialization)
+    pbc: Sequence[bool]
     dynamic_cell: bool
     # -------------------------------------------------------------------------
     # Short-range evaluation
     # -------------------------------------------------------------------------
-    supercell_diag: Sequence[int]  # TODO: Check cutoff fits? (If yes, where?)
-    use_neighborlist: bool  # TODO: Interaction with `supercell_diag`?
+    supercell_diag: Sequence[int]
+    use_neighborlist: bool
     neighborlist_prefactor: float
     # -------------------------------------------------------------------------
     # Long-range evaluation
     # -------------------------------------------------------------------------
-    # TODO: cell_mode = "general" in combination with grids_defined_on_unitcube = False would be invalid
     grids_defined_on_unitcube: bool
     grid_shapes: Sequence[None | tuple[int, ...]]
     grid_spacings: Sequence[None | onp.ndarray]
@@ -125,14 +133,6 @@ class MSMParams:
             None if self.supercell_diag is None else tuple(self.supercell_diag)
         )
         self.convolution_methods = list(self.convolution_methods)
-        # TODO: grid shapes to list (of tuples)
-        # TODO: grid sizes to list (of int) (or don't include at all?)
-        # TODO: stencil extents to list (of tuples)
-        # TODO: spacings on all levels to list (of array? of tuple?)
-        # TODO: cutoffs on all levels to list (of float?)
-        # TODO: J to onp.array
-        # TODO: omega to onp.array
-        # TODO: kernel_stencils to onp.array (or don't include at all?)
 
     def save_json(self, filename: str | Path, **kwargs) -> None:
         with open(filename, "w") as f:
@@ -159,10 +159,6 @@ def find_stencil_extents_all_levels(
     extents_intermediate = find_covering_grid_extents(
         cell, level_one_spacings, 2 * level_zero_cutoff
     )
-    # TODO: Clipping of stencils to grid size along non-periodic directions in mixed-periodicity cases?
-    #  -> Probably best to do this inside special_periodic_convolve_scipy since
-    #     it is there that the shapes of the data arrays (=grid shapes) and the
-    #     kernel stencils, and the pbc are the most conveniently available in one place.
     stencil_extents_from_center += [extents_intermediate] * n_levels_intermed
     if include_toplevel:
         stencil_extents_from_center += [
@@ -183,12 +179,11 @@ def set_up_msm_params(
     n_particles: int = None,
     max_splitting_level: int = None,
     supercell_diag: Sequence[int] = None,
-    use_neighborlist: bool = False,  # TODO: neighborlist_format? prefactor?
+    use_neighborlist: bool = False,
     neighborlist_prefactor: float = None,
     intermediate_kernel_stencil_extents: tuple[int, ...] = None,
     convolution_methods: ConvMeth | Sequence[ConvMeth] = "scipy-fft",
 ):
-    # TODO: error if neighborlist_prefactor not given but use_neighborlist = True
 
     cell = onp.asarray(cell)
     n_dim = cell.shape[0]
@@ -198,13 +193,8 @@ def set_up_msm_params(
         level_one_spacings = onp.full(n_dim, level_one_spacings)
     pbc = onp.asarray(pbc, dtype=bool)
 
-    # TODO: In periodic case, the spacings are adjusted further down, so this
-    #  step calculates alpha and thus p and mu from the initial spacings
-    #  pre-adjustment. Is this a problem? Which behavior is less surprising?
     alpha = int(onp.max(level_zero_cutoff / level_one_spacings))
     # See section "1. Preprocessing" of the article
-    # TODO: Allow different mus for each level? (The article suggests
-    #  mu >= 3*p/2 for the highest grid level)
     if mu is None:
         mu = max(int(4 * alpha + p // 2), 3 * p // 2)
 
@@ -231,8 +221,6 @@ def set_up_msm_params(
                     "Either specify max_splitting_level directly, "
                     "or n_particles."
                 )
-            # TODO: Warn/raise if max_splitting_level and n_particles are both given?
-            # TODO: Print a message that max_level is being determined automatically?
             max_splitting_level = suggest_max_grid_level_nonperiodic(
                 side_lengths=side_lengths,
                 n_particles=n_particles,
@@ -254,10 +242,6 @@ def set_up_msm_params(
         p=p,
     )
 
-    # TODO: Clipping of stencils to grid size along non-periodic directions in mixed-periodicity cases?
-    #  -> Probably best to do this inside special_periodic_convolve_scipy since
-    #     it is there that the shapes of the data arrays (=grid shapes) and the
-    #     kernel stencils, and the pbc are the most conveniently available in one place.
     stencil_extents_from_center = [None]
     if intermediate_kernel_stencil_extents is None:
         intermediate_kernel_stencil_extents = find_covering_grid_extents(
@@ -339,8 +323,6 @@ def create_msm(
     else:
         compute_u_zero = make_compute_u_zero(
             kernel_fns=kernel_fns,
-            # TODO: If I allow supercell_diag for make_eval_pair_pot_neighborlist
-            #  as well, this if-else could be much cleaner.
             pair_map_fn=partial(
                 make_eval_pair_pot,
                 pbc=params.pbc,
@@ -350,8 +332,6 @@ def create_msm(
             ),
         )
 
-    # TODO: (Re-)compute omega here, or should it be part of params (maybe just in info)?
-    #  - same for J
     omega, _ = compute_coeffs_with_truncation(params.p, params.mu)
 
     (
@@ -401,12 +381,8 @@ def create_msm(
         grid_shape_toplevel=grid_shape_toplevel,
     )
 
-    # TODO: unnecessary duplication?
     if params.dynamic_cell:
         compute_u_oneplus = make_compute_u_oneplus(
-            # TODO: Can this closure over spacings be made more compact?
-            #  (Confusing to first define a basis eval function that takes
-            #  spacings as arguments, and then define one that doesn't)
             singleparticle_basis_fn_lvl_one=partial(
                 basis_evaluation_fn, spacings=params.grid_spacings[1]
             ),
@@ -418,9 +394,6 @@ def create_msm(
         )
     else:
         compute_u_oneplus = make_compute_u_oneplus(
-            # TODO: Can this closure over spacings be made more compact?
-            #  (Confusing to first define a basis eval function that takes
-            #  spacings as arguments, and then define one that doesn't)
             singleparticle_basis_fn_lvl_one=partial(
                 basis_evaluation_fn, spacings=params.grid_spacings[1]
             ),
@@ -434,18 +407,18 @@ def create_msm(
         )
 
     def calc_energy(positions, charges, cell=None, neighborlist=None):
-        # TODO: Raise an error if
-        #  - cell arg is given, but static and ortho cell (cell_mode="ortho" and dynamic_cell=False),
-        #  - cell arg is not given, but dynamic cell?
         if params.dynamic_cell and cell is None:
             raise ValueError(
                 "MSM was set up with `dynamic_cell=True`, "
                 "but no cell argument given to the evaluation function"
             )
         if params.use_neighborlist:
-            # TODO: Better error message.
             if neighborlist is None:
-                raise ValueError("neighborlist argument is required.")
+                raise ValueError(
+                    "MSM was set up with `dynamic_cell=True`, "
+                    "but no neighborlist argument given to the evaluation "
+                    "function"
+                )
             u_zero = compute_u_zero(
                 positions,
                 charges,
@@ -454,8 +427,6 @@ def create_msm(
                 neighborlist=neighborlist,
             )
         else:
-            # TODO: Raise an error/warn if use_neighborlist is False
-            #  but the neighborlist parameter is not None?
             u_zero = compute_u_zero(
                 positions,
                 charges,
@@ -491,8 +462,6 @@ def create_msm(
             positions, charges, cell, neighborlist
         )
 
-    # TODO: Option to return fns for short- and long-range part separately?
-
     evaluation_functions = {
         "energy": calc_energy,
         "forces": calc_forces,
@@ -510,7 +479,6 @@ def create_msm(
         return calc_energy(positions, charges, cell, neighborlist)
 
     def calc_stress(positions, charges, cell, neighborlist=None):
-        # TODO: attribution?
         n_dim = positions.shape[1]
         scaled_positions = jnp.linalg.solve(cell.T, positions.T).T
 
@@ -535,9 +503,6 @@ def create_msm(
 
 
 def check_cutoffs_and_get_actual_spacings(cell: ArrayLike, params: MSMParams):
-    # TODO: Name maybe `check_cutoffs_and_calculate_spacings` or similar? To
-    #  avoid the impression that this checks the spacings in any way, because
-    #  it doesn't.
     if onp.any(params.pbc):
         n_dim = cell.shape[0]
         placeholder_positions = onp.zeros((10, n_dim))
@@ -593,11 +558,10 @@ def check_cutoffs_and_get_actual_spacings(cell: ArrayLike, params: MSMParams):
                 raise ValueError(
                     "Kernel stencil at highest level must cover the entire "
                     "grid in cases without periodicity."
-                )  # TODO: better message
+                )
             continue
 
         spacings = params.grid_spacings[lvl].copy()
-        # TODO: do away with this by introducing a scaled_gridspacing attribute?
         if params.grids_defined_on_unitcube:
             spacings *= onp.linalg.norm(cell, axis=1)
         min_required_stencil_size = find_covering_grid_extents(
@@ -619,7 +583,6 @@ def check_cutoffs_and_get_actual_spacings(cell: ArrayLike, params: MSMParams):
 
     level_one_spacings = params.grid_spacings[1].copy()
     if params.grids_defined_on_unitcube:
-        # TODO: introduce a `scaled_spacings` attribute of MSMParams?
         level_one_spacings *= onp.linalg.norm(cell, axis=1)
 
     return level_one_spacings
