@@ -5,6 +5,15 @@ The implementation is mostly based on Ref. 1, with additional inputs from Refs. 
 
 This page will be updated with links to ensuing publications.
 
+## Getting started
+
+[//]: # (TODO)
+**TODO: Correct link to github pages**
+
+[//]: # (TODO)
+Tutorials and documentation can be found on the [GitHub pages](TODO).
+More elaborate examples and benchmarks can be found in the `examples/` directory.
+
 ## Installation
 First clone the msmJAX repository and navigate to the repository root.
 
@@ -33,13 +42,13 @@ Generally speaking, the JAX ecosystem is fast-moving, and checking the current r
 
 ### Optional dependencies
 
-## Getting started
+To run the tests, proceed like above, but install msmJAX with `pip install -e ".[test]"`.
+Then, you can run `pytest tests/`, which is recommended to verify that the installation was successful.
 
-[//]: # (TODO)
-**TODO: Correct link to github pages**
-
-[//]: # (TODO)
-Quick-start tutorials and documentation can be found on the [GitHub pages](TODO).
+To run the examples, install with `pip install -e ".[examples]"`
+In some of the examples, additional external programs are used.
+But these are not required for a basic run of the examples, only if you want to re-perform the setting up the inputs or certain post-processing tasks yourself.
+Where they are used, this is indicated in the description of the individual examples.
 
 ## References
 
