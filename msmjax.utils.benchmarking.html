@@ -1,0 +1,606 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>msmjax.utils.benchmarking &mdash; msmJAX  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="msmjax.utils.general" href="msmjax.utils.general.html" />
+    <link rel="prev" title="msmjax.utils" href="msmjax.utils.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            msmJAX
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#cpu-only-installation">CPU-only installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#cuda-installation">CUDA installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#optional-dependencies">Optional dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="setup_and_run.html">Setting up and running a calculation</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="api_reference.html">API reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="msmjax.calculators.html">msmjax.calculators</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.CustomJSONEncoder"><code class="docutils literal notranslate"><span class="pre">CustomJSONEncoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.CustomJSONEncoder.default"><code class="docutils literal notranslate"><span class="pre">CustomJSONEncoder.default()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.CustomJSONDecoder"><code class="docutils literal notranslate"><span class="pre">CustomJSONDecoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.CustomJSONDecoder.object_hook"><code class="docutils literal notranslate"><span class="pre">CustomJSONDecoder.object_hook()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams"><code class="docutils literal notranslate"><span class="pre">MSMParams</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.p"><code class="docutils literal notranslate"><span class="pre">MSMParams.p</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.mu"><code class="docutils literal notranslate"><span class="pre">MSMParams.mu</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.max_splitting_level"><code class="docutils literal notranslate"><span class="pre">MSMParams.max_splitting_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.max_grid_level"><code class="docutils literal notranslate"><span class="pre">MSMParams.max_grid_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.cutoffs"><code class="docutils literal notranslate"><span class="pre">MSMParams.cutoffs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.cell"><code class="docutils literal notranslate"><span class="pre">MSMParams.cell</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.cell_mode"><code class="docutils literal notranslate"><span class="pre">MSMParams.cell_mode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.pbc"><code class="docutils literal notranslate"><span class="pre">MSMParams.pbc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.dynamic_cell"><code class="docutils literal notranslate"><span class="pre">MSMParams.dynamic_cell</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.supercell_diag"><code class="docutils literal notranslate"><span class="pre">MSMParams.supercell_diag</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.use_neighborlist"><code class="docutils literal notranslate"><span class="pre">MSMParams.use_neighborlist</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.neighborlist_prefactor"><code class="docutils literal notranslate"><span class="pre">MSMParams.neighborlist_prefactor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.grids_defined_on_unitcube"><code class="docutils literal notranslate"><span class="pre">MSMParams.grids_defined_on_unitcube</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.grid_shapes"><code class="docutils literal notranslate"><span class="pre">MSMParams.grid_shapes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.grid_spacings"><code class="docutils literal notranslate"><span class="pre">MSMParams.grid_spacings</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.stencil_extents_from_center"><code class="docutils literal notranslate"><span class="pre">MSMParams.stencil_extents_from_center</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.convolution_methods"><code class="docutils literal notranslate"><span class="pre">MSMParams.convolution_methods</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.n_dim"><code class="docutils literal notranslate"><span class="pre">MSMParams.n_dim</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.version"><code class="docutils literal notranslate"><span class="pre">MSMParams.version</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.info"><code class="docutils literal notranslate"><span class="pre">MSMParams.info</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.save_json"><code class="docutils literal notranslate"><span class="pre">MSMParams.save_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.load_json"><code class="docutils literal notranslate"><span class="pre">MSMParams.load_json()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.find_stencil_extents_all_levels"><code class="docutils literal notranslate"><span class="pre">find_stencil_extents_all_levels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.set_up_msm_params"><code class="docutils literal notranslate"><span class="pre">set_up_msm_params()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.create_msm"><code class="docutils literal notranslate"><span class="pre">create_msm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.check_cutoffs_and_get_actual_spacings"><code class="docutils literal notranslate"><span class="pre">check_cutoffs_and_get_actual_spacings()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msmjax.kernels.html">msmjax.kernels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.kernels.html#msmjax.kernels.SoftenerOneOverR"><code class="docutils literal notranslate"><span class="pre">SoftenerOneOverR</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.kernels.html#msmjax.kernels.split_one_over_r"><code class="docutils literal notranslate"><span class="pre">split_one_over_r()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.kernels.html#msmjax.kernels._get_distances"><code class="docutils literal notranslate"><span class="pre">_get_distances()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.kernels.html#msmjax.kernels._compute_one_stencil"><code class="docutils literal notranslate"><span class="pre">_compute_one_stencil()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.kernels.html#msmjax.kernels.make_construct_stencils"><code class="docutils literal notranslate"><span class="pre">make_construct_stencils()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msmjax.bspline.html">msmjax.bspline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.bspline.basis.html">msmjax.bspline.basis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.basis.html#msmjax.bspline.basis.characteristic"><code class="docutils literal notranslate"><span class="pre">characteristic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.basis.html#msmjax.bspline.basis.evaluate_basis_element"><code class="docutils literal notranslate"><span class="pre">evaluate_basis_element()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.basis.html#msmjax.bspline.basis.create_bspline_basis_element"><code class="docutils literal notranslate"><span class="pre">create_bspline_basis_element()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.bspline.coefficients.html">msmjax.bspline.coefficients</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_Phi"><code class="docutils literal notranslate"><span class="pre">calc_Phi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_col_of_B"><code class="docutils literal notranslate"><span class="pre">build_col_of_B()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_col_of_B2"><code class="docutils literal notranslate"><span class="pre">build_col_of_B2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_Toeplitz_matrix"><code class="docutils literal notranslate"><span class="pre">build_Toeplitz_matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_Toeplitz_system"><code class="docutils literal notranslate"><span class="pre">build_Toeplitz_system()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_c_m"><code class="docutils literal notranslate"><span class="pre">compute_c_m()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.generating_function"><code class="docutils literal notranslate"><span class="pre">generating_function()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_Mclaurin_coefficient"><code class="docutils literal notranslate"><span class="pre">calc_Mclaurin_coefficient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_B_p_over_2"><code class="docutils literal notranslate"><span class="pre">calc_B_p_over_2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_polynomials"><code class="docutils literal notranslate"><span class="pre">calc_polynomials()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.explode_Add"><code class="docutils literal notranslate"><span class="pre">explode_Add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.coeff_dict_to_array"><code class="docutils literal notranslate"><span class="pre">coeff_dict_to_array()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_quasi_omega_prime"><code class="docutils literal notranslate"><span class="pre">compute_quasi_omega_prime()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_j_zeroplus"><code class="docutils literal notranslate"><span class="pre">compute_j_zeroplus()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.bspline.gridops.html">msmjax.bspline.gridops</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._find_n_gridpoints_1d"><code class="docutils literal notranslate"><span class="pre">_find_n_gridpoints_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.set_up_grids_all_levels"><code class="docutils literal notranslate"><span class="pre">set_up_grids_all_levels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._arbitrary_dim_outer"><code class="docutils literal notranslate"><span class="pre">_arbitrary_dim_outer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._multiindex_outer"><code class="docutils literal notranslate"><span class="pre">_multiindex_outer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._ravel_multi_index_with_invalidation"><code class="docutils literal notranslate"><span class="pre">_ravel_multi_index_with_invalidation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_basis_evaluation_fn"><code class="docutils literal notranslate"><span class="pre">make_basis_evaluation_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_restrict_1d"><code class="docutils literal notranslate"><span class="pre">_make_restrict_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_restriction_operator"><code class="docutils literal notranslate"><span class="pre">make_restriction_operator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_prolongate_1d"><code class="docutils literal notranslate"><span class="pre">_make_prolongate_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_prolongation_operator"><code class="docutils literal notranslate"><span class="pre">make_prolongation_operator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.create_all_grid_to_grid_ops"><code class="docutils literal notranslate"><span class="pre">create_all_grid_to_grid_ops()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.suggest_max_grid_level_nonperiodic"><code class="docutils literal notranslate"><span class="pre">suggest_max_grid_level_nonperiodic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.find_spacings_and_max_level_periodic"><code class="docutils literal notranslate"><span class="pre">find_spacings_and_max_level_periodic()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msmjax.core.html">msmjax.core</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.core.shortrange.html">msmjax.core.shortrange</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange._gen_supercell"><code class="docutils literal notranslate"><span class="pre">_gen_supercell()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_free"><code class="docutils literal notranslate"><span class="pre">_displacement_free()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_ortho"><code class="docutils literal notranslate"><span class="pre">_displacement_ortho()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_general"><code class="docutils literal notranslate"><span class="pre">_displacement_general()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange._concretize_displacement_fn"><code class="docutils literal notranslate"><span class="pre">_concretize_displacement_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot"><code class="docutils literal notranslate"><span class="pre">make_eval_pair_pot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot_neighborlist"><code class="docutils literal notranslate"><span class="pre">make_eval_pair_pot_neighborlist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange.make_compute_u_zero"><code class="docutils literal notranslate"><span class="pre">make_compute_u_zero()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.core.longrange.html">msmjax.core.longrange</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange._anterpolate"><code class="docutils literal notranslate"><span class="pre">_anterpolate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_positions_gradient"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy_positions_gradient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_charge_gradient"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy_charge_gradient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange.special_periodic_convolve_scipy"><code class="docutils literal notranslate"><span class="pre">special_periodic_convolve_scipy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange.make_grid_pass_fn"><code class="docutils literal notranslate"><span class="pre">make_grid_pass_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange.make_compute_u_oneplus"><code class="docutils literal notranslate"><span class="pre">make_compute_u_oneplus()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="msmjax.utils.html">msmjax.utils</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">msmjax.utils.benchmarking</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.utils.benchmarking.dir_context"><code class="docutils literal notranslate"><span class="pre">dir_context()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.utils.benchmarking.write_lammps_data"><code class="docutils literal notranslate"><span class="pre">write_lammps_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.utils.benchmarking.parse_energy_from_lammps_log"><code class="docutils literal notranslate"><span class="pre">parse_energy_from_lammps_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.utils.benchmarking.parse_lammps_log"><code class="docutils literal notranslate"><span class="pre">parse_lammps_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.utils.benchmarking.make_lammps_input_text_pppm"><code class="docutils literal notranslate"><span class="pre">make_lammps_input_text_pppm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.utils.benchmarking.eval_lammps_pppm"><code class="docutils literal notranslate"><span class="pre">eval_lammps_pppm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.utils.benchmarking.calc_rmse"><code class="docutils literal notranslate"><span class="pre">calc_rmse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.utils.benchmarking.calc_relative_rmse_percent"><code class="docutils literal notranslate"><span class="pre">calc_relative_rmse_percent()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.utils.benchmarking.calc_relative_rmse"><code class="docutils literal notranslate"><span class="pre">calc_relative_rmse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.utils.benchmarking.make_timed_eval"><code class="docutils literal notranslate"><span class="pre">make_timed_eval()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.utils.benchmarking.remove_duplicates_from_neighborlist"><code class="docutils literal notranslate"><span class="pre">remove_duplicates_from_neighborlist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.utils.benchmarking.build_duplicate_free_neighborlists"><code class="docutils literal notranslate"><span class="pre">build_duplicate_free_neighborlists()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.utils.benchmarking.coulomb_kernel"><code class="docutils literal notranslate"><span class="pre">coulomb_kernel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.utils.benchmarking.calc_energy_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_energy_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.utils.benchmarking.calc_forces_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_forces_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.utils.benchmarking.calc_chargegrad_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_chargegrad_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.utils.benchmarking.calc_stress_virial"><code class="docutils literal notranslate"><span class="pre">calc_stress_virial()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.utils.benchmarking.calc_nonperiodic_reference_results"><code class="docutils literal notranslate"><span class="pre">calc_nonperiodic_reference_results()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.utils.general.html">msmjax.utils.general</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.general.html#msmjax.utils.general._divide_zero_safe"><code class="docutils literal notranslate"><span class="pre">_divide_zero_safe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.general.html#msmjax.utils.general._sqrt_jvp"><code class="docutils literal notranslate"><span class="pre">_sqrt_jvp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.general.html#msmjax.utils.general.get_max_cutoff_for_mic"><code class="docutils literal notranslate"><span class="pre">get_max_cutoff_for_mic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.general.html#msmjax.utils.general.find_covering_grid_extents"><code class="docutils literal notranslate"><span class="pre">find_covering_grid_extents()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">msmJAX</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="api_reference.html">API reference</a></li>
+          <li class="breadcrumb-item"><a href="msmjax.utils.html">msmjax.utils</a></li>
+      <li class="breadcrumb-item active">msmjax.utils.benchmarking</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/msmjax.utils.benchmarking.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-msmjax.utils.benchmarking">
+<span id="msmjax-utils-benchmarking"></span><h1>msmjax.utils.benchmarking<a class="headerlink" href="#module-msmjax.utils.benchmarking" title="Link to this heading"></a></h1>
+<p>Utilities for benchmarking</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.utils.benchmarking.dir_context">
+<span class="sig-prename descclassname"><span class="pre">msmjax.utils.benchmarking.</span></span><span class="sig-name descname"><span class="pre">dir_context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/utils/benchmarking.html#dir_context"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.utils.benchmarking.dir_context" title="Link to this definition"></a></dt>
+<dd><p>Create a context to run code in a different directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dir_name</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></span>) – Route to the directory.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.utils.benchmarking.write_lammps_data">
+<span class="sig-prename descclassname"><span class="pre">msmjax.utils.benchmarking.</span></span><span class="sig-name descname"><span class="pre">write_lammps_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charges</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/utils/benchmarking.html#write_lammps_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.utils.benchmarking.write_lammps_data" title="Link to this definition"></a></dt>
+<dd><p>Write structure as LAMMPS data file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.utils.benchmarking.parse_energy_from_lammps_log">
+<span class="sig-prename descclassname"><span class="pre">msmjax.utils.benchmarking.</span></span><span class="sig-name descname"><span class="pre">parse_energy_from_lammps_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/utils/benchmarking.html#parse_energy_from_lammps_log"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.utils.benchmarking.parse_energy_from_lammps_log" title="Link to this definition"></a></dt>
+<dd><p>Get the energy from LAMMPS log file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.utils.benchmarking.parse_lammps_log">
+<span class="sig-prename descclassname"><span class="pre">msmjax.utils.benchmarking.</span></span><span class="sig-name descname"><span class="pre">parse_lammps_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/utils/benchmarking.html#parse_lammps_log"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.utils.benchmarking.parse_lammps_log" title="Link to this definition"></a></dt>
+<dd><p>Get energy and other results from LAMMPS log file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.utils.benchmarking.make_lammps_input_text_pppm">
+<span class="sig-prename descclassname"><span class="pre">msmjax.utils.benchmarking.</span></span><span class="sig-name descname"><span class="pre">make_lammps_input_text_pppm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename_dump</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_neighbors_one_atom</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/utils/benchmarking.html#make_lammps_input_text_pppm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.utils.benchmarking.make_lammps_input_text_pppm" title="Link to this definition"></a></dt>
+<dd><p>Write LAMMPS input script</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>accuracy</strong> (<em>float</em>)</p></li>
+<li><p><strong>max_neighbors_one_atom</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.utils.benchmarking.eval_lammps_pppm">
+<span class="sig-prename descclassname"><span class="pre">msmjax.utils.benchmarking.</span></span><span class="sig-name descname"><span class="pre">eval_lammps_pppm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charges</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lammps_executable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lmp'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_neighbors_one_atom</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_stdout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/utils/benchmarking.html#eval_lammps_pppm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.utils.benchmarking.eval_lammps_pppm" title="Link to this definition"></a></dt>
+<dd><p>Wrapper to compute periodic electrostatic energy, forces in LAMMPS with p3m</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>positions</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.typing.ArrayLike</span></code></span>) – Array of article positions, shape <cite>(n_particles, 3)</cite></p></li>
+<li><p><strong>charges</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.typing.ArrayLike</span></code></span>) – Array of particle charges, <cite>(n_particles,)</cite></p></li>
+<li><p><strong>cell</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.typing.ArrayLike</span></code></span>) – Unit cell</p></li>
+<li><p><strong>lammps_executable</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Path to LAMMPS executable</p></li>
+<li><p><strong>accuracy</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span>) – Accuracy setting passed to LAMMPS via
+<cite>kspace_style pppm {accuracy}</cite>.</p></li>
+<li><p><strong>max_neighbors_one_atom</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – Maximum number of neighbors of a single atom.
+Supplied to LAMMPS via <cite>neigh_modify one</cite> if given. You may need
+to increase this value if you’re getting errors.</p></li>
+<li><p><strong>show_stdout</strong> – Whether to show the stdout from the subprocess call to
+LAMMPS.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>energy, forces</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.utils.benchmarking.calc_rmse">
+<span class="sig-prename descclassname"><span class="pre">msmjax.utils.benchmarking.</span></span><span class="sig-name descname"><span class="pre">calc_rmse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/utils/benchmarking.html#calc_rmse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.utils.benchmarking.calc_rmse" title="Link to this definition"></a></dt>
+<dd><p>Calculate RMSE.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>y_pred</strong> (<em>Array</em><em> | </em><em>ndarray</em><em> | </em><em>bool_</em><em> | </em><em>number</em><em> | </em><em>bool</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>complex</em>)</p></li>
+<li><p><strong>y_true</strong> (<em>Array</em><em> | </em><em>ndarray</em><em> | </em><em>bool_</em><em> | </em><em>number</em><em> | </em><em>bool</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>complex</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.utils.benchmarking.calc_relative_rmse_percent">
+<span class="sig-prename descclassname"><span class="pre">msmjax.utils.benchmarking.</span></span><span class="sig-name descname"><span class="pre">calc_relative_rmse_percent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/utils/benchmarking.html#calc_relative_rmse_percent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.utils.benchmarking.calc_relative_rmse_percent" title="Link to this definition"></a></dt>
+<dd><p>Calculate RMSE normalized to STD of reference results, as percentage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>y_pred</strong> (<em>Array</em><em> | </em><em>ndarray</em><em> | </em><em>bool_</em><em> | </em><em>number</em><em> | </em><em>bool</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>complex</em>)</p></li>
+<li><p><strong>y_true</strong> (<em>Array</em><em> | </em><em>ndarray</em><em> | </em><em>bool_</em><em> | </em><em>number</em><em> | </em><em>bool</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>complex</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.utils.benchmarking.calc_relative_rmse">
+<span class="sig-prename descclassname"><span class="pre">msmjax.utils.benchmarking.</span></span><span class="sig-name descname"><span class="pre">calc_relative_rmse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/utils/benchmarking.html#calc_relative_rmse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.utils.benchmarking.calc_relative_rmse" title="Link to this definition"></a></dt>
+<dd><p>Calculate RMSE normalized to STD of reference results.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>y_pred</strong> (<em>Array</em><em> | </em><em>ndarray</em><em> | </em><em>bool_</em><em> | </em><em>number</em><em> | </em><em>bool</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>complex</em>)</p></li>
+<li><p><strong>y_true</strong> (<em>Array</em><em> | </em><em>ndarray</em><em> | </em><em>bool_</em><em> | </em><em>number</em><em> | </em><em>bool</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>complex</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.utils.benchmarking.make_timed_eval">
+<span class="sig-prename descclassname"><span class="pre">msmjax.utils.benchmarking.</span></span><span class="sig-name descname"><span class="pre">make_timed_eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repeat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/utils/benchmarking.html#make_timed_eval"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.utils.benchmarking.make_timed_eval" title="Link to this definition"></a></dt>
+<dd><p>Given a JAX-jittable function, return a function to time its evaluation.</p>
+<p>The returned function internally takes care of jitting the function to be
+timed, and of calling <code class="docutils literal notranslate"><span class="pre">.block_until_ready()</span></code> on its output to avoid
+meaningless results because of JAX’s asynchronous dispatch.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fn</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></span>) – A JAX-jittable function.</p></li>
+<li><p><strong>repeat</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Passed to <code class="docutils literal notranslate"><span class="pre">timeit.repeat</span></code>.</p></li>
+<li><p><strong>number</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Passed to <code class="docutils literal notranslate"><span class="pre">timeit.repeat</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><p>A function with the same argument structure as <code class="docutils literal notranslate"><span class="pre">fn</span></code> that, when
+called, returns a 2-element tuple containing:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The measured evaluation time</p></li>
+<li><p>The original output of <code class="docutils literal notranslate"><span class="pre">fn</span></code>.</p></li>
+</ul>
+</div></blockquote>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.utils.benchmarking.remove_duplicates_from_neighborlist">
+<span class="sig-prename descclassname"><span class="pre">msmjax.utils.benchmarking.</span></span><span class="sig-name descname"><span class="pre">remove_duplicates_from_neighborlist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">neighborlist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/utils/benchmarking.html#remove_duplicates_from_neighborlist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.utils.benchmarking.remove_duplicates_from_neighborlist" title="Link to this definition"></a></dt>
+<dd><p>Remove duplicate index pairs from a neighbor list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>neighborlist</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>]</span>) – Original neighbor list that may contain duplicates.
+(like containing both index pair <cite>ij</cite> and <cite>ji</cite>).
+Tuple of two 1-d integer arrays of the same size. See
+<a class="reference internal" href="#module-msmjax.utils.benchmarking" title="msmjax.utils.benchmarking"><code class="xref py py-func docutils literal notranslate"><span class="pre">msmjax.utils.benchmarking()</span></code></a> for more details on format.</p></li>
+<li><p><strong>fill_value</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – A value used to pad the arrays in the neighbor list
+to length <code class="docutils literal notranslate"><span class="pre">size</span></code>. Should be a value that is ignored by the
+evaluation function to which the neighbor list will be passed.</p></li>
+<li><p><strong>size</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The number of index pairs (including placeholder values
+that contain <code class="docutils literal notranslate"><span class="pre">fill_value</span></code>) in the returned duplicate-free
+neighbor list. Must be known in advance to satisfy static-shape
+constraints under JIT.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The neighbor list with duplicate index pairs removed (i.e., containing
+only <cite>ij</cite> and not <cite>ji</cite>).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.utils.benchmarking.build_duplicate_free_neighborlists">
+<span class="sig-prename descclassname"><span class="pre">msmjax.utils.benchmarking.</span></span><span class="sig-name descname"><span class="pre">build_duplicate_free_neighborlists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">set_of_positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_of_cells</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pbc</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/utils/benchmarking.html#build_duplicate_free_neighborlists"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.utils.benchmarking.build_duplicate_free_neighborlists" title="Link to this definition"></a></dt>
+<dd><p>Construct a neighbor list with no duplicate index pairs.</p>
+<p>First uses matscipy for constructing the initial neighbor list, which does
+contain duplicates, then JAX is ued to remove the duplicates.
+The function processes several structures and pads the neighbor lists to
+the maximum neighbor-list size out of all these structures, in order to
+gain efficiency by avoiding re-compilation of the JAX duplicate-removal
+step.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>set_of_positions</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>]</span>) – Sequence of particle positions (arrays of shape
+<cite>(n_particles, n_dim)</cite>), each corresponding to one structure.</p></li>
+<li><p><strong>set_of_cells</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>]</span>) – Sequence of cells (arrays of shape <cite>(n_dim, n_dim)</cite>),
+each corresponding to one structure.</p></li>
+<li><p><strong>cutoff</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span>) – Cutoff radius for neighbor search.</p></li>
+<li><p><strong>pbc</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]</span>) – One boolean per direction signaling periodicity.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of duplicate-free neighbor lists for all structures.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.utils.benchmarking.coulomb_kernel">
+<span class="sig-prename descclassname"><span class="pre">msmjax.utils.benchmarking.</span></span><span class="sig-name descname"><span class="pre">coulomb_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/utils/benchmarking.html#coulomb_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.utils.benchmarking.coulomb_kernel" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.utils.benchmarking.calc_energy_nonperiodic_direct_summation">
+<span class="sig-prename descclassname"><span class="pre">msmjax.utils.benchmarking.</span></span><span class="sig-name descname"><span class="pre">calc_energy_nonperiodic_direct_summation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charges</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/utils/benchmarking.html#calc_energy_nonperiodic_direct_summation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.utils.benchmarking.calc_energy_nonperiodic_direct_summation" title="Link to this definition"></a></dt>
+<dd><p>Calculate exact energy for no periodicity by all-pairs sum</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>positions</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Array of particle positions, shape <cite>(n_particles, n_dim)</cite></p></li>
+<li><p><strong>charges</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Array of particle charges, shape <cite>(n_particles,)</cite></p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Energy</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.utils.benchmarking.calc_forces_nonperiodic_direct_summation">
+<span class="sig-prename descclassname"><span class="pre">msmjax.utils.benchmarking.</span></span><span class="sig-name descname"><span class="pre">calc_forces_nonperiodic_direct_summation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charges</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/utils/benchmarking.html#calc_forces_nonperiodic_direct_summation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.utils.benchmarking.calc_forces_nonperiodic_direct_summation" title="Link to this definition"></a></dt>
+<dd><p>Calculate exact forces for no periodicity by all-pairs sum</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>positions</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Array of particle positions, shape <cite>(n_particles, n_dim)</cite></p></li>
+<li><p><strong>charges</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Array of particle charges, shape <cite>(n_particles,)</cite></p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Forces</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.utils.benchmarking.calc_chargegrad_nonperiodic_direct_summation">
+<span class="sig-prename descclassname"><span class="pre">msmjax.utils.benchmarking.</span></span><span class="sig-name descname"><span class="pre">calc_chargegrad_nonperiodic_direct_summation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charges</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/utils/benchmarking.html#calc_chargegrad_nonperiodic_direct_summation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.utils.benchmarking.calc_chargegrad_nonperiodic_direct_summation" title="Link to this definition"></a></dt>
+<dd><p>Calculate exact charge gradient for no periodicity by all-pairs sum</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>positions</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Array of particle positions, shape <cite>(n_particles, n_dim)</cite></p></li>
+<li><p><strong>charges</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Array of particle charges, shape <cite>(n_particles,)</cite></p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Gradient of the energy w.r.t. particle charges</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.utils.benchmarking.calc_stress_virial">
+<span class="sig-prename descclassname"><span class="pre">msmjax.utils.benchmarking.</span></span><span class="sig-name descname"><span class="pre">calc_stress_virial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/utils/benchmarking.html#calc_stress_virial"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.utils.benchmarking.calc_stress_virial" title="Link to this definition"></a></dt>
+<dd><p>Calculate stress tensor from virial</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>positions</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Array of particle positions, shape <cite>(n_particles, n_dim)</cite></p></li>
+<li><p><strong>forces</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Array of forces, shape <cite>(n_particles, n_dim)</cite></p></li>
+<li><p><strong>cell</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Array representing cell, shape <cite>(n_dim, n_dim)</cite></p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Stress in 6-component format.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.utils.benchmarking.calc_nonperiodic_reference_results">
+<span class="sig-prename descclassname"><span class="pre">msmjax.utils.benchmarking.</span></span><span class="sig-name descname"><span class="pre">calc_nonperiodic_reference_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charges</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/utils/benchmarking.html#calc_nonperiodic_reference_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.utils.benchmarking.calc_nonperiodic_reference_results" title="Link to this definition"></a></dt>
+<dd><p>Calculate various exact reference for a non-periodic system</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>positions</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Array of particle positions, shape <cite>(n_particles, n_dim)</cite></p></li>
+<li><p><strong>charges</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Array of particle charges, shape <cite>(n_particles,)</cite></p></li>
+<li><p><strong>cell</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Array representing cell, shape <cite>(n_dim, n_dim)</cite></p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Energy, forces, charge gradient, stress tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="msmjax.utils.html" class="btn btn-neutral float-left" title="msmjax.utils" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="msmjax.utils.general.html" class="btn btn-neutral float-right" title="msmjax.utils.general" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Florian Buchner, Johannes Schörghuber, Nico Unglert, Jesús Carrete, Georg K. H. Madsen.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

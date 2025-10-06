@@ -1,0 +1,582 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>msmjax.core.shortrange &mdash; msmJAX  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="msmjax.core.longrange" href="msmjax.core.longrange.html" />
+    <link rel="prev" title="msmjax.core" href="msmjax.core.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            msmJAX
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#cpu-only-installation">CPU-only installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#cuda-installation">CUDA installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#optional-dependencies">Optional dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="setup_and_run.html">Setting up and running a calculation</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="api_reference.html">API reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="msmjax.calculators.html">msmjax.calculators</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.CustomJSONEncoder"><code class="docutils literal notranslate"><span class="pre">CustomJSONEncoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.CustomJSONEncoder.default"><code class="docutils literal notranslate"><span class="pre">CustomJSONEncoder.default()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.CustomJSONDecoder"><code class="docutils literal notranslate"><span class="pre">CustomJSONDecoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.CustomJSONDecoder.object_hook"><code class="docutils literal notranslate"><span class="pre">CustomJSONDecoder.object_hook()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams"><code class="docutils literal notranslate"><span class="pre">MSMParams</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.p"><code class="docutils literal notranslate"><span class="pre">MSMParams.p</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.mu"><code class="docutils literal notranslate"><span class="pre">MSMParams.mu</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.max_splitting_level"><code class="docutils literal notranslate"><span class="pre">MSMParams.max_splitting_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.max_grid_level"><code class="docutils literal notranslate"><span class="pre">MSMParams.max_grid_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.cutoffs"><code class="docutils literal notranslate"><span class="pre">MSMParams.cutoffs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.cell"><code class="docutils literal notranslate"><span class="pre">MSMParams.cell</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.cell_mode"><code class="docutils literal notranslate"><span class="pre">MSMParams.cell_mode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.pbc"><code class="docutils literal notranslate"><span class="pre">MSMParams.pbc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.dynamic_cell"><code class="docutils literal notranslate"><span class="pre">MSMParams.dynamic_cell</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.supercell_diag"><code class="docutils literal notranslate"><span class="pre">MSMParams.supercell_diag</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.use_neighborlist"><code class="docutils literal notranslate"><span class="pre">MSMParams.use_neighborlist</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.neighborlist_prefactor"><code class="docutils literal notranslate"><span class="pre">MSMParams.neighborlist_prefactor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.grids_defined_on_unitcube"><code class="docutils literal notranslate"><span class="pre">MSMParams.grids_defined_on_unitcube</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.grid_shapes"><code class="docutils literal notranslate"><span class="pre">MSMParams.grid_shapes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.grid_spacings"><code class="docutils literal notranslate"><span class="pre">MSMParams.grid_spacings</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.stencil_extents_from_center"><code class="docutils literal notranslate"><span class="pre">MSMParams.stencil_extents_from_center</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.convolution_methods"><code class="docutils literal notranslate"><span class="pre">MSMParams.convolution_methods</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.n_dim"><code class="docutils literal notranslate"><span class="pre">MSMParams.n_dim</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.version"><code class="docutils literal notranslate"><span class="pre">MSMParams.version</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.info"><code class="docutils literal notranslate"><span class="pre">MSMParams.info</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.save_json"><code class="docutils literal notranslate"><span class="pre">MSMParams.save_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.load_json"><code class="docutils literal notranslate"><span class="pre">MSMParams.load_json()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.find_stencil_extents_all_levels"><code class="docutils literal notranslate"><span class="pre">find_stencil_extents_all_levels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.set_up_msm_params"><code class="docutils literal notranslate"><span class="pre">set_up_msm_params()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.create_msm"><code class="docutils literal notranslate"><span class="pre">create_msm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.check_cutoffs_and_get_actual_spacings"><code class="docutils literal notranslate"><span class="pre">check_cutoffs_and_get_actual_spacings()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msmjax.kernels.html">msmjax.kernels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.kernels.html#msmjax.kernels.SoftenerOneOverR"><code class="docutils literal notranslate"><span class="pre">SoftenerOneOverR</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.kernels.html#msmjax.kernels.split_one_over_r"><code class="docutils literal notranslate"><span class="pre">split_one_over_r()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.kernels.html#msmjax.kernels._get_distances"><code class="docutils literal notranslate"><span class="pre">_get_distances()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.kernels.html#msmjax.kernels._compute_one_stencil"><code class="docutils literal notranslate"><span class="pre">_compute_one_stencil()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.kernels.html#msmjax.kernels.make_construct_stencils"><code class="docutils literal notranslate"><span class="pre">make_construct_stencils()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msmjax.bspline.html">msmjax.bspline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.bspline.basis.html">msmjax.bspline.basis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.basis.html#msmjax.bspline.basis.characteristic"><code class="docutils literal notranslate"><span class="pre">characteristic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.basis.html#msmjax.bspline.basis.evaluate_basis_element"><code class="docutils literal notranslate"><span class="pre">evaluate_basis_element()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.basis.html#msmjax.bspline.basis.create_bspline_basis_element"><code class="docutils literal notranslate"><span class="pre">create_bspline_basis_element()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.bspline.coefficients.html">msmjax.bspline.coefficients</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_Phi"><code class="docutils literal notranslate"><span class="pre">calc_Phi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_col_of_B"><code class="docutils literal notranslate"><span class="pre">build_col_of_B()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_col_of_B2"><code class="docutils literal notranslate"><span class="pre">build_col_of_B2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_Toeplitz_matrix"><code class="docutils literal notranslate"><span class="pre">build_Toeplitz_matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_Toeplitz_system"><code class="docutils literal notranslate"><span class="pre">build_Toeplitz_system()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_c_m"><code class="docutils literal notranslate"><span class="pre">compute_c_m()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.generating_function"><code class="docutils literal notranslate"><span class="pre">generating_function()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_Mclaurin_coefficient"><code class="docutils literal notranslate"><span class="pre">calc_Mclaurin_coefficient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_B_p_over_2"><code class="docutils literal notranslate"><span class="pre">calc_B_p_over_2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_polynomials"><code class="docutils literal notranslate"><span class="pre">calc_polynomials()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.explode_Add"><code class="docutils literal notranslate"><span class="pre">explode_Add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.coeff_dict_to_array"><code class="docutils literal notranslate"><span class="pre">coeff_dict_to_array()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_quasi_omega_prime"><code class="docutils literal notranslate"><span class="pre">compute_quasi_omega_prime()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_j_zeroplus"><code class="docutils literal notranslate"><span class="pre">compute_j_zeroplus()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.bspline.gridops.html">msmjax.bspline.gridops</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._find_n_gridpoints_1d"><code class="docutils literal notranslate"><span class="pre">_find_n_gridpoints_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.set_up_grids_all_levels"><code class="docutils literal notranslate"><span class="pre">set_up_grids_all_levels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._arbitrary_dim_outer"><code class="docutils literal notranslate"><span class="pre">_arbitrary_dim_outer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._multiindex_outer"><code class="docutils literal notranslate"><span class="pre">_multiindex_outer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._ravel_multi_index_with_invalidation"><code class="docutils literal notranslate"><span class="pre">_ravel_multi_index_with_invalidation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_basis_evaluation_fn"><code class="docutils literal notranslate"><span class="pre">make_basis_evaluation_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_restrict_1d"><code class="docutils literal notranslate"><span class="pre">_make_restrict_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_restriction_operator"><code class="docutils literal notranslate"><span class="pre">make_restriction_operator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_prolongate_1d"><code class="docutils literal notranslate"><span class="pre">_make_prolongate_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_prolongation_operator"><code class="docutils literal notranslate"><span class="pre">make_prolongation_operator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.create_all_grid_to_grid_ops"><code class="docutils literal notranslate"><span class="pre">create_all_grid_to_grid_ops()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.suggest_max_grid_level_nonperiodic"><code class="docutils literal notranslate"><span class="pre">suggest_max_grid_level_nonperiodic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.find_spacings_and_max_level_periodic"><code class="docutils literal notranslate"><span class="pre">find_spacings_and_max_level_periodic()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="msmjax.core.html">msmjax.core</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">msmjax.core.shortrange</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.core.shortrange._gen_supercell"><code class="docutils literal notranslate"><span class="pre">_gen_supercell()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.core.shortrange._displacement_free"><code class="docutils literal notranslate"><span class="pre">_displacement_free()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.core.shortrange._displacement_ortho"><code class="docutils literal notranslate"><span class="pre">_displacement_ortho()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.core.shortrange._displacement_general"><code class="docutils literal notranslate"><span class="pre">_displacement_general()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.core.shortrange._concretize_displacement_fn"><code class="docutils literal notranslate"><span class="pre">_concretize_displacement_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.core.shortrange.make_eval_pair_pot"><code class="docutils literal notranslate"><span class="pre">make_eval_pair_pot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.core.shortrange.make_eval_pair_pot_neighborlist"><code class="docutils literal notranslate"><span class="pre">make_eval_pair_pot_neighborlist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.core.shortrange.make_compute_u_zero"><code class="docutils literal notranslate"><span class="pre">make_compute_u_zero()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.core.longrange.html">msmjax.core.longrange</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange._anterpolate"><code class="docutils literal notranslate"><span class="pre">_anterpolate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_positions_gradient"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy_positions_gradient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_charge_gradient"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy_charge_gradient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange.special_periodic_convolve_scipy"><code class="docutils literal notranslate"><span class="pre">special_periodic_convolve_scipy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange.make_grid_pass_fn"><code class="docutils literal notranslate"><span class="pre">make_grid_pass_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange.make_compute_u_oneplus"><code class="docutils literal notranslate"><span class="pre">make_compute_u_oneplus()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msmjax.utils.html">msmjax.utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.utils.benchmarking.html">msmjax.utils.benchmarking</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.dir_context"><code class="docutils literal notranslate"><span class="pre">dir_context()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.write_lammps_data"><code class="docutils literal notranslate"><span class="pre">write_lammps_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.parse_energy_from_lammps_log"><code class="docutils literal notranslate"><span class="pre">parse_energy_from_lammps_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.parse_lammps_log"><code class="docutils literal notranslate"><span class="pre">parse_lammps_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.make_lammps_input_text_pppm"><code class="docutils literal notranslate"><span class="pre">make_lammps_input_text_pppm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.eval_lammps_pppm"><code class="docutils literal notranslate"><span class="pre">eval_lammps_pppm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_rmse"><code class="docutils literal notranslate"><span class="pre">calc_rmse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_relative_rmse_percent"><code class="docutils literal notranslate"><span class="pre">calc_relative_rmse_percent()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_relative_rmse"><code class="docutils literal notranslate"><span class="pre">calc_relative_rmse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.make_timed_eval"><code class="docutils literal notranslate"><span class="pre">make_timed_eval()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.remove_duplicates_from_neighborlist"><code class="docutils literal notranslate"><span class="pre">remove_duplicates_from_neighborlist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.build_duplicate_free_neighborlists"><code class="docutils literal notranslate"><span class="pre">build_duplicate_free_neighborlists()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.coulomb_kernel"><code class="docutils literal notranslate"><span class="pre">coulomb_kernel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_energy_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_energy_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_forces_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_forces_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_chargegrad_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_chargegrad_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_stress_virial"><code class="docutils literal notranslate"><span class="pre">calc_stress_virial()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_nonperiodic_reference_results"><code class="docutils literal notranslate"><span class="pre">calc_nonperiodic_reference_results()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.utils.general.html">msmjax.utils.general</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.general.html#msmjax.utils.general._divide_zero_safe"><code class="docutils literal notranslate"><span class="pre">_divide_zero_safe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.general.html#msmjax.utils.general._sqrt_jvp"><code class="docutils literal notranslate"><span class="pre">_sqrt_jvp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.general.html#msmjax.utils.general.get_max_cutoff_for_mic"><code class="docutils literal notranslate"><span class="pre">get_max_cutoff_for_mic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.general.html#msmjax.utils.general.find_covering_grid_extents"><code class="docutils literal notranslate"><span class="pre">find_covering_grid_extents()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">msmJAX</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="api_reference.html">API reference</a></li>
+          <li class="breadcrumb-item"><a href="msmjax.core.html">msmjax.core</a></li>
+      <li class="breadcrumb-item active">msmjax.core.shortrange</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/msmjax.core.shortrange.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-msmjax.core.shortrange">
+<span id="msmjax-core-shortrange"></span><h1>msmjax.core.shortrange<a class="headerlink" href="#module-msmjax.core.shortrange" title="Link to this heading"></a></h1>
+<p>Generic short-range implementation (part evaluated without grids).</p>
+<p class="rubric">References</p>
+<p>[1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,
+R. D. Multilevel Summation with B-Spline Interpolation for Pairwise
+Interactions in Molecular Dynamics Simulations. J. Chem. Phys. 2016,
+144 (11), 114112. <a class="reference external" href="https://doi.org/10.1063/1.4943868">https://doi.org/10.1063/1.4943868</a>.</p>
+<p>[2] Hardy, D. J. Multilevel Summation for the Fast Evaluation of
+Forces for the Simulation of Biomolecules (PhD thesis), University
+of Illinois at Urbana-Champaign, 2006.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.core.shortrange._gen_supercell">
+<span class="sig-prename descclassname"><span class="pre">msmjax.core.shortrange.</span></span><span class="sig-name descname"><span class="pre">_gen_supercell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charges</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supercell_diag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/core/shortrange.html#_gen_supercell"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.core.shortrange._gen_supercell" title="Link to this definition"></a></dt>
+<dd><p>Replicate unit cell and contained particles along its axes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>positions</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Array of positions, shape <cite>(n_particles, n_dim)</cite>.</p></li>
+<li><p><strong>charges</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Array of charges, shape <cite>(n_particles,)</cite>.</p></li>
+<li><p><strong>cell</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Array representing unit cell, shape <cite>(n_dim, n_dim)</cite>.</p></li>
+<li><p><strong>supercell_diag</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span>) – Sequence of positive integers, one for each direction,
+indicating the number of times to replicate the system.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>Tuple containing</dt><dd><ul class="simple">
+<li><p>array of positions after replication,</p></li>
+<li><p>array of charges after replication,</p></li>
+<li><p>unit cell after replication.</p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.core.shortrange._displacement_free">
+<span class="sig-prename descclassname"><span class="pre">msmjax.core.shortrange.</span></span><span class="sig-name descname"><span class="pre">_displacement_free</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/core/shortrange.html#_displacement_free"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.core.shortrange._displacement_free" title="Link to this definition"></a></dt>
+<dd><p>Compute distance vector between two points in free space</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r_1</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – First point</p></li>
+<li><p><strong>r_2</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Second point</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Distance vector.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.core.shortrange._displacement_ortho">
+<span class="sig-prename descclassname"><span class="pre">msmjax.core.shortrange.</span></span><span class="sig-name descname"><span class="pre">_displacement_ortho</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">side_lengths</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/core/shortrange.html#_displacement_ortho"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.core.shortrange._displacement_ortho" title="Link to this definition"></a></dt>
+<dd><p>Compute distance vector between two points in orthorhombic cell.</p>
+<p>Handles mixed periodicity: To indicate that specific directions lack
+periodicity, set the corresponding elements of <code class="docutils literal notranslate"><span class="pre">side_lengths</span></code> to zero.
+Periodicity is accounted for by means of the minimum image convention,
+with all the known limitations entailed by this.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r_1</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – First point</p></li>
+<li><p><strong>r_2</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Second point</p></li>
+<li><p><strong>side_lengths</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – 1-d array of side lengths (one per direction)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Distance vector.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.core.shortrange._displacement_general">
+<span class="sig-prename descclassname"><span class="pre">msmjax.core.shortrange.</span></span><span class="sig-name descname"><span class="pre">_displacement_general</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/core/shortrange.html#_displacement_general"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.core.shortrange._displacement_general" title="Link to this definition"></a></dt>
+<dd><p>Compute distance vector between two points in general triclinic cell.</p>
+<p>Handles mixed periodicity: To indicate that specific directions lack
+periodicity, set the corresponding rows of <code class="docutils literal notranslate"><span class="pre">cell</span></code> to zero.
+Periodicity is accounted for by means of the minimum image convention,
+with all the known limitations entailed by this.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r_1</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – First point</p></li>
+<li><p><strong>r_2</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Second point</p></li>
+<li><p><strong>cell</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Array representing unit cell, shape <cite>(n_dim, n_dim)</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Distance vector.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.core.shortrange._concretize_displacement_fn">
+<span class="sig-prename descclassname"><span class="pre">msmjax.core.shortrange.</span></span><span class="sig-name descname"><span class="pre">_concretize_displacement_fn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pbc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/core/shortrange.html#_concretize_displacement_fn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.core.shortrange._concretize_displacement_fn" title="Link to this definition"></a></dt>
+<dd><p>Select/construct displacement fn based on PBCs, unit cell constraints.</p>
+<p>Wraps lower-level displacement functions and transforms them into ones
+with a choice of periodic boundary conditions built-in already, and with
+a consistent signature.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pbc</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]</span>) – One boolean per direction signaling periodicity.</p></li>
+<li><p><strong>cell_mode</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code>[<code class="docutils literal notranslate"><span class="pre">'ortho'</span></code>, <code class="docutils literal notranslate"><span class="pre">'triclinic'</span></code>]]</span>) – A string specifying assumptions on the shape of the
+unit cell. Either the cell is assumed orthorhombic and
+axis-aligned, in which case only its diagonal is considered,
+reducing computational cost, or a general triclinic one. May be
+omitted (and is ignored) if no direction is periodic.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Optional</span></code> [<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>]], <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A function of two position vector arguments and (optionally, depending
+on PBCs) a unit cell, that computes the distance vector between them.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.core.shortrange.make_eval_pair_pot">
+<span class="sig-prename descclassname"><span class="pre">msmjax.core.shortrange.</span></span><span class="sig-name descname"><span class="pre">make_eval_pair_pot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pbc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supercell_diag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">per_particle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_uncharged_interaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/core/shortrange.html#make_eval_pair_pot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.core.shortrange.make_eval_pair_pot" title="Link to this definition"></a></dt>
+<dd><p>Transform interaction kernel into function acting on a particle system.</p>
+<p>In other words, given a distance-dependent interaction kernel <span class="math notranslate nohighlight">\(k(r)\)</span>,
+construct another function that computes the total system energy,
+<span class="math notranslate nohighlight">\(\frac{1}{2} \sum_i \sum_{j \neq i} q_i q_j k(r_{ij})\)</span>,
+by mapping <span class="math notranslate nohighlight">\(k(r)\)</span> over all particle pairs.</p>
+<p>The design of this implementation is inspired by JAX-MD’s <cite>smap.pair</cite>
+and internally uses some of the same lower-level functionality.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Distance computations under periodic boundary conditions are handled
+by means of the minimum image convention, with the known limitations
+this entails. If the cutoff radius of <code class="docutils literal notranslate"><span class="pre">kernel_fn</span></code> is too large for
+the unit cell, or the unit cell is too deformed, results will be
+incorrect. If you know beforehand that this is an issue, you can
+remedy it by using the <code class="docutils literal notranslate"><span class="pre">supercell_diag</span></code> parameter (see below).</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kernel_fn</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]</span>) – A function of a single scalar distance argument,
+corresponding to <span class="math notranslate nohighlight">\(k(r)\)</span> in the above formula.</p></li>
+<li><p><strong>pbc</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]</span>) – One boolean per direction signaling periodicity.</p></li>
+<li><p><strong>cell_mode</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code>[<code class="docutils literal notranslate"><span class="pre">'ortho'</span></code>, <code class="docutils literal notranslate"><span class="pre">'triclinic'</span></code>]]</span>) – A string specifying assumptions on the shape of the
+unit cell. Either the cell is assumed orthorhombic and
+axis-aligned, in which case only its diagonal is considered,
+reducing computational cost, or a general triclinic one. May be
+omitted (and is ignored) if no direction is periodic.</p></li>
+<li><p><strong>supercell_diag</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</span>) – An optional sequence of positive integers, one per
+direction. If supplied, pairwise interactions are computed
+between the particles in the original cell and all particles in
+a supercell created by repeating the cell the given number of
+times along each direction. This can be used to ensure that all
+interactions with neighbors are taken into account in cases
+where the cutoff of <code class="docutils literal notranslate"><span class="pre">kernel_fn</span></code> is too large for the
+original, non-replicated, cell.</p></li>
+<li><p><strong>per_particle</strong> – If true, an array of energies per particle is returned
+rather than the total system energy.</p></li>
+<li><p><strong>extra_uncharged_interaction</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]]</span>) – An optional additional charge-unaware
+pair potential that is evaluated along with the MSM’s short-range
+kernel, reusing the same distance computations for efficiency,
+and added to the total system energy.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Optional</span></code> [<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>]], <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A function that takes arrays of particle positions and charges,
+and the unit cell, as arguments and computes the energy for the
+whole system of particles.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.core.shortrange.make_eval_pair_pot_neighborlist">
+<span class="sig-prename descclassname"><span class="pre">msmjax.core.shortrange.</span></span><span class="sig-name descname"><span class="pre">make_eval_pair_pot_neighborlist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pbc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">safe_eval_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_uncharged_interaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/core/shortrange.html#make_eval_pair_pot_neighborlist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.core.shortrange.make_eval_pair_pot_neighborlist" title="Link to this definition"></a></dt>
+<dd><p>Transform interaction kernel into function acting on a particle system.</p>
+<p>Like <a class="reference internal" href="#msmjax.core.shortrange.make_eval_pair_pot" title="msmjax.core.shortrange.make_eval_pair_pot"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_eval_pair_pot()</span></code></a>, but with a neighbor list.</p>
+<p>The design of this implementation is inspired by JAX-MD’s
+<cite>smap.pair_neighbor_list</cite> and internally uses some of the same
+lower-level functionality.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Distance computations under periodic boundary conditions are handled
+by means of the minimum image convention, with the known limitations
+this entails. If the cutoff radius of <code class="docutils literal notranslate"><span class="pre">kernel_fn</span></code> is too large for
+the unit cell, or the unit cell is too deformed, results will be
+incorrect. Unlike the no-neighbor-list analog
+<a class="reference internal" href="#msmjax.core.shortrange.make_eval_pair_pot" title="msmjax.core.shortrange.make_eval_pair_pot"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_eval_pair_pot()</span></code></a>, this version does not have the built-in
+supercell generation feature via <code class="docutils literal notranslate"><span class="pre">supercell_diag</span></code>. This should not be
+a major limitation since in cases where supercell is required, the
+benefit of using a neighbor list is likely to be small, if any.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kernel_fn</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]</span>) – A function of a single scalar distance argument,
+see documentation of <a class="reference internal" href="#msmjax.core.shortrange.make_eval_pair_pot" title="msmjax.core.shortrange.make_eval_pair_pot"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_eval_pair_pot()</span></code></a>.</p></li>
+<li><p><strong>pbc</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]</span>) – One boolean per direction signaling periodicity.</p></li>
+<li><p><strong>cell_mode</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code>[<code class="docutils literal notranslate"><span class="pre">'ortho'</span></code>, <code class="docutils literal notranslate"><span class="pre">'triclinic'</span></code>]]</span>) – A string specifying assumptions on the shape of the
+unit cell. Either the cell is assumed orthorhombic and
+axis-aligned, in which case only its diagonal is considered,
+reducing computational cost, or a general triclinic one. May be
+omitted (and is ignored) if no direction is periodic.</p></li>
+<li><p><strong>safe_eval_distance</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span>) – A value for which <code class="docutils literal notranslate"><span class="pre">kernel_fn</span></code> evaluates to a
+result that is not NaN or infinite. Apart from this, it can be
+arbitrary. Used only internally, the exact value has no further
+consequence.</p></li>
+<li><p><strong>extra_uncharged_interaction</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]]</span>) – An optional additional charge-unaware
+pair potential that is evaluated along with the MSM’s short-range
+kernel, reusing the same neighbor list and distance computations
+for efficiency, and added to the total system energy.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Optional</span></code> [<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>]], <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A function that takes arrays of particle positions and charges,
+and the unit cell, and additionally a neighbor list and pairwise
+weights, as arguments and computes the energy for the whole system
+of particles.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.core.shortrange.make_compute_u_zero">
+<span class="sig-prename descclassname"><span class="pre">msmjax.core.shortrange.</span></span><span class="sig-name descname"><span class="pre">make_compute_u_zero</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel_fns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pair_map_fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/core/shortrange.html#make_compute_u_zero"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.core.shortrange.make_compute_u_zero" title="Link to this definition"></a></dt>
+<dd><p>Create a function that computes the MSM short-range energy contribution.</p>
+<p>The precise quantity being computed is</p>
+<div class="math notranslate nohighlight">
+\[U^0 =   \frac{1}{2} \sum_i \sum_{j \neq i} q_i q_j k_0(r_{ij})
+      - \frac{1}{2} \sum_{l=1}^L \sum_i q_i^2 k_{l}(r)\big\rvert_{r=0} \, ,\]</div>
+<p>which consists of the pair interaction term for level zero, and a
+correction term for self-interaction at the higher levels.</p>
+<p>This function is a high-level wrapper that constructs the evaluation
+function for <span class="math notranslate nohighlight">\(U^0\)</span> from two ingredients: The kernel functions
+<span class="math notranslate nohighlight">\(k_l(r)\)</span> at all levels, and a function that takes care of pair
+distance computation (this includes accounting for periodic boundary
+conditions) and evaluation of such a kernel function over all pairs of
+particles of a charged system.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kernel_fns</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]]</span>) – List of functions of a single scalar distance argument,
+one for each MSM level, corresponding to the different partial
+kernels into which the full interaction kernel is split.
+They are expected to be natively broadcastable over array inputs.</p></li>
+<li><p><strong>pair_map_fn</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]], <code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]]</span>) – <p>A function of a single argument that transforms a
+distance-dependent interaction kernel into a pairwise evaluation
+function that acts across a system of charged particles.</p>
+<ul>
+<li><p>The input to <code class="docutils literal notranslate"><span class="pre">pair_map_fn</span></code> should be a single-argument
+function of a scalar distance argument.</p></li>
+<li><p>The return value of <code class="docutils literal notranslate"><span class="pre">pair_map_fn</span></code> should be a function that
+computes the first term in the formula above.
+It takes two arrays (positions of shape <cite>(n_particles, n_dim)</cite>,
+and charges of shape <cite>(n_particles,)</cite>), plus optionally
+additional keyword arguments. Natural use cases for parameters
+passed through keyword arguments would be a unit cell in
+systems with periodicity, or a neighbor list.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The way that periodic boundary conditions are handled
+is by an appropriate definition of <code class="docutils literal notranslate"><span class="pre">pair_map_fn</span></code>.</p>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">pair_map_fn</span></code> gets applied to the zeroth element of the
+<code class="docutils literal notranslate"><span class="pre">kernel_fns</span></code> argument:
+<code class="docutils literal notranslate"><span class="pre">compute_pair_term</span> <span class="pre">=</span> <span class="pre">pair_map_fn(kernel_fns[0])</span></code>.</p>
+<p>The most convenient way to obtain a <code class="docutils literal notranslate"><span class="pre">pair_map_fn</span></code> with
+appropriate signature is by closing
+<a class="reference internal" href="#msmjax.core.shortrange.make_eval_pair_pot" title="msmjax.core.shortrange.make_eval_pair_pot"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_eval_pair_pot()</span></code></a> or
+<a class="reference internal" href="#msmjax.core.shortrange.make_eval_pair_pot_neighborlist" title="msmjax.core.shortrange.make_eval_pair_pot_neighborlist"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_eval_pair_pot_neighborlist()</span></code></a> over their extra
+arguments, e.g. <code class="docutils literal notranslate"><span class="pre">pair_map_fn</span> <span class="pre">=</span> <span class="pre">functools.partial(</span>
+<span class="pre">make_eval_pair_pot,</span> <span class="pre">pbc=(True,</span> <span class="pre">True,</span> <span class="pre">False),</span> <span class="pre">cell_mode='ortho')</span></code>.</p>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A function with the same signature as the one returned by
+<code class="docutils literal notranslate"><span class="pre">pair_map_fn(kernel_fns[0])</span></code>, that computes <span class="math notranslate nohighlight">\(U^0\)</span> from
+positions, charges, and optional additional keyword arguments.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="msmjax.core.html" class="btn btn-neutral float-left" title="msmjax.core" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="msmjax.core.longrange.html" class="btn btn-neutral float-right" title="msmjax.core.longrange" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Florian Buchner, Johannes Schörghuber, Nico Unglert, Jesús Carrete, Georg K. H. Madsen.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

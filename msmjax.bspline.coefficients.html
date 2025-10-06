@@ -1,0 +1,602 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>msmjax.bspline.coefficients &mdash; msmJAX  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="msmjax.bspline.gridops" href="msmjax.bspline.gridops.html" />
+    <link rel="prev" title="msmjax.bspline.basis" href="msmjax.bspline.basis.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            msmJAX
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#cpu-only-installation">CPU-only installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#cuda-installation">CUDA installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#optional-dependencies">Optional dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="setup_and_run.html">Setting up and running a calculation</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="api_reference.html">API reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="msmjax.calculators.html">msmjax.calculators</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.CustomJSONEncoder"><code class="docutils literal notranslate"><span class="pre">CustomJSONEncoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.CustomJSONEncoder.default"><code class="docutils literal notranslate"><span class="pre">CustomJSONEncoder.default()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.CustomJSONDecoder"><code class="docutils literal notranslate"><span class="pre">CustomJSONDecoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.CustomJSONDecoder.object_hook"><code class="docutils literal notranslate"><span class="pre">CustomJSONDecoder.object_hook()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams"><code class="docutils literal notranslate"><span class="pre">MSMParams</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.p"><code class="docutils literal notranslate"><span class="pre">MSMParams.p</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.mu"><code class="docutils literal notranslate"><span class="pre">MSMParams.mu</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.max_splitting_level"><code class="docutils literal notranslate"><span class="pre">MSMParams.max_splitting_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.max_grid_level"><code class="docutils literal notranslate"><span class="pre">MSMParams.max_grid_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.cutoffs"><code class="docutils literal notranslate"><span class="pre">MSMParams.cutoffs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.cell"><code class="docutils literal notranslate"><span class="pre">MSMParams.cell</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.cell_mode"><code class="docutils literal notranslate"><span class="pre">MSMParams.cell_mode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.pbc"><code class="docutils literal notranslate"><span class="pre">MSMParams.pbc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.dynamic_cell"><code class="docutils literal notranslate"><span class="pre">MSMParams.dynamic_cell</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.supercell_diag"><code class="docutils literal notranslate"><span class="pre">MSMParams.supercell_diag</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.use_neighborlist"><code class="docutils literal notranslate"><span class="pre">MSMParams.use_neighborlist</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.neighborlist_prefactor"><code class="docutils literal notranslate"><span class="pre">MSMParams.neighborlist_prefactor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.grids_defined_on_unitcube"><code class="docutils literal notranslate"><span class="pre">MSMParams.grids_defined_on_unitcube</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.grid_shapes"><code class="docutils literal notranslate"><span class="pre">MSMParams.grid_shapes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.grid_spacings"><code class="docutils literal notranslate"><span class="pre">MSMParams.grid_spacings</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.stencil_extents_from_center"><code class="docutils literal notranslate"><span class="pre">MSMParams.stencil_extents_from_center</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.convolution_methods"><code class="docutils literal notranslate"><span class="pre">MSMParams.convolution_methods</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.n_dim"><code class="docutils literal notranslate"><span class="pre">MSMParams.n_dim</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.version"><code class="docutils literal notranslate"><span class="pre">MSMParams.version</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.info"><code class="docutils literal notranslate"><span class="pre">MSMParams.info</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.save_json"><code class="docutils literal notranslate"><span class="pre">MSMParams.save_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.load_json"><code class="docutils literal notranslate"><span class="pre">MSMParams.load_json()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.find_stencil_extents_all_levels"><code class="docutils literal notranslate"><span class="pre">find_stencil_extents_all_levels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.set_up_msm_params"><code class="docutils literal notranslate"><span class="pre">set_up_msm_params()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.create_msm"><code class="docutils literal notranslate"><span class="pre">create_msm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.check_cutoffs_and_get_actual_spacings"><code class="docutils literal notranslate"><span class="pre">check_cutoffs_and_get_actual_spacings()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msmjax.kernels.html">msmjax.kernels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.kernels.html#msmjax.kernels.SoftenerOneOverR"><code class="docutils literal notranslate"><span class="pre">SoftenerOneOverR</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.kernels.html#msmjax.kernels.split_one_over_r"><code class="docutils literal notranslate"><span class="pre">split_one_over_r()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.kernels.html#msmjax.kernels._get_distances"><code class="docutils literal notranslate"><span class="pre">_get_distances()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.kernels.html#msmjax.kernels._compute_one_stencil"><code class="docutils literal notranslate"><span class="pre">_compute_one_stencil()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.kernels.html#msmjax.kernels.make_construct_stencils"><code class="docutils literal notranslate"><span class="pre">make_construct_stencils()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="msmjax.bspline.html">msmjax.bspline</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="msmjax.bspline.basis.html">msmjax.bspline.basis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.basis.html#msmjax.bspline.basis.characteristic"><code class="docutils literal notranslate"><span class="pre">characteristic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.basis.html#msmjax.bspline.basis.evaluate_basis_element"><code class="docutils literal notranslate"><span class="pre">evaluate_basis_element()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.basis.html#msmjax.bspline.basis.create_bspline_basis_element"><code class="docutils literal notranslate"><span class="pre">create_bspline_basis_element()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">msmjax.bspline.coefficients</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.bspline.coefficients.calc_Phi"><code class="docutils literal notranslate"><span class="pre">calc_Phi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.bspline.coefficients.build_col_of_B"><code class="docutils literal notranslate"><span class="pre">build_col_of_B()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.bspline.coefficients.build_col_of_B2"><code class="docutils literal notranslate"><span class="pre">build_col_of_B2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.bspline.coefficients.build_Toeplitz_matrix"><code class="docutils literal notranslate"><span class="pre">build_Toeplitz_matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.bspline.coefficients.build_Toeplitz_system"><code class="docutils literal notranslate"><span class="pre">build_Toeplitz_system()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.bspline.coefficients.compute_c_m"><code class="docutils literal notranslate"><span class="pre">compute_c_m()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.bspline.coefficients.generating_function"><code class="docutils literal notranslate"><span class="pre">generating_function()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.bspline.coefficients.calc_Mclaurin_coefficient"><code class="docutils literal notranslate"><span class="pre">calc_Mclaurin_coefficient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.bspline.coefficients.calc_B_p_over_2"><code class="docutils literal notranslate"><span class="pre">calc_B_p_over_2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.bspline.coefficients.calc_polynomials"><code class="docutils literal notranslate"><span class="pre">calc_polynomials()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.bspline.coefficients.explode_Add"><code class="docutils literal notranslate"><span class="pre">explode_Add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.bspline.coefficients.coeff_dict_to_array"><code class="docutils literal notranslate"><span class="pre">coeff_dict_to_array()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.bspline.coefficients.compute_quasi_omega_prime"><code class="docutils literal notranslate"><span class="pre">compute_quasi_omega_prime()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.bspline.coefficients.compute_j_zeroplus"><code class="docutils literal notranslate"><span class="pre">compute_j_zeroplus()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.bspline.gridops.html">msmjax.bspline.gridops</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._find_n_gridpoints_1d"><code class="docutils literal notranslate"><span class="pre">_find_n_gridpoints_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.set_up_grids_all_levels"><code class="docutils literal notranslate"><span class="pre">set_up_grids_all_levels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._arbitrary_dim_outer"><code class="docutils literal notranslate"><span class="pre">_arbitrary_dim_outer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._multiindex_outer"><code class="docutils literal notranslate"><span class="pre">_multiindex_outer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._ravel_multi_index_with_invalidation"><code class="docutils literal notranslate"><span class="pre">_ravel_multi_index_with_invalidation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_basis_evaluation_fn"><code class="docutils literal notranslate"><span class="pre">make_basis_evaluation_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_restrict_1d"><code class="docutils literal notranslate"><span class="pre">_make_restrict_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_restriction_operator"><code class="docutils literal notranslate"><span class="pre">make_restriction_operator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_prolongate_1d"><code class="docutils literal notranslate"><span class="pre">_make_prolongate_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_prolongation_operator"><code class="docutils literal notranslate"><span class="pre">make_prolongation_operator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.create_all_grid_to_grid_ops"><code class="docutils literal notranslate"><span class="pre">create_all_grid_to_grid_ops()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.suggest_max_grid_level_nonperiodic"><code class="docutils literal notranslate"><span class="pre">suggest_max_grid_level_nonperiodic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.find_spacings_and_max_level_periodic"><code class="docutils literal notranslate"><span class="pre">find_spacings_and_max_level_periodic()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msmjax.core.html">msmjax.core</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.core.shortrange.html">msmjax.core.shortrange</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange._gen_supercell"><code class="docutils literal notranslate"><span class="pre">_gen_supercell()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_free"><code class="docutils literal notranslate"><span class="pre">_displacement_free()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_ortho"><code class="docutils literal notranslate"><span class="pre">_displacement_ortho()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_general"><code class="docutils literal notranslate"><span class="pre">_displacement_general()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange._concretize_displacement_fn"><code class="docutils literal notranslate"><span class="pre">_concretize_displacement_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot"><code class="docutils literal notranslate"><span class="pre">make_eval_pair_pot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot_neighborlist"><code class="docutils literal notranslate"><span class="pre">make_eval_pair_pot_neighborlist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange.make_compute_u_zero"><code class="docutils literal notranslate"><span class="pre">make_compute_u_zero()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.core.longrange.html">msmjax.core.longrange</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange._anterpolate"><code class="docutils literal notranslate"><span class="pre">_anterpolate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_positions_gradient"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy_positions_gradient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_charge_gradient"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy_charge_gradient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange.special_periodic_convolve_scipy"><code class="docutils literal notranslate"><span class="pre">special_periodic_convolve_scipy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange.make_grid_pass_fn"><code class="docutils literal notranslate"><span class="pre">make_grid_pass_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange.make_compute_u_oneplus"><code class="docutils literal notranslate"><span class="pre">make_compute_u_oneplus()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msmjax.utils.html">msmjax.utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.utils.benchmarking.html">msmjax.utils.benchmarking</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.dir_context"><code class="docutils literal notranslate"><span class="pre">dir_context()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.write_lammps_data"><code class="docutils literal notranslate"><span class="pre">write_lammps_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.parse_energy_from_lammps_log"><code class="docutils literal notranslate"><span class="pre">parse_energy_from_lammps_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.parse_lammps_log"><code class="docutils literal notranslate"><span class="pre">parse_lammps_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.make_lammps_input_text_pppm"><code class="docutils literal notranslate"><span class="pre">make_lammps_input_text_pppm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.eval_lammps_pppm"><code class="docutils literal notranslate"><span class="pre">eval_lammps_pppm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_rmse"><code class="docutils literal notranslate"><span class="pre">calc_rmse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_relative_rmse_percent"><code class="docutils literal notranslate"><span class="pre">calc_relative_rmse_percent()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_relative_rmse"><code class="docutils literal notranslate"><span class="pre">calc_relative_rmse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.make_timed_eval"><code class="docutils literal notranslate"><span class="pre">make_timed_eval()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.remove_duplicates_from_neighborlist"><code class="docutils literal notranslate"><span class="pre">remove_duplicates_from_neighborlist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.build_duplicate_free_neighborlists"><code class="docutils literal notranslate"><span class="pre">build_duplicate_free_neighborlists()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.coulomb_kernel"><code class="docutils literal notranslate"><span class="pre">coulomb_kernel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_energy_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_energy_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_forces_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_forces_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_chargegrad_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_chargegrad_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_stress_virial"><code class="docutils literal notranslate"><span class="pre">calc_stress_virial()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_nonperiodic_reference_results"><code class="docutils literal notranslate"><span class="pre">calc_nonperiodic_reference_results()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.utils.general.html">msmjax.utils.general</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.general.html#msmjax.utils.general._divide_zero_safe"><code class="docutils literal notranslate"><span class="pre">_divide_zero_safe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.general.html#msmjax.utils.general._sqrt_jvp"><code class="docutils literal notranslate"><span class="pre">_sqrt_jvp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.general.html#msmjax.utils.general.get_max_cutoff_for_mic"><code class="docutils literal notranslate"><span class="pre">get_max_cutoff_for_mic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.general.html#msmjax.utils.general.find_covering_grid_extents"><code class="docutils literal notranslate"><span class="pre">find_covering_grid_extents()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">msmJAX</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="api_reference.html">API reference</a></li>
+          <li class="breadcrumb-item"><a href="msmjax.bspline.html">msmjax.bspline</a></li>
+      <li class="breadcrumb-item active">msmjax.bspline.coefficients</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/msmjax.bspline.coefficients.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-msmjax.bspline.coefficients">
+<span id="msmjax-bspline-coefficients"></span><h1>msmjax.bspline.coefficients<a class="headerlink" href="#module-msmjax.bspline.coefficients" title="Link to this heading"></a></h1>
+<p>Code for coefficients of B-spline (quasi-)interpolation.</p>
+<p class="rubric">References</p>
+<p>[1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,
+R. D. Multilevel Summation with B-Spline Interpolation for Pairwise
+Interactions in Molecular Dynamics Simulations. J. Chem. Phys. 2016,
+144 (11), 114112. <a class="reference external" href="https://doi.org/10.1063/1.4943868">https://doi.org/10.1063/1.4943868</a>.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.bspline.coefficients.calc_Phi">
+<span class="sig-prename descclassname"><span class="pre">msmjax.bspline.coefficients.</span></span><span class="sig-name descname"><span class="pre">calc_Phi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/bspline/coefficients.html#calc_Phi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.bspline.coefficients.calc_Phi" title="Link to this definition"></a></dt>
+<dd><p>Evaluate the B-spline denoted by Phi in the article.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The degree of the spline in the convention of the article.</p></li>
+<li><p><strong>u</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.typing.ArrayLike</span></code></span>) – The value or array or values where the function should be
+evaluated.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The values(s) of Phi(u) at u.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If p is not a positive, even integer.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.bspline.coefficients.build_col_of_B">
+<span class="sig-prename descclassname"><span class="pre">msmjax.bspline.coefficients.</span></span><span class="sig-name descname"><span class="pre">build_col_of_B</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/bspline/coefficients.html#build_col_of_B"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.bspline.coefficients.build_col_of_B" title="Link to this definition"></a></dt>
+<dd><p>Create a column of B according to the equation before (10).</p>
+<p>This function creates a vector with Phi(u) evaluated at all the integers
+inside its domain. Only the part of the column starting at and including
+the main diagonal is returned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>p</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The degree of the spline in the convention of the article.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A vector of p/2 elements with all the non-zero entries in any column
+of the banded matrix B, starting at and including the main diagonal.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.bspline.coefficients.build_col_of_B2">
+<span class="sig-prename descclassname"><span class="pre">msmjax.bspline.coefficients.</span></span><span class="sig-name descname"><span class="pre">build_col_of_B2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/bspline/coefficients.html#build_col_of_B2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.bspline.coefficients.build_col_of_B2" title="Link to this definition"></a></dt>
+<dd><p>Create a column of B**2 based on the column of B.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>p</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The degree of the spline in the convention of the article.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A vector with all the non-zero entries in any column of the banded
+matrix B**2, starting at and including the main diagonal.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.bspline.coefficients.build_Toeplitz_matrix">
+<span class="sig-prename descclassname"><span class="pre">msmjax.bspline.coefficients.</span></span><span class="sig-name descname"><span class="pre">build_Toeplitz_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_rows</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/bspline/coefficients.html#build_Toeplitz_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.bspline.coefficients.build_Toeplitz_matrix" title="Link to this definition"></a></dt>
+<dd><p>Build an approximation to B**2 as a Toeplitz matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The degree of the spline in the convention of the article.</p></li>
+<li><p><strong>n_rows</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The number of rows of the matrix.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The matrix as a vector in a format that scipy.linalg.toeplitz can
+understand.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If n_rows is too small for this matrix.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.bspline.coefficients.build_Toeplitz_system">
+<span class="sig-prename descclassname"><span class="pre">msmjax.bspline.coefficients.</span></span><span class="sig-name descname"><span class="pre">build_Toeplitz_system</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rhs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/bspline/coefficients.html#build_Toeplitz_system"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.bspline.coefficients.build_Toeplitz_system" title="Link to this definition"></a></dt>
+<dd><p>Build a finite approximation to the linear system defining the cm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The degree of the spline in the convention of the article.</p></li>
+<li><p><strong>rhs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></span>) – The non-zero part of the right hand side, which must have an
+odd length.</p></li>
+<li><p><strong>padding</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The amount of padding around the minimal Toeplitz
+approximation, as a positive integer.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A tuple with two vectors. The first one represents the Toeplitz
+coefficient matrix, and the second one is the symmetric Kronecker
+delta independent right-hand side.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If “padding” is negative or zero, or if rhs has an even
+    length.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.bspline.coefficients.compute_c_m">
+<span class="sig-prename descclassname"><span class="pre">msmjax.bspline.coefficients.</span></span><span class="sig-name descname"><span class="pre">compute_c_m</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">C_coeffs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/bspline/coefficients.html#compute_c_m"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.bspline.coefficients.compute_c_m" title="Link to this definition"></a></dt>
+<dd><p>Compute c_m the coefficients of the approximation to B^(-2).</p>
+<p>The solution is based on the construction of progressively larger
+approximations to an infinite Toeplitz matrix, until the solution
+converges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The degree of the spline in the convention of the article.</p></li>
+<li><p><strong>mu</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – A non-negative integer determining how many terms are calculated.
+The output will contain (2 * mu + 1) coefficients.</p></li>
+<li><p><strong>C_coeffs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></span>) – The right-hand side of the unnumbered equation
+in appendix C that defined the c_m, in the basis of powers
+of E (not delta**2!), as a NumPy array.</p></li>
+<li><p><strong>rtol</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span>) – The relative tolerance to be passes to np.allclose() when
+checking for convergence.</p></li>
+<li><p><strong>atol</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span>) – The absolute tolerance to be passes to np.allclose() when
+checking for convergence.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The coefficients c_m in a Numpy Array.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If mu is negative.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.bspline.coefficients.generating_function">
+<span class="sig-prename descclassname"><span class="pre">msmjax.bspline.coefficients.</span></span><span class="sig-name descname"><span class="pre">generating_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/bspline/coefficients.html#generating_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.bspline.coefficients.generating_function" title="Link to this definition"></a></dt>
+<dd><p>Compute the function defined in equation (B1) of the paper.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>z</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Expr</span></code></span>) – The argument on which the function will be Mclaurin-expanded.</p></li>
+<li><p><strong>s</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Expr</span></code></span>) – The parameter that determines the Mclaurin coefficients.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mul</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The value of the function.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.bspline.coefficients.calc_Mclaurin_coefficient">
+<span class="sig-prename descclassname"><span class="pre">msmjax.bspline.coefficients.</span></span><span class="sig-name descname"><span class="pre">calc_Mclaurin_coefficient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/bspline/coefficients.html#calc_Mclaurin_coefficient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.bspline.coefficients.calc_Mclaurin_coefficient" title="Link to this definition"></a></dt>
+<dd><p>Calculate a coefficient in truncated McLaurin series of a function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>function</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Function</span></code></span>) – A SymPy function.</p></li>
+<li><p><strong>variable</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Symbol</span></code></span>) – The SymPy variable of the power series.</p></li>
+<li><p><strong>order</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The order of the coefficient.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Expr</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The coefficient as a SymPy expression.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.bspline.coefficients.calc_B_p_over_2">
+<span class="sig-prename descclassname"><span class="pre">msmjax.bspline.coefficients.</span></span><span class="sig-name descname"><span class="pre">calc_B_p_over_2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/bspline/coefficients.html#calc_B_p_over_2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.bspline.coefficients.calc_B_p_over_2" title="Link to this definition"></a></dt>
+<dd><p>Build the polynomial B_(p/2) defined in equation B1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>p</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The index of the polynomial. It must be a positive even integer.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Poly</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The polynomial as a SymPy object. The variable is s=delta**2.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If p does not make sense.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.bspline.coefficients.calc_polynomials">
+<span class="sig-prename descclassname"><span class="pre">msmjax.bspline.coefficients.</span></span><span class="sig-name descname"><span class="pre">calc_polynomials</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/bspline/coefficients.html#calc_polynomials"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.bspline.coefficients.calc_polynomials" title="Link to this definition"></a></dt>
+<dd><p>Obtain the polynomials b and C defined by equation (C1).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>p</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The index of the polynomial. It must be an even integer greater
+than 2.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Poly</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Poly</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A tuple with the polynomials (b, C) as SymPy objects.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If p violates the constraints.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.bspline.coefficients.explode_Add">
+<span class="sig-prename descclassname"><span class="pre">msmjax.bspline.coefficients.</span></span><span class="sig-name descname"><span class="pre">explode_Add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">add_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/bspline/coefficients.html#explode_Add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.bspline.coefficients.explode_Add" title="Link to this definition"></a></dt>
+<dd><p>Extract all the coefficients from a sum of powers of a single variable.</p>
+<p>This function is intended for a narrow class of sympy.Add objects
+containing only positive and negative values of a single variable, and
+its behavior for any other inputs is undefined.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>add_object</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Add</span></code></span>) – The sympy.Add object to be analyzed.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dictionary of coefficients of the powers contained in add_object.
+The keys are the exponents.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the argument is not a sympy.Add object.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.bspline.coefficients.coeff_dict_to_array">
+<span class="sig-prename descclassname"><span class="pre">msmjax.bspline.coefficients.</span></span><span class="sig-name descname"><span class="pre">coeff_dict_to_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coefficients</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/bspline/coefficients.html#coeff_dict_to_array"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.bspline.coefficients.coeff_dict_to_array" title="Link to this definition"></a></dt>
+<dd><p>Translate the output of explode_Add() into a numerical array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>coefficients</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></span>) – The return code of explode_Add(), a dictionary of
+SymPy objects indexed by their exponent.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A NumPy array of floating point numbers with the coefficients, that
+can be passed to an equation solver.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the list of coefficients does not correspond to an
+    even function.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.bspline.coefficients.compute_quasi_omega_prime">
+<span class="sig-prename descclassname"><span class="pre">msmjax.bspline.coefficients.</span></span><span class="sig-name descname"><span class="pre">compute_quasi_omega_prime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/bspline/coefficients.html#compute_quasi_omega_prime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.bspline.coefficients.compute_quasi_omega_prime" title="Link to this definition"></a></dt>
+<dd><p>Compute the coefficients <span class="math notranslate nohighlight">\(\omega_{\mu,m}'\)</span> from the article.</p>
+<p>They are introduced in the inline equations in the text after Eq. (13).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The degree of the spline in the convention of the article.</p></li>
+<li><p><strong>mu</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Adjustable parameter in the quasi-interpolation scheme that
+controls its accuracy at grid points.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>The coefficients denoted $omega_{mu,m}’$ in the article.</p></li>
+<li><p>The coefficients denoted $c_m$ in the article, in the unnumbered
+equation after Eq. 12 that defines the expansion of the
+operator A.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple containing</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.bspline.coefficients.compute_j_zeroplus">
+<span class="sig-prename descclassname"><span class="pre">msmjax.bspline.coefficients.</span></span><span class="sig-name descname"><span class="pre">compute_j_zeroplus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/bspline/coefficients.html#compute_j_zeroplus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.bspline.coefficients.compute_j_zeroplus" title="Link to this definition"></a></dt>
+<dd><p>Compute the sequence J of spline-nesting coefficients given by eq. (22).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>p</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The degree of the spline in the convention of the article.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Array of coefficients for expressing B-splines at one grid level in
+terms of the B-splines at the next finer level.
+The result contains only the elements with non-negative index,
+those with negative index follow by symmetry.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="msmjax.bspline.basis.html" class="btn btn-neutral float-left" title="msmjax.bspline.basis" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="msmjax.bspline.gridops.html" class="btn btn-neutral float-right" title="msmjax.bspline.gridops" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Florian Buchner, Johannes Schörghuber, Nico Unglert, Jesús Carrete, Georg K. H. Madsen.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

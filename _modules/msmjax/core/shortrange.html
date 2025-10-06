@@ -1,0 +1,782 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>msmjax.core.shortrange &mdash; msmJAX  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            msmJAX
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference.html">API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../msmjax.calculators.html">msmjax.calculators</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.CustomJSONEncoder"><code class="docutils literal notranslate"><span class="pre">CustomJSONEncoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.CustomJSONEncoder.default"><code class="docutils literal notranslate"><span class="pre">CustomJSONEncoder.default()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.CustomJSONDecoder"><code class="docutils literal notranslate"><span class="pre">CustomJSONDecoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.CustomJSONDecoder.object_hook"><code class="docutils literal notranslate"><span class="pre">CustomJSONDecoder.object_hook()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams"><code class="docutils literal notranslate"><span class="pre">MSMParams</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.p"><code class="docutils literal notranslate"><span class="pre">MSMParams.p</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.mu"><code class="docutils literal notranslate"><span class="pre">MSMParams.mu</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.max_splitting_level"><code class="docutils literal notranslate"><span class="pre">MSMParams.max_splitting_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.max_grid_level"><code class="docutils literal notranslate"><span class="pre">MSMParams.max_grid_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.cutoffs"><code class="docutils literal notranslate"><span class="pre">MSMParams.cutoffs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.cell"><code class="docutils literal notranslate"><span class="pre">MSMParams.cell</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.cell_mode"><code class="docutils literal notranslate"><span class="pre">MSMParams.cell_mode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.pbc"><code class="docutils literal notranslate"><span class="pre">MSMParams.pbc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.dynamic_cell"><code class="docutils literal notranslate"><span class="pre">MSMParams.dynamic_cell</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.supercell_diag"><code class="docutils literal notranslate"><span class="pre">MSMParams.supercell_diag</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.use_neighborlist"><code class="docutils literal notranslate"><span class="pre">MSMParams.use_neighborlist</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.neighborlist_prefactor"><code class="docutils literal notranslate"><span class="pre">MSMParams.neighborlist_prefactor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.grids_defined_on_unitcube"><code class="docutils literal notranslate"><span class="pre">MSMParams.grids_defined_on_unitcube</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.grid_shapes"><code class="docutils literal notranslate"><span class="pre">MSMParams.grid_shapes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.grid_spacings"><code class="docutils literal notranslate"><span class="pre">MSMParams.grid_spacings</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.stencil_extents_from_center"><code class="docutils literal notranslate"><span class="pre">MSMParams.stencil_extents_from_center</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.convolution_methods"><code class="docutils literal notranslate"><span class="pre">MSMParams.convolution_methods</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.n_dim"><code class="docutils literal notranslate"><span class="pre">MSMParams.n_dim</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.version"><code class="docutils literal notranslate"><span class="pre">MSMParams.version</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.info"><code class="docutils literal notranslate"><span class="pre">MSMParams.info</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.save_json"><code class="docutils literal notranslate"><span class="pre">MSMParams.save_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.load_json"><code class="docutils literal notranslate"><span class="pre">MSMParams.load_json()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.find_stencil_extents_all_levels"><code class="docutils literal notranslate"><span class="pre">find_stencil_extents_all_levels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.set_up_msm_params"><code class="docutils literal notranslate"><span class="pre">set_up_msm_params()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.create_msm"><code class="docutils literal notranslate"><span class="pre">create_msm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.check_cutoffs_and_get_actual_spacings"><code class="docutils literal notranslate"><span class="pre">check_cutoffs_and_get_actual_spacings()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../msmjax.kernels.html">msmjax.kernels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.kernels.html#msmjax.kernels.SoftenerOneOverR"><code class="docutils literal notranslate"><span class="pre">SoftenerOneOverR</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.kernels.html#msmjax.kernels.split_one_over_r"><code class="docutils literal notranslate"><span class="pre">split_one_over_r()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.kernels.html#msmjax.kernels._get_distances"><code class="docutils literal notranslate"><span class="pre">_get_distances()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.kernels.html#msmjax.kernels._compute_one_stencil"><code class="docutils literal notranslate"><span class="pre">_compute_one_stencil()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.kernels.html#msmjax.kernels.make_construct_stencils"><code class="docutils literal notranslate"><span class="pre">make_construct_stencils()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../msmjax.bspline.html">msmjax.bspline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.bspline.basis.html">msmjax.bspline.basis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.basis.html#msmjax.bspline.basis.characteristic"><code class="docutils literal notranslate"><span class="pre">characteristic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.basis.html#msmjax.bspline.basis.evaluate_basis_element"><code class="docutils literal notranslate"><span class="pre">evaluate_basis_element()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.basis.html#msmjax.bspline.basis.create_bspline_basis_element"><code class="docutils literal notranslate"><span class="pre">create_bspline_basis_element()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html">msmjax.bspline.coefficients</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_Phi"><code class="docutils literal notranslate"><span class="pre">calc_Phi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_col_of_B"><code class="docutils literal notranslate"><span class="pre">build_col_of_B()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_col_of_B2"><code class="docutils literal notranslate"><span class="pre">build_col_of_B2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_Toeplitz_matrix"><code class="docutils literal notranslate"><span class="pre">build_Toeplitz_matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_Toeplitz_system"><code class="docutils literal notranslate"><span class="pre">build_Toeplitz_system()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_c_m"><code class="docutils literal notranslate"><span class="pre">compute_c_m()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.generating_function"><code class="docutils literal notranslate"><span class="pre">generating_function()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_Mclaurin_coefficient"><code class="docutils literal notranslate"><span class="pre">calc_Mclaurin_coefficient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_B_p_over_2"><code class="docutils literal notranslate"><span class="pre">calc_B_p_over_2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_polynomials"><code class="docutils literal notranslate"><span class="pre">calc_polynomials()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.explode_Add"><code class="docutils literal notranslate"><span class="pre">explode_Add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.coeff_dict_to_array"><code class="docutils literal notranslate"><span class="pre">coeff_dict_to_array()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_quasi_omega_prime"><code class="docutils literal notranslate"><span class="pre">compute_quasi_omega_prime()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_j_zeroplus"><code class="docutils literal notranslate"><span class="pre">compute_j_zeroplus()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.bspline.gridops.html">msmjax.bspline.gridops</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._find_n_gridpoints_1d"><code class="docutils literal notranslate"><span class="pre">_find_n_gridpoints_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.set_up_grids_all_levels"><code class="docutils literal notranslate"><span class="pre">set_up_grids_all_levels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._arbitrary_dim_outer"><code class="docutils literal notranslate"><span class="pre">_arbitrary_dim_outer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._multiindex_outer"><code class="docutils literal notranslate"><span class="pre">_multiindex_outer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._ravel_multi_index_with_invalidation"><code class="docutils literal notranslate"><span class="pre">_ravel_multi_index_with_invalidation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_basis_evaluation_fn"><code class="docutils literal notranslate"><span class="pre">make_basis_evaluation_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_restrict_1d"><code class="docutils literal notranslate"><span class="pre">_make_restrict_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_restriction_operator"><code class="docutils literal notranslate"><span class="pre">make_restriction_operator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_prolongate_1d"><code class="docutils literal notranslate"><span class="pre">_make_prolongate_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_prolongation_operator"><code class="docutils literal notranslate"><span class="pre">make_prolongation_operator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.create_all_grid_to_grid_ops"><code class="docutils literal notranslate"><span class="pre">create_all_grid_to_grid_ops()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.suggest_max_grid_level_nonperiodic"><code class="docutils literal notranslate"><span class="pre">suggest_max_grid_level_nonperiodic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.find_spacings_and_max_level_periodic"><code class="docutils literal notranslate"><span class="pre">find_spacings_and_max_level_periodic()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../msmjax.core.html">msmjax.core</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.core.shortrange.html">msmjax.core.shortrange</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._gen_supercell"><code class="docutils literal notranslate"><span class="pre">_gen_supercell()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_free"><code class="docutils literal notranslate"><span class="pre">_displacement_free()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_ortho"><code class="docutils literal notranslate"><span class="pre">_displacement_ortho()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_general"><code class="docutils literal notranslate"><span class="pre">_displacement_general()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._concretize_displacement_fn"><code class="docutils literal notranslate"><span class="pre">_concretize_displacement_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot"><code class="docutils literal notranslate"><span class="pre">make_eval_pair_pot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot_neighborlist"><code class="docutils literal notranslate"><span class="pre">make_eval_pair_pot_neighborlist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange.make_compute_u_zero"><code class="docutils literal notranslate"><span class="pre">make_compute_u_zero()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.core.longrange.html">msmjax.core.longrange</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange._anterpolate"><code class="docutils literal notranslate"><span class="pre">_anterpolate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_positions_gradient"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy_positions_gradient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_charge_gradient"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy_charge_gradient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange.special_periodic_convolve_scipy"><code class="docutils literal notranslate"><span class="pre">special_periodic_convolve_scipy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange.make_grid_pass_fn"><code class="docutils literal notranslate"><span class="pre">make_grid_pass_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange.make_compute_u_oneplus"><code class="docutils literal notranslate"><span class="pre">make_compute_u_oneplus()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../msmjax.utils.html">msmjax.utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html">msmjax.utils.benchmarking</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.dir_context"><code class="docutils literal notranslate"><span class="pre">dir_context()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.write_lammps_data"><code class="docutils literal notranslate"><span class="pre">write_lammps_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.parse_energy_from_lammps_log"><code class="docutils literal notranslate"><span class="pre">parse_energy_from_lammps_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.parse_lammps_log"><code class="docutils literal notranslate"><span class="pre">parse_lammps_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.make_lammps_input_text_pppm"><code class="docutils literal notranslate"><span class="pre">make_lammps_input_text_pppm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.eval_lammps_pppm"><code class="docutils literal notranslate"><span class="pre">eval_lammps_pppm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_rmse"><code class="docutils literal notranslate"><span class="pre">calc_rmse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_relative_rmse_percent"><code class="docutils literal notranslate"><span class="pre">calc_relative_rmse_percent()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_relative_rmse"><code class="docutils literal notranslate"><span class="pre">calc_relative_rmse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.make_timed_eval"><code class="docutils literal notranslate"><span class="pre">make_timed_eval()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.remove_duplicates_from_neighborlist"><code class="docutils literal notranslate"><span class="pre">remove_duplicates_from_neighborlist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.build_duplicate_free_neighborlists"><code class="docutils literal notranslate"><span class="pre">build_duplicate_free_neighborlists()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.coulomb_kernel"><code class="docutils literal notranslate"><span class="pre">coulomb_kernel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_energy_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_energy_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_forces_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_forces_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_chargegrad_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_chargegrad_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_stress_virial"><code class="docutils literal notranslate"><span class="pre">calc_stress_virial()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_nonperiodic_reference_results"><code class="docutils literal notranslate"><span class="pre">calc_nonperiodic_reference_results()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.utils.general.html">msmjax.utils.general</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.general.html#msmjax.utils.general._divide_zero_safe"><code class="docutils literal notranslate"><span class="pre">_divide_zero_safe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.general.html#msmjax.utils.general._sqrt_jvp"><code class="docutils literal notranslate"><span class="pre">_sqrt_jvp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.general.html#msmjax.utils.general.get_max_cutoff_for_mic"><code class="docutils literal notranslate"><span class="pre">get_max_cutoff_for_mic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.general.html#msmjax.utils.general.find_covering_grid_extents"><code class="docutils literal notranslate"><span class="pre">find_covering_grid_extents()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">msmJAX</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">msmjax.core.shortrange</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for msmjax.core.shortrange</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Generic short-range implementation (part evaluated without grids).</span>
+
+<span class="sd">References:</span>
+<span class="sd">    [1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,</span>
+<span class="sd">    R. D. Multilevel Summation with B-Spline Interpolation for Pairwise</span>
+<span class="sd">    Interactions in Molecular Dynamics Simulations. J. Chem. Phys. 2016,</span>
+<span class="sd">    144 (11), 114112. https://doi.org/10.1063/1.4943868.</span>
+
+<span class="sd">    [2] Hardy, D. J. Multilevel Summation for the Fast Evaluation of</span>
+<span class="sd">    Forces for the Simulation of Biomolecules (PhD thesis), University</span>
+<span class="sd">    of Illinois at Urbana-Champaign, 2006.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">onp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLike</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">msmjax.jax_md</span><span class="w"> </span><span class="kn">import</span> <span class="n">space</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">msmjax.jax_md.smap</span><span class="w"> </span><span class="kn">import</span> <span class="n">_generalized_diagonal_mask</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">msmjax.utils.general</span><span class="w"> </span><span class="kn">import</span> <span class="n">CellMode</span><span class="p">,</span> <span class="n">KernelFn</span><span class="p">,</span> <span class="n">_divide_zero_safe</span>
+
+
+<div class="viewcode-block" id="_gen_supercell">
+<a class="viewcode-back" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._gen_supercell">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_gen_supercell</span><span class="p">(</span>
+    <span class="n">positions</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">charges</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">cell</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">supercell_diag</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Replicate unit cell and contained particles along its axes.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        positions: Array of positions, shape `(n_particles, n_dim)`.</span>
+<span class="sd">        charges: Array of charges, shape `(n_particles,)`.</span>
+<span class="sd">        cell: Array representing unit cell, shape `(n_dim, n_dim)`.</span>
+<span class="sd">        supercell_diag: Sequence of positive integers, one for each direction,</span>
+<span class="sd">            indicating the number of times to replicate the system.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple containing</span>
+<span class="sd">            - array of positions after replication,</span>
+<span class="sd">            - array of charges after replication,</span>
+<span class="sd">            - unit cell after replication.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n_particles</span><span class="p">,</span> <span class="n">n_dim</span> <span class="o">=</span> <span class="n">positions</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">supercell_diag</span><span class="p">)</span>
+    <span class="n">tile_positions</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">super_charges</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">charges</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
+    <span class="n">grid</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="n">supercell_diag</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n_dim</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">translations</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">cell</span><span class="p">)</span>
+    <span class="n">tile_translations</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">translations</span><span class="p">,</span> <span class="n">n_particles</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">super_positions</span> <span class="o">=</span> <span class="n">tile_positions</span> <span class="o">+</span> <span class="n">tile_translations</span>
+    <span class="n">super_cell</span> <span class="o">=</span> <span class="n">cell</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">supercell_diag</span><span class="p">)[:,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">super_positions</span><span class="p">,</span> <span class="n">super_charges</span><span class="p">,</span> <span class="n">super_cell</span></div>
+
+
+
+<div class="viewcode-block" id="_displacement_free">
+<a class="viewcode-back" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_free">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_displacement_free</span><span class="p">(</span><span class="n">r_1</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">r_2</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute distance vector between two points in free space</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        r_1: First point</span>
+<span class="sd">        r_2: Second point</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Distance vector.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">r_1</span> <span class="o">-</span> <span class="n">r_2</span></div>
+
+
+
+<div class="viewcode-block" id="_displacement_ortho">
+<a class="viewcode-back" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_ortho">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_displacement_ortho</span><span class="p">(</span>
+    <span class="n">r_1</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">r_2</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">side_lengths</span><span class="p">:</span> <span class="n">ArrayLike</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute distance vector between two points in orthorhombic cell.</span>
+
+<span class="sd">    Handles mixed periodicity: To indicate that specific directions lack</span>
+<span class="sd">    periodicity, set the corresponding elements of ``side_lengths`` to zero.</span>
+<span class="sd">    Periodicity is accounted for by means of the minimum image convention,</span>
+<span class="sd">    with all the known limitations entailed by this.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        r_1: First point</span>
+<span class="sd">        r_2: Second point</span>
+<span class="sd">        side_lengths: 1-d array of side lengths (one per direction)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Distance vector.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">r_1</span> <span class="o">-</span> <span class="n">r_2</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">delta</span>
+        <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">_divide_zero_safe</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">side_lengths</span><span class="p">))</span> <span class="o">*</span> <span class="n">side_lengths</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="_displacement_general">
+<a class="viewcode-back" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_general">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_displacement_general</span><span class="p">(</span>
+    <span class="n">r_1</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">r_2</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">cell</span><span class="p">:</span> <span class="n">ArrayLike</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute distance vector between two points in general triclinic cell.</span>
+
+<span class="sd">    Handles mixed periodicity: To indicate that specific directions lack</span>
+<span class="sd">    periodicity, set the corresponding rows of ``cell`` to zero.</span>
+<span class="sd">    Periodicity is accounted for by means of the minimum image convention,</span>
+<span class="sd">    with all the known limitations entailed by this.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        r_1: First point</span>
+<span class="sd">        r_2: Second point</span>
+<span class="sd">        cell: Array representing unit cell, shape `(n_dim, n_dim)`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Distance vector.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dr</span> <span class="o">=</span> <span class="n">r_1</span> <span class="o">-</span> <span class="n">r_2</span>
+    <span class="n">inv_cell</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+    <span class="n">r_1_transf</span> <span class="o">=</span> <span class="n">r_1</span> <span class="o">@</span> <span class="n">inv_cell</span>
+    <span class="n">r_2_transf</span> <span class="o">=</span> <span class="n">r_2</span> <span class="o">@</span> <span class="n">inv_cell</span>
+    <span class="n">dr_transformed</span> <span class="o">=</span> <span class="n">r_1_transf</span> <span class="o">-</span> <span class="n">r_2_transf</span>
+    <span class="k">return</span> <span class="n">dr</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">dr_transformed</span><span class="p">)</span> <span class="o">@</span> <span class="n">cell</span></div>
+
+
+
+<div class="viewcode-block" id="_concretize_displacement_fn">
+<a class="viewcode-back" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._concretize_displacement_fn">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_concretize_displacement_fn</span><span class="p">(</span>
+    <span class="n">pbc</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">bool</span><span class="p">],</span>
+    <span class="n">cell_mode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CellMode</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayLike</span><span class="p">,</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLike</span><span class="p">]],</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Select/construct displacement fn based on PBCs, unit cell constraints.</span>
+
+<span class="sd">    Wraps lower-level displacement functions and transforms them into ones</span>
+<span class="sd">    with a choice of periodic boundary conditions built-in already, and with</span>
+<span class="sd">    a consistent signature.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        pbc: One boolean per direction signaling periodicity.</span>
+<span class="sd">        cell_mode: A string specifying assumptions on the shape of the</span>
+<span class="sd">            unit cell. Either the cell is assumed orthorhombic and</span>
+<span class="sd">            axis-aligned, in which case only its diagonal is considered,</span>
+<span class="sd">            reducing computational cost, or a general triclinic one. May be</span>
+<span class="sd">            omitted (and is ignored) if no direction is periodic.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A function of two position vector arguments and (optionally, depending</span>
+<span class="sd">        on PBCs) a unit cell, that computes the distance vector between them.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">onp</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pbc</span><span class="p">)</span> <span class="ow">and</span> <span class="n">cell_mode</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;If at least one direction is periodic, &quot;</span>
+            <span class="s2">&quot;you must specify cell_mode.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">onp</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pbc</span><span class="p">):</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">displacement_fn</span><span class="p">(</span><span class="n">r_1</span><span class="p">,</span> <span class="n">r_2</span><span class="p">,</span> <span class="n">cell</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">_displacement_free</span><span class="p">(</span><span class="n">r_1</span><span class="p">,</span> <span class="n">r_2</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">displacement_fn</span>
+
+    <span class="k">if</span> <span class="n">cell_mode</span> <span class="o">==</span> <span class="s2">&quot;ortho&quot;</span><span class="p">:</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">displacement_fn</span><span class="p">(</span><span class="n">r_1</span><span class="p">,</span> <span class="n">r_2</span><span class="p">,</span> <span class="n">cell</span><span class="p">):</span>
+            <span class="n">side_lengths_processed_for_pbc</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span> <span class="o">*</span> <span class="n">pbc</span>
+            <span class="k">return</span> <span class="n">_displacement_ortho</span><span class="p">(</span>
+                <span class="n">r_1</span><span class="p">,</span> <span class="n">r_2</span><span class="p">,</span> <span class="n">side_lengths_processed_for_pbc</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">displacement_fn</span>
+
+    <span class="k">elif</span> <span class="n">cell_mode</span> <span class="o">==</span> <span class="s2">&quot;triclinic&quot;</span><span class="p">:</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">displacement_fn</span><span class="p">(</span><span class="n">r_1</span><span class="p">,</span> <span class="n">r_2</span><span class="p">,</span> <span class="n">cell</span><span class="p">):</span>
+            <span class="n">cell_processed_for_pbc</span> <span class="o">=</span> <span class="n">cell</span> <span class="o">*</span> <span class="n">pbc</span><span class="p">[:,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">_displacement_general</span><span class="p">(</span><span class="n">r_1</span><span class="p">,</span> <span class="n">r_2</span><span class="p">,</span> <span class="n">cell_processed_for_pbc</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">displacement_fn</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid cell_mode.&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="make_eval_pair_pot">
+<a class="viewcode-back" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_eval_pair_pot</span><span class="p">(</span>
+    <span class="n">kernel_fn</span><span class="p">:</span> <span class="n">KernelFn</span><span class="p">,</span>
+    <span class="n">pbc</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">bool</span><span class="p">],</span>
+    <span class="n">cell_mode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CellMode</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">supercell_diag</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">per_particle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">extra_uncharged_interaction</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">KernelFn</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayLike</span><span class="p">,</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLike</span><span class="p">]],</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transform interaction kernel into function acting on a particle system.</span>
+
+<span class="sd">    In other words, given a distance-dependent interaction kernel :math:`k(r)`,</span>
+<span class="sd">    construct another function that computes the total system energy,</span>
+<span class="sd">    :math:`\\frac{1}{2} \\sum_i \\sum_{j \\neq i} q_i q_j k(r_{ij})`,</span>
+<span class="sd">    by mapping :math:`k(r)` over all particle pairs.</span>
+
+<span class="sd">    The design of this implementation is inspired by JAX-MD&#39;s `smap.pair`</span>
+<span class="sd">    and internally uses some of the same lower-level functionality.</span>
+
+<span class="sd">    .. warning::</span>
+<span class="sd">       Distance computations under periodic boundary conditions are handled</span>
+<span class="sd">       by means of the minimum image convention, with the known limitations</span>
+<span class="sd">       this entails. If the cutoff radius of ``kernel_fn`` is too large for</span>
+<span class="sd">       the unit cell, or the unit cell is too deformed, results will be</span>
+<span class="sd">       incorrect. If you know beforehand that this is an issue, you can</span>
+<span class="sd">       remedy it by using the ``supercell_diag`` parameter (see below).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        kernel_fn: A function of a single scalar distance argument,</span>
+<span class="sd">            corresponding to :math:`k(r)` in the above formula.</span>
+<span class="sd">        pbc: One boolean per direction signaling periodicity.</span>
+<span class="sd">        cell_mode: A string specifying assumptions on the shape of the</span>
+<span class="sd">            unit cell. Either the cell is assumed orthorhombic and</span>
+<span class="sd">            axis-aligned, in which case only its diagonal is considered,</span>
+<span class="sd">            reducing computational cost, or a general triclinic one. May be</span>
+<span class="sd">            omitted (and is ignored) if no direction is periodic.</span>
+<span class="sd">        supercell_diag: An optional sequence of positive integers, one per</span>
+<span class="sd">            direction. If supplied, pairwise interactions are computed</span>
+<span class="sd">            between the particles in the original cell and all particles in</span>
+<span class="sd">            a supercell created by repeating the cell the given number of</span>
+<span class="sd">            times along each direction. This can be used to ensure that all</span>
+<span class="sd">            interactions with neighbors are taken into account in cases</span>
+<span class="sd">            where the cutoff of ``kernel_fn`` is too large for the</span>
+<span class="sd">            original, non-replicated, cell.</span>
+<span class="sd">        per_particle: If true, an array of energies per particle is returned</span>
+<span class="sd">            rather than the total system energy.</span>
+<span class="sd">        extra_uncharged_interaction: An optional additional charge-unaware</span>
+<span class="sd">            pair potential that is evaluated along with the MSM&#39;s short-range</span>
+<span class="sd">            kernel, reusing the same distance computations for efficiency,</span>
+<span class="sd">            and added to the total system energy.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A function that takes arrays of particle positions and charges,</span>
+<span class="sd">        and the unit cell, as arguments and computes the energy for the</span>
+<span class="sd">        whole system of particles.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pbc</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pbc</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">supercell_diag</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">supercell_diag</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">pbc</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">onp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="o">~</span><span class="n">pbc</span><span class="p">,</span> <span class="n">onp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">supercell_diag</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;`supercell_diag` must be equal to one along non-periodic axes&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">displacement_fn</span> <span class="o">=</span> <span class="n">_concretize_displacement_fn</span><span class="p">(</span><span class="n">pbc</span><span class="p">,</span> <span class="n">cell_mode</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_energy</span><span class="p">(</span>
+        <span class="n">positions</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">charges</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">cell</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate pair potential for entire system of charged particles.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            positions: Array of positions, shape `(n_particles, n_dim)`.</span>
+<span class="sd">            charges: Array of charges, shape `(n_particles,)`.</span>
+<span class="sd">            cell: Array representing unit cell, shape `(n_dim, n_dim)`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Total system energy.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">pbc</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">cell</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;If at least one direction is periodic, &quot;</span>
+                    <span class="s2">&quot;the cell argument is required.&quot;</span>
+                <span class="p">)</span>
+            <span class="n">super_positions</span><span class="p">,</span> <span class="n">super_charges</span><span class="p">,</span> <span class="n">super_cell</span> <span class="o">=</span> <span class="n">_gen_supercell</span><span class="p">(</span>
+                <span class="n">positions</span><span class="o">=</span><span class="n">positions</span><span class="p">,</span>
+                <span class="n">charges</span><span class="o">=</span><span class="n">charges</span><span class="p">,</span>
+                <span class="n">cell</span><span class="o">=</span><span class="n">cell</span><span class="p">,</span>
+                <span class="n">supercell_diag</span><span class="o">=</span><span class="n">supercell_diag</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">metric_fn</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">space</span><span class="o">.</span><span class="n">metric</span><span class="p">(</span><span class="n">displacement_fn</span><span class="p">),</span> <span class="n">cell</span><span class="o">=</span><span class="n">super_cell</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">super_positions</span><span class="p">,</span> <span class="n">super_charges</span> <span class="o">=</span> <span class="n">positions</span><span class="p">,</span> <span class="n">charges</span>
+            <span class="n">metric_fn</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">space</span><span class="o">.</span><span class="n">metric</span><span class="p">(</span><span class="n">displacement_fn</span><span class="p">))</span>
+        <span class="n">mapped_metric_fn</span> <span class="o">=</span> <span class="n">space</span><span class="o">.</span><span class="n">map_product</span><span class="p">(</span><span class="n">metric_fn</span><span class="p">)</span>
+        <span class="n">dr_ij</span> <span class="o">=</span> <span class="n">mapped_metric_fn</span><span class="p">(</span><span class="n">super_positions</span><span class="p">,</span> <span class="n">positions</span><span class="p">)</span>
+        <span class="n">qi_qj</span> <span class="o">=</span> <span class="n">charges</span><span class="p">[:,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">*</span> <span class="n">super_charges</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">qi_qj</span> <span class="o">*</span> <span class="n">_generalized_diagonal_mask</span><span class="p">(</span><span class="n">kernel_fn</span><span class="p">(</span><span class="n">dr_ij</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">extra_uncharged_interaction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">+=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">_generalized_diagonal_mask</span><span class="p">(</span>
+                <span class="n">extra_uncharged_interaction</span><span class="p">(</span><span class="n">dr_ij</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">per_particle</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">compute_energy</span></div>
+
+
+
+<div class="viewcode-block" id="make_eval_pair_pot_neighborlist">
+<a class="viewcode-back" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot_neighborlist">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_eval_pair_pot_neighborlist</span><span class="p">(</span>
+    <span class="n">kernel_fn</span><span class="p">:</span> <span class="n">KernelFn</span><span class="p">,</span>
+    <span class="n">pbc</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">bool</span><span class="p">],</span>
+    <span class="n">cell_mode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CellMode</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">safe_eval_distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">extra_uncharged_interaction</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">KernelFn</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span>
+    <span class="p">[</span>
+        <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="nb">tuple</span><span class="p">[</span><span class="n">ArrayLike</span><span class="p">,</span> <span class="n">ArrayLike</span><span class="p">],</span>
+        <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLike</span><span class="p">],</span>
+    <span class="p">],</span>
+    <span class="n">Array</span><span class="p">,</span>
+<span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transform interaction kernel into function acting on a particle system.</span>
+
+<span class="sd">    Like :func:`make_eval_pair_pot`, but with a neighbor list.</span>
+
+<span class="sd">    The design of this implementation is inspired by JAX-MD&#39;s</span>
+<span class="sd">    `smap.pair_neighbor_list` and internally uses some of the same</span>
+<span class="sd">    lower-level functionality.</span>
+
+<span class="sd">    .. warning::</span>
+<span class="sd">       Distance computations under periodic boundary conditions are handled</span>
+<span class="sd">       by means of the minimum image convention, with the known limitations</span>
+<span class="sd">       this entails. If the cutoff radius of ``kernel_fn`` is too large for</span>
+<span class="sd">       the unit cell, or the unit cell is too deformed, results will be</span>
+<span class="sd">       incorrect. Unlike the no-neighbor-list analog</span>
+<span class="sd">       :func:`make_eval_pair_pot`, this version does not have the built-in</span>
+<span class="sd">       supercell generation feature via ``supercell_diag``. This should not be</span>
+<span class="sd">       a major limitation since in cases where supercell is required, the</span>
+<span class="sd">       benefit of using a neighbor list is likely to be small, if any.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        kernel_fn: A function of a single scalar distance argument,</span>
+<span class="sd">            see documentation of :func:`make_eval_pair_pot`.</span>
+<span class="sd">        pbc: One boolean per direction signaling periodicity.</span>
+<span class="sd">        cell_mode: A string specifying assumptions on the shape of the</span>
+<span class="sd">            unit cell. Either the cell is assumed orthorhombic and</span>
+<span class="sd">            axis-aligned, in which case only its diagonal is considered,</span>
+<span class="sd">            reducing computational cost, or a general triclinic one. May be</span>
+<span class="sd">            omitted (and is ignored) if no direction is periodic.</span>
+<span class="sd">        safe_eval_distance: A value for which ``kernel_fn`` evaluates to a</span>
+<span class="sd">            result that is not NaN or infinite. Apart from this, it can be</span>
+<span class="sd">            arbitrary. Used only internally, the exact value has no further</span>
+<span class="sd">            consequence.</span>
+<span class="sd">        extra_uncharged_interaction: An optional additional charge-unaware</span>
+<span class="sd">            pair potential that is evaluated along with the MSM&#39;s short-range</span>
+<span class="sd">            kernel, reusing the same neighbor list and distance computations</span>
+<span class="sd">            for efficiency, and added to the total system energy.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A function that takes arrays of particle positions and charges,</span>
+<span class="sd">        and the unit cell, and additionally a neighbor list and pairwise</span>
+<span class="sd">        weights, as arguments and computes the energy for the whole system</span>
+<span class="sd">        of particles.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pbc</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pbc</span><span class="p">)</span>
+    <span class="n">displacement_fn</span> <span class="o">=</span> <span class="n">_concretize_displacement_fn</span><span class="p">(</span><span class="n">pbc</span><span class="p">,</span> <span class="n">cell_mode</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_energy</span><span class="p">(</span>
+        <span class="n">positions</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">charges</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">neighborlist</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ArrayLike</span><span class="p">,</span> <span class="n">ArrayLike</span><span class="p">],</span>
+        <span class="n">weights</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">cell</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate pair potential over an entire system, using neighbor list.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            positions: Array of positions, shape `(n_particles, n_dim)`.</span>
+<span class="sd">            charges: Array of charges, shape `(n_particles,)`.</span>
+<span class="sd">            neighborlist: Tuple of two 1-d integer arrays of the same shape.</span>
+<span class="sd">                For example, `([0, ..., 26, ...], [91, ..., 5, ...])` would</span>
+<span class="sd">                mean that particle `91` is a neighbor of particle `0`,</span>
+<span class="sd">                and particle `5` is a neighbor of particle `26`. Entries `&gt;=</span>
+<span class="sd">                n_particles` are considered placeholder pairs and do not</span>
+<span class="sd">                contribute to the energy. They can be used to satisfy the</span>
+<span class="sd">                static shape requirement in jit-compiled functions.</span>
+<span class="sd">            weights: Either a scalar or an array of the same shape as each</span>
+<span class="sd">                component array of `neighbor_list`, representing an extra</span>
+<span class="sd">                multiplicative weight to be applied to every pairwise energy</span>
+<span class="sd">                contribution. This can be used to correct for how different</span>
+<span class="sd">                neighbor list formats may differently handle duplicate</span>
+<span class="sd">                particle pairs, or even to include something like fudge</span>
+<span class="sd">                factors for close-together atoms.</span>
+<span class="sd">            cell: Array representing unit cell, shape `(n_dim, n_dim)`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Total system energy.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">pbc</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">cell</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;If at least one direction is periodic, &quot;</span>
+                    <span class="s2">&quot;the cell argument is required.&quot;</span>
+                <span class="p">)</span>
+        <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span> <span class="o">=</span> <span class="n">neighborlist</span>
+        <span class="n">metric_fn</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">space</span><span class="o">.</span><span class="n">metric</span><span class="p">(</span><span class="n">displacement_fn</span><span class="p">),</span> <span class="n">cell</span><span class="o">=</span><span class="n">cell</span><span class="p">)</span>
+        <span class="n">mapped_metric_fn</span> <span class="o">=</span> <span class="n">space</span><span class="o">.</span><span class="n">map_bond</span><span class="p">(</span><span class="n">metric_fn</span><span class="p">)</span>
+        <span class="n">dr_ij</span> <span class="o">=</span> <span class="n">mapped_metric_fn</span><span class="p">(</span><span class="n">positions</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">positions</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+        <span class="n">n_particles</span> <span class="o">=</span> <span class="n">positions</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">is_not_placeholder</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">i</span> <span class="o">&lt;</span> <span class="n">n_particles</span><span class="p">,</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n_particles</span><span class="p">)</span>
+        <span class="c1"># Set distances of placeholder pairs to a value at which the potential</span>
+        <span class="c1"># can be safely evaluated</span>
+        <span class="n">dr_ij</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">is_not_placeholder</span><span class="p">,</span> <span class="n">dr_ij</span><span class="p">,</span> <span class="n">safe_eval_distance</span><span class="p">)</span>
+        <span class="n">qi_qj</span> <span class="o">=</span> <span class="n">charges</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">charges</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+        <span class="n">charged_pair_term</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">is_not_placeholder</span><span class="p">,</span> <span class="n">weights</span> <span class="o">*</span> <span class="n">qi_qj</span> <span class="o">*</span> <span class="n">kernel_fn</span><span class="p">(</span><span class="n">dr_ij</span><span class="p">),</span> <span class="mf">0.0</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">extra_uncharged_interaction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">charged_pair_term</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="n">charged_pair_term</span>
+                <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                    <span class="n">is_not_placeholder</span><span class="p">,</span>
+                    <span class="n">weights</span> <span class="o">*</span> <span class="n">extra_uncharged_interaction</span><span class="p">(</span><span class="n">dr_ij</span><span class="p">),</span>
+                    <span class="mf">0.0</span><span class="p">,</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+            <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">compute_energy</span></div>
+
+
+
+<div class="viewcode-block" id="make_compute_u_zero">
+<a class="viewcode-back" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange.make_compute_u_zero">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_compute_u_zero</span><span class="p">(</span>
+    <span class="n">kernel_fns</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">KernelFn</span><span class="p">],</span>
+    <span class="n">pair_map_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span>
+        <span class="p">[</span><span class="n">KernelFn</span><span class="p">],</span>
+        <span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayLike</span><span class="p">,</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Array</span><span class="p">],</span>
+    <span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayLike</span><span class="p">,</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a function that computes the MSM short-range energy contribution.</span>
+
+<span class="sd">    The precise quantity being computed is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        U^0 =   \\frac{1}{2} \\sum_i \\sum_{j \\neq i} q_i q_j k_0(r_{ij})</span>
+<span class="sd">              - \\frac{1}{2} \\sum_{l=1}^L \\sum_i q_i^2 k_{l}(r)\\big\\rvert_{r=0} \, ,</span>
+
+<span class="sd">    which consists of the pair interaction term for level zero, and a</span>
+<span class="sd">    correction term for self-interaction at the higher levels.</span>
+
+<span class="sd">    This function is a high-level wrapper that constructs the evaluation</span>
+<span class="sd">    function for :math:`U^0` from two ingredients: The kernel functions</span>
+<span class="sd">    :math:`k_l(r)` at all levels, and a function that takes care of pair</span>
+<span class="sd">    distance computation (this includes accounting for periodic boundary</span>
+<span class="sd">    conditions) and evaluation of such a kernel function over all pairs of</span>
+<span class="sd">    particles of a charged system.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        kernel_fns: List of functions of a single scalar distance argument,</span>
+<span class="sd">            one for each MSM level, corresponding to the different partial</span>
+<span class="sd">            kernels into which the full interaction kernel is split.</span>
+<span class="sd">            They are expected to be natively broadcastable over array inputs.</span>
+<span class="sd">        pair_map_fn: A function of a single argument that transforms a</span>
+<span class="sd">            distance-dependent interaction kernel into a pairwise evaluation</span>
+<span class="sd">            function that acts across a system of charged particles.</span>
+
+<span class="sd">            - The input to ``pair_map_fn`` should be a single-argument</span>
+<span class="sd">              function of a scalar distance argument.</span>
+
+<span class="sd">            - The return value of ``pair_map_fn`` should be a function that</span>
+<span class="sd">              computes the first term in the formula above.</span>
+<span class="sd">              It takes two arrays (positions of shape `(n_particles, n_dim)`,</span>
+<span class="sd">              and charges of shape `(n_particles,)`), plus optionally</span>
+<span class="sd">              additional keyword arguments. Natural use cases for parameters</span>
+<span class="sd">              passed through keyword arguments would be a unit cell in</span>
+<span class="sd">              systems with periodicity, or a neighbor list.</span>
+
+<span class="sd">            .. note::</span>
+<span class="sd">               The way that periodic boundary conditions are handled</span>
+<span class="sd">               is by an appropriate definition of ``pair_map_fn``.</span>
+
+<span class="sd">            ``pair_map_fn`` gets applied to the zeroth element of the</span>
+<span class="sd">            ``kernel_fns`` argument:</span>
+<span class="sd">            ``compute_pair_term = pair_map_fn(kernel_fns[0])``.</span>
+
+<span class="sd">            The most convenient way to obtain a ``pair_map_fn`` with</span>
+<span class="sd">            appropriate signature is by closing</span>
+<span class="sd">            :func:`make_eval_pair_pot` or</span>
+<span class="sd">            :func:`make_eval_pair_pot_neighborlist` over their extra</span>
+<span class="sd">            arguments, e.g. ``pair_map_fn = functools.partial(</span>
+<span class="sd">            make_eval_pair_pot, pbc=(True, True, False), cell_mode=&#39;ortho&#39;)``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A function with the same signature as the one returned by</span>
+<span class="sd">        ``pair_map_fn(kernel_fns[0])``, that computes :math:`U^0` from</span>
+<span class="sd">        positions, charges, and optional additional keyword arguments.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">compute_pair_term</span> <span class="o">=</span> <span class="n">pair_map_fn</span><span class="p">(</span><span class="n">kernel_fns</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">sum_of_higher_kernels_at_zero</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">sum</span><span class="p">([</span><span class="n">k</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">kernel_fns</span><span class="p">[</span><span class="mi">1</span><span class="p">:]])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_u_zero</span><span class="p">(</span>
+        <span class="n">positions</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">charges</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the short-range energy contribution :math:`U^0` of the MSM.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            positions: Array of positions, shape `(n_particles, n_dim)`.</span>
+<span class="sd">            charges: Array of charges, shape `(n_particles,)`.</span>
+<span class="sd">            **kwargs: Optional additional keyword arguments passed to the</span>
+<span class="sd">                function returned by ``pair_map_fn``. Natural use cases</span>
+<span class="sd">                would be a unit cell or a neighbor list.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The short-range energy contribution :math:`U^0`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pair_term</span> <span class="o">=</span> <span class="n">compute_pair_term</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">charges</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">self_interaction_term</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">charges</span> <span class="o">*</span> <span class="n">charges</span><span class="p">)</span> <span class="o">*</span> <span class="n">sum_of_higher_kernels_at_zero</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">pair_term</span> <span class="o">-</span> <span class="n">self_interaction_term</span>
+
+    <span class="k">return</span> <span class="n">compute_u_zero</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Florian Buchner, Johannes Schörghuber, Nico Unglert, Jesús Carrete, Georg K. H. Madsen.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,862 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>msmjax.core.longrange &mdash; msmJAX  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            msmJAX
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference.html">API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../msmjax.calculators.html">msmjax.calculators</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.CustomJSONEncoder"><code class="docutils literal notranslate"><span class="pre">CustomJSONEncoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.CustomJSONEncoder.default"><code class="docutils literal notranslate"><span class="pre">CustomJSONEncoder.default()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.CustomJSONDecoder"><code class="docutils literal notranslate"><span class="pre">CustomJSONDecoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.CustomJSONDecoder.object_hook"><code class="docutils literal notranslate"><span class="pre">CustomJSONDecoder.object_hook()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams"><code class="docutils literal notranslate"><span class="pre">MSMParams</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.p"><code class="docutils literal notranslate"><span class="pre">MSMParams.p</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.mu"><code class="docutils literal notranslate"><span class="pre">MSMParams.mu</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.max_splitting_level"><code class="docutils literal notranslate"><span class="pre">MSMParams.max_splitting_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.max_grid_level"><code class="docutils literal notranslate"><span class="pre">MSMParams.max_grid_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.cutoffs"><code class="docutils literal notranslate"><span class="pre">MSMParams.cutoffs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.cell"><code class="docutils literal notranslate"><span class="pre">MSMParams.cell</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.cell_mode"><code class="docutils literal notranslate"><span class="pre">MSMParams.cell_mode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.pbc"><code class="docutils literal notranslate"><span class="pre">MSMParams.pbc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.dynamic_cell"><code class="docutils literal notranslate"><span class="pre">MSMParams.dynamic_cell</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.supercell_diag"><code class="docutils literal notranslate"><span class="pre">MSMParams.supercell_diag</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.use_neighborlist"><code class="docutils literal notranslate"><span class="pre">MSMParams.use_neighborlist</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.neighborlist_prefactor"><code class="docutils literal notranslate"><span class="pre">MSMParams.neighborlist_prefactor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.grids_defined_on_unitcube"><code class="docutils literal notranslate"><span class="pre">MSMParams.grids_defined_on_unitcube</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.grid_shapes"><code class="docutils literal notranslate"><span class="pre">MSMParams.grid_shapes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.grid_spacings"><code class="docutils literal notranslate"><span class="pre">MSMParams.grid_spacings</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.stencil_extents_from_center"><code class="docutils literal notranslate"><span class="pre">MSMParams.stencil_extents_from_center</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.convolution_methods"><code class="docutils literal notranslate"><span class="pre">MSMParams.convolution_methods</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.n_dim"><code class="docutils literal notranslate"><span class="pre">MSMParams.n_dim</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.version"><code class="docutils literal notranslate"><span class="pre">MSMParams.version</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.info"><code class="docutils literal notranslate"><span class="pre">MSMParams.info</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.save_json"><code class="docutils literal notranslate"><span class="pre">MSMParams.save_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.load_json"><code class="docutils literal notranslate"><span class="pre">MSMParams.load_json()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.find_stencil_extents_all_levels"><code class="docutils literal notranslate"><span class="pre">find_stencil_extents_all_levels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.set_up_msm_params"><code class="docutils literal notranslate"><span class="pre">set_up_msm_params()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.create_msm"><code class="docutils literal notranslate"><span class="pre">create_msm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.check_cutoffs_and_get_actual_spacings"><code class="docutils literal notranslate"><span class="pre">check_cutoffs_and_get_actual_spacings()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../msmjax.kernels.html">msmjax.kernels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.kernels.html#msmjax.kernels.SoftenerOneOverR"><code class="docutils literal notranslate"><span class="pre">SoftenerOneOverR</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.kernels.html#msmjax.kernels.split_one_over_r"><code class="docutils literal notranslate"><span class="pre">split_one_over_r()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.kernels.html#msmjax.kernels._get_distances"><code class="docutils literal notranslate"><span class="pre">_get_distances()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.kernels.html#msmjax.kernels._compute_one_stencil"><code class="docutils literal notranslate"><span class="pre">_compute_one_stencil()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.kernels.html#msmjax.kernels.make_construct_stencils"><code class="docutils literal notranslate"><span class="pre">make_construct_stencils()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../msmjax.bspline.html">msmjax.bspline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.bspline.basis.html">msmjax.bspline.basis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.basis.html#msmjax.bspline.basis.characteristic"><code class="docutils literal notranslate"><span class="pre">characteristic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.basis.html#msmjax.bspline.basis.evaluate_basis_element"><code class="docutils literal notranslate"><span class="pre">evaluate_basis_element()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.basis.html#msmjax.bspline.basis.create_bspline_basis_element"><code class="docutils literal notranslate"><span class="pre">create_bspline_basis_element()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html">msmjax.bspline.coefficients</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_Phi"><code class="docutils literal notranslate"><span class="pre">calc_Phi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_col_of_B"><code class="docutils literal notranslate"><span class="pre">build_col_of_B()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_col_of_B2"><code class="docutils literal notranslate"><span class="pre">build_col_of_B2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_Toeplitz_matrix"><code class="docutils literal notranslate"><span class="pre">build_Toeplitz_matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_Toeplitz_system"><code class="docutils literal notranslate"><span class="pre">build_Toeplitz_system()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_c_m"><code class="docutils literal notranslate"><span class="pre">compute_c_m()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.generating_function"><code class="docutils literal notranslate"><span class="pre">generating_function()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_Mclaurin_coefficient"><code class="docutils literal notranslate"><span class="pre">calc_Mclaurin_coefficient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_B_p_over_2"><code class="docutils literal notranslate"><span class="pre">calc_B_p_over_2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_polynomials"><code class="docutils literal notranslate"><span class="pre">calc_polynomials()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.explode_Add"><code class="docutils literal notranslate"><span class="pre">explode_Add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.coeff_dict_to_array"><code class="docutils literal notranslate"><span class="pre">coeff_dict_to_array()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_quasi_omega_prime"><code class="docutils literal notranslate"><span class="pre">compute_quasi_omega_prime()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_j_zeroplus"><code class="docutils literal notranslate"><span class="pre">compute_j_zeroplus()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.bspline.gridops.html">msmjax.bspline.gridops</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._find_n_gridpoints_1d"><code class="docutils literal notranslate"><span class="pre">_find_n_gridpoints_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.set_up_grids_all_levels"><code class="docutils literal notranslate"><span class="pre">set_up_grids_all_levels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._arbitrary_dim_outer"><code class="docutils literal notranslate"><span class="pre">_arbitrary_dim_outer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._multiindex_outer"><code class="docutils literal notranslate"><span class="pre">_multiindex_outer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._ravel_multi_index_with_invalidation"><code class="docutils literal notranslate"><span class="pre">_ravel_multi_index_with_invalidation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_basis_evaluation_fn"><code class="docutils literal notranslate"><span class="pre">make_basis_evaluation_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_restrict_1d"><code class="docutils literal notranslate"><span class="pre">_make_restrict_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_restriction_operator"><code class="docutils literal notranslate"><span class="pre">make_restriction_operator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_prolongate_1d"><code class="docutils literal notranslate"><span class="pre">_make_prolongate_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_prolongation_operator"><code class="docutils literal notranslate"><span class="pre">make_prolongation_operator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.create_all_grid_to_grid_ops"><code class="docutils literal notranslate"><span class="pre">create_all_grid_to_grid_ops()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.suggest_max_grid_level_nonperiodic"><code class="docutils literal notranslate"><span class="pre">suggest_max_grid_level_nonperiodic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.find_spacings_and_max_level_periodic"><code class="docutils literal notranslate"><span class="pre">find_spacings_and_max_level_periodic()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../msmjax.core.html">msmjax.core</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.core.shortrange.html">msmjax.core.shortrange</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._gen_supercell"><code class="docutils literal notranslate"><span class="pre">_gen_supercell()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_free"><code class="docutils literal notranslate"><span class="pre">_displacement_free()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_ortho"><code class="docutils literal notranslate"><span class="pre">_displacement_ortho()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_general"><code class="docutils literal notranslate"><span class="pre">_displacement_general()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._concretize_displacement_fn"><code class="docutils literal notranslate"><span class="pre">_concretize_displacement_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot"><code class="docutils literal notranslate"><span class="pre">make_eval_pair_pot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot_neighborlist"><code class="docutils literal notranslate"><span class="pre">make_eval_pair_pot_neighborlist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange.make_compute_u_zero"><code class="docutils literal notranslate"><span class="pre">make_compute_u_zero()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.core.longrange.html">msmjax.core.longrange</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange._anterpolate"><code class="docutils literal notranslate"><span class="pre">_anterpolate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_positions_gradient"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy_positions_gradient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_charge_gradient"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy_charge_gradient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange.special_periodic_convolve_scipy"><code class="docutils literal notranslate"><span class="pre">special_periodic_convolve_scipy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange.make_grid_pass_fn"><code class="docutils literal notranslate"><span class="pre">make_grid_pass_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange.make_compute_u_oneplus"><code class="docutils literal notranslate"><span class="pre">make_compute_u_oneplus()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../msmjax.utils.html">msmjax.utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html">msmjax.utils.benchmarking</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.dir_context"><code class="docutils literal notranslate"><span class="pre">dir_context()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.write_lammps_data"><code class="docutils literal notranslate"><span class="pre">write_lammps_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.parse_energy_from_lammps_log"><code class="docutils literal notranslate"><span class="pre">parse_energy_from_lammps_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.parse_lammps_log"><code class="docutils literal notranslate"><span class="pre">parse_lammps_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.make_lammps_input_text_pppm"><code class="docutils literal notranslate"><span class="pre">make_lammps_input_text_pppm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.eval_lammps_pppm"><code class="docutils literal notranslate"><span class="pre">eval_lammps_pppm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_rmse"><code class="docutils literal notranslate"><span class="pre">calc_rmse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_relative_rmse_percent"><code class="docutils literal notranslate"><span class="pre">calc_relative_rmse_percent()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_relative_rmse"><code class="docutils literal notranslate"><span class="pre">calc_relative_rmse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.make_timed_eval"><code class="docutils literal notranslate"><span class="pre">make_timed_eval()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.remove_duplicates_from_neighborlist"><code class="docutils literal notranslate"><span class="pre">remove_duplicates_from_neighborlist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.build_duplicate_free_neighborlists"><code class="docutils literal notranslate"><span class="pre">build_duplicate_free_neighborlists()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.coulomb_kernel"><code class="docutils literal notranslate"><span class="pre">coulomb_kernel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_energy_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_energy_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_forces_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_forces_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_chargegrad_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_chargegrad_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_stress_virial"><code class="docutils literal notranslate"><span class="pre">calc_stress_virial()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_nonperiodic_reference_results"><code class="docutils literal notranslate"><span class="pre">calc_nonperiodic_reference_results()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.utils.general.html">msmjax.utils.general</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.general.html#msmjax.utils.general._divide_zero_safe"><code class="docutils literal notranslate"><span class="pre">_divide_zero_safe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.general.html#msmjax.utils.general._sqrt_jvp"><code class="docutils literal notranslate"><span class="pre">_sqrt_jvp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.general.html#msmjax.utils.general.get_max_cutoff_for_mic"><code class="docutils literal notranslate"><span class="pre">get_max_cutoff_for_mic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.general.html#msmjax.utils.general.find_covering_grid_extents"><code class="docutils literal notranslate"><span class="pre">find_covering_grid_extents()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">msmJAX</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">msmjax.core.longrange</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for msmjax.core.longrange</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Generic code for long-range part (that is evaluated using grids).</span>
+
+<span class="sd">References:</span>
+<span class="sd">    [1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,</span>
+<span class="sd">    R. D. Multilevel Summation with B-Spline Interpolation for Pairwise</span>
+<span class="sd">    Interactions in Molecular Dynamics Simulations. J. Chem. Phys. 2016,</span>
+<span class="sd">    144 (11), 114112. https://doi.org/10.1063/1.4943868.</span>
+
+<span class="sd">    [2] Hardy, D. J. Multilevel Summation for the Fast Evaluation of</span>
+<span class="sd">    Forces for the Simulation of Biomolecules (PhD thesis), University</span>
+<span class="sd">    of Illinois at Urbana-Champaign, 2006.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">onp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLike</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">msmjax.utils.general</span><span class="w"> </span><span class="kn">import</span> <span class="n">CellMode</span>
+
+
+<div class="viewcode-block" id="_anterpolate">
+<a class="viewcode-back" href="../../../msmjax.core.longrange.html#msmjax.core.longrange._anterpolate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_anterpolate</span><span class="p">(</span>
+    <span class="n">basis_vals</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">basis_inds</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">charges</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">grid_shape</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Low-level function doing anterpolation (= calculating grid charge).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        basis_vals: Array of shape `(n_particles, support_size)`, where</span>
+<span class="sd">            `support_size` is the number of grid points around one particle</span>
+<span class="sd">            with non-zero values of their basis functions. Contains the</span>
+<span class="sd">            values of nearby non-zero basis functions for all particles. The</span>
+<span class="sd">            first axis runs over particles, the second over grid points.</span>
+<span class="sd">        basis_inds: Array of the same shape as ``basis_vals`` which, for all</span>
+<span class="sd">            particles, contains the `flat` (!) indices of all nearby grid</span>
+<span class="sd">            points with non-zero basis function values.</span>
+<span class="sd">        charges: Array of charges, shape `(n_particles,)`.</span>
+<span class="sd">        grid_shape: Tuple of integers representing shape of the target</span>
+<span class="sd">            grid to which particle charges will be anterpolated.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        An array of the same shape as the ``grid_shape`` parameter that</span>
+<span class="sd">        contains the value of the grid charge for each grid point.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">grid_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">onp</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">grid_shape</span><span class="p">))</span>
+    <span class="n">gridcharge_flat</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">grid_size</span><span class="p">)</span>
+    <span class="n">gridcharge_flat</span> <span class="o">=</span> <span class="n">gridcharge_flat</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">basis_inds</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="n">charges</span><span class="p">[:,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">*</span> <span class="n">basis_vals</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">gridcharge_flat</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">grid_shape</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="_interpolate_energy">
+<a class="viewcode-back" href="../../../msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_interpolate_energy</span><span class="p">(</span>
+    <span class="n">gridpotential</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">basis_vals</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">basis_inds</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">charges</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Low-level function calculating long-range energy from grid potential.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        gridpotential: Array of grid potential (:math:`e^{l+}` in the language</span>
+<span class="sd">            of the reference).</span>
+<span class="sd">        basis_vals: See :func:`_anterpolate`.</span>
+<span class="sd">        basis_inds: See :func:`_anterpolate`.</span>
+<span class="sd">        charges: Array of particle charges, shape `(n_particles,)`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The scalar electrostatic energy.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">energy</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+        <span class="n">charges</span> <span class="o">*</span> <span class="p">(</span><span class="n">gridpotential</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">basis_inds</span><span class="p">)</span> <span class="o">*</span> <span class="n">basis_vals</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">energy</span></div>
+
+
+
+<div class="viewcode-block" id="_interpolate_energy_positions_gradient">
+<a class="viewcode-back" href="../../../msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_positions_gradient">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_interpolate_energy_positions_gradient</span><span class="p">(</span>
+    <span class="n">gridpotential</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">basis_grads</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">basis_inds</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">charges</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Low-level function calculating positions gradient of long-range energy.</span>
+
+<span class="sd">    Implements an analytic expression for the derivative that calculates it</span>
+<span class="sd">    by explicitly interpolating it from the grid potential. This allows a</span>
+<span class="sd">    more efficient computation than default automatic differentiation of</span>
+<span class="sd">    the energy.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        gridpotential: Array of grid potential (:math:`e^{l+}` in the language</span>
+<span class="sd">            of the reference).</span>
+<span class="sd">        basis_grads: Similar to ``basis_vals`` (see :func:`_anterpolate`),</span>
+<span class="sd">            but containing the gradients of the basis functions w.r.t.</span>
+<span class="sd">            particle positions instead of their values. Shape `(n_particles,</span>
+<span class="sd">            support_size, n_dim)`, where `n_dim` is the spatial dimension of</span>
+<span class="sd">            the system.</span>
+<span class="sd">        basis_inds: See :func:`_anterpolate`.</span>
+<span class="sd">        charges: Array of particle charges, shape `(n_particles,)`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The gradient of the long-range energy w.r.t. particle positions,</span>
+<span class="sd">        which is an array of shape `(n_particles, n_dim)`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">charges</span><span class="p">[:,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+        <span class="n">gridpotential</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">basis_inds</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">*</span> <span class="n">basis_grads</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<div class="viewcode-block" id="_interpolate_energy_charge_gradient">
+<a class="viewcode-back" href="../../../msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_charge_gradient">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_interpolate_energy_charge_gradient</span><span class="p">(</span>
+    <span class="n">gridpotential</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">basis_vals</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">basis_inds</span><span class="p">:</span> <span class="n">ArrayLike</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Low-level function calculating charge gradient of long-range energy.</span>
+
+<span class="sd">    Implements an analytic expression for the derivative that calculates it</span>
+<span class="sd">    by explicitly interpolating it from the grid potential. This allows a</span>
+<span class="sd">    more efficient computation than default automatic differentiation of</span>
+<span class="sd">    the energy.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        gridpotential: Array of grid potential (:math:`e^{l+}` in the language</span>
+<span class="sd">            of the reference).</span>
+<span class="sd">        basis_vals: See :func:`_anterpolate`.</span>
+<span class="sd">        basis_inds: See :func:`_anterpolate`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The gradient of the long-range energy w.r.t. particle charges,</span>
+<span class="sd">        which is an array of shape `(n_particles,)`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">gridpotential</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">basis_inds</span><span class="p">)</span> <span class="o">*</span> <span class="n">basis_vals</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="special_periodic_convolve_scipy">
+<a class="viewcode-back" href="../../../msmjax.core.longrange.html#msmjax.core.longrange.special_periodic_convolve_scipy">[docs]</a>
+<span class="nd">@partial</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">,</span> <span class="n">static_argnames</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;pbc&quot;</span><span class="p">,</span> <span class="s2">&quot;method&quot;</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">special_periodic_convolve_scipy</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">kernel</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">pbc</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">bool</span><span class="p">],</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;direct&quot;</span><span class="p">,</span> <span class="s2">&quot;fft&quot;</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Perform a specialized case of convolution with optional wrapping.</span>
+
+<span class="sd">    Implemented as a wrapper around :func:`jax.scipy.signal.convolve`</span>
+<span class="sd">    with, depending on periodicity, appropriate padding of the input arrays:</span>
+
+<span class="sd">        - If no direction is periodic, this function is equivalent to calling</span>
+<span class="sd">          :func:`jax.scipy.signal.convolve` with `mode=&#39;same&#39;`.</span>
+<span class="sd">        - Along any periodic direction, the ``data`` array is first</span>
+<span class="sd">          periodically replicated as much as needed for the ``kernel`` array</span>
+<span class="sd">          to not extend beyond the edges. Then, the convolution is performed</span>
+<span class="sd">          with :func:`jax.scipy.signal.convolve`, before trimming the result</span>
+<span class="sd">          back to the original size of ``data``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data: First input. Represents some data on a real-space grid.</span>
+<span class="sd">            If a direction is periodic, it corresponds to the values contained</span>
+<span class="sd">            within the unit cell along that direction.</span>
+<span class="sd">        kernel: Second input. Should have the same number of dimensions as</span>
+<span class="sd">            ``data``. Represents a finite-size kernel or filter. In the</span>
+<span class="sd">            original intended use case, always has an odd number of points</span>
+<span class="sd">            along each dimension (i.e., can be centered w.r.t. the points of</span>
+<span class="sd">            ``data``).</span>
+<span class="sd">        pbc: One boolean per direction signaling periodicity.</span>
+<span class="sd">        method: String indicating the method to use for calculating the</span>
+<span class="sd">            convolution. Either &#39;direct&#39; or &#39;fft&#39;. Passed on to</span>
+<span class="sd">            :func:`jax.scipy.signal.convolve`. `fft` is usually much faster.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        An array of the same shape as ``data`` containing the convolution of</span>
+<span class="sd">        the two arrays.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pbc</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pbc</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">pbc</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="n">size_kernel</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">kernel</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">size_kernel_below_middle</span> <span class="o">=</span> <span class="n">size_kernel</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="n">size_kernel_above_middle</span> <span class="o">=</span> <span class="n">size_kernel</span> <span class="o">-</span> <span class="n">size_kernel_below_middle</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">pad_width</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+            <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">s_b</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">s_a</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">s_b</span><span class="p">,</span> <span class="n">s_a</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                <span class="n">size_kernel_below_middle</span><span class="p">,</span> <span class="n">size_kernel_above_middle</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">pad_width</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+            <span class="n">pw</span> <span class="k">if</span> <span class="n">periodic</span> <span class="k">else</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">pw</span><span class="p">,</span> <span class="n">periodic</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">pad_width</span><span class="p">,</span> <span class="n">pbc</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">inds_reconstruct_unpadded</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">pw</span><span class="p">,</span> <span class="n">periodic</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">pad_width</span><span class="p">,</span> <span class="n">pbc</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">periodic</span><span class="p">:</span>
+                <span class="n">inds_reconstruct_unpadded</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="n">pw</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">pw</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">inds_reconstruct_unpadded</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span>
+        <span class="n">inds_reconstruct_unpadded</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">inds_reconstruct_unpadded</span><span class="p">)</span>
+        <span class="n">data_extended</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span>
+            <span class="n">data</span><span class="p">,</span>
+            <span class="n">pad_width</span><span class="o">=</span><span class="n">pad_width</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;wrap&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">nruter</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span>
+            <span class="n">data_extended</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;same&quot;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">nruter</span><span class="p">[</span><span class="n">inds_reconstruct_unpadded</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span>
+            <span class="n">data</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;same&quot;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="make_grid_pass_fn">
+<a class="viewcode-back" href="../../../msmjax.core.longrange.html#msmjax.core.longrange.make_grid_pass_fn">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_grid_pass_fn</span><span class="p">(</span>
+    <span class="n">restriction_fns</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayLike</span><span class="p">],</span> <span class="n">Array</span><span class="p">]],</span>
+    <span class="n">prolongation_fns</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayLike</span><span class="p">],</span> <span class="n">Array</span><span class="p">]],</span>
+    <span class="n">interaction_fns</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayLike</span><span class="p">,</span> <span class="n">ArrayLike</span><span class="p">],</span> <span class="n">Array</span><span class="p">]],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayLike</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]],</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a function that makes a pass through all grid levels.</span>
+
+<span class="sd">    In other words, create the linear operator (consisting of restriction of</span>
+<span class="sd">    the grid charge to higher grid levels, calculation of potentials at all</span>
+<span class="sd">    levels, and prolongation of the higher-level potentials down to lower</span>
+<span class="sd">    levels) that connects the grid charge at level one to the accumulated</span>
+<span class="sd">    grid potential at level one. This corresponds to the upper part of the</span>
+<span class="sd">    V-cycle diagram as which the MSM is commonly visualized.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">       The operator sequences passed as parameters to this function need to</span>
+<span class="sd">       respect the grid-level indexing convention. As per convention,</span>
+<span class="sd">       the index 0 refers to the particle level (where interactions are</span>
+<span class="sd">       computed directly without grids), whereas the lowest actual grid</span>
+<span class="sd">       level is at index 1. Further, for the restriction and prolongation</span>
+<span class="sd">       functions, which connect two different grid levels, the convention is</span>
+<span class="sd">       that the function whose `output` lives on grid level :math:`l` is</span>
+<span class="sd">       located at index :math:`l` of the sequence. For example, the operator</span>
+<span class="sd">       :math:`\mathcal{ I}^2_1` that restricts the grid charge from level 1</span>
+<span class="sd">       to 2 would be addressed as ``restriction_fns[2]``.</span>
+
+<span class="sd">       Thus, the input for, e.g., four grid levels should look like this,</span>
+<span class="sd">       employing placeholders where needed:</span>
+
+<span class="sd">       .. code-block:: python</span>
+
+<span class="sd">          restriction_fns = [None, None, I_21, I_32, I_43]</span>
+<span class="sd">          prolongation_fns = [None, I_12, I_23, I_34, None]</span>
+<span class="sd">          interaction_fns = [None, K_1, K_2, K_3, K_4]</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        restriction_fns: Sequence of restriction functions,</span>
+<span class="sd">            one for each level, including placeholders (see above note).</span>
+<span class="sd">            Corresponding to the upward arrows on the left side of the</span>
+<span class="sd">            V-cycle diagram. Input is array of grid charge, output is array</span>
+<span class="sd">            of grid charge one level higher.</span>
+<span class="sd">        prolongation_fns: Sequence of prolongation functions,</span>
+<span class="sd">            one for each level, including placeholders (see above note).</span>
+<span class="sd">            Corresponding to the downward arrows on the right side of the</span>
+<span class="sd">            V-cycle diagram. Input is array of grid potential,</span>
+<span class="sd">            output is array of potential prolongated to the next lower level.</span>
+<span class="sd">        interaction_fns: Sequence of interaction functions,</span>
+<span class="sd">            one for each level, including placeholders (see above note).</span>
+<span class="sd">            Corresponding to the horizontal arrows in the V-cycle diagram.</span>
+<span class="sd">            Inputs are two arrays, grid charge and a kernel coefficient</span>
+<span class="sd">            stencil, output is the grid potential on the same level.</span>
+<span class="sd">            Mathematically:</span>
+<span class="sd">            :math:`e^{l}_{\\mathbf{m}} = \sum_{\mathbf{n}} K^l_{\\mathbf{m}</span>
+<span class="sd">            - \\mathbf{n}} \\tilde{q}^l_{\\mathbf{n}}`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A function for performing the pass through all grid levels.</span>
+<span class="sd">        It calculates the accumulated grid potential :math:`e^{1+}` at level</span>
+<span class="sd">        one and takes two arguments:</span>
+
+<span class="sd">            - The level-one grid charge :math:`\\tilde{q}^1`.</span>
+<span class="sd">            - A sequence of coefficient stencil arrays for the interaction</span>
+<span class="sd">              kernels, one per grid level (including a placeholder at level</span>
+<span class="sd">              zero, see note above on grid-level indexing convention). These</span>
+<span class="sd">              are passed to the ``interaction_fns`` that were supplied to</span>
+<span class="sd">              construct the grid pass function. The :math:`l`-th stencil is</span>
+<span class="sd">              consumed by the :math:`l`-th element of ``ìnteraction_fns``</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">restriction_fns</span><span class="p">)</span>
+        <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">prolongation_fns</span><span class="p">)</span>
+        <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">interaction_fns</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;restriction_fns, prolongation_fns, interaction_fns &quot;</span>
+            <span class="s2">&quot;must all have same length.&quot;</span>
+        <span class="p">)</span>
+    <span class="n">n_levels</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">restriction_fns</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">grid_pass</span><span class="p">(</span>
+        <span class="n">gridcharge_lvl_one</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">kernel_stencils</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ArrayLike</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">kernel_stencils</span><span class="p">)</span> <span class="o">==</span> <span class="n">n_levels</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Wrong number of kernel stencils. &quot;</span>
+                <span class="s2">&quot;Expected </span><span class="si">{}</span><span class="s2"> (including a placeholder at level zero), &quot;</span>
+                <span class="s2">&quot;got </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n_levels</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">kernel_stencils</span><span class="p">))</span>
+            <span class="p">)</span>
+        <span class="n">gridcharges_all_levels</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="n">gridcharge_lvl_one</span><span class="p">}</span>
+
+        <span class="c1"># Go up ladder</span>
+        <span class="k">for</span> <span class="n">lvl</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_levels</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">restrict</span> <span class="o">=</span> <span class="n">restriction_fns</span><span class="p">[</span><span class="n">lvl</span><span class="p">]</span>
+            <span class="n">gridcharge_fine</span> <span class="o">=</span> <span class="n">gridcharges_all_levels</span><span class="p">[</span><span class="n">lvl</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">gridcharge_coarse</span> <span class="o">=</span> <span class="n">restrict</span><span class="p">(</span><span class="n">gridcharge_fine</span><span class="p">)</span>
+            <span class="n">gridcharges_all_levels</span><span class="p">[</span><span class="n">lvl</span><span class="p">]</span> <span class="o">=</span> <span class="n">gridcharge_coarse</span>
+
+        <span class="c1"># Apply top-level interaction</span>
+        <span class="n">gridcharge_toplevel</span> <span class="o">=</span> <span class="n">gridcharges_all_levels</span><span class="p">[</span><span class="n">n_levels</span><span class="p">]</span>
+        <span class="n">interact_toplevel</span> <span class="o">=</span> <span class="n">interaction_fns</span><span class="p">[</span><span class="n">n_levels</span><span class="p">]</span>
+        <span class="n">kernel_stencils_toplevel</span> <span class="o">=</span> <span class="n">kernel_stencils</span><span class="p">[</span><span class="n">n_levels</span><span class="p">]</span>
+        <span class="n">gridpotential</span> <span class="o">=</span> <span class="n">interact_toplevel</span><span class="p">(</span>
+            <span class="n">gridcharge_toplevel</span><span class="p">,</span> <span class="n">kernel_stencils_toplevel</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Go down ladder</span>
+        <span class="k">for</span> <span class="n">lvl</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_levels</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">gridpotential</span> <span class="o">=</span> <span class="n">interaction_fns</span><span class="p">[</span><span class="n">lvl</span><span class="p">](</span>
+                <span class="n">gridcharges_all_levels</span><span class="p">[</span><span class="n">lvl</span><span class="p">],</span> <span class="n">kernel_stencils</span><span class="p">[</span><span class="n">lvl</span><span class="p">]</span>
+            <span class="p">)</span> <span class="o">+</span> <span class="n">prolongation_fns</span><span class="p">[</span><span class="n">lvl</span><span class="p">](</span><span class="n">gridpotential</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">gridpotential</span>
+
+    <span class="k">return</span> <span class="n">grid_pass</span></div>
+
+
+
+<div class="viewcode-block" id="make_compute_u_oneplus">
+<a class="viewcode-back" href="../../../msmjax.core.longrange.html#msmjax.core.longrange.make_compute_u_oneplus">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_compute_u_oneplus</span><span class="p">(</span>
+    <span class="n">basis_eval_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayLike</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]],</span>
+    <span class="n">grid_pass_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayLike</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]],</span> <span class="n">Array</span><span class="p">],</span>
+    <span class="n">grid_shape_lvl_one</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">transform_mode</span><span class="p">:</span> <span class="n">CellMode</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">kernel_stencils</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="kc">None</span> <span class="o">|</span> <span class="n">ArrayLike</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">kernel_stencil_construction_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span>
+        <span class="p">[</span><span class="n">ArrayLike</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">use_custom_derivatives</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayLike</span><span class="p">,</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]],</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a function that computes the MSM long-range energy contribution.</span>
+
+<span class="sd">    The quantity being (approximately) calculated is called :math:`U^{1+}`</span>
+<span class="sd">    in reference 1.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        basis_eval_fn:</span>
+<span class="sd">            A function that, for one (!) particle,</span>
+
+<span class="sd">                1) identifies all points on the level-one grid that are</span>
+<span class="sd">                   sufficiently close for the particle&#39;s position to be</span>
+<span class="sd">                   contained within the support of the associated basis</span>
+<span class="sd">                   functions, i.e., finds the set of grid points</span>
+<span class="sd">                   :math:`M = \\{</span>
+<span class="sd">                   \\mathbf{m} : \\varphi^{1}_{\\mathbf{m}}(\\mathbf{r}_i) \\neq 0</span>
+<span class="sd">                   \\} \\,`</span>
+<span class="sd">                   (where :math:`\\mathbf{r}_i` denotes the position of</span>
+<span class="sd">                   particle :math:`i` and</span>
+<span class="sd">                   :math:`\\mathbf{\\varphi^{1}_{\\mathbf{m}}}` is the</span>
+<span class="sd">                   basis function centered on point :math:`\\mathbf{m}` of the</span>
+<span class="sd">                   level-one grid),</span>
+
+<span class="sd">                2) evaluates the corresponding basis functions, i.e.</span>
+<span class="sd">                   computes :math:`\\varphi^{1}_{\\mathbf{m}}(\\mathbf{r}_i)`</span>
+<span class="sd">                   for all grid points :math:`\mathbf{m} \in M \\,`.</span>
+
+<span class="sd">            Inputs and outputs:</span>
+
+<span class="sd">                - Input to ``basis_eval_fn`` should be a</span>
+<span class="sd">                  1-d array, shape `(n_dim,)`, representing the coordinates</span>
+<span class="sd">                  of a single particle.</span>
+
+<span class="sd">                - Output of ``basis_eval_fn`` should be a</span>
+<span class="sd">                  tuple of two 1-d arrays, each of shape `(support_size,)`,</span>
+<span class="sd">                  where `support_size` designates the number of non-zero</span>
+<span class="sd">                  basis functions around one particle (= the cardinality of</span>
+<span class="sd">                  :math:`M` from above). The first of the two arrays</span>
+<span class="sd">                  contains the values of the basis functions at all grid</span>
+<span class="sd">                  points :math:`\mathbf{m} \in M`. The second array contains</span>
+<span class="sd">                  the corresponding set of grid point indices :math:`M` as</span>
+<span class="sd">                  `flat` (!) indices into the grid.</span>
+
+<span class="sd">            .. note::</span>
+<span class="sd">               Regardless of the spatial dimension of the system,</span>
+<span class="sd">               ``basis_eval_fn`` should always return flat arrays.</span>
+
+<span class="sd">            .. warning::</span>
+<span class="sd">               If ``basis_eval_fn`` returns indices that are out of bounds</span>
+<span class="sd">               w.r.t. to the grid size defined by ``grid_shape_lvl_one``,</span>
+<span class="sd">               this will result in NaNs. This is intentional because errors</span>
+<span class="sd">               like particles moving outside the grid boundaries might</span>
+<span class="sd">               otherwise go unnoticed.</span>
+
+<span class="sd">        grid_pass_fn: A function that performs the entire process of moving up,</span>
+<span class="sd">            across, and back down the grid hierarchy. For more details on</span>
+<span class="sd">            the expected signature, see :func:`make_grid_pass_fn`, which can</span>
+<span class="sd">            be used conveniently to create such a function.</span>
+
+<span class="sd">            Inputs and outputs:</span>
+
+<span class="sd">                - Input to ``grid_pass_fn`` should be the level-one grid</span>
+<span class="sd">                  charge :math:`\\tilde{q}^1` (an array whose shape matches</span>
+<span class="sd">                  the ``grid_shape_lvl_one`` parameter), and a sequence of</span>
+<span class="sd">                  coefficient stencils for the interaction kernels (one per</span>
+<span class="sd">                  grid level, including a placeholder at level zero).</span>
+<span class="sd">                - Output of ``grid_pass_fn`` should be the level-one grid</span>
+<span class="sd">                  potential, also of shape ``grid_shape_lvl_one``.</span>
+
+<span class="sd">        grid_shape_lvl_one: Tuple of integers representing shape of target</span>
+<span class="sd">            grid at level one, to which particle charges will be anterpolated.</span>
+<span class="sd">        transform_mode: The presence of this argument signals that positions</span>
+<span class="sd">            should be transformed to the unit cube before passing them to</span>
+<span class="sd">            ``basis_eval_fn``, in which case ``basis_eval_fn`` must have been</span>
+<span class="sd">            defined such that it acts on positions given w.r.t. to the unit</span>
+<span class="sd">            cube. Its value is a string specifying assumptions on the shape</span>
+<span class="sd">            of the unit cell used to simplify the transformation.</span>
+<span class="sd">            Together with appropriate values given for ``basis_eval_fn``,</span>
+<span class="sd">            and ``kernel_stencils`` or ``kernel_stencil_construction_fn``, this</span>
+<span class="sd">            argument serves to support non-orthorhombic cells as well as ones</span>
+<span class="sd">            that can dynamically change.</span>
+<span class="sd">        kernel_stencils: A sequence of precomputed arrays representing kernel</span>
+<span class="sd">            stencils for convolution with the grid charge. Use this argument</span>
+<span class="sd">            when the cell is fixed, and the kernel stencils thus don&#39;t change.</span>
+<span class="sd">            Mutually exclusive with ``kernel_stencil_construction_fn``.</span>
+<span class="sd">        kernel_stencil_construction_fn:</span>
+<span class="sd">            A function that computes the sequence of kernel stencils from the</span>
+<span class="sd">            current cell. Use this argument when the cell can change, such</span>
+<span class="sd">            that the kernel stencils are not known in advance.</span>
+<span class="sd">            Mutually exclusive with ``kernel_stencils``.</span>
+<span class="sd">        use_custom_derivatives: Whether the returned energy function should</span>
+<span class="sd">            use custom (more efficient) differentiation rules for its</span>
+<span class="sd">            derivatives w.r.t. positions and charges.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A function that computes the scalar energy :math:`U^{1+}` and takes</span>
+<span class="sd">        three arguments:</span>
+
+<span class="sd">        - Array of positions, shape `(n_particles, n_dim)`.</span>
+<span class="sd">        - Array of charges, shape `(n_particles,)`.</span>
+<span class="sd">        - A sequence of coefficient stencils for the interaction kernels (one</span>
+<span class="sd">          per grid level, including a placeholder at level zero). Passed to</span>
+<span class="sd">          ``grid_pass_fn``. See :func:`make_grid_pass_fn` for more details.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">kernel_stencils</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">kernel_stencil_construction_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;One of kernel_stencils or kernel_stencil_construction_fn &quot;</span>
+            <span class="s2">&quot;is required.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">kernel_stencils</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="n">kernel_stencil_construction_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;kernel_stencils and kernel_stencil_construction_fn &quot;</span>
+            <span class="s2">&quot;are mutually exclusive.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calc_energy</span><span class="p">(</span>
+        <span class="n">positions</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">charges</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">kernel_stencils</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the MSM&#39;s long-range energy contribution :math:`U^{1+}`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            positions: Array of positions, shape `(n_particles, n_dim)`.</span>
+<span class="sd">            charges: Array of charges, shape `(n_particles,)`.</span>
+<span class="sd">            kernel_stencils: A sequence of coefficient stencils for the</span>
+<span class="sd">                interaction kernels (one per grid level, including a</span>
+<span class="sd">                placeholder at level zero). Passed to ``grid_pass_fn``. See</span>
+<span class="sd">                :func:`make_grid_pass_fn` for more details.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The long-range energy contribution :math:`U^{1+}`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">basis_vals</span><span class="p">,</span> <span class="n">basis_inds</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">basis_eval_fn</span><span class="p">)(</span><span class="n">positions</span><span class="p">)</span>
+        <span class="n">gridcharge_lvl_one</span> <span class="o">=</span> <span class="n">_anterpolate</span><span class="p">(</span>
+            <span class="n">basis_vals</span><span class="p">,</span> <span class="n">basis_inds</span><span class="p">,</span> <span class="n">charges</span><span class="p">,</span> <span class="n">grid_shape_lvl_one</span>
+        <span class="p">)</span>
+        <span class="n">gridpotential_lvl_oneplus</span> <span class="o">=</span> <span class="n">grid_pass_fn</span><span class="p">(</span>
+            <span class="n">gridcharge_lvl_one</span><span class="p">,</span> <span class="n">kernel_stencils</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">_interpolate_energy</span><span class="p">(</span>
+            <span class="n">gridpotential_lvl_oneplus</span><span class="p">,</span> <span class="n">basis_vals</span><span class="p">,</span> <span class="n">basis_inds</span><span class="p">,</span> <span class="n">charges</span>
+        <span class="p">)</span>
+
+    <span class="nd">@jax</span><span class="o">.</span><span class="n">custom_jvp</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calc_energy_custom</span><span class="p">(</span>
+        <span class="n">positions</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">charges</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">kernel_stencils</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ArrayLike</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the long-range energy contribution :math:`U^0` using custom</span>
+<span class="sd">        derivative rules.</span>
+
+<span class="sd">        See ``_calc_energy`` for parameter details.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_calc_energy</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">charges</span><span class="p">,</span> <span class="n">kernel_stencils</span><span class="p">)</span>
+
+    <span class="nd">@_calc_energy_custom</span><span class="o">.</span><span class="n">defjvp</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calc_energy_custom_jvp</span><span class="p">(</span><span class="n">primals</span><span class="p">,</span> <span class="n">tangents</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Defines custom derivative rules for _calc_energy_custom&quot;&quot;&quot;</span>
+        <span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">charges</span><span class="p">,</span> <span class="n">kernel_stencils</span><span class="p">)</span> <span class="o">=</span> <span class="n">primals</span>
+        <span class="p">(</span><span class="n">positions_dot</span><span class="p">,</span> <span class="n">charges_dot</span><span class="p">,</span> <span class="n">kernel_stencils_dot</span><span class="p">)</span> <span class="o">=</span> <span class="n">tangents</span>
+
+        <span class="c1"># Energy</span>
+        <span class="n">basis_vals</span><span class="p">,</span> <span class="n">basis_inds</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">basis_eval_fn</span><span class="p">)(</span><span class="n">positions</span><span class="p">)</span>
+        <span class="n">gridcharge_lvl_one</span> <span class="o">=</span> <span class="n">_anterpolate</span><span class="p">(</span>
+            <span class="n">basis_vals</span><span class="p">,</span> <span class="n">basis_inds</span><span class="p">,</span> <span class="n">charges</span><span class="p">,</span> <span class="n">grid_shape_lvl_one</span>
+        <span class="p">)</span>
+        <span class="n">gridpotential_lvl_oneplus</span> <span class="o">=</span> <span class="n">grid_pass_fn</span><span class="p">(</span>
+            <span class="n">gridcharge_lvl_one</span><span class="p">,</span> <span class="n">kernel_stencils</span>
+        <span class="p">)</span>
+        <span class="n">energy</span> <span class="o">=</span> <span class="n">_interpolate_energy</span><span class="p">(</span>
+            <span class="n">gridpotential_lvl_oneplus</span><span class="p">,</span> <span class="n">basis_vals</span><span class="p">,</span> <span class="n">basis_inds</span><span class="p">,</span> <span class="n">charges</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Derivative w.r.t. positions:</span>
+        <span class="n">basis_grads</span><span class="p">,</span> <span class="n">basis_inds</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span>
+            <span class="n">jax</span><span class="o">.</span><span class="n">jacfwd</span><span class="p">(</span><span class="n">basis_eval_fn</span><span class="p">,</span> <span class="n">has_aux</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">)(</span><span class="n">positions</span><span class="p">)</span>
+        <span class="n">positions_jac</span> <span class="o">=</span> <span class="n">_interpolate_energy_positions_gradient</span><span class="p">(</span>
+            <span class="n">gridpotential_lvl_oneplus</span><span class="p">,</span> <span class="n">basis_grads</span><span class="p">,</span> <span class="n">basis_inds</span><span class="p">,</span> <span class="n">charges</span>
+        <span class="p">)</span>
+        <span class="n">positions_tangent_out</span> <span class="o">=</span> <span class="p">(</span><span class="n">positions_jac</span> <span class="o">*</span> <span class="n">positions_dot</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+        <span class="c1"># Derivative w.r.t. charges:</span>
+        <span class="n">charges_jac</span> <span class="o">=</span> <span class="n">_interpolate_energy_charge_gradient</span><span class="p">(</span>
+            <span class="n">gridpotential_lvl_oneplus</span><span class="p">,</span> <span class="n">basis_vals</span><span class="p">,</span> <span class="n">basis_inds</span>
+        <span class="p">)</span>
+        <span class="n">charges_tangent_out</span> <span class="o">=</span> <span class="p">(</span><span class="n">charges_jac</span> <span class="o">*</span> <span class="n">charges_dot</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+        <span class="c1"># Derivative w.r.t. kernel stencils:</span>
+        <span class="c1"># In contrast to the positions and charges, we cannot supply a</span>
+        <span class="c1"># custom derivative rule for this parameter, as the functional form</span>
+        <span class="c1"># of `grid_pass_fn` is unspecified. Therefore, we fall back to</span>
+        <span class="c1"># default automatic differentiation. This is done in a slightly</span>
+        <span class="c1"># hacky way, by calling the regular jvp, but with the input tangents</span>
+        <span class="c1"># corresponding to all parameters except ``kernel_stencils`` set to</span>
+        <span class="c1"># zero.</span>
+        <span class="n">tangents_zeroed</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">positions</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">charges</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
+            <span class="n">kernel_stencils_dot</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">kernel_stencils_tangent_out</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jvp</span><span class="p">(</span>
+            <span class="n">_calc_energy</span><span class="p">,</span> <span class="n">primals</span><span class="p">,</span> <span class="n">tangents_zeroed</span>
+        <span class="p">)</span>
+
+        <span class="n">primal_out</span> <span class="o">=</span> <span class="n">energy</span>
+        <span class="n">tangent_out</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">positions_tangent_out</span>
+            <span class="o">+</span> <span class="n">charges_tangent_out</span>
+            <span class="o">+</span> <span class="n">kernel_stencils_tangent_out</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">primal_out</span><span class="p">,</span> <span class="n">tangent_out</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_make_unitcube_transform_fn</span><span class="p">(</span>
+        <span class="n">cell</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayLike</span><span class="p">],</span> <span class="n">Array</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">transform_mode</span> <span class="o">==</span> <span class="s2">&quot;ortho&quot;</span><span class="p">:</span>
+            <span class="n">inverse</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+            <span class="k">return</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="n">inverse</span>
+        <span class="k">elif</span> <span class="n">transform_mode</span> <span class="o">==</span> <span class="s2">&quot;triclinic&quot;</span><span class="p">:</span>
+            <span class="n">inverse</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+            <span class="k">return</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">@</span> <span class="n">inverse</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid &#39;transform_mode&#39;: </span><span class="si">{</span><span class="n">transform_mode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_u_oneplus</span><span class="p">(</span>
+        <span class="n">positions</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">charges</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">cell</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">transform_mode</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">positions_to_unitcube</span> <span class="o">=</span> <span class="n">_make_unitcube_transform_fn</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+            <span class="n">positions</span> <span class="o">=</span> <span class="n">positions_to_unitcube</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">kernel_stencils</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">stencils</span> <span class="o">=</span> <span class="n">kernel_stencils</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">stencils</span> <span class="o">=</span> <span class="n">kernel_stencil_construction_fn</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">use_custom_derivatives</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_calc_energy</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">charges</span><span class="p">,</span> <span class="n">stencils</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">_calc_energy_custom</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">charges</span><span class="p">,</span> <span class="n">stencils</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">compute_u_oneplus</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Florian Buchner, Johannes Schörghuber, Nico Unglert, Jesús Carrete, Georg K. H. Madsen.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

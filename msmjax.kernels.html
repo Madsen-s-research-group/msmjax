@@ -1,0 +1,435 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>msmjax.kernels &mdash; msmJAX  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="msmjax.bspline" href="msmjax.bspline.html" />
+    <link rel="prev" title="msmjax.calculators" href="msmjax.calculators.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            msmJAX
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#cpu-only-installation">CPU-only installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#cuda-installation">CUDA installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#optional-dependencies">Optional dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="setup_and_run.html">Setting up and running a calculation</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="api_reference.html">API reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="msmjax.calculators.html">msmjax.calculators</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.CustomJSONEncoder"><code class="docutils literal notranslate"><span class="pre">CustomJSONEncoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.CustomJSONEncoder.default"><code class="docutils literal notranslate"><span class="pre">CustomJSONEncoder.default()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.CustomJSONDecoder"><code class="docutils literal notranslate"><span class="pre">CustomJSONDecoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.CustomJSONDecoder.object_hook"><code class="docutils literal notranslate"><span class="pre">CustomJSONDecoder.object_hook()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams"><code class="docutils literal notranslate"><span class="pre">MSMParams</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.p"><code class="docutils literal notranslate"><span class="pre">MSMParams.p</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.mu"><code class="docutils literal notranslate"><span class="pre">MSMParams.mu</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.max_splitting_level"><code class="docutils literal notranslate"><span class="pre">MSMParams.max_splitting_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.max_grid_level"><code class="docutils literal notranslate"><span class="pre">MSMParams.max_grid_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.cutoffs"><code class="docutils literal notranslate"><span class="pre">MSMParams.cutoffs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.cell"><code class="docutils literal notranslate"><span class="pre">MSMParams.cell</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.cell_mode"><code class="docutils literal notranslate"><span class="pre">MSMParams.cell_mode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.pbc"><code class="docutils literal notranslate"><span class="pre">MSMParams.pbc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.dynamic_cell"><code class="docutils literal notranslate"><span class="pre">MSMParams.dynamic_cell</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.supercell_diag"><code class="docutils literal notranslate"><span class="pre">MSMParams.supercell_diag</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.use_neighborlist"><code class="docutils literal notranslate"><span class="pre">MSMParams.use_neighborlist</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.neighborlist_prefactor"><code class="docutils literal notranslate"><span class="pre">MSMParams.neighborlist_prefactor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.grids_defined_on_unitcube"><code class="docutils literal notranslate"><span class="pre">MSMParams.grids_defined_on_unitcube</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.grid_shapes"><code class="docutils literal notranslate"><span class="pre">MSMParams.grid_shapes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.grid_spacings"><code class="docutils literal notranslate"><span class="pre">MSMParams.grid_spacings</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.stencil_extents_from_center"><code class="docutils literal notranslate"><span class="pre">MSMParams.stencil_extents_from_center</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.convolution_methods"><code class="docutils literal notranslate"><span class="pre">MSMParams.convolution_methods</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.n_dim"><code class="docutils literal notranslate"><span class="pre">MSMParams.n_dim</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.version"><code class="docutils literal notranslate"><span class="pre">MSMParams.version</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.info"><code class="docutils literal notranslate"><span class="pre">MSMParams.info</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.save_json"><code class="docutils literal notranslate"><span class="pre">MSMParams.save_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.MSMParams.load_json"><code class="docutils literal notranslate"><span class="pre">MSMParams.load_json()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.find_stencil_extents_all_levels"><code class="docutils literal notranslate"><span class="pre">find_stencil_extents_all_levels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.set_up_msm_params"><code class="docutils literal notranslate"><span class="pre">set_up_msm_params()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.create_msm"><code class="docutils literal notranslate"><span class="pre">create_msm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.calculators.html#msmjax.calculators.check_cutoffs_and_get_actual_spacings"><code class="docutils literal notranslate"><span class="pre">check_cutoffs_and_get_actual_spacings()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">msmjax.kernels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#msmjax.kernels.SoftenerOneOverR"><code class="docutils literal notranslate"><span class="pre">SoftenerOneOverR</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msmjax.kernels.split_one_over_r"><code class="docutils literal notranslate"><span class="pre">split_one_over_r()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msmjax.kernels._get_distances"><code class="docutils literal notranslate"><span class="pre">_get_distances()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msmjax.kernels._compute_one_stencil"><code class="docutils literal notranslate"><span class="pre">_compute_one_stencil()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msmjax.kernels.make_construct_stencils"><code class="docutils literal notranslate"><span class="pre">make_construct_stencils()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msmjax.bspline.html">msmjax.bspline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.bspline.basis.html">msmjax.bspline.basis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.basis.html#msmjax.bspline.basis.characteristic"><code class="docutils literal notranslate"><span class="pre">characteristic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.basis.html#msmjax.bspline.basis.evaluate_basis_element"><code class="docutils literal notranslate"><span class="pre">evaluate_basis_element()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.basis.html#msmjax.bspline.basis.create_bspline_basis_element"><code class="docutils literal notranslate"><span class="pre">create_bspline_basis_element()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.bspline.coefficients.html">msmjax.bspline.coefficients</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_Phi"><code class="docutils literal notranslate"><span class="pre">calc_Phi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_col_of_B"><code class="docutils literal notranslate"><span class="pre">build_col_of_B()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_col_of_B2"><code class="docutils literal notranslate"><span class="pre">build_col_of_B2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_Toeplitz_matrix"><code class="docutils literal notranslate"><span class="pre">build_Toeplitz_matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_Toeplitz_system"><code class="docutils literal notranslate"><span class="pre">build_Toeplitz_system()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_c_m"><code class="docutils literal notranslate"><span class="pre">compute_c_m()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.generating_function"><code class="docutils literal notranslate"><span class="pre">generating_function()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_Mclaurin_coefficient"><code class="docutils literal notranslate"><span class="pre">calc_Mclaurin_coefficient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_B_p_over_2"><code class="docutils literal notranslate"><span class="pre">calc_B_p_over_2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_polynomials"><code class="docutils literal notranslate"><span class="pre">calc_polynomials()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.explode_Add"><code class="docutils literal notranslate"><span class="pre">explode_Add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.coeff_dict_to_array"><code class="docutils literal notranslate"><span class="pre">coeff_dict_to_array()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_quasi_omega_prime"><code class="docutils literal notranslate"><span class="pre">compute_quasi_omega_prime()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_j_zeroplus"><code class="docutils literal notranslate"><span class="pre">compute_j_zeroplus()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.bspline.gridops.html">msmjax.bspline.gridops</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._find_n_gridpoints_1d"><code class="docutils literal notranslate"><span class="pre">_find_n_gridpoints_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.set_up_grids_all_levels"><code class="docutils literal notranslate"><span class="pre">set_up_grids_all_levels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._arbitrary_dim_outer"><code class="docutils literal notranslate"><span class="pre">_arbitrary_dim_outer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._multiindex_outer"><code class="docutils literal notranslate"><span class="pre">_multiindex_outer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._ravel_multi_index_with_invalidation"><code class="docutils literal notranslate"><span class="pre">_ravel_multi_index_with_invalidation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_basis_evaluation_fn"><code class="docutils literal notranslate"><span class="pre">make_basis_evaluation_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_restrict_1d"><code class="docutils literal notranslate"><span class="pre">_make_restrict_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_restriction_operator"><code class="docutils literal notranslate"><span class="pre">make_restriction_operator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_prolongate_1d"><code class="docutils literal notranslate"><span class="pre">_make_prolongate_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_prolongation_operator"><code class="docutils literal notranslate"><span class="pre">make_prolongation_operator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.create_all_grid_to_grid_ops"><code class="docutils literal notranslate"><span class="pre">create_all_grid_to_grid_ops()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.suggest_max_grid_level_nonperiodic"><code class="docutils literal notranslate"><span class="pre">suggest_max_grid_level_nonperiodic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.find_spacings_and_max_level_periodic"><code class="docutils literal notranslate"><span class="pre">find_spacings_and_max_level_periodic()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msmjax.core.html">msmjax.core</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.core.shortrange.html">msmjax.core.shortrange</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange._gen_supercell"><code class="docutils literal notranslate"><span class="pre">_gen_supercell()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_free"><code class="docutils literal notranslate"><span class="pre">_displacement_free()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_ortho"><code class="docutils literal notranslate"><span class="pre">_displacement_ortho()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_general"><code class="docutils literal notranslate"><span class="pre">_displacement_general()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange._concretize_displacement_fn"><code class="docutils literal notranslate"><span class="pre">_concretize_displacement_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot"><code class="docutils literal notranslate"><span class="pre">make_eval_pair_pot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot_neighborlist"><code class="docutils literal notranslate"><span class="pre">make_eval_pair_pot_neighborlist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange.make_compute_u_zero"><code class="docutils literal notranslate"><span class="pre">make_compute_u_zero()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.core.longrange.html">msmjax.core.longrange</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange._anterpolate"><code class="docutils literal notranslate"><span class="pre">_anterpolate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_positions_gradient"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy_positions_gradient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_charge_gradient"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy_charge_gradient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange.special_periodic_convolve_scipy"><code class="docutils literal notranslate"><span class="pre">special_periodic_convolve_scipy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange.make_grid_pass_fn"><code class="docutils literal notranslate"><span class="pre">make_grid_pass_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange.make_compute_u_oneplus"><code class="docutils literal notranslate"><span class="pre">make_compute_u_oneplus()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msmjax.utils.html">msmjax.utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.utils.benchmarking.html">msmjax.utils.benchmarking</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.dir_context"><code class="docutils literal notranslate"><span class="pre">dir_context()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.write_lammps_data"><code class="docutils literal notranslate"><span class="pre">write_lammps_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.parse_energy_from_lammps_log"><code class="docutils literal notranslate"><span class="pre">parse_energy_from_lammps_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.parse_lammps_log"><code class="docutils literal notranslate"><span class="pre">parse_lammps_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.make_lammps_input_text_pppm"><code class="docutils literal notranslate"><span class="pre">make_lammps_input_text_pppm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.eval_lammps_pppm"><code class="docutils literal notranslate"><span class="pre">eval_lammps_pppm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_rmse"><code class="docutils literal notranslate"><span class="pre">calc_rmse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_relative_rmse_percent"><code class="docutils literal notranslate"><span class="pre">calc_relative_rmse_percent()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_relative_rmse"><code class="docutils literal notranslate"><span class="pre">calc_relative_rmse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.make_timed_eval"><code class="docutils literal notranslate"><span class="pre">make_timed_eval()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.remove_duplicates_from_neighborlist"><code class="docutils literal notranslate"><span class="pre">remove_duplicates_from_neighborlist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.build_duplicate_free_neighborlists"><code class="docutils literal notranslate"><span class="pre">build_duplicate_free_neighborlists()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.coulomb_kernel"><code class="docutils literal notranslate"><span class="pre">coulomb_kernel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_energy_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_energy_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_forces_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_forces_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_chargegrad_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_chargegrad_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_stress_virial"><code class="docutils literal notranslate"><span class="pre">calc_stress_virial()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_nonperiodic_reference_results"><code class="docutils literal notranslate"><span class="pre">calc_nonperiodic_reference_results()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.utils.general.html">msmjax.utils.general</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.general.html#msmjax.utils.general._divide_zero_safe"><code class="docutils literal notranslate"><span class="pre">_divide_zero_safe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.general.html#msmjax.utils.general._sqrt_jvp"><code class="docutils literal notranslate"><span class="pre">_sqrt_jvp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.general.html#msmjax.utils.general.get_max_cutoff_for_mic"><code class="docutils literal notranslate"><span class="pre">get_max_cutoff_for_mic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.general.html#msmjax.utils.general.find_covering_grid_extents"><code class="docutils literal notranslate"><span class="pre">find_covering_grid_extents()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">msmJAX</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="api_reference.html">API reference</a></li>
+      <li class="breadcrumb-item active">msmjax.kernels</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/msmjax.kernels.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-msmjax.kernels">
+<span id="msmjax-kernels"></span><h1>msmjax.kernels<a class="headerlink" href="#module-msmjax.kernels" title="Link to this heading"></a></h1>
+<p>Code for splitting interaction kernels into sum of partial kernels.</p>
+<p class="rubric">References</p>
+<p>[1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,
+R. D. Multilevel Summation with B-Spline Interpolation for Pairwise
+Interactions in Molecular Dynamics Simulations. J. Chem. Phys. 2016,
+144 (11), 114112. <a class="reference external" href="https://doi.org/10.1063/1.4943868">https://doi.org/10.1063/1.4943868</a>.</p>
+<p>[2] Hardy, D. J. Multilevel Summation for the Fast Evaluation of
+Forces for the Simulation of Biomolecules (PhD thesis), University
+of Illinois at Urbana-Champaign, 2006.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="msmjax.kernels.SoftenerOneOverR">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">msmjax.kernels.</span></span><span class="sig-name descname"><span class="pre">SoftenerOneOverR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/kernels.html#SoftenerOneOverR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.kernels.SoftenerOneOverR" title="Link to this definition"></a></dt>
+<dd><p>Class for constructing and evaluating softener for the 1/r kernel.</p>
+<p>The softener is a function of a dimensionless argument rho that is equal
+to 1/rho for rho &gt;= 1 and bounded and smooth for rho &lt; 1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>order</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Order (as a function of s = rho**2) of the Taylor polynomial
+that the softening function consists of for rho &lt; 1.
+In line with common spline terminology, its polynomial degree (as
+a function of s = rho**2) is equal to order - 1.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.kernels.split_one_over_r">
+<span class="sig-prename descclassname"><span class="pre">msmjax.kernels.</span></span><span class="sig-name descname"><span class="pre">split_one_over_r</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_zero_cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">softening_function</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/kernels.html#split_one_over_r"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.kernels.split_one_over_r" title="Link to this definition"></a></dt>
+<dd><p>Split kernel 1/r in (max_level + 1) terms according to reference.</p>
+<p>The splitting terms sum up to the Coulomb kernel 1/r like this:
+1/r = g_0(r) + g_1(r) + g_2(r) + … + g_{max_order}(r)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_level</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The number of splits to be performed.</p></li>
+<li><p><strong>level_zero_cutoff</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span>) – The cutoff radius of the level-zero kernel function.</p></li>
+<li><p><strong>softening_function</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></span>) – The basic smoothing function for this splitting.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list of one-argument functions g_l with l from zero to <cite>max_order</cite>
+that represent the terms in the splitting of the interaction kernel.
+These have their respective cutoffs ‘built in’ already (in the sense
+that they evaluate to zero for distances beyond) and take their
+arguments in the same length units that <code class="docutils literal notranslate"><span class="pre">level_zero_cutoff</span></code> was
+supplied in.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the arguments do not make sense.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.kernels._get_distances">
+<span class="sig-prename descclassname"><span class="pre">msmjax.kernels.</span></span><span class="sig-name descname"><span class="pre">_get_distances</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extents_from_center</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spacing_or_gridcell</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/kernels.html#_get_distances"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.kernels._get_distances" title="Link to this definition"></a></dt>
+<dd><p>Compute distances (from the origin) of points on a regular grid.</p>
+<p>This function’s originally intended use is to construct the grid of
+distances at which the interaction kernels are to be evaluated for the
+purpose of calculating kernel stencils for interpolation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>extents_from_center</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span>) – Number of points along each axis, counted from,
+and not including, the center point. That is to say, for
+<code class="docutils literal notranslate"><span class="pre">extents_from_center</span> <span class="pre">=</span> <span class="pre">(s_1,</span> <span class="pre">s_2,</span> <span class="pre">s_3)</span></code>, the shape of the grid
+of points is <code class="docutils literal notranslate"><span class="pre">(2</span> <span class="pre">*</span> <span class="pre">s_1</span> <span class="pre">+</span> <span class="pre">1,</span> <span class="pre">2</span> <span class="pre">*</span> <span class="pre">s_2</span> <span class="pre">+</span> <span class="pre">1,</span> <span class="pre">2</span> <span class="pre">*</span> <span class="pre">s_3</span> <span class="pre">+</span> <span class="pre">1)</span></code>.</p></li>
+<li><p><strong>spacing_or_gridcell</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Either a scalar grid spacing value (use if
+orthogonal axes with the same grid spacing along all axes),
+a 1-d array (use if orthogonal axes with different spacings),
+or a 2-d array of shape <code class="docutils literal notranslate"><span class="pre">(n_dim,</span> <span class="pre">n_dim)</span></code> corresponding to
+exactly one grid cell (use if the axes spanning the grid are not
+orthogonal).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Distances from the origin of points on the grid.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.kernels._compute_one_stencil">
+<span class="sig-prename descclassname"><span class="pre">msmjax.kernels.</span></span><span class="sig-name descname"><span class="pre">_compute_one_stencil</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">omega_prime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/kernels.html#_compute_one_stencil"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.kernels._compute_one_stencil" title="Link to this definition"></a></dt>
+<dd><p>Compute one kernel stencil by convolution with universal spline coeffs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>function_values</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Values of the function for which the stencil of
+interpolation coefficients is to be computed, on a regular grid.</p></li>
+<li><p><strong>omega_prime</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – 1-d sequence of universal spline coefficients for
+convolution with <code class="docutils literal notranslate"><span class="pre">function_values</span></code>.</p></li>
+<li><p><strong>mode</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – The <code class="docutils literal notranslate"><span class="pre">mode</span></code> argument passed to <code class="docutils literal notranslate"><span class="pre">jax.scipy.signal.convolve</span></code>
+used internally for doing the convolution.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The resulting kernel stencil.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.kernels.make_construct_stencils">
+<span class="sig-prename descclassname"><span class="pre">msmjax.kernels.</span></span><span class="sig-name descname"><span class="pre">make_construct_stencils</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">omega_prime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_levels_intermed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_toplevel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scaled_spacings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_lowest_intermed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extents_from_center_intermed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_toplevel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_shape_toplevel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/kernels.html#make_construct_stencils"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.kernels.make_construct_stencils" title="Link to this definition"></a></dt>
+<dd><p>Create a function to compute all kernel stencils from a given unit cell</p>
+<p>The created function is suitable for passing as the
+<code class="docutils literal notranslate"><span class="pre">kernel_stencil_construction_fn</span></code> argument to
+<a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange.make_compute_u_oneplus" title="msmjax.core.longrange.make_compute_u_oneplus"><code class="xref py py-func docutils literal notranslate"><span class="pre">msmjax.core.longrange.make_compute_u_oneplus()</span></code></a>.</p>
+<p>The design is taileored to kernel splitting schemes like the one
+implemented by <a class="reference internal" href="#msmjax.kernels.split_one_over_r" title="msmjax.kernels.split_one_over_r"><code class="xref py py-func docutils literal notranslate"><span class="pre">split_one_over_r()</span></code></a>, in which all the
+intermediate-level partial kernels <span class="math notranslate nohighlight">\(k_l(r)\)</span>, <span class="math notranslate nohighlight">\(l = 1, ...,
+L - 1\)</span> have the same functional form except for scaling, and the kernel
+stencils on grids at subsequent levels with twice the spacing can be
+computed by simply dividing the lower-level kernel stencil by two.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>omega_prime</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – 1-d sequence of universal spline coefficients from
+convolution with which the kernel stencils are obtained.</p></li>
+<li><p><strong>n_levels_intermed</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The number of intermediate levels, i.e. all
+levels <span class="math notranslate nohighlight">\(l = 1, ..., L-1\)</span>, but excluding <span class="math notranslate nohighlight">\(l = 0\)</span> and
+<span class="math notranslate nohighlight">\(l = L\)</span>.</p></li>
+<li><p><strong>include_toplevel</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – Whether the top level (<span class="math notranslate nohighlight">\(l = L\)</span>) should be
+included. Usually, this is true in systems without periodicity,
+and false in periodic ones.</p></li>
+<li><p><strong>scaled_spacings</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – 1-d array of grid spacings values, one per axis,
+expressed in fractional coordinates w.r.t. the cell.</p></li>
+<li><p><strong>cell_mode</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code>[<code class="docutils literal notranslate"><span class="pre">'ortho'</span></code>, <code class="docutils literal notranslate"><span class="pre">'triclinic'</span></code>]</span>) – A string specifying assumptions on the shape of the
+unit cell. Either the cell is assumed orthorhombic and
+axis-aligned, in which case only its diagonal is considered,
+reducing computational cost, or a general triclinic one.</p></li>
+<li><p><strong>k_lowest_intermed</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]]</span>) – The partial kernel at the lowest intermediate grid
+level (<span class="math notranslate nohighlight">\(l = 1 &lt; L\)</span> if <code class="docutils literal notranslate"><span class="pre">n_levels_intermed</span></code> &gt; 0).
+Omit if <code class="docutils literal notranslate"><span class="pre">n_levels_intermed</span> <span class="pre">=</span> <span class="pre">0</span></code>, in which case <span class="math notranslate nohighlight">\(L = 1\)</span>.</p></li>
+<li><p><strong>extents_from_center_intermed</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>] | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – Number of points of the intermediate
+(<span class="math notranslate nohighlight">\(l = L\)</span>) stencils along each axis, counted from, and not
+including, the center point. That is to say, for
+<code class="docutils literal notranslate"><span class="pre">extents_from_center</span> <span class="pre">=</span> <span class="pre">(s_1,</span> <span class="pre">s_2,</span> <span class="pre">s_3)</span></code>, the shape of the
+stencils is <code class="docutils literal notranslate"><span class="pre">(2</span> <span class="pre">*</span> <span class="pre">s_1</span> <span class="pre">+</span> <span class="pre">1,</span> <span class="pre">2</span> <span class="pre">*</span> <span class="pre">s_2</span> <span class="pre">+</span> <span class="pre">1,</span> <span class="pre">2</span> <span class="pre">*</span> <span class="pre">s_3</span> <span class="pre">+</span> <span class="pre">1)</span></code>.
+Required if <code class="docutils literal notranslate"><span class="pre">k_toplevel</span></code> was given.</p></li>
+<li><p><strong>k_toplevel</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]]</span>) – The partial kernel :math`k_L(r)` at the top level.</p></li>
+<li><p><strong>grid_shape_toplevel</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>] | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – The shape (number of points along each axis) of
+the highest-level (<span class="math notranslate nohighlight">\(l = L\)</span>) grid. Required if <code class="docutils literal notranslate"><span class="pre">k_toplevel</span></code>
+was given.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A function of one argument (cell, of shape <code class="docutils literal notranslate"><span class="pre">(n_dim,</span> <span class="pre">n_ndim)</span></code>), that
+returns a list of kernel stencils, one for each level, with <code class="docutils literal notranslate"><span class="pre">None</span></code>
+as a placeholder at level zero, where there is no grid.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="msmjax.calculators.html" class="btn btn-neutral float-left" title="msmjax.calculators" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="msmjax.bspline.html" class="btn btn-neutral float-right" title="msmjax.bspline" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Florian Buchner, Johannes Schörghuber, Nico Unglert, Jesús Carrete, Georg K. H. Madsen.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

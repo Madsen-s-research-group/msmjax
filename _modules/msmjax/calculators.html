@@ -1,0 +1,1077 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>msmjax.calculators &mdash; msmJAX  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            msmJAX
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide.html">API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html">Installation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference.html">API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../msmjax.calculators.html">msmjax.calculators</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.CustomJSONEncoder"><code class="docutils literal notranslate"><span class="pre">CustomJSONEncoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.CustomJSONEncoder.default"><code class="docutils literal notranslate"><span class="pre">CustomJSONEncoder.default()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.CustomJSONDecoder"><code class="docutils literal notranslate"><span class="pre">CustomJSONDecoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.CustomJSONDecoder.object_hook"><code class="docutils literal notranslate"><span class="pre">CustomJSONDecoder.object_hook()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams"><code class="docutils literal notranslate"><span class="pre">MSMParams</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.p"><code class="docutils literal notranslate"><span class="pre">MSMParams.p</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.mu"><code class="docutils literal notranslate"><span class="pre">MSMParams.mu</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.max_splitting_level"><code class="docutils literal notranslate"><span class="pre">MSMParams.max_splitting_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.max_grid_level"><code class="docutils literal notranslate"><span class="pre">MSMParams.max_grid_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.cutoffs"><code class="docutils literal notranslate"><span class="pre">MSMParams.cutoffs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.cell"><code class="docutils literal notranslate"><span class="pre">MSMParams.cell</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.cell_mode"><code class="docutils literal notranslate"><span class="pre">MSMParams.cell_mode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.pbc"><code class="docutils literal notranslate"><span class="pre">MSMParams.pbc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.dynamic_cell"><code class="docutils literal notranslate"><span class="pre">MSMParams.dynamic_cell</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.supercell_diag"><code class="docutils literal notranslate"><span class="pre">MSMParams.supercell_diag</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.use_neighborlist"><code class="docutils literal notranslate"><span class="pre">MSMParams.use_neighborlist</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.neighborlist_prefactor"><code class="docutils literal notranslate"><span class="pre">MSMParams.neighborlist_prefactor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.grids_defined_on_unitcube"><code class="docutils literal notranslate"><span class="pre">MSMParams.grids_defined_on_unitcube</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.grid_shapes"><code class="docutils literal notranslate"><span class="pre">MSMParams.grid_shapes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.grid_spacings"><code class="docutils literal notranslate"><span class="pre">MSMParams.grid_spacings</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.stencil_extents_from_center"><code class="docutils literal notranslate"><span class="pre">MSMParams.stencil_extents_from_center</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.convolution_methods"><code class="docutils literal notranslate"><span class="pre">MSMParams.convolution_methods</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.n_dim"><code class="docutils literal notranslate"><span class="pre">MSMParams.n_dim</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.version"><code class="docutils literal notranslate"><span class="pre">MSMParams.version</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.info"><code class="docutils literal notranslate"><span class="pre">MSMParams.info</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.save_json"><code class="docutils literal notranslate"><span class="pre">MSMParams.save_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.load_json"><code class="docutils literal notranslate"><span class="pre">MSMParams.load_json()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.find_stencil_extents_all_levels"><code class="docutils literal notranslate"><span class="pre">find_stencil_extents_all_levels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.set_up_msm_params"><code class="docutils literal notranslate"><span class="pre">set_up_msm_params()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.create_msm"><code class="docutils literal notranslate"><span class="pre">create_msm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../msmjax.calculators.html#msmjax.calculators.check_cutoffs_and_get_actual_spacings"><code class="docutils literal notranslate"><span class="pre">check_cutoffs_and_get_actual_spacings()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../msmjax.kernels.html">msmjax.kernels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../msmjax.kernels.html#msmjax.kernels.SoftenerOneOverR"><code class="docutils literal notranslate"><span class="pre">SoftenerOneOverR</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../msmjax.kernels.html#msmjax.kernels.split_one_over_r"><code class="docutils literal notranslate"><span class="pre">split_one_over_r()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../msmjax.kernels.html#msmjax.kernels._get_distances"><code class="docutils literal notranslate"><span class="pre">_get_distances()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../msmjax.kernels.html#msmjax.kernels._compute_one_stencil"><code class="docutils literal notranslate"><span class="pre">_compute_one_stencil()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../msmjax.kernels.html#msmjax.kernels.make_construct_stencils"><code class="docutils literal notranslate"><span class="pre">make_construct_stencils()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../msmjax.bspline.html">msmjax.bspline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../msmjax.bspline.basis.html">msmjax.bspline.basis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.basis.html#msmjax.bspline.basis.characteristic"><code class="docutils literal notranslate"><span class="pre">characteristic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.basis.html#msmjax.bspline.basis.evaluate_basis_element"><code class="docutils literal notranslate"><span class="pre">evaluate_basis_element()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.basis.html#msmjax.bspline.basis.create_bspline_basis_element"><code class="docutils literal notranslate"><span class="pre">create_bspline_basis_element()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../msmjax.bspline.coefficients.html">msmjax.bspline.coefficients</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_Phi"><code class="docutils literal notranslate"><span class="pre">calc_Phi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_col_of_B"><code class="docutils literal notranslate"><span class="pre">build_col_of_B()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_col_of_B2"><code class="docutils literal notranslate"><span class="pre">build_col_of_B2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_Toeplitz_matrix"><code class="docutils literal notranslate"><span class="pre">build_Toeplitz_matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_Toeplitz_system"><code class="docutils literal notranslate"><span class="pre">build_Toeplitz_system()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_c_m"><code class="docutils literal notranslate"><span class="pre">compute_c_m()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.generating_function"><code class="docutils literal notranslate"><span class="pre">generating_function()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_Mclaurin_coefficient"><code class="docutils literal notranslate"><span class="pre">calc_Mclaurin_coefficient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_B_p_over_2"><code class="docutils literal notranslate"><span class="pre">calc_B_p_over_2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_polynomials"><code class="docutils literal notranslate"><span class="pre">calc_polynomials()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.explode_Add"><code class="docutils literal notranslate"><span class="pre">explode_Add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.coeff_dict_to_array"><code class="docutils literal notranslate"><span class="pre">coeff_dict_to_array()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_quasi_omega_prime"><code class="docutils literal notranslate"><span class="pre">compute_quasi_omega_prime()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_j_zeroplus"><code class="docutils literal notranslate"><span class="pre">compute_j_zeroplus()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../msmjax.bspline.gridops.html">msmjax.bspline.gridops</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._find_n_gridpoints_1d"><code class="docutils literal notranslate"><span class="pre">_find_n_gridpoints_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.set_up_grids_all_levels"><code class="docutils literal notranslate"><span class="pre">set_up_grids_all_levels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._arbitrary_dim_outer"><code class="docutils literal notranslate"><span class="pre">_arbitrary_dim_outer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._multiindex_outer"><code class="docutils literal notranslate"><span class="pre">_multiindex_outer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._ravel_multi_index_with_invalidation"><code class="docutils literal notranslate"><span class="pre">_ravel_multi_index_with_invalidation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_basis_evaluation_fn"><code class="docutils literal notranslate"><span class="pre">make_basis_evaluation_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_restrict_1d"><code class="docutils literal notranslate"><span class="pre">_make_restrict_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_restriction_operator"><code class="docutils literal notranslate"><span class="pre">make_restriction_operator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_prolongate_1d"><code class="docutils literal notranslate"><span class="pre">_make_prolongate_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_prolongation_operator"><code class="docutils literal notranslate"><span class="pre">make_prolongation_operator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.create_all_grid_to_grid_ops"><code class="docutils literal notranslate"><span class="pre">create_all_grid_to_grid_ops()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.suggest_max_grid_level_nonperiodic"><code class="docutils literal notranslate"><span class="pre">suggest_max_grid_level_nonperiodic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.find_spacings_and_max_level_periodic"><code class="docutils literal notranslate"><span class="pre">find_spacings_and_max_level_periodic()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../msmjax.core.html">msmjax.core</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../msmjax.core.shortrange.html">msmjax.core.shortrange</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.core.shortrange.html#msmjax.core.shortrange._gen_supercell"><code class="docutils literal notranslate"><span class="pre">_gen_supercell()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_free"><code class="docutils literal notranslate"><span class="pre">_displacement_free()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_ortho"><code class="docutils literal notranslate"><span class="pre">_displacement_ortho()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_general"><code class="docutils literal notranslate"><span class="pre">_displacement_general()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.core.shortrange.html#msmjax.core.shortrange._concretize_displacement_fn"><code class="docutils literal notranslate"><span class="pre">_concretize_displacement_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot"><code class="docutils literal notranslate"><span class="pre">make_eval_pair_pot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot_neighborlist"><code class="docutils literal notranslate"><span class="pre">make_eval_pair_pot_neighborlist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.core.shortrange.html#msmjax.core.shortrange.make_compute_u_zero"><code class="docutils literal notranslate"><span class="pre">make_compute_u_zero()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../msmjax.core.longrange.html">msmjax.core.longrange</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.core.longrange.html#msmjax.core.longrange._anterpolate"><code class="docutils literal notranslate"><span class="pre">_anterpolate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_positions_gradient"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy_positions_gradient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_charge_gradient"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy_charge_gradient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.core.longrange.html#msmjax.core.longrange.special_periodic_convolve_scipy"><code class="docutils literal notranslate"><span class="pre">special_periodic_convolve_scipy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.core.longrange.html#msmjax.core.longrange.make_grid_pass_fn"><code class="docutils literal notranslate"><span class="pre">make_grid_pass_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.core.longrange.html#msmjax.core.longrange.make_compute_u_oneplus"><code class="docutils literal notranslate"><span class="pre">make_compute_u_oneplus()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../msmjax.utils.html">msmjax.utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../msmjax.utils.benchmarking.html">msmjax.utils.benchmarking</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.dir_context"><code class="docutils literal notranslate"><span class="pre">dir_context()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.write_lammps_data"><code class="docutils literal notranslate"><span class="pre">write_lammps_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.parse_energy_from_lammps_log"><code class="docutils literal notranslate"><span class="pre">parse_energy_from_lammps_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.parse_lammps_log"><code class="docutils literal notranslate"><span class="pre">parse_lammps_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.make_lammps_input_text_pppm"><code class="docutils literal notranslate"><span class="pre">make_lammps_input_text_pppm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.eval_lammps_pppm"><code class="docutils literal notranslate"><span class="pre">eval_lammps_pppm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_rmse"><code class="docutils literal notranslate"><span class="pre">calc_rmse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_relative_rmse_percent"><code class="docutils literal notranslate"><span class="pre">calc_relative_rmse_percent()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_relative_rmse"><code class="docutils literal notranslate"><span class="pre">calc_relative_rmse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.make_timed_eval"><code class="docutils literal notranslate"><span class="pre">make_timed_eval()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.remove_duplicates_from_neighborlist"><code class="docutils literal notranslate"><span class="pre">remove_duplicates_from_neighborlist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.build_duplicate_free_neighborlists"><code class="docutils literal notranslate"><span class="pre">build_duplicate_free_neighborlists()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.coulomb_kernel"><code class="docutils literal notranslate"><span class="pre">coulomb_kernel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_energy_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_energy_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_forces_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_forces_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_chargegrad_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_chargegrad_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_stress_virial"><code class="docutils literal notranslate"><span class="pre">calc_stress_virial()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_nonperiodic_reference_results"><code class="docutils literal notranslate"><span class="pre">calc_nonperiodic_reference_results()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../msmjax.utils.general.html">msmjax.utils.general</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.general.html#msmjax.utils.general._divide_zero_safe"><code class="docutils literal notranslate"><span class="pre">_divide_zero_safe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.general.html#msmjax.utils.general._sqrt_jvp"><code class="docutils literal notranslate"><span class="pre">_sqrt_jvp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.general.html#msmjax.utils.general.get_max_cutoff_for_mic"><code class="docutils literal notranslate"><span class="pre">get_max_cutoff_for_mic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../msmjax.utils.general.html#msmjax.utils.general.find_covering_grid_extents"><code class="docutils literal notranslate"><span class="pre">find_covering_grid_extents()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">msmJAX</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">msmjax.calculators</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for msmjax.calculators</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Code for high-level interface.</span>
+
+<span class="sd">References:</span>
+<span class="sd">    [1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,</span>
+<span class="sd">    R. D. Multilevel Summation with B-Spline Interpolation for Pairwise</span>
+<span class="sd">    Interactions in Molecular Dynamics Simulations. J. Chem. Phys. 2016,</span>
+<span class="sd">    144 (11), 114112. https://doi.org/10.1063/1.4943868.</span>
+
+<span class="sd">    [2] Hardy, D. J. Multilevel Summation for the Fast Evaluation of</span>
+<span class="sd">    Forces for the Simulation of Biomolecules (PhD thesis), University</span>
+<span class="sd">    of Illinois at Urbana-Champaign, 2006.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">onp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLike</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">msmjax</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">msmjax.bspline.coefficients</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_quasi_omega_prime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">msmjax.bspline.gridops</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">create_all_grid_to_grid_ops</span><span class="p">,</span>
+    <span class="n">find_spacings_and_max_level_periodic</span><span class="p">,</span>
+    <span class="n">make_basis_evaluation_fn</span><span class="p">,</span>
+    <span class="n">set_up_grids_all_levels</span><span class="p">,</span>
+    <span class="n">suggest_max_grid_level_nonperiodic</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">msmjax.core.longrange</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_compute_u_oneplus</span><span class="p">,</span> <span class="n">make_grid_pass_fn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">msmjax.core.shortrange</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_gen_supercell</span><span class="p">,</span>
+    <span class="n">make_compute_u_zero</span><span class="p">,</span>
+    <span class="n">make_eval_pair_pot</span><span class="p">,</span>
+    <span class="n">make_eval_pair_pot_neighborlist</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">msmjax.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SoftenerOneOverR</span><span class="p">,</span>
+    <span class="n">make_construct_stencils</span><span class="p">,</span>
+    <span class="n">split_one_over_r</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">msmjax.utils.general</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CellMode</span><span class="p">,</span>
+    <span class="n">ConvMeth</span><span class="p">,</span>
+    <span class="n">KernelFn</span><span class="p">,</span>
+    <span class="n">find_covering_grid_extents</span><span class="p">,</span>
+    <span class="n">get_max_cutoff_for_mic</span><span class="p">,</span>
+    <span class="n">inds_matrix_to_six_component_stress</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="CustomJSONEncoder">
+<a class="viewcode-back" href="../../msmjax.calculators.html#msmjax.calculators.CustomJSONEncoder">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CustomJSONEncoder</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class that extends JSONEncoder to handle different data types.</span>
+
+<span class="sd">    From Clinamen2:</span>
+<span class="sd">    R. Wanzenböck, F. Buchner, P. Kovács, G. K. H. Madsen, and J. Carrete,</span>
+<span class="sd">    “Clinamen2: Functional-style evolutionary optimization in Python for</span>
+<span class="sd">    atomistic structure searches,” Computer Physics Communications,</span>
+<span class="sd">    vol. 297, p. 109065, Apr. 2024, doi: 10.1016/j.cpc.2023.109065.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CustomJSONEncoder.default">
+<a class="viewcode-back" href="../../msmjax.calculators.html#msmjax.calculators.CustomJSONEncoder.default">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a json-izable version of o or delegate on the base class.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">onp</span><span class="o">.</span><span class="n">generic</span><span class="p">):</span>
+            <span class="c1"># Deal with non-serializable types such as numpy.int64</span>
+            <span class="k">return</span> <span class="n">o</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">onp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">nruter</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;main_type&quot;</span><span class="p">:</span> <span class="s2">&quot;NumPy/&quot;</span> <span class="o">+</span> <span class="n">o</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="n">o</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="n">nruter</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CustomJSONDecoder">
+<a class="viewcode-back" href="../../msmjax.calculators.html#msmjax.calculators.CustomJSONDecoder">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CustomJSONDecoder</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONDecoder</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class that extends the JSONDecoder to handle different data types.</span>
+
+<span class="sd">    From Clinamen2:</span>
+<span class="sd">    R. Wanzenböck, F. Buchner, P. Kovács, G. K. H. Madsen, and J. Carrete,</span>
+<span class="sd">    “Clinamen2: Functional-style evolutionary optimization in Python for</span>
+<span class="sd">    atomistic structure searches,” Computer Physics Communications,</span>
+<span class="sd">    vol. 297, p. 109065, Apr. 2024, doi: 10.1016/j.cpc.2023.109065.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">JSONDecoder</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">object_hook</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">object_hook</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="CustomJSONDecoder.object_hook">
+<a class="viewcode-back" href="../../msmjax.calculators.html#msmjax.calculators.CustomJSONDecoder.object_hook">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">object_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reencode numpy arrays from dictionary.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">main_type</span><span class="p">,</span> <span class="o">*</span><span class="n">extra</span> <span class="o">=</span> <span class="n">o</span><span class="p">[</span><span class="s2">&quot;main_type&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">main_type</span> <span class="o">==</span> <span class="s2">&quot;NumPy&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">onp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">o</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">extra</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">o</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MSMParams">
+<a class="viewcode-back" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams">[docs]</a>
+<span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MSMParams</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for holding all settings required for MSM with B-spline</span>
+<span class="sd">    interpolation for Coulomb potentials.</span>
+
+<span class="sd">    While it is possible to manually instantiate this class, this requires</span>
+<span class="sd">    a lot of parameters, and might leave it in an inconsistent state.</span>
+<span class="sd">    The recommended way is to use :func:`set_up_msm_params` instead.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        p: Interpolation order in the convention of the article (Ref. [1]).</span>
+<span class="sd">        mu: Adjustable parameter in the quasi-interpolation scheme that</span>
+<span class="sd">            controls its accuracy at grid points, see Ref. [1].</span>
+<span class="sd">        max_splitting_level: The level of the highest term in the splitting of</span>
+<span class="sd">            the Coulomb kernel into partial kernels.</span>
+<span class="sd">        max_grid_level: The level of the highest grid included in the</span>
+<span class="sd">            evaluation. Can be lower than ``max_splitting_level``.</span>
+<span class="sd">        cutoffs: Sequence of cutoff radii of the partial kernels at all levels.</span>
+<span class="sd">        cell: Simulation cell. The exact interpretation depends on the</span>
+<span class="sd">            ``dynamic_cell`` parameter. If ``dynamic_cell=False``, it is the</span>
+<span class="sd">            actual fixed cell for which the model is evaluated.</span>
+<span class="sd">            If ``dynamic_cell=True``, it is merely a reference cell.</span>
+<span class="sd">        cell_mode: A string specifying assumptions on the shape of the</span>
+<span class="sd">            unit cell. Either the cell is assumed orthorhombic and</span>
+<span class="sd">            axis-aligned, in which case only its diagonal is considered,</span>
+<span class="sd">            reducing computational cost, or a general triclinic one.</span>
+<span class="sd">        pbc: One boolean per direction signaling periodicity.</span>
+<span class="sd">        dynamic_cell: Whether the cell can dynamically change.</span>
+<span class="sd">        supercell_diag: An optional sequence of positive integers, one per</span>
+<span class="sd">            direction, indicating that the short-range contribution should</span>
+<span class="sd">            be evaluated in a supercell.</span>
+<span class="sd">            See :py:func:`msmjax.core.shortrange.make_eval_pair_pot`</span>
+<span class="sd">            for more details.</span>
+<span class="sd">        use_neighborlist: Whether to use a neighbor list.</span>
+<span class="sd">        neighborlist_prefactor: Set to 0.5 if the neighbor lists you are going</span>
+<span class="sd">            to pass contain duplicates, and to 1.0 if they are duplicate-free.</span>
+<span class="sd">            Setting to other values is possible, but unlikely to make sense.</span>
+<span class="sd">        grids_defined_on_unitcube: Whether the grid spacings are given on the</span>
+<span class="sd">            unit cube or in dimensionful length units.</span>
+<span class="sd">        grid_shapes: Sequence of tuples of integers indicating the shape of</span>
+<span class="sd">            grid at each level.</span>
+<span class="sd">        grid_spacings: Sequence of 1-d arrays (one value per direction)</span>
+<span class="sd">            indicating the grid spacings at each level.</span>
+<span class="sd">            If ``grids_defined_on_unitcube = True``, they must be given in</span>
+<span class="sd">            fractional coordinates.</span>
+<span class="sd">        stencil_extents_from_center:</span>
+<span class="sd">        convolution_methods: Algorithms to use for convolution in the grid</span>
+<span class="sd">            potential calculation. One value per grid level (i.e., different</span>
+<span class="sd">            algorithms can be used at different levels).</span>
+<span class="sd">            See :py:obj:`msmjax.utils.general.ConvMeth` and</span>
+<span class="sd">            :py:func:`msmjax.core.longrange.special_periodic_convolve_scipy`</span>
+<span class="sd">            for more details.</span>
+<span class="sd">        n_dim: Spatial dimension.</span>
+<span class="sd">        version: Package version.</span>
+<span class="sd">        info: Any additional information you want to store for later reference.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># Basic MSM settings</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="n">p</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">mu</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">max_splitting_level</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">max_grid_level</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">cutoffs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># Geometry-related</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="n">cell</span><span class="p">:</span> <span class="n">onp</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">cell_mode</span><span class="p">:</span> <span class="n">CellMode</span>
+    <span class="n">pbc</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span>
+    <span class="n">dynamic_cell</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># Short-range evaluation</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="n">supercell_diag</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">use_neighborlist</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">neighborlist_prefactor</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># Long-range evaluation</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="n">grids_defined_on_unitcube</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">grid_shapes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="kc">None</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span>
+    <span class="n">grid_spacings</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="kc">None</span> <span class="o">|</span> <span class="n">onp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+    <span class="n">stencil_extents_from_center</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="kc">None</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span>
+    <span class="n">convolution_methods</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="kc">None</span> <span class="o">|</span> <span class="n">ConvMeth</span><span class="p">]</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># Info</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="n">n_dim</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">msmjax</span><span class="o">.</span><span class="n">__version__</span>
+    <span class="n">info</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pbc</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pbc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supercell_diag</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="kc">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">supercell_diag</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">supercell_diag</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">convolution_methods</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">convolution_methods</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MSMParams.save_json">
+<a class="viewcode-back" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.save_json">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span>
+                <span class="n">dataclasses</span><span class="o">.</span><span class="n">asdict</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">f</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">CustomJSONEncoder</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MSMParams.load_json">
+<a class="viewcode-back" href="../../msmjax.calculators.html#msmjax.calculators.MSMParams.load_json">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">params_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">CustomJSONDecoder</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">params_dict</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="find_stencil_extents_all_levels">
+<a class="viewcode-back" href="../../msmjax.calculators.html#msmjax.calculators.find_stencil_extents_all_levels">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_stencil_extents_all_levels</span><span class="p">(</span>
+    <span class="n">cell</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">level_one_spacings</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">level_zero_cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">n_levels_intermed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">include_toplevel</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">grid_shape_toplevel</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="kc">None</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Determine required extents of the kernel stencils at all grid levels.</span>
+
+<span class="sd">    See Ref. [1] for the criteria used.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cell: Array representing cell, `shape (n_dim, n_dim)`.</span>
+<span class="sd">        level_one_spacings: 1-d array of grid spacings at the lowest grid</span>
+<span class="sd">            level (l = 1), one value per direction.</span>
+<span class="sd">        level_zero_cutoff: Cutoff radius of the level-zero partial kernel.</span>
+<span class="sd">        n_levels_intermed: See :py:func:`msmjax.kernels.make_construct_stencils`</span>
+<span class="sd">        include_toplevel: See :py:func:`msmjax.kernels.make_construct_stencils`</span>
+<span class="sd">        grid_shape_toplevel: See :py:func:`msmjax.kernels.make_construct_stencils`</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List of tuples of integers indicating kernel stencil extents, one for</span>
+<span class="sd">        each level, with a ``None`` placeholder at level zero, where there is</span>
+<span class="sd">        no grid. See :py:func:`msmjax.kernels.make_construct_stencils` for</span>
+<span class="sd">        the precise meaning of the returned stencil extents.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">stencil_extents_from_center</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+    <span class="n">extents_intermediate</span> <span class="o">=</span> <span class="n">find_covering_grid_extents</span><span class="p">(</span>
+        <span class="n">cell</span><span class="p">,</span> <span class="n">level_one_spacings</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">level_zero_cutoff</span>
+    <span class="p">)</span>
+    <span class="n">stencil_extents_from_center</span> <span class="o">+=</span> <span class="p">[</span><span class="n">extents_intermediate</span><span class="p">]</span> <span class="o">*</span> <span class="n">n_levels_intermed</span>
+    <span class="k">if</span> <span class="n">include_toplevel</span><span class="p">:</span>
+        <span class="n">stencil_extents_from_center</span> <span class="o">+=</span> <span class="p">[</span>
+            <span class="nb">tuple</span><span class="p">(</span><span class="n">onp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">grid_shape_toplevel</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">]</span>
+    <span class="k">return</span> <span class="n">stencil_extents_from_center</span></div>
+
+
+
+<div class="viewcode-block" id="set_up_msm_params">
+<a class="viewcode-back" href="../../msmjax.calculators.html#msmjax.calculators.set_up_msm_params">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_up_msm_params</span><span class="p">(</span>
+    <span class="n">cell</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">level_one_spacings</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">level_zero_cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">pbc</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">bool</span><span class="p">],</span>
+    <span class="n">cell_mode</span><span class="p">:</span> <span class="n">CellMode</span><span class="p">,</span>
+    <span class="n">dynamic_cell</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">mu</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">n_particles</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_splitting_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">supercell_diag</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">use_neighborlist</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">neighborlist_prefactor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">intermediate_kernel_stencil_extents</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">convolution_methods</span><span class="p">:</span> <span class="n">ConvMeth</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ConvMeth</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;scipy-fft&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set up an :obj:`MSMParams` instance.</span>
+
+<span class="sd">    This is the recommended way for doing so, with a higher-level</span>
+<span class="sd">    interface requiring fewer parameters, and with more error checking,</span>
+<span class="sd">    than manually instantiating :obj:`MSMParams`.</span>
+
+<span class="sd">    The required arguments can be grouped into the main MSM algorithm</span>
+<span class="sd">    parameters on the one hand (``level_zero_cutoff``,</span>
+<span class="sd">    ``level_one_spacings``, ``p``), and specification of system geometry (in a</span>
+<span class="sd">    wider sense) on the other hand (``cell``, ``pbc``, ``cell_mode``,</span>
+<span class="sd">    ``dynamic_cell``).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cell: Array representing unit cell, shape `(n_dim, n_dim)`. Rows</span>
+<span class="sd">            correspond to different cell vectors, columns correspond to</span>
+<span class="sd">            different cartesian coordinates. The cell is required for setup</span>
+<span class="sd">            even in non-periodic cases, as well as when the cell can change</span>
+<span class="sd">            (``dynamic_cell = True``), because the cell together with the grid</span>
+<span class="sd">            spacings determines the numbers of grid points (which need to be</span>
+<span class="sd">            fixed at setup time).</span>
+<span class="sd">            In case the cell can change during simulation (</span>
+<span class="sd">            ``dynamic_cell = True``), it is only the *ratio* between the</span>
+<span class="sd">            lengths of the cell vectors and the grid spacings that matters</span>
+<span class="sd">            for setting up the number of grid points. For proper automatic</span>
+<span class="sd">            determination of ``intermediate_kernel_stencil_extents`` in cases</span>
+<span class="sd">            with periodicity, it is advised to supply the cell and the spacings</span>
+<span class="sd">            in the most compressed/tilted state that the model is</span>
+<span class="sd">            intended to be able to handle.</span>
+<span class="sd">        level_one_spacings: Level-one grid spacings, one value per direction.</span>
+<span class="sd">        level_zero_cutoff: Cutoff radius of the lowest-level partial kernel</span>
+<span class="sd">            :math:`k_0(r)`.</span>
+<span class="sd">        p: Interpolation order in the convention of the article (Ref. [1]).</span>
+<span class="sd">        pbc: One boolean per direction signaling periodicity.</span>
+<span class="sd">        cell_mode: A string specifying assumptions on the shape of the</span>
+<span class="sd">            unit cell. Either the cell is assumed orthorhombic and</span>
+<span class="sd">            axis-aligned, in which case only its diagonal is considered,</span>
+<span class="sd">            reducing computational cost, or a general triclinic one.</span>
+<span class="sd">        dynamic_cell: Whether the cell can dynamically change, or the one given</span>
+<span class="sd">            at setup time remains fixed.</span>
+<span class="sd">        mu: Adjustable parameter in the quasi-interpolation scheme that</span>
+<span class="sd">            controls its accuracy at grid points. Chosen based on heuristics</span>
+<span class="sd">            from Ref. [1] if not given.</span>
+<span class="sd">        n_particles: Number of particles. Required in the non-periodic case if</span>
+<span class="sd">            the number of levels is to be chosen automatically.</span>
+<span class="sd">        max_splitting_level: The level of the highest term in the splitting of</span>
+<span class="sd">            the Coulomb kernel into partial kernels. Note that, in cases with</span>
+<span class="sd">            periodicity, this is not the same as the level of the highest grid</span>
+<span class="sd">            included in the evaluation. Determined automatically by default.</span>
+<span class="sd">            In cases without periodicity only, you can try manually tuning it,</span>
+<span class="sd">            which may or may not improve performance.</span>
+<span class="sd">        supercell_diag: An optional sequence of positive integers, one per</span>
+<span class="sd">            direction, indicating that the short-range contribution should</span>
+<span class="sd">            be evaluated in a supercell. Does not work in combination with</span>
+<span class="sd">            ``use_neighborlist = True``.</span>
+<span class="sd">            See :py:func:`msmjax.core.shortrange.make_eval_pair_pot`</span>
+<span class="sd">            for more details.</span>
+<span class="sd">        use_neighborlist: Whether to use a neighbor list.</span>
+<span class="sd">        neighborlist_prefactor: Set to 0.5 if the neighbor lists you are going</span>
+<span class="sd">            to pass contain duplicates, and to 1.0 if they are duplicate-free.</span>
+<span class="sd">            Setting to other values is possible, but unlikely to make sense.</span>
+<span class="sd">        intermediate_kernel_stencil_extents: See the</span>
+<span class="sd">            ``extents_from_center_intermed`` parameter of</span>
+<span class="sd">            :py:func:`msmjax.kernels.make_construct_stencils`.</span>
+<span class="sd">        convolution_methods: Algorithms to use for convolution in the grid</span>
+<span class="sd">            potential calculation. One value per grid level (i.e., different</span>
+<span class="sd">            algorithms can be used at different levels).</span>
+<span class="sd">            See :py:obj:`msmjax.utils.general.ConvMeth` and</span>
+<span class="sd">            :py:func:`msmjax.core.longrange.special_periodic_convolve_scipy`</span>
+<span class="sd">            for more details.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        An :obj:`MSMParams` instance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cell</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+    <span class="n">n_dim</span> <span class="o">=</span> <span class="n">cell</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">side_lengths</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">level_one_spacings</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">level_one_spacings</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">onp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">level_one_spacings</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">level_one_spacings</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_dim</span><span class="p">,</span> <span class="n">level_one_spacings</span><span class="p">)</span>
+    <span class="n">pbc</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pbc</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+
+    <span class="n">alpha</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">onp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">level_zero_cutoff</span> <span class="o">/</span> <span class="n">level_one_spacings</span><span class="p">))</span>
+    <span class="c1"># See section &quot;1. Preprocessing&quot; of the article</span>
+    <span class="k">if</span> <span class="n">mu</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">+</span> <span class="n">p</span> <span class="o">//</span> <span class="mi">2</span><span class="p">),</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">p</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">pbc</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">max_splitting_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Leave max_splitting_level unfilled if at least one direction &quot;</span>
+                <span class="s2">&quot;is periodic. It is determined automatically.&quot;</span>
+            <span class="p">)</span>
+        <span class="p">(</span>
+            <span class="n">adjusted_spacings</span><span class="p">,</span>
+            <span class="n">max_splitting_level</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">find_spacings_and_max_level_periodic</span><span class="p">(</span>
+            <span class="n">side_lengths</span><span class="p">[</span><span class="n">pbc</span><span class="p">],</span> <span class="n">level_one_spacings</span><span class="p">[</span><span class="n">pbc</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">level_one_spacings</span><span class="p">[</span><span class="n">onp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">pbc</span><span class="p">)[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">adjusted_spacings</span>
+        <span class="n">max_grid_level</span> <span class="o">=</span> <span class="n">max_splitting_level</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">max_splitting_level</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">n_particles</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;n_particles is required for the automatic determination &quot;</span>
+                    <span class="s2">&quot;of the number of grid levels in non-periodic systems. &quot;</span>
+                    <span class="s2">&quot;Either specify max_splitting_level directly, &quot;</span>
+                    <span class="s2">&quot;or n_particles.&quot;</span>
+                <span class="p">)</span>
+            <span class="n">max_splitting_level</span> <span class="o">=</span> <span class="n">suggest_max_grid_level_nonperiodic</span><span class="p">(</span>
+                <span class="n">side_lengths</span><span class="o">=</span><span class="n">side_lengths</span><span class="p">,</span>
+                <span class="n">n_particles</span><span class="o">=</span><span class="n">n_particles</span><span class="p">,</span>
+                <span class="n">level_one_spacings</span><span class="o">=</span><span class="n">level_one_spacings</span><span class="p">,</span>
+                <span class="n">level_zero_cutoff</span><span class="o">=</span><span class="n">level_zero_cutoff</span><span class="p">,</span>
+                <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">max_grid_level</span> <span class="o">=</span> <span class="n">max_splitting_level</span>
+
+    <span class="n">cutoffs_all_levels</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="mi">2</span><span class="o">**</span><span class="n">lvl</span> <span class="o">*</span> <span class="n">level_zero_cutoff</span> <span class="k">for</span> <span class="n">lvl</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_splitting_level</span><span class="p">)</span>
+    <span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">onp</span><span class="o">.</span><span class="n">inf</span><span class="p">]</span>
+
+    <span class="n">gridshapes_all_levels</span><span class="p">,</span> <span class="n">spacings_all_levels</span> <span class="o">=</span> <span class="n">set_up_grids_all_levels</span><span class="p">(</span>
+        <span class="n">side_lengths</span><span class="o">=</span><span class="n">side_lengths</span><span class="p">,</span>
+        <span class="n">level_one_spacings</span><span class="o">=</span><span class="n">level_one_spacings</span><span class="p">,</span>
+        <span class="n">pbc</span><span class="o">=</span><span class="n">pbc</span><span class="p">,</span>
+        <span class="n">max_grid_level</span><span class="o">=</span><span class="n">max_grid_level</span><span class="p">,</span>
+        <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">stencil_extents_from_center</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">intermediate_kernel_stencil_extents</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">intermediate_kernel_stencil_extents</span> <span class="o">=</span> <span class="n">find_covering_grid_extents</span><span class="p">(</span>
+            <span class="n">cell</span><span class="p">,</span> <span class="n">level_one_spacings</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">level_zero_cutoff</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">pbc</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="n">stencil_extents_from_center</span> <span class="o">+=</span> <span class="p">[</span>
+            <span class="n">intermediate_kernel_stencil_extents</span>
+        <span class="p">]</span> <span class="o">*</span> <span class="n">max_grid_level</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">stencil_extents_from_center</span> <span class="o">+=</span> <span class="p">[</span>
+            <span class="n">intermediate_kernel_stencil_extents</span>
+        <span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">max_grid_level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">stencil_extents_from_center</span> <span class="o">+=</span> <span class="p">[</span>
+            <span class="nb">tuple</span><span class="p">(</span><span class="n">onp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">gridshapes_all_levels</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">dynamic_cell</span> <span class="ow">or</span> <span class="n">cell_mode</span> <span class="o">==</span> <span class="s2">&quot;triclinic&quot;</span><span class="p">:</span>
+        <span class="n">grids_defined_on_unitcube</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">side_lengths</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">spacings_all_levels</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="kc">None</span> <span class="k">if</span> <span class="n">spacings</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">spacings</span> <span class="o">/</span> <span class="n">side_lengths</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">spacings</span> <span class="ow">in</span> <span class="n">spacings_all_levels</span>
+        <span class="p">]</span>
+    <span class="k">elif</span> <span class="n">cell_mode</span> <span class="o">==</span> <span class="s2">&quot;ortho&quot;</span><span class="p">:</span>
+        <span class="n">grids_defined_on_unitcube</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">convolution_methods</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">convolution_methods</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">convolution_methods</span><span class="p">]</span> <span class="o">*</span> <span class="n">max_grid_level</span>
+
+    <span class="n">params</span> <span class="o">=</span> <span class="n">MSMParams</span><span class="p">(</span>
+        <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span>
+        <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span>
+        <span class="n">max_splitting_level</span><span class="o">=</span><span class="n">max_splitting_level</span><span class="p">,</span>
+        <span class="n">max_grid_level</span><span class="o">=</span><span class="n">max_grid_level</span><span class="p">,</span>
+        <span class="n">cutoffs</span><span class="o">=</span><span class="n">cutoffs_all_levels</span><span class="p">,</span>
+        <span class="n">cell</span><span class="o">=</span><span class="n">cell</span><span class="p">,</span>
+        <span class="n">cell_mode</span><span class="o">=</span><span class="n">cell_mode</span><span class="p">,</span>
+        <span class="n">pbc</span><span class="o">=</span><span class="n">pbc</span><span class="p">,</span>
+        <span class="n">dynamic_cell</span><span class="o">=</span><span class="n">dynamic_cell</span><span class="p">,</span>
+        <span class="n">supercell_diag</span><span class="o">=</span><span class="n">supercell_diag</span><span class="p">,</span>
+        <span class="n">use_neighborlist</span><span class="o">=</span><span class="n">use_neighborlist</span><span class="p">,</span>
+        <span class="n">neighborlist_prefactor</span><span class="o">=</span><span class="n">neighborlist_prefactor</span><span class="p">,</span>
+        <span class="n">grids_defined_on_unitcube</span><span class="o">=</span><span class="n">grids_defined_on_unitcube</span><span class="p">,</span>
+        <span class="n">grid_shapes</span><span class="o">=</span><span class="n">gridshapes_all_levels</span><span class="p">,</span>
+        <span class="n">grid_spacings</span><span class="o">=</span><span class="n">spacings_all_levels</span><span class="p">,</span>
+        <span class="n">stencil_extents_from_center</span><span class="o">=</span><span class="n">stencil_extents_from_center</span><span class="p">,</span>
+        <span class="n">convolution_methods</span><span class="o">=</span><span class="n">convolution_methods</span><span class="p">,</span>
+        <span class="n">n_dim</span><span class="o">=</span><span class="n">n_dim</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">params</span></div>
+
+
+
+<div class="viewcode-block" id="create_msm">
+<a class="viewcode-back" href="../../msmjax.calculators.html#msmjax.calculators.create_msm">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_msm</span><span class="p">(</span>
+    <span class="n">params</span><span class="p">:</span> <span class="n">MSMParams</span><span class="p">,</span>
+    <span class="n">part</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;total&quot;</span><span class="p">,</span> <span class="s2">&quot;shortrange&quot;</span><span class="p">,</span> <span class="s2">&quot;longrange&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;total&quot;</span><span class="p">,</span>
+    <span class="n">use_custom_derivatives_for_longrange</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">extra_uncharged_interaction</span><span class="p">:</span> <span class="n">KernelFn</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;From an MSMParams instance, create electrostatics evaluation functions.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        params: The :obj:`MSMParams` instance from which to set up the</span>
+<span class="sd">            evaluation functions.</span>
+<span class="sd">        part: Whether to calculate the total energy, or just the short-range</span>
+<span class="sd">            (:math:`U^0`) or long-range (:math:`U^{1+}`) contribution.</span>
+<span class="sd">        use_custom_derivatives_for_longrange: Whether to use the custom</span>
+<span class="sd">            optimized JVP for the long-range part.</span>
+<span class="sd">        extra_uncharged_interaction: See</span>
+<span class="sd">            :py:func:`msmjax.core.shortrange.make_eval_pair_pot`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary of functions that evaluate various different electrostatic</span>
+<span class="sd">        quantities. Their exact argument structure depends on the settings in</span>
+<span class="sd">        ``params``. In all cases, they take positions and charges as their</span>
+<span class="sd">        first two arguments. If ``params`` specifies a dynamic cell, they have</span>
+<span class="sd">        an additional cell argument, and if ``params`` specifies that a</span>
+<span class="sd">        neighbor list is to be used, they have an additional neighbor list</span>
+<span class="sd">        argument.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">params</span><span class="o">.</span><span class="n">dynamic_cell</span><span class="p">:</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="n">check_cutoffs_and_get_actual_spacings</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">cell</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+
+    <span class="n">kernel_fns</span> <span class="o">=</span> <span class="n">split_one_over_r</span><span class="p">(</span>
+        <span class="n">max_level</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">max_splitting_level</span><span class="p">,</span>
+        <span class="n">level_zero_cutoff</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">cutoffs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">softening_function</span><span class="o">=</span><span class="n">SoftenerOneOverR</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">p</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">use_neighborlist</span><span class="p">:</span>
+        <span class="n">compute_u_zero</span> <span class="o">=</span> <span class="n">make_compute_u_zero</span><span class="p">(</span>
+            <span class="n">kernel_fns</span><span class="o">=</span><span class="n">kernel_fns</span><span class="p">,</span>
+            <span class="n">pair_map_fn</span><span class="o">=</span><span class="n">partial</span><span class="p">(</span>
+                <span class="n">make_eval_pair_pot_neighborlist</span><span class="p">,</span>
+                <span class="n">pbc</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">pbc</span><span class="p">,</span>
+                <span class="n">cell_mode</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">cell_mode</span><span class="p">,</span>
+                <span class="n">extra_uncharged_interaction</span><span class="o">=</span><span class="n">extra_uncharged_interaction</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">compute_u_zero</span> <span class="o">=</span> <span class="n">make_compute_u_zero</span><span class="p">(</span>
+            <span class="n">kernel_fns</span><span class="o">=</span><span class="n">kernel_fns</span><span class="p">,</span>
+            <span class="n">pair_map_fn</span><span class="o">=</span><span class="n">partial</span><span class="p">(</span>
+                <span class="n">make_eval_pair_pot</span><span class="p">,</span>
+                <span class="n">pbc</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">pbc</span><span class="p">,</span>
+                <span class="n">cell_mode</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">cell_mode</span><span class="p">,</span>
+                <span class="n">supercell_diag</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">supercell_diag</span><span class="p">,</span>
+                <span class="n">extra_uncharged_interaction</span><span class="o">=</span><span class="n">extra_uncharged_interaction</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="n">quasi_omega_prime</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">compute_quasi_omega_prime</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">mu</span><span class="p">)</span>
+
+    <span class="p">(</span>
+        <span class="n">restriction_fns</span><span class="p">,</span>
+        <span class="n">prolongation_fns</span><span class="p">,</span>
+        <span class="n">convolution_fns</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">create_all_grid_to_grid_ops</span><span class="p">(</span>
+        <span class="n">grid_shapes</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">grid_shapes</span><span class="p">,</span>
+        <span class="n">p</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">p</span><span class="p">,</span>
+        <span class="n">pbc</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">pbc</span><span class="p">,</span>
+        <span class="n">convolution_methods</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">convolution_methods</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">grid_pass_fn</span> <span class="o">=</span> <span class="n">make_grid_pass_fn</span><span class="p">(</span>
+        <span class="n">restriction_fns</span><span class="p">,</span> <span class="n">prolongation_fns</span><span class="p">,</span> <span class="n">convolution_fns</span>
+    <span class="p">)</span>
+    <span class="n">basis_evaluation_fn</span> <span class="o">=</span> <span class="n">make_basis_evaluation_fn</span><span class="p">(</span>
+        <span class="n">grid_shape</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">grid_shapes</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">p</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="n">pbc</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">pbc</span>
+    <span class="p">)</span>
+
+    <span class="n">n_levels_intermed</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">max_splitting_level</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">include_toplevel</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">max_grid_level</span> <span class="o">==</span> <span class="n">params</span><span class="o">.</span><span class="n">max_splitting_level</span>
+    <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">grids_defined_on_unitcube</span><span class="p">:</span>
+        <span class="n">scaled_spacings</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">grid_spacings</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">scaled_spacings</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">grid_spacings</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">onp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">cell</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">n_levels_intermed</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">k_lowest_intermed</span> <span class="o">=</span> <span class="n">kernel_fns</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">extents_intermed</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">stencil_extents_from_center</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="p">(</span><span class="n">k_lowest_intermed</span><span class="p">,</span> <span class="n">extents_intermed</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">include_toplevel</span><span class="p">:</span>
+        <span class="n">k_toplevel</span> <span class="o">=</span> <span class="n">kernel_fns</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">grid_shape_toplevel</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">grid_shapes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="p">(</span><span class="n">k_toplevel</span><span class="p">,</span> <span class="n">grid_shape_toplevel</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">construct_stencils</span> <span class="o">=</span> <span class="n">make_construct_stencils</span><span class="p">(</span>
+        <span class="n">omega_prime</span><span class="o">=</span><span class="n">quasi_omega_prime</span><span class="p">,</span>
+        <span class="n">n_levels_intermed</span><span class="o">=</span><span class="n">n_levels_intermed</span><span class="p">,</span>
+        <span class="n">include_toplevel</span><span class="o">=</span><span class="n">include_toplevel</span><span class="p">,</span>
+        <span class="n">scaled_spacings</span><span class="o">=</span><span class="n">scaled_spacings</span><span class="p">,</span>
+        <span class="n">cell_mode</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">cell_mode</span><span class="p">,</span>
+        <span class="n">k_lowest_intermed</span><span class="o">=</span><span class="n">k_lowest_intermed</span><span class="p">,</span>
+        <span class="n">extents_from_center_intermed</span><span class="o">=</span><span class="n">extents_intermed</span><span class="p">,</span>
+        <span class="n">k_toplevel</span><span class="o">=</span><span class="n">k_toplevel</span><span class="p">,</span>
+        <span class="n">grid_shape_toplevel</span><span class="o">=</span><span class="n">grid_shape_toplevel</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">dynamic_cell</span><span class="p">:</span>
+        <span class="n">compute_u_oneplus</span> <span class="o">=</span> <span class="n">make_compute_u_oneplus</span><span class="p">(</span>
+            <span class="n">basis_eval_fn</span><span class="o">=</span><span class="n">partial</span><span class="p">(</span>
+                <span class="n">basis_evaluation_fn</span><span class="p">,</span> <span class="n">spacings</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">grid_spacings</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="p">),</span>
+            <span class="n">grid_pass_fn</span><span class="o">=</span><span class="n">grid_pass_fn</span><span class="p">,</span>
+            <span class="n">grid_shape_lvl_one</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">grid_shapes</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">transform_mode</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">cell_mode</span><span class="p">,</span>
+            <span class="n">kernel_stencil_construction_fn</span><span class="o">=</span><span class="n">construct_stencils</span><span class="p">,</span>
+            <span class="n">use_custom_derivatives</span><span class="o">=</span><span class="n">use_custom_derivatives_for_longrange</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">compute_u_oneplus</span> <span class="o">=</span> <span class="n">make_compute_u_oneplus</span><span class="p">(</span>
+            <span class="n">basis_eval_fn</span><span class="o">=</span><span class="n">partial</span><span class="p">(</span>
+                <span class="n">basis_evaluation_fn</span><span class="p">,</span> <span class="n">spacings</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">grid_spacings</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="p">),</span>
+            <span class="n">grid_pass_fn</span><span class="o">=</span><span class="n">grid_pass_fn</span><span class="p">,</span>
+            <span class="n">grid_shape_lvl_one</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">grid_shapes</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">transform_mode</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">params</span><span class="o">.</span><span class="n">cell_mode</span> <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">grids_defined_on_unitcube</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="n">kernel_stencils</span><span class="o">=</span><span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">construct_stencils</span><span class="p">)(</span><span class="n">params</span><span class="o">.</span><span class="n">cell</span><span class="p">),</span>
+            <span class="n">use_custom_derivatives</span><span class="o">=</span><span class="n">use_custom_derivatives_for_longrange</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_energy</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">charges</span><span class="p">,</span> <span class="n">cell</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">neighborlist</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">dynamic_cell</span> <span class="ow">and</span> <span class="n">cell</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;MSM was set up with `dynamic_cell=True`, &quot;</span>
+                <span class="s2">&quot;but no cell argument given to the evaluation function&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">use_neighborlist</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">neighborlist</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;MSM was set up with `dynamic_cell=True`, &quot;</span>
+                    <span class="s2">&quot;but no neighborlist argument given to the evaluation &quot;</span>
+                    <span class="s2">&quot;function&quot;</span>
+                <span class="p">)</span>
+            <span class="n">u_zero</span> <span class="o">=</span> <span class="n">compute_u_zero</span><span class="p">(</span>
+                <span class="n">positions</span><span class="p">,</span>
+                <span class="n">charges</span><span class="p">,</span>
+                <span class="n">cell</span><span class="o">=</span><span class="n">cell</span> <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">dynamic_cell</span> <span class="k">else</span> <span class="n">params</span><span class="o">.</span><span class="n">cell</span><span class="p">,</span>
+                <span class="n">weights</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">neighborlist_prefactor</span><span class="p">,</span>
+                <span class="n">neighborlist</span><span class="o">=</span><span class="n">neighborlist</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">u_zero</span> <span class="o">=</span> <span class="n">compute_u_zero</span><span class="p">(</span>
+                <span class="n">positions</span><span class="p">,</span>
+                <span class="n">charges</span><span class="p">,</span>
+                <span class="n">cell</span><span class="o">=</span><span class="n">cell</span> <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">dynamic_cell</span> <span class="k">else</span> <span class="n">params</span><span class="o">.</span><span class="n">cell</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">u_oneplus</span> <span class="o">=</span> <span class="n">compute_u_oneplus</span><span class="p">(</span>
+            <span class="n">positions</span><span class="p">,</span> <span class="n">charges</span><span class="p">,</span> <span class="n">cell</span> <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">dynamic_cell</span> <span class="k">else</span> <span class="n">params</span><span class="o">.</span><span class="n">cell</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">part</span> <span class="o">==</span> <span class="s2">&quot;total&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">u_zero</span> <span class="o">+</span> <span class="n">u_oneplus</span>
+        <span class="k">elif</span> <span class="n">part</span> <span class="o">==</span> <span class="s2">&quot;shortrange&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">u_zero</span>
+        <span class="k">elif</span> <span class="n">part</span> <span class="o">==</span> <span class="s2">&quot;longrange&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">u_oneplus</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Illegal value for argument `part`.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_forces</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">charges</span><span class="p">,</span> <span class="n">cell</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">neighborlist</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">calc_energy</span><span class="p">,</span> <span class="n">argnums</span><span class="o">=</span><span class="mi">0</span><span class="p">)(</span>
+            <span class="n">positions</span><span class="p">,</span> <span class="n">charges</span><span class="p">,</span> <span class="n">cell</span><span class="p">,</span> <span class="n">neighborlist</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_energy_and_forces</span><span class="p">(</span>
+        <span class="n">positions</span><span class="p">,</span> <span class="n">charges</span><span class="p">,</span> <span class="n">cell</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">neighborlist</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="n">value</span><span class="p">,</span> <span class="n">grad</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">calc_energy</span><span class="p">,</span> <span class="n">argnums</span><span class="o">=</span><span class="mi">0</span><span class="p">)(</span>
+            <span class="n">positions</span><span class="p">,</span> <span class="n">charges</span><span class="p">,</span> <span class="n">cell</span><span class="p">,</span> <span class="n">neighborlist</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span><span class="p">,</span> <span class="o">-</span><span class="n">grad</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_charge_gradient</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">charges</span><span class="p">,</span> <span class="n">cell</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">neighborlist</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">calc_energy</span><span class="p">,</span> <span class="n">argnums</span><span class="o">=</span><span class="mi">1</span><span class="p">)(</span>
+            <span class="n">positions</span><span class="p">,</span> <span class="n">charges</span><span class="p">,</span> <span class="n">cell</span><span class="p">,</span> <span class="n">neighborlist</span>
+        <span class="p">)</span>
+
+    <span class="n">evaluation_functions</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;energy&quot;</span><span class="p">:</span> <span class="n">calc_energy</span><span class="p">,</span>
+        <span class="s2">&quot;forces&quot;</span><span class="p">:</span> <span class="n">calc_forces</span><span class="p">,</span>
+        <span class="s2">&quot;energy_and_forces&quot;</span><span class="p">:</span> <span class="n">calc_energy_and_forces</span><span class="p">,</span>
+        <span class="s2">&quot;charge_gradient&quot;</span><span class="p">:</span> <span class="n">calc_charge_gradient</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">params</span><span class="o">.</span><span class="n">dynamic_cell</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">evaluation_functions</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_energy_from_scaled</span><span class="p">(</span>
+        <span class="n">scaled_positions</span><span class="p">,</span> <span class="n">charges</span><span class="p">,</span> <span class="n">cell</span><span class="p">,</span> <span class="n">neighborlist</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="n">positions</span> <span class="o">=</span> <span class="n">scaled_positions</span> <span class="o">@</span> <span class="n">cell</span>
+        <span class="k">return</span> <span class="n">calc_energy</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">charges</span><span class="p">,</span> <span class="n">cell</span><span class="p">,</span> <span class="n">neighborlist</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_stress</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">charges</span><span class="p">,</span> <span class="n">cell</span><span class="p">,</span> <span class="n">neighborlist</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">n_dim</span> <span class="o">=</span> <span class="n">positions</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">scaled_positions</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">positions</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">deformation_energy</span><span class="p">(</span><span class="n">epsilon</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">calc_energy_from_scaled</span><span class="p">(</span>
+                <span class="n">scaled_positions</span><span class="p">,</span>
+                <span class="n">charges</span><span class="p">,</span>
+                <span class="n">cell</span> <span class="o">@</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n_dim</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">epsilon</span> <span class="o">+</span> <span class="n">epsilon</span><span class="o">.</span><span class="n">T</span><span class="p">)),</span>
+                <span class="n">neighborlist</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">stress_matrix</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">deformation_energy</span><span class="p">)(</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+        <span class="p">)</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">fabs</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">cell</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">cell_mode</span> <span class="o">==</span> <span class="s2">&quot;ortho&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">stress_matrix</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">params</span><span class="o">.</span><span class="n">cell_mode</span> <span class="o">==</span> <span class="s2">&quot;triclinic&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">stress_matrix</span><span class="p">[</span><span class="n">inds_matrix_to_six_component_stress</span><span class="p">]</span>
+
+    <span class="n">evaluation_functions</span><span class="p">[</span><span class="s2">&quot;stress&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">calc_stress</span>
+    <span class="k">return</span> <span class="n">evaluation_functions</span></div>
+
+
+
+<div class="viewcode-block" id="check_cutoffs_and_get_actual_spacings">
+<a class="viewcode-back" href="../../msmjax.calculators.html#msmjax.calculators.check_cutoffs_and_get_actual_spacings">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_cutoffs_and_get_actual_spacings</span><span class="p">(</span>
+    <span class="n">cell</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">MSMParams</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">onp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;For a given cell, check if MSM cutoff and kernel stencil size settings</span>
+<span class="sd">    are appropriate, and calculate the actual grid spacings.</span>
+
+<span class="sd">    If ok, the spacings are returned. Otherwise, an error is intentionally</span>
+<span class="sd">    raised to signal that an inappropriate settings-cell combination was</span>
+<span class="sd">    encountered.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cell: The cell for which to check the cutoff and kernel stencil sizes.</span>
+<span class="sd">        params: The parameter instance specifying the cutoff and the kernel</span>
+<span class="sd">            stencil sizes.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Array of actual grid spacings for the given cell, one value per</span>
+<span class="sd">        direction.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the cutoff is too small for the minimum-image convention</span>
+<span class="sd">            to work in the given cell. Only raised if there is periodicity.</span>
+<span class="sd">        ValueError: If any of the kernel stencils specified by ``params``</span>
+<span class="sd">            is too small.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">onp</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">pbc</span><span class="p">):</span>
+        <span class="n">n_dim</span> <span class="o">=</span> <span class="n">cell</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">placeholder_positions</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">))</span>
+        <span class="n">placeholder_charges</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">10</span><span class="p">,))</span>
+        <span class="n">supercell_diag</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="o">*</span> <span class="n">n_dim</span>
+            <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">supercell_diag</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">params</span><span class="o">.</span><span class="n">supercell_diag</span>
+        <span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">supercell</span> <span class="o">=</span> <span class="n">_gen_supercell</span><span class="p">(</span>
+            <span class="n">placeholder_positions</span><span class="p">,</span> <span class="n">placeholder_charges</span><span class="p">,</span> <span class="n">cell</span><span class="p">,</span> <span class="n">supercell_diag</span>
+        <span class="p">)</span>
+        <span class="c1"># A simple way of taking only directions with periodicity into account</span>
+        <span class="c1"># in the cutoff determination is to make the cell vectors very large</span>
+        <span class="c1"># (effectively infinite) along nonperiodic directions before</span>
+        <span class="c1"># calculating the maximum allowed cutoff as if fully periodic.</span>
+        <span class="c1"># We repeat this procedure for two different large elongation factors</span>
+        <span class="c1"># and check that the resulting cutoffs are the same, to ensure that a</span>
+        <span class="c1"># sufficient elongation of the cell was used.</span>
+        <span class="n">trial_cells</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">supercell</span> <span class="o">*</span> <span class="n">onp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">pbc</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">elongation</span><span class="p">)[:,</span> <span class="n">onp</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">elongation</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">1.0e3</span><span class="p">,</span> <span class="mf">1.0e4</span><span class="p">]</span>
+        <span class="p">]</span>
+        <span class="n">trial_cutoffs</span> <span class="o">=</span> <span class="p">[</span><span class="n">get_max_cutoff_for_mic</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">trial_cells</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">onp</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="o">*</span><span class="n">trial_cutoffs</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Something went wrong while checking if the cutoff fits.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">max_allowed_cutoff</span> <span class="o">=</span> <span class="n">trial_cutoffs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">cutoffs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">max_allowed_cutoff</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="n">onp</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">cutoffs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">max_allowed_cutoff</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Level-zero cutoff radius too large for the given cell:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;It is </span><span class="si">{</span><span class="n">params</span><span class="o">.</span><span class="n">cutoffs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, but the cell can only &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;accommodate </span><span class="si">{</span><span class="n">max_allowed_cutoff</span><span class="si">}</span><span class="s2">.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Consider reducing the cutoff or making a larger supercell &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(either via supercell_diag or manually).&quot;</span>
+            <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">lvl</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">max_grid_level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">given_stencil_size</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">stencil_extents_from_center</span><span class="p">[</span><span class="n">lvl</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">lvl</span> <span class="o">==</span> <span class="n">params</span><span class="o">.</span><span class="n">max_grid_level</span> <span class="o">==</span> <span class="n">params</span><span class="o">.</span><span class="n">max_splitting_level</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">onp</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">pbc</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">onp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span>
+                <span class="n">onp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">given_stencil_size</span><span class="p">)</span>
+                <span class="o">&gt;=</span> <span class="n">onp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">grid_shapes</span><span class="p">[</span><span class="n">lvl</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Kernel stencil at highest level must cover the entire &quot;</span>
+                    <span class="s2">&quot;grid in cases without periodicity.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="n">spacings</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">grid_spacings</span><span class="p">[</span><span class="n">lvl</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">grids_defined_on_unitcube</span><span class="p">:</span>
+            <span class="n">spacings</span> <span class="o">*=</span> <span class="n">onp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">min_required_stencil_size</span> <span class="o">=</span> <span class="n">find_covering_grid_extents</span><span class="p">(</span>
+            <span class="n">grid_axes</span><span class="o">=</span><span class="n">cell</span><span class="p">,</span> <span class="n">spacings</span><span class="o">=</span><span class="n">spacings</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">cutoffs</span><span class="p">[</span><span class="n">lvl</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="n">onp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">given_stencil_size</span><span class="p">)</span>
+            <span class="o">&gt;=</span> <span class="n">onp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">min_required_stencil_size</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The kernel stencil at level </span><span class="si">{</span><span class="n">lvl</span><span class="si">}</span><span class="s2"> is too small to cover the &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;cutoff for the given cell:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;It is </span><span class="si">{</span><span class="n">given_stencil_size</span><span class="si">}</span><span class="s2">, but needs to be (component-&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;wise) at least </span><span class="si">{</span><span class="n">min_required_stencil_size</span><span class="si">}</span><span class="s2">.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Try increasing intermediate_kernel_stencil_extents &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;during setup, and make sure the cell is not unreasonably &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;compressed or distorted.&quot;</span>
+            <span class="p">)</span>
+
+    <span class="n">level_one_spacings</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">grid_spacings</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">grids_defined_on_unitcube</span><span class="p">:</span>
+        <span class="n">level_one_spacings</span> <span class="o">*=</span> <span class="n">onp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">level_one_spacings</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Florian Buchner, Johannes Schörghuber, Nico Unglert, Jesús Carrete, Georg K. H. Madsen.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

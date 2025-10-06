@@ -1,0 +1,669 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>msmjax.calculators &mdash; msmJAX  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="msmjax.kernels" href="msmjax.kernels.html" />
+    <link rel="prev" title="API reference" href="api_reference.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            msmJAX
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#cpu-only-installation">CPU-only installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#cuda-installation">CUDA installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#optional-dependencies">Optional dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="setup_and_run.html">Setting up and running a calculation</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="api_reference.html">API reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">msmjax.calculators</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#msmjax.calculators.CustomJSONEncoder"><code class="docutils literal notranslate"><span class="pre">CustomJSONEncoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.CustomJSONEncoder.default"><code class="docutils literal notranslate"><span class="pre">CustomJSONEncoder.default()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#msmjax.calculators.CustomJSONDecoder"><code class="docutils literal notranslate"><span class="pre">CustomJSONDecoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.CustomJSONDecoder.object_hook"><code class="docutils literal notranslate"><span class="pre">CustomJSONDecoder.object_hook()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#msmjax.calculators.MSMParams"><code class="docutils literal notranslate"><span class="pre">MSMParams</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.p"><code class="docutils literal notranslate"><span class="pre">MSMParams.p</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.mu"><code class="docutils literal notranslate"><span class="pre">MSMParams.mu</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.max_splitting_level"><code class="docutils literal notranslate"><span class="pre">MSMParams.max_splitting_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.max_grid_level"><code class="docutils literal notranslate"><span class="pre">MSMParams.max_grid_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.cutoffs"><code class="docutils literal notranslate"><span class="pre">MSMParams.cutoffs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.cell"><code class="docutils literal notranslate"><span class="pre">MSMParams.cell</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.cell_mode"><code class="docutils literal notranslate"><span class="pre">MSMParams.cell_mode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.pbc"><code class="docutils literal notranslate"><span class="pre">MSMParams.pbc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.dynamic_cell"><code class="docutils literal notranslate"><span class="pre">MSMParams.dynamic_cell</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.supercell_diag"><code class="docutils literal notranslate"><span class="pre">MSMParams.supercell_diag</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.use_neighborlist"><code class="docutils literal notranslate"><span class="pre">MSMParams.use_neighborlist</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.neighborlist_prefactor"><code class="docutils literal notranslate"><span class="pre">MSMParams.neighborlist_prefactor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.grids_defined_on_unitcube"><code class="docutils literal notranslate"><span class="pre">MSMParams.grids_defined_on_unitcube</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.grid_shapes"><code class="docutils literal notranslate"><span class="pre">MSMParams.grid_shapes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.grid_spacings"><code class="docutils literal notranslate"><span class="pre">MSMParams.grid_spacings</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.stencil_extents_from_center"><code class="docutils literal notranslate"><span class="pre">MSMParams.stencil_extents_from_center</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.convolution_methods"><code class="docutils literal notranslate"><span class="pre">MSMParams.convolution_methods</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.n_dim"><code class="docutils literal notranslate"><span class="pre">MSMParams.n_dim</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.version"><code class="docutils literal notranslate"><span class="pre">MSMParams.version</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.info"><code class="docutils literal notranslate"><span class="pre">MSMParams.info</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.save_json"><code class="docutils literal notranslate"><span class="pre">MSMParams.save_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msmjax.calculators.MSMParams.load_json"><code class="docutils literal notranslate"><span class="pre">MSMParams.load_json()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#msmjax.calculators.find_stencil_extents_all_levels"><code class="docutils literal notranslate"><span class="pre">find_stencil_extents_all_levels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msmjax.calculators.set_up_msm_params"><code class="docutils literal notranslate"><span class="pre">set_up_msm_params()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msmjax.calculators.create_msm"><code class="docutils literal notranslate"><span class="pre">create_msm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msmjax.calculators.check_cutoffs_and_get_actual_spacings"><code class="docutils literal notranslate"><span class="pre">check_cutoffs_and_get_actual_spacings()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msmjax.kernels.html">msmjax.kernels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.kernels.html#msmjax.kernels.SoftenerOneOverR"><code class="docutils literal notranslate"><span class="pre">SoftenerOneOverR</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.kernels.html#msmjax.kernels.split_one_over_r"><code class="docutils literal notranslate"><span class="pre">split_one_over_r()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.kernels.html#msmjax.kernels._get_distances"><code class="docutils literal notranslate"><span class="pre">_get_distances()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.kernels.html#msmjax.kernels._compute_one_stencil"><code class="docutils literal notranslate"><span class="pre">_compute_one_stencil()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.kernels.html#msmjax.kernels.make_construct_stencils"><code class="docutils literal notranslate"><span class="pre">make_construct_stencils()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msmjax.bspline.html">msmjax.bspline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.bspline.basis.html">msmjax.bspline.basis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.basis.html#msmjax.bspline.basis.characteristic"><code class="docutils literal notranslate"><span class="pre">characteristic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.basis.html#msmjax.bspline.basis.evaluate_basis_element"><code class="docutils literal notranslate"><span class="pre">evaluate_basis_element()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.basis.html#msmjax.bspline.basis.create_bspline_basis_element"><code class="docutils literal notranslate"><span class="pre">create_bspline_basis_element()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.bspline.coefficients.html">msmjax.bspline.coefficients</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_Phi"><code class="docutils literal notranslate"><span class="pre">calc_Phi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_col_of_B"><code class="docutils literal notranslate"><span class="pre">build_col_of_B()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_col_of_B2"><code class="docutils literal notranslate"><span class="pre">build_col_of_B2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_Toeplitz_matrix"><code class="docutils literal notranslate"><span class="pre">build_Toeplitz_matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_Toeplitz_system"><code class="docutils literal notranslate"><span class="pre">build_Toeplitz_system()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_c_m"><code class="docutils literal notranslate"><span class="pre">compute_c_m()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.generating_function"><code class="docutils literal notranslate"><span class="pre">generating_function()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_Mclaurin_coefficient"><code class="docutils literal notranslate"><span class="pre">calc_Mclaurin_coefficient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_B_p_over_2"><code class="docutils literal notranslate"><span class="pre">calc_B_p_over_2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_polynomials"><code class="docutils literal notranslate"><span class="pre">calc_polynomials()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.explode_Add"><code class="docutils literal notranslate"><span class="pre">explode_Add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.coeff_dict_to_array"><code class="docutils literal notranslate"><span class="pre">coeff_dict_to_array()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_quasi_omega_prime"><code class="docutils literal notranslate"><span class="pre">compute_quasi_omega_prime()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_j_zeroplus"><code class="docutils literal notranslate"><span class="pre">compute_j_zeroplus()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.bspline.gridops.html">msmjax.bspline.gridops</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._find_n_gridpoints_1d"><code class="docutils literal notranslate"><span class="pre">_find_n_gridpoints_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.set_up_grids_all_levels"><code class="docutils literal notranslate"><span class="pre">set_up_grids_all_levels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._arbitrary_dim_outer"><code class="docutils literal notranslate"><span class="pre">_arbitrary_dim_outer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._multiindex_outer"><code class="docutils literal notranslate"><span class="pre">_multiindex_outer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._ravel_multi_index_with_invalidation"><code class="docutils literal notranslate"><span class="pre">_ravel_multi_index_with_invalidation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_basis_evaluation_fn"><code class="docutils literal notranslate"><span class="pre">make_basis_evaluation_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_restrict_1d"><code class="docutils literal notranslate"><span class="pre">_make_restrict_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_restriction_operator"><code class="docutils literal notranslate"><span class="pre">make_restriction_operator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_prolongate_1d"><code class="docutils literal notranslate"><span class="pre">_make_prolongate_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_prolongation_operator"><code class="docutils literal notranslate"><span class="pre">make_prolongation_operator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.create_all_grid_to_grid_ops"><code class="docutils literal notranslate"><span class="pre">create_all_grid_to_grid_ops()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.suggest_max_grid_level_nonperiodic"><code class="docutils literal notranslate"><span class="pre">suggest_max_grid_level_nonperiodic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.bspline.gridops.html#msmjax.bspline.gridops.find_spacings_and_max_level_periodic"><code class="docutils literal notranslate"><span class="pre">find_spacings_and_max_level_periodic()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msmjax.core.html">msmjax.core</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.core.shortrange.html">msmjax.core.shortrange</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange._gen_supercell"><code class="docutils literal notranslate"><span class="pre">_gen_supercell()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_free"><code class="docutils literal notranslate"><span class="pre">_displacement_free()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_ortho"><code class="docutils literal notranslate"><span class="pre">_displacement_ortho()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_general"><code class="docutils literal notranslate"><span class="pre">_displacement_general()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange._concretize_displacement_fn"><code class="docutils literal notranslate"><span class="pre">_concretize_displacement_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot"><code class="docutils literal notranslate"><span class="pre">make_eval_pair_pot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot_neighborlist"><code class="docutils literal notranslate"><span class="pre">make_eval_pair_pot_neighborlist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange.make_compute_u_zero"><code class="docutils literal notranslate"><span class="pre">make_compute_u_zero()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.core.longrange.html">msmjax.core.longrange</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange._anterpolate"><code class="docutils literal notranslate"><span class="pre">_anterpolate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_positions_gradient"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy_positions_gradient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_charge_gradient"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy_charge_gradient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange.special_periodic_convolve_scipy"><code class="docutils literal notranslate"><span class="pre">special_periodic_convolve_scipy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange.make_grid_pass_fn"><code class="docutils literal notranslate"><span class="pre">make_grid_pass_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange.make_compute_u_oneplus"><code class="docutils literal notranslate"><span class="pre">make_compute_u_oneplus()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msmjax.utils.html">msmjax.utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.utils.benchmarking.html">msmjax.utils.benchmarking</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.dir_context"><code class="docutils literal notranslate"><span class="pre">dir_context()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.write_lammps_data"><code class="docutils literal notranslate"><span class="pre">write_lammps_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.parse_energy_from_lammps_log"><code class="docutils literal notranslate"><span class="pre">parse_energy_from_lammps_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.parse_lammps_log"><code class="docutils literal notranslate"><span class="pre">parse_lammps_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.make_lammps_input_text_pppm"><code class="docutils literal notranslate"><span class="pre">make_lammps_input_text_pppm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.eval_lammps_pppm"><code class="docutils literal notranslate"><span class="pre">eval_lammps_pppm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_rmse"><code class="docutils literal notranslate"><span class="pre">calc_rmse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_relative_rmse_percent"><code class="docutils literal notranslate"><span class="pre">calc_relative_rmse_percent()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_relative_rmse"><code class="docutils literal notranslate"><span class="pre">calc_relative_rmse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.make_timed_eval"><code class="docutils literal notranslate"><span class="pre">make_timed_eval()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.remove_duplicates_from_neighborlist"><code class="docutils literal notranslate"><span class="pre">remove_duplicates_from_neighborlist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.build_duplicate_free_neighborlists"><code class="docutils literal notranslate"><span class="pre">build_duplicate_free_neighborlists()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.coulomb_kernel"><code class="docutils literal notranslate"><span class="pre">coulomb_kernel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_energy_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_energy_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_forces_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_forces_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_chargegrad_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_chargegrad_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_stress_virial"><code class="docutils literal notranslate"><span class="pre">calc_stress_virial()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_nonperiodic_reference_results"><code class="docutils literal notranslate"><span class="pre">calc_nonperiodic_reference_results()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="msmjax.utils.general.html">msmjax.utils.general</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.general.html#msmjax.utils.general._divide_zero_safe"><code class="docutils literal notranslate"><span class="pre">_divide_zero_safe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.general.html#msmjax.utils.general._sqrt_jvp"><code class="docutils literal notranslate"><span class="pre">_sqrt_jvp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.general.html#msmjax.utils.general.get_max_cutoff_for_mic"><code class="docutils literal notranslate"><span class="pre">get_max_cutoff_for_mic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msmjax.utils.general.html#msmjax.utils.general.find_covering_grid_extents"><code class="docutils literal notranslate"><span class="pre">find_covering_grid_extents()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">msmJAX</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="api_reference.html">API reference</a></li>
+      <li class="breadcrumb-item active">msmjax.calculators</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/msmjax.calculators.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-msmjax.calculators">
+<span id="msmjax-calculators"></span><h1>msmjax.calculators<a class="headerlink" href="#module-msmjax.calculators" title="Link to this heading"></a></h1>
+<p>Code for high-level interface.</p>
+<p class="rubric">References</p>
+<p>[1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,
+R. D. Multilevel Summation with B-Spline Interpolation for Pairwise
+Interactions in Molecular Dynamics Simulations. J. Chem. Phys. 2016,
+144 (11), 114112. <a class="reference external" href="https://doi.org/10.1063/1.4943868">https://doi.org/10.1063/1.4943868</a>.</p>
+<p>[2] Hardy, D. J. Multilevel Summation for the Fast Evaluation of
+Forces for the Simulation of Biomolecules (PhD thesis), University
+of Illinois at Urbana-Champaign, 2006.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="msmjax.calculators.CustomJSONEncoder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">msmjax.calculators.</span></span><span class="sig-name descname"><span class="pre">CustomJSONEncoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skipkeys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ensure_ascii</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_circular</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_nan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort_keys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">separators</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/calculators.html#CustomJSONEncoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.calculators.CustomJSONEncoder" title="Link to this definition"></a></dt>
+<dd><p>Class that extends JSONEncoder to handle different data types.</p>
+<p>From Clinamen2:
+R. Wanzenböck, F. Buchner, P. Kovács, G. K. H. Madsen, and J. Carrete,
+“Clinamen2: Functional-style evolutionary optimization in Python for
+atomistic structure searches,” Computer Physics Communications,
+vol. 297, p. 109065, Apr. 2024, doi: 10.1016/j.cpc.2023.109065.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="msmjax.calculators.CustomJSONEncoder.default">
+<span class="sig-name descname"><span class="pre">default</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">o</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/calculators.html#CustomJSONEncoder.default"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.calculators.CustomJSONEncoder.default" title="Link to this definition"></a></dt>
+<dd><p>Return a json-izable version of o or delegate on the base class.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="msmjax.calculators.CustomJSONDecoder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">msmjax.calculators.</span></span><span class="sig-name descname"><span class="pre">CustomJSONDecoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/calculators.html#CustomJSONDecoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.calculators.CustomJSONDecoder" title="Link to this definition"></a></dt>
+<dd><p>Class that extends the JSONDecoder to handle different data types.</p>
+<p>From Clinamen2:
+R. Wanzenböck, F. Buchner, P. Kovács, G. K. H. Madsen, and J. Carrete,
+“Clinamen2: Functional-style evolutionary optimization in Python for
+atomistic structure searches,” Computer Physics Communications,
+vol. 297, p. 109065, Apr. 2024, doi: 10.1016/j.cpc.2023.109065.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="msmjax.calculators.CustomJSONDecoder.object_hook">
+<span class="sig-name descname"><span class="pre">object_hook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">o</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/calculators.html#CustomJSONDecoder.object_hook"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.calculators.CustomJSONDecoder.object_hook" title="Link to this definition"></a></dt>
+<dd><p>Reencode numpy arrays from dictionary.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">msmjax.calculators.</span></span><span class="sig-name descname"><span class="pre">MSMParams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_splitting_level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_grid_level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoffs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pbc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_cell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supercell_diag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_neighborlist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">neighborlist_prefactor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grids_defined_on_unitcube</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_shapes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_spacings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stencil_extents_from_center</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">convolution_methods</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version='2025.10.1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/calculators.html#MSMParams"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.calculators.MSMParams" title="Link to this definition"></a></dt>
+<dd><p>Class for holding all settings required for MSM with B-spline
+interpolation for Coulomb potentials.</p>
+<p>While it is possible to manually instantiate this class, this requires
+a lot of parameters, and might leave it in an inconsistent state.
+The recommended way is to use <a class="reference internal" href="#msmjax.calculators.set_up_msm_params" title="msmjax.calculators.set_up_msm_params"><code class="xref py py-func docutils literal notranslate"><span class="pre">set_up_msm_params()</span></code></a> instead.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Interpolation order in the convention of the article (Ref. [1]).</p></li>
+<li><p><strong>mu</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Adjustable parameter in the quasi-interpolation scheme that
+controls its accuracy at grid points, see Ref. [1].</p></li>
+<li><p><strong>max_splitting_level</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The level of the highest term in the splitting of
+the Coulomb kernel into partial kernels.</p></li>
+<li><p><strong>max_grid_level</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The level of the highest grid included in the
+evaluation. Can be lower than <code class="docutils literal notranslate"><span class="pre">max_splitting_level</span></code>.</p></li>
+<li><p><strong>cutoffs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</span>) – Sequence of cutoff radii of the partial kernels at all levels.</p></li>
+<li><p><strong>cell</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></span>) – Simulation cell. The exact interpretation depends on the
+<code class="docutils literal notranslate"><span class="pre">dynamic_cell</span></code> parameter. If <code class="docutils literal notranslate"><span class="pre">dynamic_cell=False</span></code>, it is the
+actual fixed cell for which the model is evaluated.
+If <code class="docutils literal notranslate"><span class="pre">dynamic_cell=True</span></code>, it is merely a reference cell.</p></li>
+<li><p><strong>cell_mode</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code>[<code class="docutils literal notranslate"><span class="pre">'ortho'</span></code>, <code class="docutils literal notranslate"><span class="pre">'triclinic'</span></code>]</span>) – A string specifying assumptions on the shape of the
+unit cell. Either the cell is assumed orthorhombic and
+axis-aligned, in which case only its diagonal is considered,
+reducing computational cost, or a general triclinic one.</p></li>
+<li><p><strong>pbc</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]</span>) – One boolean per direction signaling periodicity.</p></li>
+<li><p><strong>dynamic_cell</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – Whether the cell can dynamically change.</p></li>
+<li><p><strong>supercell_diag</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span>) – An optional sequence of positive integers, one per
+direction, indicating that the short-range contribution should
+be evaluated in a supercell.
+See <a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot" title="msmjax.core.shortrange.make_eval_pair_pot"><code class="xref py py-func docutils literal notranslate"><span class="pre">msmjax.core.shortrange.make_eval_pair_pot()</span></code></a>
+for more details.</p></li>
+<li><p><strong>use_neighborlist</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – Whether to use a neighbor list.</p></li>
+<li><p><strong>neighborlist_prefactor</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span>) – Set to 0.5 if the neighbor lists you are going
+to pass contain duplicates, and to 1.0 if they are duplicate-free.
+Setting to other values is possible, but unlikely to make sense.</p></li>
+<li><p><strong>grids_defined_on_unitcube</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – Whether the grid spacings are given on the
+unit cube or in dimensionful length units.</p></li>
+<li><p><strong>grid_shapes</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>]]</span>) – Sequence of tuples of integers indicating the shape of
+grid at each level.</p></li>
+<li><p><strong>grid_spacings</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>]</span>) – Sequence of 1-d arrays (one value per direction)
+indicating the grid spacings at each level.
+If <code class="docutils literal notranslate"><span class="pre">grids_defined_on_unitcube</span> <span class="pre">=</span> <span class="pre">True</span></code>, they must be given in
+fractional coordinates.</p></li>
+<li><p><strong>stencil_extents_from_center</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>]]</span>)</p></li>
+<li><p><strong>convolution_methods</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code>[<code class="docutils literal notranslate"><span class="pre">'scipy-direct'</span></code>, <code class="docutils literal notranslate"><span class="pre">'scipy-fft'</span></code>]]]</span>) – Algorithms to use for convolution in the grid
+potential calculation. One value per grid level (i.e., different
+algorithms can be used at different levels).
+See <code class="xref py py-obj docutils literal notranslate"><span class="pre">msmjax.utils.general.ConvMeth</span></code> and
+<a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange.special_periodic_convolve_scipy" title="msmjax.core.longrange.special_periodic_convolve_scipy"><code class="xref py py-func docutils literal notranslate"><span class="pre">msmjax.core.longrange.special_periodic_convolve_scipy()</span></code></a>
+for more details.</p></li>
+<li><p><strong>n_dim</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Spatial dimension.</p></li>
+<li><p><strong>version</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Package version.</p></li>
+<li><p><strong>info</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></span>) – Any additional information you want to store for later reference.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.p">
+<span class="sig-name descname"><span class="pre">p</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#msmjax.calculators.MSMParams.p" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.mu">
+<span class="sig-name descname"><span class="pre">mu</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#msmjax.calculators.MSMParams.mu" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.max_splitting_level">
+<span class="sig-name descname"><span class="pre">max_splitting_level</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#msmjax.calculators.MSMParams.max_splitting_level" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.max_grid_level">
+<span class="sig-name descname"><span class="pre">max_grid_level</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#msmjax.calculators.MSMParams.max_grid_level" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.cutoffs">
+<span class="sig-name descname"><span class="pre">cutoffs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code><span class="pre">]</span></em><a class="headerlink" href="#msmjax.calculators.MSMParams.cutoffs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.cell">
+<span class="sig-name descname"><span class="pre">cell</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></em><a class="headerlink" href="#msmjax.calculators.MSMParams.cell" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.cell_mode">
+<span class="sig-name descname"><span class="pre">cell_mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'ortho'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'triclinic'</span></code><span class="pre">]</span></em><a class="headerlink" href="#msmjax.calculators.MSMParams.cell_mode" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.pbc">
+<span class="sig-name descname"><span class="pre">pbc</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code><span class="pre">]</span></em><a class="headerlink" href="#msmjax.calculators.MSMParams.pbc" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.dynamic_cell">
+<span class="sig-name descname"><span class="pre">dynamic_cell</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></em><a class="headerlink" href="#msmjax.calculators.MSMParams.dynamic_cell" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.supercell_diag">
+<span class="sig-name descname"><span class="pre">supercell_diag</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code><span class="pre">]</span></em><a class="headerlink" href="#msmjax.calculators.MSMParams.supercell_diag" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.use_neighborlist">
+<span class="sig-name descname"><span class="pre">use_neighborlist</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></em><a class="headerlink" href="#msmjax.calculators.MSMParams.use_neighborlist" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.neighborlist_prefactor">
+<span class="sig-name descname"><span class="pre">neighborlist_prefactor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></em><a class="headerlink" href="#msmjax.calculators.MSMParams.neighborlist_prefactor" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.grids_defined_on_unitcube">
+<span class="sig-name descname"><span class="pre">grids_defined_on_unitcube</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></em><a class="headerlink" href="#msmjax.calculators.MSMParams.grids_defined_on_unitcube" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.grid_shapes">
+<span class="sig-name descname"><span class="pre">grid_shapes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code><span class="pre">[</span><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code> <span class="pre">|</span> <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code><span class="pre">,</span> <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code><span class="pre">]]</span></em><a class="headerlink" href="#msmjax.calculators.MSMParams.grid_shapes" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.grid_spacings">
+<span class="sig-name descname"><span class="pre">grid_spacings</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code><span class="pre">[</span><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code> <span class="pre">|</span> <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code><span class="pre">]</span></em><a class="headerlink" href="#msmjax.calculators.MSMParams.grid_spacings" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.stencil_extents_from_center">
+<span class="sig-name descname"><span class="pre">stencil_extents_from_center</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code><span class="pre">[</span><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code> <span class="pre">|</span> <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code><span class="pre">,</span> <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code><span class="pre">]]</span></em><a class="headerlink" href="#msmjax.calculators.MSMParams.stencil_extents_from_center" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.convolution_methods">
+<span class="sig-name descname"><span class="pre">convolution_methods</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code><span class="pre">[</span><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code><span class="pre">[</span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'scipy-direct'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'scipy-fft'</span></code><span class="pre">]]]</span></em><a class="headerlink" href="#msmjax.calculators.MSMParams.convolution_methods" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.n_dim">
+<span class="sig-name descname"><span class="pre">n_dim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#msmjax.calculators.MSMParams.n_dim" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.version">
+<span class="sig-name descname"><span class="pre">version</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'2025.10.1'</span></em><a class="headerlink" href="#msmjax.calculators.MSMParams.version" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.info">
+<span class="sig-name descname"><span class="pre">info</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></em><a class="headerlink" href="#msmjax.calculators.MSMParams.info" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.save_json">
+<span class="sig-name descname"><span class="pre">save_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/calculators.html#MSMParams.save_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.calculators.MSMParams.save_json" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>filename</strong> (<em>str</em><em> | </em><em>Path</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msmjax.calculators.MSMParams.load_json">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/calculators.html#MSMParams.load_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.calculators.MSMParams.load_json" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> (<em>str</em><em> | </em><em>Path</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.calculators.find_stencil_extents_all_levels">
+<span class="sig-prename descclassname"><span class="pre">msmjax.calculators.</span></span><span class="sig-name descname"><span class="pre">find_stencil_extents_all_levels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_one_spacings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_zero_cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_levels_intermed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_toplevel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_shape_toplevel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/calculators.html#find_stencil_extents_all_levels"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.calculators.find_stencil_extents_all_levels" title="Link to this definition"></a></dt>
+<dd><p>Determine required extents of the kernel stencils at all grid levels.</p>
+<p>See Ref. [1] for the criteria used.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cell</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Array representing cell, <cite>shape (n_dim, n_dim)</cite>.</p></li>
+<li><p><strong>level_one_spacings</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – 1-d array of grid spacings at the lowest grid
+level (l = 1), one value per direction.</p></li>
+<li><p><strong>level_zero_cutoff</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span>) – Cutoff radius of the level-zero partial kernel.</p></li>
+<li><p><strong>n_levels_intermed</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – See <a class="reference internal" href="msmjax.kernels.html#msmjax.kernels.make_construct_stencils" title="msmjax.kernels.make_construct_stencils"><code class="xref py py-func docutils literal notranslate"><span class="pre">msmjax.kernels.make_construct_stencils()</span></code></a></p></li>
+<li><p><strong>include_toplevel</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – See <a class="reference internal" href="msmjax.kernels.html#msmjax.kernels.make_construct_stencils" title="msmjax.kernels.make_construct_stencils"><code class="xref py py-func docutils literal notranslate"><span class="pre">msmjax.kernels.make_construct_stencils()</span></code></a></p></li>
+<li><p><strong>grid_shape_toplevel</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>]</span>) – See <a class="reference internal" href="msmjax.kernels.html#msmjax.kernels.make_construct_stencils" title="msmjax.kernels.make_construct_stencils"><code class="xref py py-func docutils literal notranslate"><span class="pre">msmjax.kernels.make_construct_stencils()</span></code></a></p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>]]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of tuples of integers indicating kernel stencil extents, one for
+each level, with a <code class="docutils literal notranslate"><span class="pre">None</span></code> placeholder at level zero, where there is
+no grid. See <a class="reference internal" href="msmjax.kernels.html#msmjax.kernels.make_construct_stencils" title="msmjax.kernels.make_construct_stencils"><code class="xref py py-func docutils literal notranslate"><span class="pre">msmjax.kernels.make_construct_stencils()</span></code></a> for
+the precise meaning of the returned stencil extents.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.calculators.set_up_msm_params">
+<span class="sig-prename descclassname"><span class="pre">msmjax.calculators.</span></span><span class="sig-name descname"><span class="pre">set_up_msm_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_one_spacings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_zero_cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pbc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_cell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_particles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_splitting_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supercell_diag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_neighborlist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">neighborlist_prefactor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intermediate_kernel_stencil_extents</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">convolution_methods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'scipy-fft'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/calculators.html#set_up_msm_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.calculators.set_up_msm_params" title="Link to this definition"></a></dt>
+<dd><p>Set up an <a class="reference internal" href="#msmjax.calculators.MSMParams" title="msmjax.calculators.MSMParams"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MSMParams</span></code></a> instance.</p>
+<p>This is the recommended way for doing so, with a higher-level
+interface requiring fewer parameters, and with more error checking,
+than manually instantiating <a class="reference internal" href="#msmjax.calculators.MSMParams" title="msmjax.calculators.MSMParams"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MSMParams</span></code></a>.</p>
+<p>The required arguments can be grouped into the main MSM algorithm
+parameters on the one hand (<code class="docutils literal notranslate"><span class="pre">level_zero_cutoff</span></code>,
+<code class="docutils literal notranslate"><span class="pre">level_one_spacings</span></code>, <code class="docutils literal notranslate"><span class="pre">p</span></code>), and specification of system geometry (in a
+wider sense) on the other hand (<code class="docutils literal notranslate"><span class="pre">cell</span></code>, <code class="docutils literal notranslate"><span class="pre">pbc</span></code>, <code class="docutils literal notranslate"><span class="pre">cell_mode</span></code>,
+<code class="docutils literal notranslate"><span class="pre">dynamic_cell</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cell</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Array representing unit cell, shape <cite>(n_dim, n_dim)</cite>. Rows
+correspond to different cell vectors, columns correspond to
+different cartesian coordinates. The cell is required for setup
+even in non-periodic cases, as well as when the cell can change
+(<code class="docutils literal notranslate"><span class="pre">dynamic_cell</span> <span class="pre">=</span> <span class="pre">True</span></code>), because the cell together with the grid
+spacings determines the numbers of grid points (which need to be
+fixed at setup time).
+In case the cell can change during simulation (
+<code class="docutils literal notranslate"><span class="pre">dynamic_cell</span> <span class="pre">=</span> <span class="pre">True</span></code>), it is only the <em>ratio</em> between the
+lengths of the cell vectors and the grid spacings that matters
+for setting up the number of grid points. For proper automatic
+determination of <code class="docutils literal notranslate"><span class="pre">intermediate_kernel_stencil_extents</span></code> in cases
+with periodicity, it is advised to supply the cell and the spacings
+in the most compressed/tilted state that the model is
+intended to be able to handle.</p></li>
+<li><p><strong>level_one_spacings</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – Level-one grid spacings, one value per direction.</p></li>
+<li><p><strong>level_zero_cutoff</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span>) – Cutoff radius of the lowest-level partial kernel
+<span class="math notranslate nohighlight">\(k_0(r)\)</span>.</p></li>
+<li><p><strong>p</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Interpolation order in the convention of the article (Ref. [1]).</p></li>
+<li><p><strong>pbc</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]</span>) – One boolean per direction signaling periodicity.</p></li>
+<li><p><strong>cell_mode</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code>[<code class="docutils literal notranslate"><span class="pre">'ortho'</span></code>, <code class="docutils literal notranslate"><span class="pre">'triclinic'</span></code>]</span>) – A string specifying assumptions on the shape of the
+unit cell. Either the cell is assumed orthorhombic and
+axis-aligned, in which case only its diagonal is considered,
+reducing computational cost, or a general triclinic one.</p></li>
+<li><p><strong>dynamic_cell</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – Whether the cell can dynamically change, or the one given
+at setup time remains fixed.</p></li>
+<li><p><strong>mu</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – Adjustable parameter in the quasi-interpolation scheme that
+controls its accuracy at grid points. Chosen based on heuristics
+from Ref. [1] if not given.</p></li>
+<li><p><strong>n_particles</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – Number of particles. Required in the non-periodic case if
+the number of levels is to be chosen automatically.</p></li>
+<li><p><strong>max_splitting_level</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – The level of the highest term in the splitting of
+the Coulomb kernel into partial kernels. Note that, in cases with
+periodicity, this is not the same as the level of the highest grid
+included in the evaluation. Determined automatically by default.
+In cases without periodicity only, you can try manually tuning it,
+which may or may not improve performance.</p></li>
+<li><p><strong>supercell_diag</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</span>) – An optional sequence of positive integers, one per
+direction, indicating that the short-range contribution should
+be evaluated in a supercell. Does not work in combination with
+<code class="docutils literal notranslate"><span class="pre">use_neighborlist</span> <span class="pre">=</span> <span class="pre">True</span></code>.
+See <a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot" title="msmjax.core.shortrange.make_eval_pair_pot"><code class="xref py py-func docutils literal notranslate"><span class="pre">msmjax.core.shortrange.make_eval_pair_pot()</span></code></a>
+for more details.</p></li>
+<li><p><strong>use_neighborlist</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – Whether to use a neighbor list.</p></li>
+<li><p><strong>neighborlist_prefactor</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – Set to 0.5 if the neighbor lists you are going
+to pass contain duplicates, and to 1.0 if they are duplicate-free.
+Setting to other values is possible, but unlikely to make sense.</p></li>
+<li><p><strong>intermediate_kernel_stencil_extents</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>] | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – See the
+<code class="docutils literal notranslate"><span class="pre">extents_from_center_intermed</span></code> parameter of
+<a class="reference internal" href="msmjax.kernels.html#msmjax.kernels.make_construct_stencils" title="msmjax.kernels.make_construct_stencils"><code class="xref py py-func docutils literal notranslate"><span class="pre">msmjax.kernels.make_construct_stencils()</span></code></a>.</p></li>
+<li><p><strong>convolution_methods</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code>[<code class="docutils literal notranslate"><span class="pre">'scipy-direct'</span></code>, <code class="docutils literal notranslate"><span class="pre">'scipy-fft'</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code>[<code class="docutils literal notranslate"><span class="pre">'scipy-direct'</span></code>, <code class="docutils literal notranslate"><span class="pre">'scipy-fft'</span></code>]]]</span>) – Algorithms to use for convolution in the grid
+potential calculation. One value per grid level (i.e., different
+algorithms can be used at different levels).
+See <code class="xref py py-obj docutils literal notranslate"><span class="pre">msmjax.utils.general.ConvMeth</span></code> and
+<a class="reference internal" href="msmjax.core.longrange.html#msmjax.core.longrange.special_periodic_convolve_scipy" title="msmjax.core.longrange.special_periodic_convolve_scipy"><code class="xref py py-func docutils literal notranslate"><span class="pre">msmjax.core.longrange.special_periodic_convolve_scipy()</span></code></a>
+for more details.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An <a class="reference internal" href="#msmjax.calculators.MSMParams" title="msmjax.calculators.MSMParams"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MSMParams</span></code></a> instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.calculators.create_msm">
+<span class="sig-prename descclassname"><span class="pre">msmjax.calculators.</span></span><span class="sig-name descname"><span class="pre">create_msm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">part</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'total'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_custom_derivatives_for_longrange</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_uncharged_interaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/calculators.html#create_msm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.calculators.create_msm" title="Link to this definition"></a></dt>
+<dd><p>From an MSMParams instance, create electrostatics evaluation functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>params</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#msmjax.calculators.MSMParams" title="msmjax.calculators.MSMParams"><code class="xref py py-class docutils literal notranslate"><span class="pre">MSMParams</span></code></a></span>) – The <a class="reference internal" href="#msmjax.calculators.MSMParams" title="msmjax.calculators.MSMParams"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MSMParams</span></code></a> instance from which to set up the
+evaluation functions.</p></li>
+<li><p><strong>part</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code>[<code class="docutils literal notranslate"><span class="pre">'total'</span></code>, <code class="docutils literal notranslate"><span class="pre">'shortrange'</span></code>, <code class="docutils literal notranslate"><span class="pre">'longrange'</span></code>]</span>) – Whether to calculate the total energy, or just the short-range
+(<span class="math notranslate nohighlight">\(U^0\)</span>) or long-range (<span class="math notranslate nohighlight">\(U^{1+}\)</span>) contribution.</p></li>
+<li><p><strong>use_custom_derivatives_for_longrange</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – Whether to use the custom
+optimized JVP for the long-range part.</p></li>
+<li><p><strong>extra_uncharged_interaction</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]]</span>) – See
+<a class="reference internal" href="msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot" title="msmjax.core.shortrange.make_eval_pair_pot"><code class="xref py py-func docutils literal notranslate"><span class="pre">msmjax.core.shortrange.make_eval_pair_pot()</span></code></a>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dictionary of functions that evaluate various different electrostatic
+quantities. Their exact argument structure depends on the settings in
+<code class="docutils literal notranslate"><span class="pre">params</span></code>. In all cases, they take positions and charges as their
+first two arguments. If <code class="docutils literal notranslate"><span class="pre">params</span></code> specifies a dynamic cell, they have
+an additional cell argument, and if <code class="docutils literal notranslate"><span class="pre">params</span></code> specifies that a
+neighbor list is to be used, they have an additional neighbor list
+argument.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="msmjax.calculators.check_cutoffs_and_get_actual_spacings">
+<span class="sig-prename descclassname"><span class="pre">msmjax.calculators.</span></span><span class="sig-name descname"><span class="pre">check_cutoffs_and_get_actual_spacings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msmjax/calculators.html#check_cutoffs_and_get_actual_spacings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msmjax.calculators.check_cutoffs_and_get_actual_spacings" title="Link to this definition"></a></dt>
+<dd><p>For a given cell, check if MSM cutoff and kernel stencil size settings
+are appropriate, and calculate the actual grid spacings.</p>
+<p>If ok, the spacings are returned. Otherwise, an error is intentionally
+raised to signal that an inappropriate settings-cell combination was
+encountered.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cell</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">jax.typing.ArrayLike</span></code></span>) – The cell for which to check the cutoff and kernel stencil sizes.</p></li>
+<li><p><strong>params</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#msmjax.calculators.MSMParams" title="msmjax.calculators.MSMParams"><code class="xref py py-class docutils literal notranslate"><span class="pre">MSMParams</span></code></a></span>) – The parameter instance specifying the cutoff and the kernel
+stencil sizes.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Array of actual grid spacings for the given cell, one value per
+direction.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If the cutoff is too small for the minimum-image convention
+    to work in the given cell. Only raised if there is periodicity.</p></li>
+<li><p><strong>ValueError</strong> – If any of the kernel stencils specified by <code class="docutils literal notranslate"><span class="pre">params</span></code>
+    is too small.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="api_reference.html" class="btn btn-neutral float-left" title="API reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="msmjax.kernels.html" class="btn btn-neutral float-right" title="msmjax.kernels" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Florian Buchner, Johannes Schörghuber, Nico Unglert, Jesús Carrete, Georg K. H. Madsen.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

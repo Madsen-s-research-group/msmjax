@@ -1,0 +1,953 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>msmjax.bspline.gridops &mdash; msmJAX  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            msmJAX
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference.html">API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../msmjax.calculators.html">msmjax.calculators</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.CustomJSONEncoder"><code class="docutils literal notranslate"><span class="pre">CustomJSONEncoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.CustomJSONEncoder.default"><code class="docutils literal notranslate"><span class="pre">CustomJSONEncoder.default()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.CustomJSONDecoder"><code class="docutils literal notranslate"><span class="pre">CustomJSONDecoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.CustomJSONDecoder.object_hook"><code class="docutils literal notranslate"><span class="pre">CustomJSONDecoder.object_hook()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams"><code class="docutils literal notranslate"><span class="pre">MSMParams</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.p"><code class="docutils literal notranslate"><span class="pre">MSMParams.p</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.mu"><code class="docutils literal notranslate"><span class="pre">MSMParams.mu</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.max_splitting_level"><code class="docutils literal notranslate"><span class="pre">MSMParams.max_splitting_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.max_grid_level"><code class="docutils literal notranslate"><span class="pre">MSMParams.max_grid_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.cutoffs"><code class="docutils literal notranslate"><span class="pre">MSMParams.cutoffs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.cell"><code class="docutils literal notranslate"><span class="pre">MSMParams.cell</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.cell_mode"><code class="docutils literal notranslate"><span class="pre">MSMParams.cell_mode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.pbc"><code class="docutils literal notranslate"><span class="pre">MSMParams.pbc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.dynamic_cell"><code class="docutils literal notranslate"><span class="pre">MSMParams.dynamic_cell</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.supercell_diag"><code class="docutils literal notranslate"><span class="pre">MSMParams.supercell_diag</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.use_neighborlist"><code class="docutils literal notranslate"><span class="pre">MSMParams.use_neighborlist</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.neighborlist_prefactor"><code class="docutils literal notranslate"><span class="pre">MSMParams.neighborlist_prefactor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.grids_defined_on_unitcube"><code class="docutils literal notranslate"><span class="pre">MSMParams.grids_defined_on_unitcube</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.grid_shapes"><code class="docutils literal notranslate"><span class="pre">MSMParams.grid_shapes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.grid_spacings"><code class="docutils literal notranslate"><span class="pre">MSMParams.grid_spacings</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.stencil_extents_from_center"><code class="docutils literal notranslate"><span class="pre">MSMParams.stencil_extents_from_center</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.convolution_methods"><code class="docutils literal notranslate"><span class="pre">MSMParams.convolution_methods</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.n_dim"><code class="docutils literal notranslate"><span class="pre">MSMParams.n_dim</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.version"><code class="docutils literal notranslate"><span class="pre">MSMParams.version</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.info"><code class="docutils literal notranslate"><span class="pre">MSMParams.info</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.save_json"><code class="docutils literal notranslate"><span class="pre">MSMParams.save_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.load_json"><code class="docutils literal notranslate"><span class="pre">MSMParams.load_json()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.find_stencil_extents_all_levels"><code class="docutils literal notranslate"><span class="pre">find_stencil_extents_all_levels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.set_up_msm_params"><code class="docutils literal notranslate"><span class="pre">set_up_msm_params()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.create_msm"><code class="docutils literal notranslate"><span class="pre">create_msm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.check_cutoffs_and_get_actual_spacings"><code class="docutils literal notranslate"><span class="pre">check_cutoffs_and_get_actual_spacings()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../msmjax.kernels.html">msmjax.kernels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.kernels.html#msmjax.kernels.SoftenerOneOverR"><code class="docutils literal notranslate"><span class="pre">SoftenerOneOverR</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.kernels.html#msmjax.kernels.split_one_over_r"><code class="docutils literal notranslate"><span class="pre">split_one_over_r()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.kernels.html#msmjax.kernels._get_distances"><code class="docutils literal notranslate"><span class="pre">_get_distances()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.kernels.html#msmjax.kernels._compute_one_stencil"><code class="docutils literal notranslate"><span class="pre">_compute_one_stencil()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.kernels.html#msmjax.kernels.make_construct_stencils"><code class="docutils literal notranslate"><span class="pre">make_construct_stencils()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../msmjax.bspline.html">msmjax.bspline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.bspline.basis.html">msmjax.bspline.basis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.basis.html#msmjax.bspline.basis.characteristic"><code class="docutils literal notranslate"><span class="pre">characteristic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.basis.html#msmjax.bspline.basis.evaluate_basis_element"><code class="docutils literal notranslate"><span class="pre">evaluate_basis_element()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.basis.html#msmjax.bspline.basis.create_bspline_basis_element"><code class="docutils literal notranslate"><span class="pre">create_bspline_basis_element()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html">msmjax.bspline.coefficients</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_Phi"><code class="docutils literal notranslate"><span class="pre">calc_Phi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_col_of_B"><code class="docutils literal notranslate"><span class="pre">build_col_of_B()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_col_of_B2"><code class="docutils literal notranslate"><span class="pre">build_col_of_B2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_Toeplitz_matrix"><code class="docutils literal notranslate"><span class="pre">build_Toeplitz_matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_Toeplitz_system"><code class="docutils literal notranslate"><span class="pre">build_Toeplitz_system()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_c_m"><code class="docutils literal notranslate"><span class="pre">compute_c_m()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.generating_function"><code class="docutils literal notranslate"><span class="pre">generating_function()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_Mclaurin_coefficient"><code class="docutils literal notranslate"><span class="pre">calc_Mclaurin_coefficient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_B_p_over_2"><code class="docutils literal notranslate"><span class="pre">calc_B_p_over_2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_polynomials"><code class="docutils literal notranslate"><span class="pre">calc_polynomials()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.explode_Add"><code class="docutils literal notranslate"><span class="pre">explode_Add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.coeff_dict_to_array"><code class="docutils literal notranslate"><span class="pre">coeff_dict_to_array()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_quasi_omega_prime"><code class="docutils literal notranslate"><span class="pre">compute_quasi_omega_prime()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_j_zeroplus"><code class="docutils literal notranslate"><span class="pre">compute_j_zeroplus()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.bspline.gridops.html">msmjax.bspline.gridops</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._find_n_gridpoints_1d"><code class="docutils literal notranslate"><span class="pre">_find_n_gridpoints_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.set_up_grids_all_levels"><code class="docutils literal notranslate"><span class="pre">set_up_grids_all_levels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._arbitrary_dim_outer"><code class="docutils literal notranslate"><span class="pre">_arbitrary_dim_outer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._multiindex_outer"><code class="docutils literal notranslate"><span class="pre">_multiindex_outer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._ravel_multi_index_with_invalidation"><code class="docutils literal notranslate"><span class="pre">_ravel_multi_index_with_invalidation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_basis_evaluation_fn"><code class="docutils literal notranslate"><span class="pre">make_basis_evaluation_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_restrict_1d"><code class="docutils literal notranslate"><span class="pre">_make_restrict_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_restriction_operator"><code class="docutils literal notranslate"><span class="pre">make_restriction_operator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_prolongate_1d"><code class="docutils literal notranslate"><span class="pre">_make_prolongate_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_prolongation_operator"><code class="docutils literal notranslate"><span class="pre">make_prolongation_operator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.create_all_grid_to_grid_ops"><code class="docutils literal notranslate"><span class="pre">create_all_grid_to_grid_ops()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.suggest_max_grid_level_nonperiodic"><code class="docutils literal notranslate"><span class="pre">suggest_max_grid_level_nonperiodic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.find_spacings_and_max_level_periodic"><code class="docutils literal notranslate"><span class="pre">find_spacings_and_max_level_periodic()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../msmjax.core.html">msmjax.core</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.core.shortrange.html">msmjax.core.shortrange</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._gen_supercell"><code class="docutils literal notranslate"><span class="pre">_gen_supercell()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_free"><code class="docutils literal notranslate"><span class="pre">_displacement_free()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_ortho"><code class="docutils literal notranslate"><span class="pre">_displacement_ortho()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_general"><code class="docutils literal notranslate"><span class="pre">_displacement_general()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._concretize_displacement_fn"><code class="docutils literal notranslate"><span class="pre">_concretize_displacement_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot"><code class="docutils literal notranslate"><span class="pre">make_eval_pair_pot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot_neighborlist"><code class="docutils literal notranslate"><span class="pre">make_eval_pair_pot_neighborlist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange.make_compute_u_zero"><code class="docutils literal notranslate"><span class="pre">make_compute_u_zero()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.core.longrange.html">msmjax.core.longrange</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange._anterpolate"><code class="docutils literal notranslate"><span class="pre">_anterpolate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_positions_gradient"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy_positions_gradient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_charge_gradient"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy_charge_gradient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange.special_periodic_convolve_scipy"><code class="docutils literal notranslate"><span class="pre">special_periodic_convolve_scipy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange.make_grid_pass_fn"><code class="docutils literal notranslate"><span class="pre">make_grid_pass_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange.make_compute_u_oneplus"><code class="docutils literal notranslate"><span class="pre">make_compute_u_oneplus()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../msmjax.utils.html">msmjax.utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html">msmjax.utils.benchmarking</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.dir_context"><code class="docutils literal notranslate"><span class="pre">dir_context()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.write_lammps_data"><code class="docutils literal notranslate"><span class="pre">write_lammps_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.parse_energy_from_lammps_log"><code class="docutils literal notranslate"><span class="pre">parse_energy_from_lammps_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.parse_lammps_log"><code class="docutils literal notranslate"><span class="pre">parse_lammps_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.make_lammps_input_text_pppm"><code class="docutils literal notranslate"><span class="pre">make_lammps_input_text_pppm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.eval_lammps_pppm"><code class="docutils literal notranslate"><span class="pre">eval_lammps_pppm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_rmse"><code class="docutils literal notranslate"><span class="pre">calc_rmse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_relative_rmse_percent"><code class="docutils literal notranslate"><span class="pre">calc_relative_rmse_percent()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_relative_rmse"><code class="docutils literal notranslate"><span class="pre">calc_relative_rmse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.make_timed_eval"><code class="docutils literal notranslate"><span class="pre">make_timed_eval()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.remove_duplicates_from_neighborlist"><code class="docutils literal notranslate"><span class="pre">remove_duplicates_from_neighborlist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.build_duplicate_free_neighborlists"><code class="docutils literal notranslate"><span class="pre">build_duplicate_free_neighborlists()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.coulomb_kernel"><code class="docutils literal notranslate"><span class="pre">coulomb_kernel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_energy_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_energy_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_forces_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_forces_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_chargegrad_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_chargegrad_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_stress_virial"><code class="docutils literal notranslate"><span class="pre">calc_stress_virial()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_nonperiodic_reference_results"><code class="docutils literal notranslate"><span class="pre">calc_nonperiodic_reference_results()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.utils.general.html">msmjax.utils.general</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.general.html#msmjax.utils.general._divide_zero_safe"><code class="docutils literal notranslate"><span class="pre">_divide_zero_safe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.general.html#msmjax.utils.general._sqrt_jvp"><code class="docutils literal notranslate"><span class="pre">_sqrt_jvp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.general.html#msmjax.utils.general.get_max_cutoff_for_mic"><code class="docutils literal notranslate"><span class="pre">get_max_cutoff_for_mic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.general.html#msmjax.utils.general.find_covering_grid_extents"><code class="docutils literal notranslate"><span class="pre">find_covering_grid_extents()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">msmJAX</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">msmjax.bspline.gridops</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for msmjax.bspline.gridops</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Generic code for long-range part (that is evaluated using grids).</span>
+
+<span class="sd">References:</span>
+<span class="sd">    [1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,</span>
+<span class="sd">    R. D. Multilevel Summation with B-Spline Interpolation for Pairwise</span>
+<span class="sd">    Interactions in Molecular Dynamics Simulations. J. Chem. Phys. 2016,</span>
+<span class="sd">    144 (11), 114112. https://doi.org/10.1063/1.4943868.</span>
+
+<span class="sd">    [2] Hardy, D. J. Multilevel Summation for the Fast Evaluation of</span>
+<span class="sd">    Forces for the Simulation of Biomolecules (PhD thesis), University</span>
+<span class="sd">    of Illinois at Urbana-Champaign, 2006.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">onp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLike</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">msmjax.bspline.basis</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_bspline_basis_element</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">msmjax.bspline.coefficients</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_j_zeroplus</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">msmjax.core.longrange</span><span class="w"> </span><span class="kn">import</span> <span class="n">special_periodic_convolve_scipy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">msmjax.utils.general</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConvMeth</span>
+
+
+<div class="viewcode-block" id="_find_n_gridpoints_1d">
+<a class="viewcode-back" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._find_n_gridpoints_1d">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_find_n_gridpoints_1d</span><span class="p">(</span>
+    <span class="n">length</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">is_periodic</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find number of grid points along one dimension.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        length: Length of the domain where particles can be located.</span>
+<span class="sd">        h: Grid spacing.</span>
+<span class="sd">        p: Interpolation order.</span>
+<span class="sd">        is_periodic: Whether there is periodicity along this dimension.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Number of grid points.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">p</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;p must be even&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">is_periodic</span><span class="p">:</span>
+        <span class="c1"># This checks that h = length * 2**(-n) or h = (length / 3) * 2**(-n),</span>
+        <span class="c1"># with an integer exponent n.</span>
+        <span class="n">exponent_one</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">length</span> <span class="o">/</span> <span class="n">h</span><span class="p">)</span>
+        <span class="n">exponent_three</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">length</span> <span class="o">/</span> <span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">h</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="n">onp</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">exponent_one</span><span class="p">,</span> <span class="n">onp</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">exponent_one</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="ow">or</span> <span class="n">onp</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">exponent_three</span><span class="p">,</span> <span class="n">onp</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">exponent_three</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Along any periodic axis, the grid spacing must be a power &quot;</span>
+                <span class="s2">&quot;of two times either the box length or the box length &quot;</span>
+                <span class="s2">&quot;divided by three.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">onp</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">length</span> <span class="o">/</span> <span class="n">h</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># +1 to be safe</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">onp</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">length</span> <span class="o">/</span> <span class="n">h</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">p</span></div>
+
+
+
+<div class="viewcode-block" id="set_up_grids_all_levels">
+<a class="viewcode-back" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.set_up_grids_all_levels">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_up_grids_all_levels</span><span class="p">(</span>
+    <span class="n">side_lengths</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">level_one_spacings</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">pbc</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">bool</span><span class="p">],</span>
+    <span class="n">max_grid_level</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="kc">None</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]],</span> <span class="nb">list</span><span class="p">[</span><span class="kc">None</span> <span class="o">|</span> <span class="n">onp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Determine the shapes and spacings of the grids at all levels.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        side_lengths: Side lengths of a cuboid region where particles may be</span>
+<span class="sd">            located.</span>
+<span class="sd">        level_one_spacings: Level-one grid spacings, one for each direction.</span>
+<span class="sd">        pbc: One boolean per direction signaling periodicity.</span>
+<span class="sd">        max_grid_level: The highest grid level.</span>
+<span class="sd">        p: Interpolation order.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple containing:</span>
+<span class="sd">            - A list of tuples indicating grid shapes, with the tuple at</span>
+<span class="sd">              index l of the list corresponding to grid level l.</span>
+<span class="sd">            - A list of arrays indicating grid spacings, with the tuple at</span>
+<span class="sd">              index l of the list corresponding to grid level l.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">max_grid_level</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Need at least one grid level.&quot;</span><span class="p">)</span>
+
+    <span class="n">level_one_spacings</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">level_one_spacings</span><span class="p">)</span>
+
+    <span class="n">shapes_all_levels</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+    <span class="n">spacings_all_levels</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">lvl</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_grid_level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">spacings</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="n">lvl</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">level_one_spacings</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+            <span class="n">_find_n_gridpoints_1d</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">is_periodic</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">length</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">is_periodic</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">side_lengths</span><span class="p">,</span> <span class="n">spacings</span><span class="p">,</span> <span class="n">pbc</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">shapes_all_levels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">spacings_all_levels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spacings</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">shapes_all_levels</span><span class="p">,</span> <span class="n">spacings_all_levels</span></div>
+
+
+
+<div class="viewcode-block" id="_arbitrary_dim_outer">
+<a class="viewcode-back" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._arbitrary_dim_outer">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_arbitrary_dim_outer</span><span class="p">(</span><span class="o">*</span><span class="n">xi</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the outer product of an arbitrary number of arrays&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="o">*</span><span class="n">xi</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s2">&quot;ij&quot;</span><span class="p">)),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="_multiindex_outer">
+<a class="viewcode-back" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._multiindex_outer">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_multiindex_outer</span><span class="p">(</span><span class="o">*</span><span class="n">inds_individual_axes</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct a mesh grid and return it processed into a multiindex.&quot;&quot;&quot;</span>
+    <span class="n">multi_inds</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+        <span class="n">arr</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">arr</span> <span class="ow">in</span> <span class="n">jnp</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="o">*</span><span class="n">inds_individual_axes</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s2">&quot;ij&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">multi_inds</span></div>
+
+
+
+<div class="viewcode-block" id="_ravel_multi_index_with_invalidation">
+<a class="viewcode-back" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._ravel_multi_index_with_invalidation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_ravel_multi_index_with_invalidation</span><span class="p">(</span>
+    <span class="n">multi_index</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">dims</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">pbc</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Like jax.numpy.ravel_multi_index() with different out-of-bounds handling</span>
+
+<span class="sd">    The out-of-bounds handling of this function depends on the boundary</span>
+<span class="sd">    conditions, specified via ``pbc``.</span>
+<span class="sd">    Along periodic directions, it is identical to calling</span>
+<span class="sd">    ``jax.numpy.ravel_multi_index()`` with ``mode=&quot;wrap&quot;``.</span>
+<span class="sd">    Along nonperiodic directions, any out-of-bounds values in the input</span>
+<span class="sd">    mult-index are become out-of-bounds values also in the output flat index.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        multi_index: Like in jax.numpy.ravel_multi_index().</span>
+<span class="sd">        dims: Like in jax.numpy.ravel_multi_index().</span>
+<span class="sd">        pbc: One boolean per direction signaling periodicity.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Flat indices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pbc</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pbc</span><span class="p">)</span>
+    <span class="n">all_periodic</span> <span class="o">=</span> <span class="n">pbc</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="n">any_periodic</span> <span class="o">=</span> <span class="n">pbc</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+    <span class="n">intentionally_out_of_bounds_index</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">dims</span><span class="p">)</span>
+
+    <span class="n">flat_inds_wrapped</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ravel_multi_index</span><span class="p">(</span><span class="n">multi_index</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;wrap&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">all_periodic</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">flat_inds_wrapped</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">multi_index</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">multi_index</span><span class="p">)</span>
+        <span class="n">in_bounds</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
+            <span class="n">multi_index</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">multi_index</span> <span class="o">&lt;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dims</span><span class="p">)[:,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">any_periodic</span><span class="p">:</span>
+            <span class="n">in_bounds</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="n">in_bounds</span><span class="p">,</span> <span class="n">pbc</span><span class="p">[:,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">newaxis</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">in_bounds</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+            <span class="n">flat_inds_wrapped</span><span class="p">,</span>
+            <span class="n">intentionally_out_of_bounds_index</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="make_basis_evaluation_fn">
+<a class="viewcode-back" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_basis_evaluation_fn">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_basis_evaluation_fn</span><span class="p">(</span>
+    <span class="n">grid_shape</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pbc</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Make fn that evaluates all contributing basis fns for a single particle.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        grid_shape: Tuple of integers representing shape of the grid on which</span>
+<span class="sd">            the basis functions are defined.</span>
+<span class="sd">        p: Interpolation order.</span>
+<span class="sd">        pbc: One boolean per direction signaling periodicity.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A function that evaluates the grid-centered basis functions for a</span>
+<span class="sd">        single particle. It has two inputs and two outputs:</span>
+
+<span class="sd">        - The inputs are two 1-d arrays, both of shape ``(n_dim, )``,</span>
+<span class="sd">          representing the coordinates of a single particle, and the grid</span>
+<span class="sd">          spacings along each direction.</span>
+
+<span class="sd">        - The outputs are two 1-d arrays, representing the values of all</span>
+<span class="sd">          basis functions that contain the particle in their support, and the</span>
+<span class="sd">          flat indices of the corresponding grid points. They are always</span>
+<span class="sd">          flat arrays, regardless of the spatial dimension of the system.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pbc</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pbc</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">zero_align_idx</span><span class="p">(</span><span class="n">positional_idx</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">pbc</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">positional_idx</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="o">~</span><span class="n">pbc</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">positional_idx</span> <span class="o">-</span> <span class="n">p</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                <span class="n">pbc</span><span class="p">[:,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">newaxis</span><span class="p">],</span>
+                <span class="n">positional_idx</span><span class="p">,</span>
+                <span class="n">positional_idx</span> <span class="o">-</span> <span class="n">p</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_positional_idx</span><span class="p">(</span><span class="n">zero_aligned_idx</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">pbc</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">zero_aligned_idx</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="o">~</span><span class="n">pbc</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">zero_aligned_idx</span> <span class="o">+</span> <span class="n">p</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                <span class="n">pbc</span><span class="p">[:,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">newaxis</span><span class="p">],</span>
+                <span class="n">zero_aligned_idx</span><span class="p">,</span>
+                <span class="n">zero_aligned_idx</span> <span class="o">+</span> <span class="n">p</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="n">bspline_basis_element</span> <span class="o">=</span> <span class="n">create_bspline_basis_element</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">eval_basis</span><span class="p">(</span><span class="n">coords</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">spacings</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+        <span class="n">r_over_h</span> <span class="o">=</span> <span class="n">coords</span> <span class="o">/</span> <span class="n">spacings</span>
+        <span class="n">raw_reference_inds</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">r_over_h</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">raw_inds</span> <span class="o">=</span> <span class="n">raw_reference_inds</span><span class="p">[:,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+            <span class="o">-</span><span class="n">p</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">p</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="p">)</span>
+        <span class="n">splinevals_per_axis</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">bspline_basis_element</span><span class="p">))(</span>
+            <span class="p">(</span><span class="n">r_over_h</span> <span class="o">-</span> <span class="n">raw_inds</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        <span class="p">)</span>
+        <span class="n">inds_per_axis</span> <span class="o">=</span> <span class="n">to_positional_idx</span><span class="p">(</span><span class="n">raw_inds</span><span class="p">)</span>
+
+        <span class="n">splinevals</span> <span class="o">=</span> <span class="n">_arbitrary_dim_outer</span><span class="p">(</span><span class="o">*</span><span class="n">splinevals_per_axis</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+
+        <span class="n">multiinds</span> <span class="o">=</span> <span class="n">_multiindex_outer</span><span class="p">(</span><span class="o">*</span><span class="n">inds_per_axis</span><span class="p">)</span>
+        <span class="n">flat_inds</span> <span class="o">=</span> <span class="n">_ravel_multi_index_with_invalidation</span><span class="p">(</span>
+            <span class="n">multiinds</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="n">grid_shape</span><span class="p">,</span> <span class="n">pbc</span><span class="o">=</span><span class="n">pbc</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">splinevals</span><span class="p">,</span> <span class="n">flat_inds</span>
+
+    <span class="k">return</span> <span class="n">eval_basis</span></div>
+
+
+
+<div class="viewcode-block" id="_make_restrict_1d">
+<a class="viewcode-back" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_restrict_1d">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_make_restrict_1d</span><span class="p">(</span>
+    <span class="n">n_points_in</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_points_out</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">is_periodic</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Array</span><span class="p">],</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Make a function that performs restriction along one dimension.&quot;&quot;&quot;</span>
+    <span class="n">J_zeroplus</span> <span class="o">=</span> <span class="n">compute_j_zeroplus</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">J</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">J_zeroplus</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">J_zeroplus</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">zero_align_idx</span><span class="p">(</span><span class="n">positional_idx</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">is_periodic</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">positional_idx</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">positional_idx</span> <span class="o">-</span> <span class="n">p</span> <span class="o">//</span> <span class="mi">2</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_positional_idx</span><span class="p">(</span><span class="n">zero_aligned_idx</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">is_periodic</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">zero_aligned_idx</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">zero_aligned_idx</span> <span class="o">+</span> <span class="n">p</span> <span class="o">//</span> <span class="mi">2</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">restrict_1d</span><span class="p">(</span><span class="n">in_array_fine</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_points_out</span><span class="p">)</span>
+        <span class="n">i_aligned</span> <span class="o">=</span> <span class="n">zero_align_idx</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">j_aligned</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i_aligned</span><span class="p">)[:,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+            <span class="o">-</span><span class="n">p</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">p</span> <span class="o">//</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="p">)</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">to_positional_idx</span><span class="p">(</span><span class="n">j_aligned</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">is_periodic</span><span class="p">:</span>
+            <span class="n">j</span> <span class="o">=</span> <span class="n">j</span> <span class="o">%</span> <span class="n">n_points_in</span>
+            <span class="n">selected_source_values</span> <span class="o">=</span> <span class="n">in_array_fine</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">selected_source_values</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">j</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n_points_in</span><span class="p">),</span>
+                <span class="n">in_array_fine</span><span class="p">[</span><span class="n">j</span><span class="p">],</span>
+                <span class="mf">0.0</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">selected_source_values</span> <span class="o">*</span> <span class="n">J</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">restrict_1d</span></div>
+
+
+
+<div class="viewcode-block" id="make_restriction_operator">
+<a class="viewcode-back" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_restriction_operator">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_restriction_operator</span><span class="p">(</span>
+    <span class="n">grid_shape_in</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">grid_shape_out</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">pbc</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">bool</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Array</span><span class="p">],</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Make a function that performs restriction.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        grid_shape_in: Tuple of integers indicating the shape of the input</span>
+<span class="sd">            (lower-level, finer) grid.</span>
+<span class="sd">        grid_shape_out: Tuple of integers indicating the shape of the target</span>
+<span class="sd">            (higher-level, coarser) grid.</span>
+<span class="sd">        p: Interpolation order.</span>
+<span class="sd">        pbc: One boolean per direction signaling periodicity.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A function that takes in an array of shape ``grid_shape_in`` and</span>
+<span class="sd">        restricts it to a coarser grid, returning an array of shape</span>
+<span class="sd">        ``grid_shape_out``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">restriction_fns_1d_per_axis</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">_make_restrict_1d</span><span class="p">(</span><span class="n">n_points_in</span><span class="p">,</span> <span class="n">n_points_out</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">is_periodic</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n_points_in</span><span class="p">,</span> <span class="n">n_points_out</span><span class="p">,</span> <span class="n">is_periodic</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="n">grid_shape_in</span><span class="p">,</span> <span class="n">grid_shape_out</span><span class="p">,</span> <span class="n">pbc</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">restrict</span><span class="p">(</span><span class="n">in_array_fine</span><span class="p">):</span>
+        <span class="n">out_array_coarse</span> <span class="o">=</span> <span class="n">in_array_fine</span>
+        <span class="k">for</span> <span class="n">axis</span><span class="p">,</span> <span class="n">fn_1d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">restriction_fns_1d_per_axis</span><span class="p">):</span>
+            <span class="n">out_array_coarse</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span>
+                <span class="n">func1d</span><span class="o">=</span><span class="n">fn_1d</span><span class="p">,</span>
+                <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">,</span>
+                <span class="n">arr</span><span class="o">=</span><span class="n">out_array_coarse</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">out_array_coarse</span>
+
+    <span class="k">return</span> <span class="n">restrict</span></div>
+
+
+
+<div class="viewcode-block" id="_make_prolongate_1d">
+<a class="viewcode-back" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_prolongate_1d">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_make_prolongate_1d</span><span class="p">(</span>
+    <span class="n">n_points_in</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_points_out</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">is_periodic</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Array</span><span class="p">],</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Make a function that performs prolongation along one dimension.&quot;&quot;&quot;</span>
+    <span class="n">J_zeroplus</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">compute_j_zeroplus</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+    <span class="n">J</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">J_zeroplus</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">J_zeroplus</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">zero_align_idx</span><span class="p">(</span><span class="n">positional_idx</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">is_periodic</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">positional_idx</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">positional_idx</span> <span class="o">-</span> <span class="n">p</span> <span class="o">//</span> <span class="mi">2</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_positional_idx</span><span class="p">(</span><span class="n">zero_aligned_idx</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">is_periodic</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">zero_aligned_idx</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">zero_aligned_idx</span> <span class="o">+</span> <span class="n">p</span> <span class="o">//</span> <span class="mi">2</span>
+
+    <span class="n">start_even</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">onp</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">onp</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="o">-</span><span class="n">p</span> <span class="o">/</span> <span class="mi">4</span><span class="p">,</span> <span class="n">decimals</span><span class="o">=</span><span class="mi">1</span><span class="p">)))</span>
+    <span class="n">end_even</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">onp</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">onp</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">p</span> <span class="o">/</span> <span class="mi">4</span><span class="p">,</span> <span class="n">decimals</span><span class="o">=</span><span class="mi">1</span><span class="p">)))</span>
+    <span class="n">start_odd</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">onp</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">onp</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">-</span> <span class="n">p</span> <span class="o">/</span> <span class="mi">4</span><span class="p">,</span> <span class="n">decimals</span><span class="o">=</span><span class="mi">1</span><span class="p">)))</span>
+    <span class="n">end_odd</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">onp</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">onp</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">+</span> <span class="n">p</span> <span class="o">/</span> <span class="mi">4</span><span class="p">,</span> <span class="n">decimals</span><span class="o">=</span><span class="mi">1</span><span class="p">)))</span>
+    <span class="n">dists_to_neighbors_even</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">start_even</span><span class="p">,</span> <span class="n">end_even</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">dists_to_neighbors_odd</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">start_odd</span><span class="p">,</span> <span class="n">end_odd</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">inds_into_J_even</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">dists_to_neighbors_even</span>
+    <span class="n">inds_into_J_odd</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">dists_to_neighbors_odd</span>
+
+    <span class="k">if</span> <span class="n">is_periodic</span><span class="p">:</span>
+        <span class="n">slice_even</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">slice_odd</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">slice_even</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">((</span><span class="n">p</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">slice_odd</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">p</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">prolongate_1d</span><span class="p">(</span><span class="n">in_array_coarse</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_points_out</span><span class="p">)</span>
+
+        <span class="n">i_even</span> <span class="o">=</span> <span class="n">i</span><span class="p">[</span><span class="n">slice_even</span><span class="p">]</span>
+        <span class="n">i_even_aligned</span> <span class="o">=</span> <span class="n">zero_align_idx</span><span class="p">(</span><span class="n">i_even</span><span class="p">)</span>
+        <span class="n">j_even_aligned</span> <span class="o">=</span> <span class="p">(</span><span class="n">i_even_aligned</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)[</span>
+            <span class="p">:,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">newaxis</span>
+        <span class="p">]</span> <span class="o">+</span> <span class="n">dists_to_neighbors_even</span>
+        <span class="n">j_even</span> <span class="o">=</span> <span class="n">to_positional_idx</span><span class="p">(</span><span class="n">j_even_aligned</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_periodic</span><span class="p">:</span>
+            <span class="n">j_even</span> <span class="o">=</span> <span class="n">j_even</span> <span class="o">%</span> <span class="n">n_points_in</span>
+
+        <span class="n">i_odd</span> <span class="o">=</span> <span class="n">i</span><span class="p">[</span><span class="n">slice_odd</span><span class="p">]</span>
+        <span class="n">i_odd_aligned</span> <span class="o">=</span> <span class="n">zero_align_idx</span><span class="p">(</span><span class="n">i_odd</span><span class="p">)</span>
+        <span class="n">j_odd_aligned</span> <span class="o">=</span> <span class="p">(</span><span class="n">i_odd_aligned</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)[</span>
+            <span class="p">:,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">newaxis</span>
+        <span class="p">]</span> <span class="o">+</span> <span class="n">dists_to_neighbors_odd</span>
+        <span class="n">j_odd</span> <span class="o">=</span> <span class="n">to_positional_idx</span><span class="p">(</span><span class="n">j_odd_aligned</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_periodic</span><span class="p">:</span>
+            <span class="n">j_odd</span> <span class="o">=</span> <span class="n">j_odd</span> <span class="o">%</span> <span class="n">n_points_in</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_points_out</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">i_even</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">in_array_coarse</span><span class="p">[</span><span class="n">j_even</span><span class="p">]</span> <span class="o">*</span> <span class="n">J_zeroplus</span><span class="p">[</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">inds_into_J_even</span><span class="p">)]</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">i_odd</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">in_array_coarse</span><span class="p">[</span><span class="n">j_odd</span><span class="p">]</span> <span class="o">*</span> <span class="n">J_zeroplus</span><span class="p">[</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">inds_into_J_odd</span><span class="p">)]</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">return</span> <span class="n">prolongate_1d</span></div>
+
+
+
+<div class="viewcode-block" id="make_prolongation_operator">
+<a class="viewcode-back" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_prolongation_operator">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_prolongation_operator</span><span class="p">(</span>
+    <span class="n">grid_shape_in</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">grid_shape_out</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">pbc</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">bool</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Array</span><span class="p">],</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Make a function that performs prolongation.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        grid_shape_in: Tuple of integers indicating the shape of the input</span>
+<span class="sd">            (higher-level, coarser) grid.</span>
+<span class="sd">        grid_shape_out: Tuple of integers indicating the shape of the target</span>
+<span class="sd">            (lower-level, finer) grid.</span>
+<span class="sd">        p: Interpolation order.</span>
+<span class="sd">        pbc: One boolean per direction signaling periodicity.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A function that takes in an array of shape ``grid_shape_in`` and</span>
+<span class="sd">        prolongs it to a finer grid, returning an array of shape</span>
+<span class="sd">        ``grid_shape_out``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">prolongation_fns_1d_per_axis</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">_make_prolongate_1d</span><span class="p">(</span><span class="n">n_points_in</span><span class="p">,</span> <span class="n">n_points_out</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">is_periodic</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n_points_in</span><span class="p">,</span> <span class="n">n_points_out</span><span class="p">,</span> <span class="n">is_periodic</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="n">grid_shape_in</span><span class="p">,</span> <span class="n">grid_shape_out</span><span class="p">,</span> <span class="n">pbc</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">prolongate</span><span class="p">(</span><span class="n">in_array_coarse</span><span class="p">):</span>
+        <span class="n">out_array_fine</span> <span class="o">=</span> <span class="n">in_array_coarse</span>
+        <span class="k">for</span> <span class="n">axis</span><span class="p">,</span> <span class="n">fn_1d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">prolongation_fns_1d_per_axis</span><span class="p">):</span>
+            <span class="n">out_array_fine</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span>
+                <span class="n">func1d</span><span class="o">=</span><span class="n">fn_1d</span><span class="p">,</span>
+                <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">,</span>
+                <span class="n">arr</span><span class="o">=</span><span class="n">out_array_fine</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">out_array_fine</span>
+
+    <span class="k">return</span> <span class="n">prolongate</span></div>
+
+
+
+<div class="viewcode-block" id="create_all_grid_to_grid_ops">
+<a class="viewcode-back" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.create_all_grid_to_grid_ops">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_all_grid_to_grid_ops</span><span class="p">(</span>
+    <span class="n">grid_shapes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]],</span>
+    <span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">pbc</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">bool</span><span class="p">],</span>
+    <span class="n">convolution_methods</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="kc">None</span> <span class="o">|</span> <span class="n">ConvMeth</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create all necessary functions that map from grids to grids</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        grid_shapes: Sequence of tuples of integers indicating the shape of</span>
+<span class="sd">            the grids at all levels.</span>
+<span class="sd">        p: Interpolation order.</span>
+<span class="sd">        pbc: One boolean per direction signaling periodicity.</span>
+<span class="sd">        convolution_methods: Algorithm to use for convolution in the grid</span>
+<span class="sd">            potential calculation. One value per grid level (i.e., different</span>
+<span class="sd">            algorithms can be used at different levels).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Three-element tuple containing:</span>
+<span class="sd">            - Sequence of functions for restrictions between all pairs of</span>
+<span class="sd">              grids at adjacent levels.</span>
+<span class="sd">            - Sequence of functions for prolongations between all pairs of</span>
+<span class="sd">              grids at adjacent levels.</span>
+<span class="sd">            - Sequence of functions for potential calculation via convolution</span>
+<span class="sd">              with kernel stencils at all levels.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">max_level_grids</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">grid_shapes</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="n">restriction_fns</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">max_level_grids</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">lvl</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">max_level_grids</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">restrict</span> <span class="o">=</span> <span class="n">make_restriction_operator</span><span class="p">(</span>
+            <span class="n">grid_shape_in</span><span class="o">=</span><span class="n">grid_shapes</span><span class="p">[</span><span class="n">lvl</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="n">grid_shape_out</span><span class="o">=</span><span class="n">grid_shapes</span><span class="p">[</span><span class="n">lvl</span><span class="p">],</span>
+            <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span>
+            <span class="n">pbc</span><span class="o">=</span><span class="n">pbc</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">restriction_fns</span><span class="p">[</span><span class="n">lvl</span><span class="p">]</span> <span class="o">=</span> <span class="n">restrict</span>
+
+    <span class="n">prolongation_fns</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">max_level_grids</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">lvl</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_level_grids</span><span class="p">):</span>
+        <span class="n">prolongate</span> <span class="o">=</span> <span class="n">make_prolongation_operator</span><span class="p">(</span>
+            <span class="n">grid_shape_in</span><span class="o">=</span><span class="n">grid_shapes</span><span class="p">[</span><span class="n">lvl</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="n">grid_shape_out</span><span class="o">=</span><span class="n">grid_shapes</span><span class="p">[</span><span class="n">lvl</span><span class="p">],</span>
+            <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span>
+            <span class="n">pbc</span><span class="o">=</span><span class="n">pbc</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">prolongation_fns</span><span class="p">[</span><span class="n">lvl</span><span class="p">]</span> <span class="o">=</span> <span class="n">prolongate</span>
+
+    <span class="n">convolution_fns</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">max_level_grids</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">lvl</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_level_grids</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">conv_meth</span> <span class="o">=</span> <span class="n">convolution_methods</span><span class="p">[</span><span class="n">lvl</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">conv_meth</span> <span class="o">==</span> <span class="s2">&quot;scipy-direct&quot;</span><span class="p">:</span>
+            <span class="n">interact</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
+                <span class="n">special_periodic_convolve_scipy</span><span class="p">,</span>
+                <span class="n">pbc</span><span class="o">=</span><span class="n">pbc</span><span class="p">,</span>
+                <span class="n">method</span><span class="o">=</span><span class="s2">&quot;direct&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">conv_meth</span> <span class="o">==</span> <span class="s2">&quot;scipy-fft&quot;</span><span class="p">:</span>
+            <span class="n">interact</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
+                <span class="n">special_periodic_convolve_scipy</span><span class="p">,</span>
+                <span class="n">pbc</span><span class="o">=</span><span class="n">pbc</span><span class="p">,</span>
+                <span class="n">method</span><span class="o">=</span><span class="s2">&quot;fft&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">conv_meth</span><span class="si">}</span><span class="s2">` is not a valid convolution method&quot;</span>
+            <span class="p">)</span>
+        <span class="n">convolution_fns</span><span class="p">[</span><span class="n">lvl</span><span class="p">]</span> <span class="o">=</span> <span class="n">interact</span>
+
+    <span class="k">return</span> <span class="n">restriction_fns</span><span class="p">,</span> <span class="n">prolongation_fns</span><span class="p">,</span> <span class="n">convolution_fns</span></div>
+
+
+
+<div class="viewcode-block" id="suggest_max_grid_level_nonperiodic">
+<a class="viewcode-back" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.suggest_max_grid_level_nonperiodic">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">suggest_max_grid_level_nonperiodic</span><span class="p">(</span>
+    <span class="n">side_lengths</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">n_particles</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">level_one_spacings</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">level_zero_cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Suggest an efficient value for highest grid level in nonperiodic case.</span>
+
+<span class="sd">    The criterion used, as per Ref. [1], is that the number of grid points</span>
+<span class="sd">    at the highest level should be less than or equal to the sqare root of the</span>
+<span class="sd">    number of particles. However, this may be unachievable for lower particle</span>
+<span class="sd">    counts, since the support of the basis functions dictates that the grids</span>
+<span class="sd">    extend beyond the boundary of the cell, so there is a minimum number of</span>
+<span class="sd">    grid points that cannot be reduced further even by going to arbitrarily</span>
+<span class="sd">    high grid levels.</span>
+<span class="sd">    Therefore, other criteria are implemented as a failsafe as well.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        side_lengths: Side lengths of a cuboid region where particles may be</span>
+<span class="sd">            located.</span>
+<span class="sd">        n_particles: Number of particles.</span>
+<span class="sd">        level_one_spacings: Level-one grid spacings, one value per direction.</span>
+<span class="sd">        level_zero_cutoff: Level-zero cutoff.</span>
+<span class="sd">        p: Interpolation order.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Suggested value for highest grid level.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">error_message</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;Automatic determination of the number of grid levels for &quot;</span>
+        <span class="s2">&quot;non-periodic system resulted in an invalid value less than 1. &quot;</span>
+        <span class="s2">&quot;Are you using a a too large (compared to the simulation cell) &quot;</span>
+        <span class="s2">&quot;level-one grid spacing or level-zero cutoff?&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># 1. Find level at which spacing becomes larger than side length.</span>
+    <span class="c1">#    This corresponds to the point where the number of grid points cannot</span>
+    <span class="c1">#    be reduced any further by adding another level, and serves as an upper</span>
+    <span class="c1">#    limit on the number of grid levels.</span>
+    <span class="n">upper_limit_per_direction</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">onp</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">side_lengths</span> <span class="o">/</span> <span class="n">level_one_spacings</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="n">max_grid_level</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">upper_limit_per_direction</span><span class="p">)</span>
+
+    <span class="c1"># 2. Find the highest level at which the cutoff is not larger than half</span>
+    <span class="c1">#    the longest side of the cell.</span>
+    <span class="n">level_from_cutoff</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">side_lengths</span> <span class="o">/</span> <span class="n">level_zero_cutoff</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">level_from_cutoff</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">level_from_cutoff</span><span class="p">)</span>
+    <span class="n">max_grid_level</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">max_grid_level</span><span class="p">,</span> <span class="n">level_from_cutoff</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">max_grid_level</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span>
+
+    <span class="c1"># 3. Find (if achievable) the level where n_gridpoints &lt;= sqrt(n_particles)</span>
+    <span class="n">shapes_all_levels</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">set_up_grids_all_levels</span><span class="p">(</span>
+        <span class="n">side_lengths</span><span class="o">=</span><span class="n">side_lengths</span><span class="p">,</span>
+        <span class="n">level_one_spacings</span><span class="o">=</span><span class="n">level_one_spacings</span><span class="p">,</span>
+        <span class="n">max_grid_level</span><span class="o">=</span><span class="n">max_grid_level</span><span class="p">,</span>
+        <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span>
+        <span class="n">pbc</span><span class="o">=</span><span class="p">(</span><span class="kc">False</span><span class="p">,)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">side_lengths</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">n_gridpoints_all_levels</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="kc">None</span> <span class="k">if</span> <span class="n">s</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">onp</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">shapes_all_levels</span>
+    <span class="p">]</span>
+    <span class="n">levels_with_fewer_points</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">onp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">n_gridpoints_all_levels</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">&lt;=</span> <span class="n">onp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_particles</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">levels_with_fewer_points</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">max_grid_level</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">max_grid_level</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">levels_with_fewer_points</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">max_grid_level</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">max_grid_level</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="find_spacings_and_max_level_periodic">
+<a class="viewcode-back" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.find_spacings_and_max_level_periodic">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_spacings_and_max_level_periodic</span><span class="p">(</span>
+    <span class="n">side_lengths</span><span class="p">,</span> <span class="n">target_level_one_spacings</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find grid spacings and number of grid levels compatible with periodicity</span>
+
+<span class="sd">    The spacing and number of levels are not independent and are</span>
+<span class="sd">    adjusted/determined automatically because:</span>
+
+<span class="sd">    - In a periodic system, the grid spacings need to divide the side</span>
+<span class="sd">      lengths without remainder.</span>
+<span class="sd">    - In our implementation of the MSM for periodic boundary conditions,</span>
+<span class="sd">      based on Ref. [2], the number of grids keeps being increased until</span>
+<span class="sd">      there is only one point at the highest level, which is then not</span>
+<span class="sd">      actually visited (it would not contribute due to charge neutrality).</span>
+<span class="sd">      Since this condition can lead to non-ideal spacings, far from the</span>
+<span class="sd">      ideal ones, being enforced, we allow the grid points along each</span>
+<span class="sd">      direction to be not just powers of two, but also three times a power</span>
+<span class="sd">      of two.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        side_lengths: Array of side lengths, one per direction.</span>
+<span class="sd">        target_level_one_spacings: Array of target grid spacings at level one.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple containing:</span>
+<span class="sd">            - Array of level-one spacings that have been adjusted to be</span>
+<span class="sd">              compatible with periodic boundary conditions.</span>
+<span class="sd">            - The highest level in the kernel splitting. This is one level</span>
+<span class="sd">              higher than the highest grid level at which calculations are</span>
+<span class="sd">              actually performed, because the top level (with either one or</span>
+<span class="sd">              three grid points in each direction) is omitted.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">side_lengths</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">side_lengths</span><span class="p">)</span>
+    <span class="n">target_level_one_spacings</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">target_level_one_spacings</span><span class="p">)</span>
+
+    <span class="n">raw_ells_one_based</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">side_lengths</span> <span class="o">/</span> <span class="n">target_level_one_spacings</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">candidate_ells_one_based</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">column_stack</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">onp</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">raw_ells_one_based</span><span class="p">),</span> <span class="n">onp</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">raw_ells_one_based</span><span class="p">)]</span>
+    <span class="p">)</span>
+    <span class="n">candidate_spacings_one_based</span> <span class="o">=</span> <span class="n">side_lengths</span><span class="p">[:,</span> <span class="n">onp</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">**</span> <span class="p">(</span>
+        <span class="n">candidate_ells_one_based</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="n">raw_ells_three_based</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">onp</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">side_lengths</span> <span class="o">/</span> <span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">target_level_one_spacings</span><span class="p">))</span> <span class="o">+</span> <span class="mi">2</span>
+    <span class="p">)</span>
+    <span class="n">candidate_ells_three_based</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">column_stack</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">onp</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">raw_ells_three_based</span><span class="p">),</span> <span class="n">onp</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">raw_ells_three_based</span><span class="p">)]</span>
+    <span class="p">)</span>
+    <span class="n">candidate_spacings_three_based</span> <span class="o">=</span> <span class="n">side_lengths</span><span class="p">[:,</span> <span class="n">onp</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span>
+        <span class="mi">3</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="n">candidate_ells_three_based</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">candidate_spacings</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">candidate_spacings_one_based</span><span class="p">,</span> <span class="n">candidate_spacings_three_based</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="n">candidate_ells</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">candidate_ells_one_based</span><span class="p">,</span> <span class="n">candidate_ells_three_based</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">deviations</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span>
+        <span class="n">candidate_spacings</span> <span class="o">-</span> <span class="n">target_level_one_spacings</span><span class="p">[:,</span> <span class="n">onp</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">inds_best_match</span> <span class="o">=</span> <span class="n">onp</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">deviations</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">ells</span> <span class="o">=</span> <span class="n">candidate_ells</span><span class="p">[</span><span class="n">onp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">candidate_ells</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">inds_best_match</span><span class="p">]</span>
+    <span class="n">adjusted_spacings</span> <span class="o">=</span> <span class="n">candidate_spacings</span><span class="p">[</span>
+        <span class="n">onp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">candidate_spacings</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">inds_best_match</span>
+    <span class="p">]</span>
+    <span class="n">max_splitting_level</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">ells</span><span class="p">))</span>
+
+    <span class="c1"># Remember that in periodic cases the highest grid level that is actually</span>
+    <span class="c1"># evaluated is one less than the highest splitting level we just determined</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">max_splitting_level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Automatic determination of the number of grid levels for &quot;</span>
+            <span class="s2">&quot;periodic system resulted in an invalid value less than 1. &quot;</span>
+            <span class="s2">&quot;Are you using a a too large (compared to the unit cell) &quot;</span>
+            <span class="s2">&quot;level-one grid spacing?&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">adjusted_spacings</span><span class="p">,</span> <span class="n">max_splitting_level</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Florian Buchner, Johannes Schörghuber, Nico Unglert, Jesús Carrete, Georg K. H. Madsen.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

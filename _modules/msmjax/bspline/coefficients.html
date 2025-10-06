@@ -1,0 +1,737 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>msmjax.bspline.coefficients &mdash; msmJAX  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            msmJAX
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference.html">API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../msmjax.calculators.html">msmjax.calculators</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.CustomJSONEncoder"><code class="docutils literal notranslate"><span class="pre">CustomJSONEncoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.CustomJSONEncoder.default"><code class="docutils literal notranslate"><span class="pre">CustomJSONEncoder.default()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.CustomJSONDecoder"><code class="docutils literal notranslate"><span class="pre">CustomJSONDecoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.CustomJSONDecoder.object_hook"><code class="docutils literal notranslate"><span class="pre">CustomJSONDecoder.object_hook()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams"><code class="docutils literal notranslate"><span class="pre">MSMParams</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.p"><code class="docutils literal notranslate"><span class="pre">MSMParams.p</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.mu"><code class="docutils literal notranslate"><span class="pre">MSMParams.mu</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.max_splitting_level"><code class="docutils literal notranslate"><span class="pre">MSMParams.max_splitting_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.max_grid_level"><code class="docutils literal notranslate"><span class="pre">MSMParams.max_grid_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.cutoffs"><code class="docutils literal notranslate"><span class="pre">MSMParams.cutoffs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.cell"><code class="docutils literal notranslate"><span class="pre">MSMParams.cell</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.cell_mode"><code class="docutils literal notranslate"><span class="pre">MSMParams.cell_mode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.pbc"><code class="docutils literal notranslate"><span class="pre">MSMParams.pbc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.dynamic_cell"><code class="docutils literal notranslate"><span class="pre">MSMParams.dynamic_cell</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.supercell_diag"><code class="docutils literal notranslate"><span class="pre">MSMParams.supercell_diag</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.use_neighborlist"><code class="docutils literal notranslate"><span class="pre">MSMParams.use_neighborlist</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.neighborlist_prefactor"><code class="docutils literal notranslate"><span class="pre">MSMParams.neighborlist_prefactor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.grids_defined_on_unitcube"><code class="docutils literal notranslate"><span class="pre">MSMParams.grids_defined_on_unitcube</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.grid_shapes"><code class="docutils literal notranslate"><span class="pre">MSMParams.grid_shapes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.grid_spacings"><code class="docutils literal notranslate"><span class="pre">MSMParams.grid_spacings</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.stencil_extents_from_center"><code class="docutils literal notranslate"><span class="pre">MSMParams.stencil_extents_from_center</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.convolution_methods"><code class="docutils literal notranslate"><span class="pre">MSMParams.convolution_methods</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.n_dim"><code class="docutils literal notranslate"><span class="pre">MSMParams.n_dim</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.version"><code class="docutils literal notranslate"><span class="pre">MSMParams.version</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.info"><code class="docutils literal notranslate"><span class="pre">MSMParams.info</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.save_json"><code class="docutils literal notranslate"><span class="pre">MSMParams.save_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.MSMParams.load_json"><code class="docutils literal notranslate"><span class="pre">MSMParams.load_json()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.find_stencil_extents_all_levels"><code class="docutils literal notranslate"><span class="pre">find_stencil_extents_all_levels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.set_up_msm_params"><code class="docutils literal notranslate"><span class="pre">set_up_msm_params()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.create_msm"><code class="docutils literal notranslate"><span class="pre">create_msm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.calculators.html#msmjax.calculators.check_cutoffs_and_get_actual_spacings"><code class="docutils literal notranslate"><span class="pre">check_cutoffs_and_get_actual_spacings()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../msmjax.kernels.html">msmjax.kernels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.kernels.html#msmjax.kernels.SoftenerOneOverR"><code class="docutils literal notranslate"><span class="pre">SoftenerOneOverR</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.kernels.html#msmjax.kernels.split_one_over_r"><code class="docutils literal notranslate"><span class="pre">split_one_over_r()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.kernels.html#msmjax.kernels._get_distances"><code class="docutils literal notranslate"><span class="pre">_get_distances()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.kernels.html#msmjax.kernels._compute_one_stencil"><code class="docutils literal notranslate"><span class="pre">_compute_one_stencil()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.kernels.html#msmjax.kernels.make_construct_stencils"><code class="docutils literal notranslate"><span class="pre">make_construct_stencils()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../msmjax.bspline.html">msmjax.bspline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.bspline.basis.html">msmjax.bspline.basis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.basis.html#msmjax.bspline.basis.characteristic"><code class="docutils literal notranslate"><span class="pre">characteristic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.basis.html#msmjax.bspline.basis.evaluate_basis_element"><code class="docutils literal notranslate"><span class="pre">evaluate_basis_element()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.basis.html#msmjax.bspline.basis.create_bspline_basis_element"><code class="docutils literal notranslate"><span class="pre">create_bspline_basis_element()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html">msmjax.bspline.coefficients</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_Phi"><code class="docutils literal notranslate"><span class="pre">calc_Phi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_col_of_B"><code class="docutils literal notranslate"><span class="pre">build_col_of_B()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_col_of_B2"><code class="docutils literal notranslate"><span class="pre">build_col_of_B2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_Toeplitz_matrix"><code class="docutils literal notranslate"><span class="pre">build_Toeplitz_matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_Toeplitz_system"><code class="docutils literal notranslate"><span class="pre">build_Toeplitz_system()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_c_m"><code class="docutils literal notranslate"><span class="pre">compute_c_m()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.generating_function"><code class="docutils literal notranslate"><span class="pre">generating_function()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_Mclaurin_coefficient"><code class="docutils literal notranslate"><span class="pre">calc_Mclaurin_coefficient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_B_p_over_2"><code class="docutils literal notranslate"><span class="pre">calc_B_p_over_2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_polynomials"><code class="docutils literal notranslate"><span class="pre">calc_polynomials()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.explode_Add"><code class="docutils literal notranslate"><span class="pre">explode_Add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.coeff_dict_to_array"><code class="docutils literal notranslate"><span class="pre">coeff_dict_to_array()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_quasi_omega_prime"><code class="docutils literal notranslate"><span class="pre">compute_quasi_omega_prime()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_j_zeroplus"><code class="docutils literal notranslate"><span class="pre">compute_j_zeroplus()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.bspline.gridops.html">msmjax.bspline.gridops</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._find_n_gridpoints_1d"><code class="docutils literal notranslate"><span class="pre">_find_n_gridpoints_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.set_up_grids_all_levels"><code class="docutils literal notranslate"><span class="pre">set_up_grids_all_levels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._arbitrary_dim_outer"><code class="docutils literal notranslate"><span class="pre">_arbitrary_dim_outer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._multiindex_outer"><code class="docutils literal notranslate"><span class="pre">_multiindex_outer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._ravel_multi_index_with_invalidation"><code class="docutils literal notranslate"><span class="pre">_ravel_multi_index_with_invalidation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_basis_evaluation_fn"><code class="docutils literal notranslate"><span class="pre">make_basis_evaluation_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_restrict_1d"><code class="docutils literal notranslate"><span class="pre">_make_restrict_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_restriction_operator"><code class="docutils literal notranslate"><span class="pre">make_restriction_operator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops._make_prolongate_1d"><code class="docutils literal notranslate"><span class="pre">_make_prolongate_1d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.make_prolongation_operator"><code class="docutils literal notranslate"><span class="pre">make_prolongation_operator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.create_all_grid_to_grid_ops"><code class="docutils literal notranslate"><span class="pre">create_all_grid_to_grid_ops()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.suggest_max_grid_level_nonperiodic"><code class="docutils literal notranslate"><span class="pre">suggest_max_grid_level_nonperiodic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.bspline.gridops.html#msmjax.bspline.gridops.find_spacings_and_max_level_periodic"><code class="docutils literal notranslate"><span class="pre">find_spacings_and_max_level_periodic()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../msmjax.core.html">msmjax.core</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.core.shortrange.html">msmjax.core.shortrange</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._gen_supercell"><code class="docutils literal notranslate"><span class="pre">_gen_supercell()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_free"><code class="docutils literal notranslate"><span class="pre">_displacement_free()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_ortho"><code class="docutils literal notranslate"><span class="pre">_displacement_ortho()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._displacement_general"><code class="docutils literal notranslate"><span class="pre">_displacement_general()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange._concretize_displacement_fn"><code class="docutils literal notranslate"><span class="pre">_concretize_displacement_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot"><code class="docutils literal notranslate"><span class="pre">make_eval_pair_pot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange.make_eval_pair_pot_neighborlist"><code class="docutils literal notranslate"><span class="pre">make_eval_pair_pot_neighborlist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.shortrange.html#msmjax.core.shortrange.make_compute_u_zero"><code class="docutils literal notranslate"><span class="pre">make_compute_u_zero()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.core.longrange.html">msmjax.core.longrange</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange._anterpolate"><code class="docutils literal notranslate"><span class="pre">_anterpolate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_positions_gradient"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy_positions_gradient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange._interpolate_energy_charge_gradient"><code class="docutils literal notranslate"><span class="pre">_interpolate_energy_charge_gradient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange.special_periodic_convolve_scipy"><code class="docutils literal notranslate"><span class="pre">special_periodic_convolve_scipy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange.make_grid_pass_fn"><code class="docutils literal notranslate"><span class="pre">make_grid_pass_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.core.longrange.html#msmjax.core.longrange.make_compute_u_oneplus"><code class="docutils literal notranslate"><span class="pre">make_compute_u_oneplus()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../msmjax.utils.html">msmjax.utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html">msmjax.utils.benchmarking</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.dir_context"><code class="docutils literal notranslate"><span class="pre">dir_context()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.write_lammps_data"><code class="docutils literal notranslate"><span class="pre">write_lammps_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.parse_energy_from_lammps_log"><code class="docutils literal notranslate"><span class="pre">parse_energy_from_lammps_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.parse_lammps_log"><code class="docutils literal notranslate"><span class="pre">parse_lammps_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.make_lammps_input_text_pppm"><code class="docutils literal notranslate"><span class="pre">make_lammps_input_text_pppm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.eval_lammps_pppm"><code class="docutils literal notranslate"><span class="pre">eval_lammps_pppm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_rmse"><code class="docutils literal notranslate"><span class="pre">calc_rmse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_relative_rmse_percent"><code class="docutils literal notranslate"><span class="pre">calc_relative_rmse_percent()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_relative_rmse"><code class="docutils literal notranslate"><span class="pre">calc_relative_rmse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.make_timed_eval"><code class="docutils literal notranslate"><span class="pre">make_timed_eval()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.remove_duplicates_from_neighborlist"><code class="docutils literal notranslate"><span class="pre">remove_duplicates_from_neighborlist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.build_duplicate_free_neighborlists"><code class="docutils literal notranslate"><span class="pre">build_duplicate_free_neighborlists()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.coulomb_kernel"><code class="docutils literal notranslate"><span class="pre">coulomb_kernel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_energy_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_energy_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_forces_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_forces_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_chargegrad_nonperiodic_direct_summation"><code class="docutils literal notranslate"><span class="pre">calc_chargegrad_nonperiodic_direct_summation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_stress_virial"><code class="docutils literal notranslate"><span class="pre">calc_stress_virial()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.benchmarking.html#msmjax.utils.benchmarking.calc_nonperiodic_reference_results"><code class="docutils literal notranslate"><span class="pre">calc_nonperiodic_reference_results()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../msmjax.utils.general.html">msmjax.utils.general</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.general.html#msmjax.utils.general._divide_zero_safe"><code class="docutils literal notranslate"><span class="pre">_divide_zero_safe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.general.html#msmjax.utils.general._sqrt_jvp"><code class="docutils literal notranslate"><span class="pre">_sqrt_jvp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.general.html#msmjax.utils.general.get_max_cutoff_for_mic"><code class="docutils literal notranslate"><span class="pre">get_max_cutoff_for_mic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../msmjax.utils.general.html#msmjax.utils.general.find_covering_grid_extents"><code class="docutils literal notranslate"><span class="pre">find_covering_grid_extents()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">msmJAX</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">msmjax.bspline.coefficients</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for msmjax.bspline.coefficients</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Code for coefficients of B-spline (quasi-)interpolation.</span>
+
+<span class="sd">References:</span>
+<span class="sd">    [1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,</span>
+<span class="sd">    R. D. Multilevel Summation with B-Spline Interpolation for Pairwise</span>
+<span class="sd">    Interactions in Molecular Dynamics Simulations. J. Chem. Phys. 2016,</span>
+<span class="sd">    144 (11), 114112. https://doi.org/10.1063/1.4943868.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipy.linalg</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">la</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sympy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">BSpline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">comb</span>
+
+
+<div class="viewcode-block" id="calc_Phi">
+<a class="viewcode-back" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_Phi">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">calc_Phi</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">u</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate the B-spline denoted by Phi in the article.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        p: The degree of the spline in the convention of the article.</span>
+<span class="sd">        u: The value or array or values where the function should be</span>
+<span class="sd">            evaluated.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The values(s) of Phi(u) at u.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If p is not a positive, even integer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">p</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">p</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;p must be a positive even integer&quot;</span><span class="p">)</span>
+    <span class="n">knots</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="n">p</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">p</span> <span class="o">//</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">BSpline</span><span class="o">.</span><span class="n">basis_element</span><span class="p">(</span><span class="n">knots</span><span class="p">)(</span><span class="n">u</span><span class="p">)</span>
+    <span class="n">out</span><span class="p">[(</span><span class="n">u</span> <span class="o">&lt;</span> <span class="n">knots</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">|</span> <span class="p">(</span><span class="n">u</span> <span class="o">&gt;</span> <span class="n">knots</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])]</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="build_col_of_B">
+<a class="viewcode-back" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_col_of_B">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_col_of_B</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a column of B according to the equation before (10).</span>
+
+<span class="sd">    This function creates a vector with Phi(u) evaluated at all the integers</span>
+<span class="sd">    inside its domain. Only the part of the column starting at and including</span>
+<span class="sd">    the main diagonal is returned.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        p: The degree of the spline in the convention of the article.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A vector of p/2 elements with all the non-zero entries in any column</span>
+<span class="sd">        of the banded matrix B, starting at and including the main diagonal.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">calc_Phi</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">p</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="build_col_of_B2">
+<a class="viewcode-back" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_col_of_B2">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_col_of_B2</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a column of B**2 based on the column of B.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        p: The degree of the spline in the convention of the article.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A vector with all the non-zero entries in any column of the banded</span>
+<span class="sd">        matrix B**2, starting at and including the main diagonal.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">full_col_of_B</span> <span class="o">=</span> <span class="n">build_col_of_B</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">full_col_of_B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">full_col_of_B</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">full_col_of_B</span><span class="p">[</span><span class="mi">1</span><span class="p">::]])</span>
+    <span class="c1"># Obtain the generic row of the square of the infinite Toeplitz matrix through</span>
+    <span class="c1"># a simple discrete convolution.</span>
+    <span class="n">full_col_of_B2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">full_col_of_B</span><span class="p">,</span> <span class="n">full_col_of_B</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;full&quot;</span><span class="p">)</span>
+    <span class="c1"># Return only the non-redundant part.</span>
+    <span class="k">return</span> <span class="n">full_col_of_B2</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">full_col_of_B2</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span> <span class="p">:]</span></div>
+
+
+
+<div class="viewcode-block" id="build_Toeplitz_matrix">
+<a class="viewcode-back" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_Toeplitz_matrix">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_Toeplitz_matrix</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an approximation to B**2 as a Toeplitz matrix.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        p: The degree of the spline in the convention of the article.</span>
+<span class="sd">        n_rows: The number of rows of the matrix.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The matrix as a vector in a format that scipy.linalg.toeplitz can</span>
+<span class="sd">        understand.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If n_rows is too small for this matrix.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">first_col</span> <span class="o">=</span> <span class="n">build_col_of_B2</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">n_first_col</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">first_col</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">n_rows</span> <span class="o">&lt;</span> <span class="n">n_first_col</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;not enough rows were requested&quot;</span><span class="p">)</span>
+    <span class="n">first_col</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">first_col</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="o">+</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">n_rows</span> <span class="o">-</span> <span class="n">n_first_col</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">first_col</span></div>
+
+
+
+<div class="viewcode-block" id="build_Toeplitz_system">
+<a class="viewcode-back" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.build_Toeplitz_system">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_Toeplitz_system</span><span class="p">(</span>
+    <span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">rhs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">padding</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a finite approximation to the linear system defining the cm.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        p: The degree of the spline in the convention of the article.</span>
+<span class="sd">        rhs: The non-zero part of the right hand side, which must have an</span>
+<span class="sd">            odd length.</span>
+<span class="sd">        padding: The amount of padding around the minimal Toeplitz</span>
+<span class="sd">            approximation, as a positive integer.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tuple with two vectors. The first one represents the Toeplitz</span>
+<span class="sd">        coefficient matrix, and the second one is the symmetric Kronecker</span>
+<span class="sd">        delta independent right-hand side.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If &quot;padding&quot; is negative or zero, or if rhs has an even</span>
+<span class="sd">            length.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rhs</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;rhs must have an odd length&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">padding</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;padding must be a positive integer&quot;</span><span class="p">)</span>
+    <span class="n">minimal</span> <span class="o">=</span> <span class="n">p</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">minimal</span> <span class="o">=</span> <span class="n">minimal</span> <span class="o">+</span> <span class="p">(</span><span class="n">minimal</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span>
+    <span class="n">minimal</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">minimal</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">rhs</span><span class="p">))</span>
+    <span class="n">n_rows</span> <span class="o">=</span> <span class="n">minimal</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">padding</span>
+
+    <span class="n">center</span> <span class="o">=</span> <span class="n">n_rows</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="n">beginning</span> <span class="o">=</span> <span class="n">center</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">rhs</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="n">full_rhs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_rows</span><span class="p">)</span>
+    <span class="n">full_rhs</span><span class="p">[</span><span class="n">beginning</span> <span class="p">:</span> <span class="n">beginning</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">rhs</span><span class="p">)]</span> <span class="o">=</span> <span class="n">rhs</span>
+
+    <span class="n">coefficients</span> <span class="o">=</span> <span class="n">build_Toeplitz_matrix</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">coefficients</span><span class="p">,</span> <span class="n">full_rhs</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="compute_c_m">
+<a class="viewcode-back" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_c_m">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_c_m</span><span class="p">(</span>
+    <span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">C_coeffs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">mu</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">rtol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span>
+    <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute c_m the coefficients of the approximation to B^(-2).</span>
+
+<span class="sd">    The solution is based on the construction of progressively larger</span>
+<span class="sd">    approximations to an infinite Toeplitz matrix, until the solution</span>
+<span class="sd">    converges.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        p: The degree of the spline in the convention of the article.</span>
+<span class="sd">        mu: A non-negative integer determining how many terms are calculated.</span>
+<span class="sd">            The output will contain (2 * mu + 1) coefficients.</span>
+<span class="sd">        C_coeffs: The right-hand side of the unnumbered equation</span>
+<span class="sd">            in appendix C that defined the c_m, in the basis of powers</span>
+<span class="sd">            of E (not delta**2!), as a NumPy array.</span>
+<span class="sd">        rtol: The relative tolerance to be passes to np.allclose() when</span>
+<span class="sd">            checking for convergence.</span>
+<span class="sd">        atol: The absolute tolerance to be passes to np.allclose() when</span>
+<span class="sd">            checking for convergence.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The coefficients c_m in a Numpy Array.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If mu is negative.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">mu</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;mu cannot be negative&quot;</span><span class="p">)</span>
+    <span class="n">n_elements</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">mu</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">last_solution</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_elements</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+    <span class="c1"># This is just a safe initial estimate for the amount of padding needed.</span>
+    <span class="c1"># There is a hard minimum imposed by the number of elements requested, and</span>
+    <span class="c1"># we add len(C_coeffs) to be on the safe side.</span>
+    <span class="n">initial_padding</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_elements</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">C_coeffs</span><span class="p">))</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">C_coeffs</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">padding</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">initial_padding</span><span class="p">):</span>
+        <span class="n">first_col</span><span class="p">,</span> <span class="n">rhs</span> <span class="o">=</span> <span class="n">build_Toeplitz_system</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">C_coeffs</span><span class="p">,</span> <span class="n">padding</span><span class="p">)</span>
+        <span class="n">solution</span> <span class="o">=</span> <span class="n">la</span><span class="o">.</span><span class="n">solve_toeplitz</span><span class="p">(</span><span class="n">first_col</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span>
+        <span class="n">center</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="n">solution</span> <span class="o">=</span> <span class="n">solution</span><span class="p">[</span><span class="n">center</span> <span class="o">-</span> <span class="n">mu</span> <span class="p">:</span> <span class="n">center</span> <span class="o">+</span> <span class="n">mu</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">last_solution</span><span class="p">,</span> <span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">solution</span>
+        <span class="n">last_solution</span> <span class="o">=</span> <span class="n">solution</span></div>
+
+
+
+<div class="viewcode-block" id="generating_function">
+<a class="viewcode-back" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.generating_function">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generating_function</span><span class="p">(</span><span class="n">z</span><span class="p">:</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Expr</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Mul</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the function defined in equation (B1) of the paper.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        z: The argument on which the function will be Mclaurin-expanded.</span>
+<span class="sd">        s: The parameter that determines the Mclaurin coefficients.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The value of the function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sz</span> <span class="o">=</span> <span class="n">s</span> <span class="o">*</span> <span class="n">z</span>
+    <span class="k">return</span> <span class="n">s</span> <span class="o">*</span> <span class="n">sympy</span><span class="o">.</span><span class="n">sinh</span><span class="p">(</span><span class="n">sz</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">s</span> <span class="o">*</span> <span class="n">s</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">sympy</span><span class="o">.</span><span class="n">cosh</span><span class="p">(</span><span class="n">sz</span><span class="p">)))</span></div>
+
+
+
+<div class="viewcode-block" id="calc_Mclaurin_coefficient">
+<a class="viewcode-back" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_Mclaurin_coefficient">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">calc_Mclaurin_coefficient</span><span class="p">(</span>
+    <span class="n">function</span><span class="p">:</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Function</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Symbol</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate a coefficient in truncated McLaurin series of a function.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        function: A SymPy function.</span>
+<span class="sd">        variable: The SymPy variable of the power series.</span>
+<span class="sd">        order: The order of the coefficient.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The coefficient as a SymPy expression.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">sympy</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
+        <span class="n">function</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="o">/</span> <span class="n">sympy</span><span class="o">.</span><span class="n">factorial</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="calc_B_p_over_2">
+<a class="viewcode-back" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_B_p_over_2">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">calc_B_p_over_2</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Poly</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the polynomial B_(p/2) defined in equation B1.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        p: The index of the polynomial. It must be a positive even integer.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The polynomial as a SymPy object. The variable is s=delta**2.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If p does not make sense.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">p</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">p</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;p must be a positive even integer&quot;</span><span class="p">)</span>
+    <span class="n">symbolic_z</span> <span class="o">=</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Symbol</span><span class="p">(</span><span class="s2">&quot;z&quot;</span><span class="p">)</span>
+    <span class="n">symbolic_s</span> <span class="o">=</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Symbol</span><span class="p">(</span><span class="s2">&quot;s&quot;</span><span class="p">)</span>
+    <span class="n">mclaurin</span> <span class="o">=</span> <span class="n">calc_Mclaurin_coefficient</span><span class="p">(</span>
+        <span class="n">generating_function</span><span class="p">(</span><span class="n">symbolic_z</span><span class="p">,</span> <span class="n">symbolic_s</span><span class="p">),</span> <span class="n">symbolic_z</span><span class="p">,</span> <span class="n">p</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="n">sympy_polynomial</span> <span class="o">=</span> <span class="n">sympy</span><span class="o">.</span><span class="n">poly</span><span class="p">(</span>
+        <span class="n">mclaurin</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">symbolic_s</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">symbolic_s</span><span class="p">),</span> <span class="n">symbolic_s</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">sympy_polynomial</span></div>
+
+
+
+<div class="viewcode-block" id="calc_polynomials">
+<a class="viewcode-back" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.calc_polynomials">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">calc_polynomials</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">sympy</span><span class="o">.</span><span class="n">Poly</span><span class="p">,</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Poly</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Obtain the polynomials b and C defined by equation (C1).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        p: The index of the polynomial. It must be an even integer greater</span>
+<span class="sd">            than 2.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tuple with the polynomials (b, C) as SymPy objects.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If p violates the constraints.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">p</span> <span class="o">&lt;</span> <span class="mi">4</span> <span class="ow">or</span> <span class="n">p</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;p must be an even integer greater than 2&quot;</span><span class="p">)</span>
+    <span class="c1"># Build equation (C1) symbolically, but putting everything in the left-hand</span>
+    <span class="c1"># side.</span>
+    <span class="n">polynomial_B</span> <span class="o">=</span> <span class="n">calc_B_p_over_2</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">symbolic_s</span> <span class="o">=</span> <span class="n">polynomial_B</span><span class="o">.</span><span class="n">gen</span>
+    <span class="n">polynomial_B2</span> <span class="o">=</span> <span class="n">polynomial_B</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">lhs_coefficient_generator</span> <span class="o">=</span> <span class="n">sympy</span><span class="o">.</span><span class="n">numbered_symbols</span><span class="p">(</span><span class="s2">&quot;b&quot;</span><span class="p">)</span>
+    <span class="n">b_symbolic_coefficients</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="nb">next</span><span class="p">(</span><span class="n">lhs_coefficient_generator</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">b_polynomial</span> <span class="o">=</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Poly</span><span class="p">(</span><span class="n">b_symbolic_coefficients</span><span class="p">,</span> <span class="n">symbolic_s</span><span class="p">)</span>
+    <span class="n">lhs</span> <span class="o">=</span> <span class="n">polynomial_B2</span> <span class="o">*</span> <span class="n">b_polynomial</span>
+    <span class="n">C_coefficient_generator</span> <span class="o">=</span> <span class="n">sympy</span><span class="o">.</span><span class="n">numbered_symbols</span><span class="p">(</span><span class="s2">&quot;C&quot;</span><span class="p">)</span>
+    <span class="n">C_symbolic_coefficients</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="nb">next</span><span class="p">(</span><span class="n">C_coefficient_generator</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">C_polynomial</span> <span class="o">=</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Poly</span><span class="p">(</span><span class="n">C_symbolic_coefficients</span><span class="p">,</span> <span class="n">symbolic_s</span><span class="p">)</span>
+    <span class="n">lhs</span> <span class="o">+=</span> <span class="n">symbolic_s</span> <span class="o">**</span> <span class="p">(</span><span class="n">p</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">C_polynomial</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="c1"># Now demand that all coefficients be equal to zero and solve the system</span>
+    <span class="c1"># of linear equations resulting from this condition.</span>
+    <span class="n">lhs_symbolic_coefficients</span> <span class="o">=</span> <span class="n">lhs</span><span class="o">.</span><span class="n">all_coeffs</span><span class="p">()</span>
+    <span class="c1"># Solve it to get the coefficients of both polynomials.</span>
+    <span class="n">solution</span> <span class="o">=</span> <span class="n">sympy</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">lhs_symbolic_coefficients</span><span class="p">)</span>
+    <span class="c1"># Replace the symbolic coefficients by their values and return.</span>
+    <span class="n">b_polynomial</span> <span class="o">=</span> <span class="n">b_polynomial</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+    <span class="n">C_polynomial</span> <span class="o">=</span> <span class="n">C_polynomial</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">sympy</span><span class="o">.</span><span class="n">Poly</span><span class="p">(</span><span class="n">b_polynomial</span><span class="p">),</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Poly</span><span class="p">(</span><span class="n">C_polynomial</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="explode_Add">
+<a class="viewcode-back" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.explode_Add">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">explode_Add</span><span class="p">(</span><span class="n">add_object</span><span class="p">:</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Add</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract all the coefficients from a sum of powers of a single variable.</span>
+
+<span class="sd">    This function is intended for a narrow class of sympy.Add objects</span>
+<span class="sd">    containing only positive and negative values of a single variable, and</span>
+<span class="sd">    its behavior for any other inputs is undefined.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        add_object: The sympy.Add object to be analyzed.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary of coefficients of the powers contained in add_object.</span>
+<span class="sd">        The keys are the exponents.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the argument is not a sympy.Add object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">add_object</span><span class="p">,</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Add</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;the argument should be a sympy.Add object&quot;</span><span class="p">)</span>
+    <span class="n">nruter</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="n">terms</span> <span class="o">=</span> <span class="n">add_object</span><span class="o">.</span><span class="n">args</span>
+    <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">terms</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">term</span><span class="p">,</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Mul</span><span class="p">):</span>
+            <span class="c1"># All actual powers go here.</span>
+            <span class="n">subterms</span> <span class="o">=</span> <span class="n">term</span><span class="o">.</span><span class="n">args</span>
+            <span class="n">power</span> <span class="o">=</span> <span class="n">subterms</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">power</span><span class="p">,</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Symbol</span><span class="p">):</span>
+                <span class="c1"># This is the linear term.</span>
+                <span class="n">nruter</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">subterms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># This is a power with an exponent different from 1.</span>
+                <span class="n">subsubterms</span> <span class="o">=</span> <span class="n">power</span><span class="o">.</span><span class="n">args</span>
+                <span class="n">nruter</span><span class="p">[</span><span class="n">subsubterms</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">subterms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Otherwise, we are dealing with the independent term.</span>
+            <span class="n">nruter</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">term</span>
+    <span class="k">return</span> <span class="n">nruter</span></div>
+
+
+
+<div class="viewcode-block" id="coeff_dict_to_array">
+<a class="viewcode-back" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.coeff_dict_to_array">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">coeff_dict_to_array</span><span class="p">(</span><span class="n">coefficients</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Translate the output of explode_Add() into a numerical array.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        coefficients: The return code of explode_Add(), a dictionary of</span>
+<span class="sd">            SymPy objects indexed by their exponent.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A NumPy array of floating point numbers with the coefficients, that</span>
+<span class="sd">        can be passed to an equation solver.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the list of coefficients does not correspond to an</span>
+<span class="sd">            even function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">exponents</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">coefficients</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">min_exponent</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">exponents</span><span class="p">)</span>
+    <span class="n">max_exponent</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">exponents</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">min_exponent</span> <span class="o">!=</span> <span class="o">-</span><span class="n">max_exponent</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;the coefficients do not come from an even function&quot;</span><span class="p">)</span>
+    <span class="n">nruter</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="nb">float</span><span class="p">(</span><span class="n">coefficients</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">exponents</span> <span class="k">else</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">min_exponent</span><span class="p">,</span> <span class="n">max_exponent</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">nruter</span></div>
+
+
+
+<div class="viewcode-block" id="compute_quasi_omega_prime">
+<a class="viewcode-back" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_quasi_omega_prime">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_quasi_omega_prime</span><span class="p">(</span>
+    <span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">mu</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the coefficients :math:`\\omega_{\\mu,m}&#39;` from the article.</span>
+
+<span class="sd">    They are introduced in the inline equations in the text after Eq. (13).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        p: The degree of the spline in the convention of the article.</span>
+<span class="sd">        mu: Adjustable parameter in the quasi-interpolation scheme that</span>
+<span class="sd">            controls its accuracy at grid points.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple containing:</span>
+<span class="sd">            - The coefficients denoted $\\omega_{\\mu,m}&#39;$ in the article.</span>
+<span class="sd">            - The coefficients denoted $c_m$ in the article, in the unnumbered</span>
+<span class="sd">              equation after Eq. 12 that defines the expansion of the</span>
+<span class="sd">              operator A.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">b_polynomial</span><span class="p">,</span> <span class="n">C_polynomial</span> <span class="o">=</span> <span class="n">calc_polynomials</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">symbolic_s</span> <span class="o">=</span> <span class="n">b_polynomial</span><span class="o">.</span><span class="n">gen</span>
+
+    <span class="c1"># Insert the actual expression of the centered difference operator,</span>
+    <span class="c1"># and gather together all the terms corresponding to each power of E.</span>
+    <span class="c1"># After this, the objects are no longer SymPy polynomials, but</span>
+    <span class="c1"># &quot;Add&quot; objects that can be decomposed into a sum of &quot;Mul&quot; objects.</span>
+    <span class="n">symbolic_E</span> <span class="o">=</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Symbol</span><span class="p">(</span><span class="s2">&quot;E&quot;</span><span class="p">)</span>
+    <span class="n">delta2</span> <span class="o">=</span> <span class="n">symbolic_E</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">symbolic_E</span> <span class="o">-</span> <span class="mi">2</span>
+    <span class="n">b_expr</span> <span class="o">=</span> <span class="n">b_polynomial</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">symbolic_s</span><span class="p">,</span> <span class="n">delta2</span><span class="p">)</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">expand</span><span class="p">()</span>
+    <span class="n">C_expr</span> <span class="o">=</span> <span class="n">C_polynomial</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">symbolic_s</span><span class="p">,</span> <span class="n">delta2</span><span class="p">)</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">expand</span><span class="p">()</span>
+
+    <span class="c1"># Build the non-zero &quot;core&quot; of the right-hand side of the unnumbered</span>
+    <span class="c1"># equation in appendix C that defined the c_m.</span>
+    <span class="n">C_coefficients</span> <span class="o">=</span> <span class="n">explode_Add</span><span class="p">(</span><span class="n">C_expr</span><span class="p">)</span>
+    <span class="n">C_coefficients</span> <span class="o">=</span> <span class="n">coeff_dict_to_array</span><span class="p">(</span><span class="n">C_coefficients</span><span class="p">)</span>
+
+    <span class="c1"># Solve for c_m</span>
+    <span class="n">c_m</span> <span class="o">=</span> <span class="n">compute_c_m</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">C_coefficients</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span>
+
+    <span class="c1"># Use SymPy one last time to multipy the expression defined by the c_m</span>
+    <span class="c1"># by a factor of delta**p and collect the coefficients.</span>
+    <span class="n">c_m_contr</span> <span class="o">=</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Poly</span><span class="p">(</span><span class="n">c_m</span><span class="p">,</span> <span class="n">symbolic_E</span><span class="p">)</span><span class="o">.</span><span class="n">expr</span> <span class="o">/</span> <span class="n">symbolic_E</span> <span class="o">**</span> <span class="p">(</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">c_m</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="p">)</span>
+    <span class="n">c_m_contr</span> <span class="o">*=</span> <span class="n">delta2</span> <span class="o">**</span> <span class="p">(</span><span class="n">p</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">c_m_contr</span> <span class="o">=</span> <span class="n">c_m_contr</span><span class="o">.</span><span class="n">expand</span><span class="p">()</span>
+    <span class="n">multiplied_c_m</span> <span class="o">=</span> <span class="n">coeff_dict_to_array</span><span class="p">(</span><span class="n">explode_Add</span><span class="p">(</span><span class="n">c_m_contr</span><span class="p">))</span>
+
+    <span class="c1"># The quasi-interpolating omega_prime consist of two contributions: one</span>
+    <span class="c1"># coming from the &quot;exact&quot; part (the b polynomial) and the other from the</span>
+    <span class="c1"># truncated c_m. Therefore, we also need to translate the coefficients</span>
+    <span class="c1"># of b into a NumPy array.</span>
+    <span class="n">b_coefficients</span> <span class="o">=</span> <span class="n">coeff_dict_to_array</span><span class="p">(</span><span class="n">explode_Add</span><span class="p">(</span><span class="n">b_expr</span><span class="p">))</span>
+
+    <span class="c1"># Finally, add both paths of the solution to get the quasi_omega_prime.</span>
+    <span class="c1"># To do that, we need to pad the shortest of those two arrays.</span>
+    <span class="n">common_length</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">b_coefficients</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">multiplied_c_m</span><span class="p">))</span>
+    <span class="n">b_coefficients</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span>
+        <span class="n">b_coefficients</span><span class="p">,</span>
+        <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">common_length</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">b_coefficients</span><span class="p">))</span> <span class="o">//</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="s2">&quot;constant&quot;</span><span class="p">,</span>
+        <span class="n">constant_values</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">multiplied_c_m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span>
+        <span class="n">multiplied_c_m</span><span class="p">,</span>
+        <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">common_length</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">multiplied_c_m</span><span class="p">))</span> <span class="o">//</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="s2">&quot;constant&quot;</span><span class="p">,</span>
+        <span class="n">constant_values</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">quasi_omega_prime</span> <span class="o">=</span> <span class="n">b_coefficients</span> <span class="o">+</span> <span class="n">multiplied_c_m</span>
+
+    <span class="k">return</span> <span class="n">quasi_omega_prime</span><span class="p">,</span> <span class="n">c_m</span></div>
+
+
+
+<div class="viewcode-block" id="compute_j_zeroplus">
+<a class="viewcode-back" href="../../../msmjax.bspline.coefficients.html#msmjax.bspline.coefficients.compute_j_zeroplus">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_j_zeroplus</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the sequence J of spline-nesting coefficients given by eq. (22).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        p: The degree of the spline in the convention of the article.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Array of coefficients for expressing B-splines at one grid level in</span>
+<span class="sd">        terms of the B-splines at the next finer level.</span>
+<span class="sd">        The result contains only the elements with non-negative index,</span>
+<span class="sd">        those with negative index follow by symmetry.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">p</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">p</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;p must be a positive even integer&quot;</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">p</span> <span class="o">//</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mf">2.0</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">p</span><span class="p">)</span> <span class="o">*</span> <span class="n">comb</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">p</span> <span class="o">//</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">n</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Florian Buchner, Johannes Schörghuber, Nico Unglert, Jesús Carrete, Georg K. H. Madsen.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
