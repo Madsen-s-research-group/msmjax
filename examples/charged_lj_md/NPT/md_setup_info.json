@@ -1,0 +1,12 @@
+{
+  "simtime_ps": 3000.0,
+  "timestep_fs": 1.0,
+  "loginterval_fs": 500.0,
+  "ensemble": "NPT",
+  "temp_K": 395.955,
+  "pressure_GPa": 0.27127106227106224,
+  "safe_sidelength_limits": [
+    26.76,
+    52.96810135749618
+  ]
+}

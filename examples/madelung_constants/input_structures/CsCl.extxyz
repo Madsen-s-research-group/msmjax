@@ -1,0 +1,4 @@
+2
+Lattice="4.209055 0.0 0.0 0.0 4.209055 0.0 0.0 0.0 4.209055" Properties=species:S:1:pos:R:3:spacegroup_kinds:I:1 spacegroup="P 1" unit_cell=conventional occupancy="_JSON {\"0\": {\"Cs\": 1}, \"1\": {\"Cl\": 1}}" pbc="T T T"
+Cs       0.00000000       0.00000000       0.00000000        0
+Cl       2.10452750       2.10452750       2.10452750        1

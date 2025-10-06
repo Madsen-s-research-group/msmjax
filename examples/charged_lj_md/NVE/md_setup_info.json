@@ -1,0 +1,6 @@
+{
+  "simtime_ps": 1000.0,
+  "timestep_fs": 1.0,
+  "loginterval_fs": 500.0,
+  "ensemble": "NVE"
+}

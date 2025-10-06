@@ -1,0 +1,116 @@
+{
+  "p": 4,
+  "mu": 18,
+  "max_splitting_level": 4,
+  "max_grid_level": 3,
+  "cutoffs": [
+    13.38,
+    26.76,
+    53.52,
+    107.04,
+    Infinity
+  ],
+  "cell": {
+    "main_type": "NumPy/float64",
+    "data": [
+      [
+        35.31206757166412,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        35.31206757166412,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        35.31206757166412
+      ]
+    ]
+  },
+  "cell_mode": "ortho",
+  "pbc": [
+    true,
+    true,
+    true
+  ],
+  "dynamic_cell": true,
+  "supercell_diag": null,
+  "use_neighborlist": false,
+  "neighborlist_prefactor": null,
+  "grids_defined_on_unitcube": true,
+  "grid_shapes": [
+    null,
+    [
+      12,
+      12,
+      12
+    ],
+    [
+      6,
+      6,
+      6
+    ],
+    [
+      3,
+      3,
+      3
+    ]
+  ],
+  "grid_spacings": [
+    null,
+    {
+      "main_type": "NumPy/float64",
+      "data": [
+        0.08333333333333333,
+        0.08333333333333333,
+        0.08333333333333333
+      ]
+    },
+    {
+      "main_type": "NumPy/float64",
+      "data": [
+        0.16666666666666666,
+        0.16666666666666666,
+        0.16666666666666666
+      ]
+    },
+    {
+      "main_type": "NumPy/float64",
+      "data": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ]
+    }
+  ],
+  "stencil_extents_from_center": [
+    null,
+    [
+      9,
+      9,
+      9
+    ],
+    [
+      9,
+      9,
+      9
+    ],
+    [
+      9,
+      9,
+      9
+    ]
+  ],
+  "convolution_methods": [
+    null,
+    "scipy-fft",
+    "scipy-fft",
+    "scipy-fft"
+  ],
+  "n_dim": 3,
+  "version": "2025.10.1",
+  "info": {}
+}

@@ -1,0 +1,792 @@
+"""Code for high-level interface.
+
+References:
+    [1] Hardy, D. J.; Wolff, M. A.; Xia, J.; Schulten, K.; Skeel,
+    R. D. Multilevel Summation with B-Spline Interpolation for Pairwise
+    Interactions in Molecular Dynamics Simulations. J. Chem. Phys. 2016,
+    144 (11), 114112. https://doi.org/10.1063/1.4943868.
+
+    [2] Hardy, D. J. Multilevel Summation for the Fast Evaluation of
+    Forces for the Simulation of Biomolecules (PhD thesis), University
+    of Illinois at Urbana-Champaign, 2006.
+"""
+
+import dataclasses
+import json
+from functools import partial
+from pathlib import Path
+from typing import Callable, Literal, Sequence
+
+import jax
+import jax.numpy as jnp
+import numpy as onp
+from jax.typing import ArrayLike
+
+import msmjax
+from msmjax.bspline.coefficients import compute_quasi_omega_prime
+from msmjax.bspline.gridops import (
+    create_all_grid_to_grid_ops,
+    find_spacings_and_max_level_periodic,
+    make_basis_evaluation_fn,
+    set_up_grids_all_levels,
+    suggest_max_grid_level_nonperiodic,
+)
+from msmjax.core.longrange import make_compute_u_oneplus, make_grid_pass_fn
+from msmjax.core.shortrange import (
+    _gen_supercell,
+    make_compute_u_zero,
+    make_eval_pair_pot,
+    make_eval_pair_pot_neighborlist,
+)
+from msmjax.kernels import (
+    SoftenerOneOverR,
+    make_construct_stencils,
+    split_one_over_r,
+)
+from msmjax.utils.general import (
+    CellMode,
+    ConvMeth,
+    KernelFn,
+    find_covering_grid_extents,
+    get_max_cutoff_for_mic,
+    inds_matrix_to_six_component_stress,
+)
+
+
+class CustomJSONEncoder(json.JSONEncoder):
+    """Class that extends JSONEncoder to handle different data types.
+
+    From Clinamen2:
+    R. Wanzenböck, F. Buchner, P. Kovács, G. K. H. Madsen, and J. Carrete,
+    “Clinamen2: Functional-style evolutionary optimization in Python for
+    atomistic structure searches,” Computer Physics Communications,
+    vol. 297, p. 109065, Apr. 2024, doi: 10.1016/j.cpc.2023.109065.
+    """
+
+    def default(self, o):
+        """Return a json-izable version of o or delegate on the base class."""
+        if isinstance(o, onp.generic):
+            # Deal with non-serializable types such as numpy.int64
+            return o.item()
+        elif isinstance(o, onp.ndarray):
+            nruter = {
+                "main_type": "NumPy/" + o.dtype.name,
+                "data": o.tolist(),
+            }
+            return nruter
+        return json.JSONEncoder.default(self, o)
+
+
+class CustomJSONDecoder(json.JSONDecoder):
+    """Class that extends the JSONDecoder to handle different data types.
+
+    From Clinamen2:
+    R. Wanzenböck, F. Buchner, P. Kovács, G. K. H. Madsen, and J. Carrete,
+    “Clinamen2: Functional-style evolutionary optimization in Python for
+    atomistic structure searches,” Computer Physics Communications,
+    vol. 297, p. 109065, Apr. 2024, doi: 10.1016/j.cpc.2023.109065.
+    """
+
+    def __init__(self, *args, **kwargs):
+        json.JSONDecoder.__init__(
+            self, object_hook=self.object_hook, *args, **kwargs
+        )
+
+    def object_hook(self, o):
+        """Reencode numpy arrays from dictionary."""
+        try:
+            main_type, *extra = o["main_type"].split("/")
+            if main_type == "NumPy":
+                return onp.asarray(o["data"], dtype=extra[0])
+        except (KeyError, ValueError):
+            return o
+
+
+@dataclasses.dataclass
+class MSMParams:
+    """Class for holding all settings required for MSM with B-spline
+    interpolation for Coulomb potentials.
+
+    While it is possible to manually instantiate this class, this requires
+    a lot of parameters, and might leave it in an inconsistent state.
+    The recommended way is to use :func:`set_up_msm_params` instead.
+
+    Args:
+        p: Interpolation order in the convention of the article (Ref. [1]).
+        mu: Adjustable parameter in the quasi-interpolation scheme that
+            controls its accuracy at grid points, see Ref. [1].
+        max_splitting_level: The level of the highest term in the splitting of
+            the Coulomb kernel into partial kernels.
+        max_grid_level: The level of the highest grid included in the
+            evaluation. Can be lower than ``max_splitting_level``.
+        cutoffs: Sequence of cutoff radii of the partial kernels at all levels.
+        cell: Simulation cell. The exact interpretation depends on the
+            ``dynamic_cell`` parameter. If ``dynamic_cell=False``, it is the
+            actual fixed cell for which the model is evaluated.
+            If ``dynamic_cell=True``, it is merely a reference cell.
+        cell_mode: A string specifying assumptions on the shape of the
+            unit cell. Either the cell is assumed orthorhombic and
+            axis-aligned, in which case only its diagonal is considered,
+            reducing computational cost, or a general triclinic one.
+        pbc: One boolean per direction signaling periodicity.
+        dynamic_cell: Whether the cell can dynamically change.
+        supercell_diag: An optional sequence of positive integers, one per
+            direction, indicating that the short-range contribution should
+            be evaluated in a supercell.
+            See :py:func:`msmjax.core.shortrange.make_eval_pair_pot`
+            for more details.
+        use_neighborlist: Whether to use a neighbor list.
+        neighborlist_prefactor: Set to 0.5 if the neighbor lists you are going
+            to pass contain duplicates, and to 1.0 if they are duplicate-free.
+            Setting to other values is possible, but unlikely to make sense.
+        grids_defined_on_unitcube: Whether the grid spacings are given on the
+            unit cube or in dimensionful length units.
+        grid_shapes: Sequence of tuples of integers indicating the shape of
+            grid at each level.
+        grid_spacings: Sequence of 1-d arrays (one value per direction)
+            indicating the grid spacings at each level.
+            If ``grids_defined_on_unitcube = True``, they must be given in
+            fractional coordinates.
+        stencil_extents_from_center:
+        convolution_methods: Algorithms to use for convolution in the grid
+            potential calculation. One value per grid level (i.e., different
+            algorithms can be used at different levels).
+            See :py:obj:`msmjax.utils.general.ConvMeth` and
+            :py:func:`msmjax.core.longrange.special_periodic_convolve_scipy`
+            for more details.
+        n_dim: Spatial dimension.
+        version: Package version.
+        info: Any additional information you want to store for later reference.
+    """
+
+    # -------------------------------------------------------------------------
+    # Basic MSM settings
+    # -------------------------------------------------------------------------
+    p: int
+    mu: int
+    max_splitting_level: int
+    max_grid_level: int
+    cutoffs: Sequence[float]
+    # -------------------------------------------------------------------------
+    # Geometry-related
+    # -------------------------------------------------------------------------
+    cell: onp.ndarray
+    cell_mode: CellMode
+    pbc: Sequence[bool]
+    dynamic_cell: bool
+    # -------------------------------------------------------------------------
+    # Short-range evaluation
+    # -------------------------------------------------------------------------
+    supercell_diag: Sequence[int]
+    use_neighborlist: bool
+    neighborlist_prefactor: float
+    # -------------------------------------------------------------------------
+    # Long-range evaluation
+    # -------------------------------------------------------------------------
+    grids_defined_on_unitcube: bool
+    grid_shapes: Sequence[None | tuple[int, ...]]
+    grid_spacings: Sequence[None | onp.ndarray]
+    stencil_extents_from_center: Sequence[None | tuple[int, ...]]
+    convolution_methods: Sequence[None | ConvMeth]
+    # -------------------------------------------------------------------------
+    # Info
+    # -------------------------------------------------------------------------
+    n_dim: int
+    version: str = msmjax.__version__
+    info: dict = dataclasses.field(default_factory=dict)
+
+    def __post_init__(self):
+        self.pbc = tuple(self.pbc)
+        self.supercell_diag = (
+            None if self.supercell_diag is None else tuple(self.supercell_diag)
+        )
+        self.convolution_methods = list(self.convolution_methods)
+
+    def save_json(self, filename: str | Path, **kwargs) -> None:
+        with open(filename, "w") as f:
+            json.dump(
+                dataclasses.asdict(self), f, cls=CustomJSONEncoder, **kwargs
+            )
+
+    @classmethod
+    def load_json(cls, filename: str | Path):
+        with open(filename, "r") as f:
+            params_dict = json.load(f, cls=CustomJSONDecoder)
+        return cls(**params_dict)
+
+
+def find_stencil_extents_all_levels(
+    cell: ArrayLike,
+    level_one_spacings: ArrayLike,
+    level_zero_cutoff: float,
+    n_levels_intermed: int,
+    include_toplevel: bool,
+    grid_shape_toplevel: tuple[int, ...] = None,
+) -> list[None | tuple[int, ...]]:
+    """Determine required extents of the kernel stencils at all grid levels.
+
+    See Ref. [1] for the criteria used.
+
+    Args:
+        cell: Array representing cell, `shape (n_dim, n_dim)`.
+        level_one_spacings: 1-d array of grid spacings at the lowest grid
+            level (l = 1), one value per direction.
+        level_zero_cutoff: Cutoff radius of the level-zero partial kernel.
+        n_levels_intermed: See :py:func:`msmjax.kernels.make_construct_stencils`
+        include_toplevel: See :py:func:`msmjax.kernels.make_construct_stencils`
+        grid_shape_toplevel: See :py:func:`msmjax.kernels.make_construct_stencils`
+
+    Returns:
+        List of tuples of integers indicating kernel stencil extents, one for
+        each level, with a ``None`` placeholder at level zero, where there is
+        no grid. See :py:func:`msmjax.kernels.make_construct_stencils` for
+        the precise meaning of the returned stencil extents.
+    """
+    stencil_extents_from_center = [None]
+    extents_intermediate = find_covering_grid_extents(
+        cell, level_one_spacings, 2 * level_zero_cutoff
+    )
+    stencil_extents_from_center += [extents_intermediate] * n_levels_intermed
+    if include_toplevel:
+        stencil_extents_from_center += [
+            tuple(onp.array(grid_shape_toplevel) - 1)
+        ]
+    return stencil_extents_from_center
+
+
+def set_up_msm_params(
+    cell: ArrayLike,
+    level_one_spacings: float | ArrayLike,
+    level_zero_cutoff: float,
+    p: int,
+    pbc: Sequence[bool],
+    cell_mode: CellMode,
+    dynamic_cell: bool,
+    mu: int | None = None,
+    n_particles: int | None = None,
+    max_splitting_level: int | None = None,
+    supercell_diag: Sequence[int] | None = None,
+    use_neighborlist: bool = False,
+    neighborlist_prefactor: float | None = None,
+    intermediate_kernel_stencil_extents: tuple[int, ...] | None = None,
+    convolution_methods: ConvMeth | Sequence[ConvMeth] = "scipy-fft",
+):
+    """Set up an :obj:`MSMParams` instance.
+
+    This is the recommended way for doing so, with a higher-level
+    interface requiring fewer parameters, and with more error checking,
+    than manually instantiating :obj:`MSMParams`.
+
+    The required arguments can be grouped into the main MSM algorithm
+    parameters on the one hand (``level_zero_cutoff``,
+    ``level_one_spacings``, ``p``), and specification of system geometry (in a
+    wider sense) on the other hand (``cell``, ``pbc``, ``cell_mode``,
+    ``dynamic_cell``).
+
+    Args:
+        cell: Array representing unit cell, shape `(n_dim, n_dim)`. Rows
+            correspond to different cell vectors, columns correspond to
+            different cartesian coordinates. The cell is required for setup
+            even in non-periodic cases, as well as when the cell can change
+            (``dynamic_cell = True``), because the cell together with the grid
+            spacings determines the numbers of grid points (which need to be
+            fixed at setup time).
+            In case the cell can change during simulation (
+            ``dynamic_cell = True``), it is only the *ratio* between the
+            lengths of the cell vectors and the grid spacings that matters
+            for setting up the number of grid points. For proper automatic
+            determination of ``intermediate_kernel_stencil_extents`` in cases
+            with periodicity, it is advised to supply the cell and the spacings
+            in the most compressed/tilted state that the model is
+            intended to be able to handle.
+        level_one_spacings: Level-one grid spacings, one value per direction.
+        level_zero_cutoff: Cutoff radius of the lowest-level partial kernel
+            :math:`k_0(r)`.
+        p: Interpolation order in the convention of the article (Ref. [1]).
+        pbc: One boolean per direction signaling periodicity.
+        cell_mode: A string specifying assumptions on the shape of the
+            unit cell. Either the cell is assumed orthorhombic and
+            axis-aligned, in which case only its diagonal is considered,
+            reducing computational cost, or a general triclinic one.
+        dynamic_cell: Whether the cell can dynamically change, or the one given
+            at setup time remains fixed.
+        mu: Adjustable parameter in the quasi-interpolation scheme that
+            controls its accuracy at grid points. Chosen based on heuristics
+            from Ref. [1] if not given.
+        n_particles: Number of particles. Required in the non-periodic case if
+            the number of levels is to be chosen automatically.
+        max_splitting_level: The level of the highest term in the splitting of
+            the Coulomb kernel into partial kernels. Note that, in cases with
+            periodicity, this is not the same as the level of the highest grid
+            included in the evaluation. Determined automatically by default.
+            In cases without periodicity only, you can try manually tuning it,
+            which may or may not improve performance.
+        supercell_diag: An optional sequence of positive integers, one per
+            direction, indicating that the short-range contribution should
+            be evaluated in a supercell. Does not work in combination with
+            ``use_neighborlist = True``.
+            See :py:func:`msmjax.core.shortrange.make_eval_pair_pot`
+            for more details.
+        use_neighborlist: Whether to use a neighbor list.
+        neighborlist_prefactor: Set to 0.5 if the neighbor lists you are going
+            to pass contain duplicates, and to 1.0 if they are duplicate-free.
+            Setting to other values is possible, but unlikely to make sense.
+        intermediate_kernel_stencil_extents: See the
+            ``extents_from_center_intermed`` parameter of
+            :py:func:`msmjax.kernels.make_construct_stencils`.
+        convolution_methods: Algorithms to use for convolution in the grid
+            potential calculation. One value per grid level (i.e., different
+            algorithms can be used at different levels).
+            See :py:obj:`msmjax.utils.general.ConvMeth` and
+            :py:func:`msmjax.core.longrange.special_periodic_convolve_scipy`
+            for more details.
+
+    Returns:
+        An :obj:`MSMParams` instance.
+    """
+    cell = onp.asarray(cell)
+    n_dim = cell.shape[0]
+    side_lengths = onp.linalg.norm(cell, axis=1)
+    level_one_spacings = onp.asarray(level_one_spacings)
+    if onp.ndim(level_one_spacings) == 0:
+        level_one_spacings = onp.full(n_dim, level_one_spacings)
+    pbc = onp.asarray(pbc, dtype=bool)
+
+    alpha = int(onp.max(level_zero_cutoff / level_one_spacings))
+    # See section "1. Preprocessing" of the article
+    if mu is None:
+        mu = max(int(4 * alpha + p // 2), 3 * p // 2)
+
+    if pbc.any():
+        if max_splitting_level is not None:
+            raise ValueError(
+                "Leave max_splitting_level unfilled if at least one direction "
+                "is periodic. It is determined automatically."
+            )
+        (
+            adjusted_spacings,
+            max_splitting_level,
+        ) = find_spacings_and_max_level_periodic(
+            side_lengths[pbc], level_one_spacings[pbc]
+        )
+        level_one_spacings[onp.where(pbc)[0]] = adjusted_spacings
+        max_grid_level = max_splitting_level - 1
+    else:
+        if max_splitting_level is None:
+            if n_particles is None:
+                raise ValueError(
+                    "n_particles is required for the automatic determination "
+                    "of the number of grid levels in non-periodic systems. "
+                    "Either specify max_splitting_level directly, "
+                    "or n_particles."
+                )
+            max_splitting_level = suggest_max_grid_level_nonperiodic(
+                side_lengths=side_lengths,
+                n_particles=n_particles,
+                level_one_spacings=level_one_spacings,
+                level_zero_cutoff=level_zero_cutoff,
+                p=p,
+            )
+        max_grid_level = max_splitting_level
+
+    cutoffs_all_levels = [
+        2**lvl * level_zero_cutoff for lvl in range(max_splitting_level)
+    ] + [onp.inf]
+
+    gridshapes_all_levels, spacings_all_levels = set_up_grids_all_levels(
+        side_lengths=side_lengths,
+        level_one_spacings=level_one_spacings,
+        pbc=pbc,
+        max_grid_level=max_grid_level,
+        p=p,
+    )
+
+    stencil_extents_from_center = [None]
+    if intermediate_kernel_stencil_extents is None:
+        intermediate_kernel_stencil_extents = find_covering_grid_extents(
+            cell, level_one_spacings, 2 * level_zero_cutoff
+        )
+    if pbc.any():
+        stencil_extents_from_center += [
+            intermediate_kernel_stencil_extents
+        ] * max_grid_level
+    else:
+        stencil_extents_from_center += [
+            intermediate_kernel_stencil_extents
+        ] * (max_grid_level - 1)
+        stencil_extents_from_center += [
+            tuple(onp.array(gridshapes_all_levels[-1]) - 1)
+        ]
+
+    if dynamic_cell or cell_mode == "triclinic":
+        grids_defined_on_unitcube = True
+        side_lengths = onp.linalg.norm(cell, axis=1)
+        spacings_all_levels = [
+            (None if spacings is None else spacings / side_lengths)
+            for spacings in spacings_all_levels
+        ]
+    elif cell_mode == "ortho":
+        grids_defined_on_unitcube = False
+
+    if isinstance(convolution_methods, str):
+        convolution_methods = [None] + [convolution_methods] * max_grid_level
+
+    params = MSMParams(
+        p=p,
+        mu=mu,
+        max_splitting_level=max_splitting_level,
+        max_grid_level=max_grid_level,
+        cutoffs=cutoffs_all_levels,
+        cell=cell,
+        cell_mode=cell_mode,
+        pbc=pbc,
+        dynamic_cell=dynamic_cell,
+        supercell_diag=supercell_diag,
+        use_neighborlist=use_neighborlist,
+        neighborlist_prefactor=neighborlist_prefactor,
+        grids_defined_on_unitcube=grids_defined_on_unitcube,
+        grid_shapes=gridshapes_all_levels,
+        grid_spacings=spacings_all_levels,
+        stencil_extents_from_center=stencil_extents_from_center,
+        convolution_methods=convolution_methods,
+        n_dim=n_dim,
+    )
+    return params
+
+
+def create_msm(
+    params: MSMParams,
+    part: Literal["total", "shortrange", "longrange"] = "total",
+    use_custom_derivatives_for_longrange: bool = True,
+    extra_uncharged_interaction: KernelFn | None = None,
+) -> dict[str, Callable]:
+    """From an MSMParams instance, create electrostatics evaluation functions.
+
+    Args:
+        params: The :obj:`MSMParams` instance from which to set up the
+            evaluation functions.
+        part: Whether to calculate the total energy, or just the short-range
+            (:math:`U^0`) or long-range (:math:`U^{1+}`) contribution.
+        use_custom_derivatives_for_longrange: Whether to use the custom
+            optimized JVP for the long-range part.
+        extra_uncharged_interaction: See
+            :py:func:`msmjax.core.shortrange.make_eval_pair_pot`.
+
+    Returns:
+        A dictionary of functions that evaluate various different electrostatic
+        quantities. Their exact argument structure depends on the settings in
+        ``params``. In all cases, they take positions and charges as their
+        first two arguments. If ``params`` specifies a dynamic cell, they have
+        an additional cell argument, and if ``params`` specifies that a
+        neighbor list is to be used, they have an additional neighbor list
+        argument.
+    """
+    if not params.dynamic_cell:
+        _ = check_cutoffs_and_get_actual_spacings(params.cell, params)
+
+    kernel_fns = split_one_over_r(
+        max_level=params.max_splitting_level,
+        level_zero_cutoff=params.cutoffs[0],
+        softening_function=SoftenerOneOverR(params.p),
+    )
+
+    if params.use_neighborlist:
+        compute_u_zero = make_compute_u_zero(
+            kernel_fns=kernel_fns,
+            pair_map_fn=partial(
+                make_eval_pair_pot_neighborlist,
+                pbc=params.pbc,
+                cell_mode=params.cell_mode,
+                extra_uncharged_interaction=extra_uncharged_interaction,
+            ),
+        )
+    else:
+        compute_u_zero = make_compute_u_zero(
+            kernel_fns=kernel_fns,
+            pair_map_fn=partial(
+                make_eval_pair_pot,
+                pbc=params.pbc,
+                cell_mode=params.cell_mode,
+                supercell_diag=params.supercell_diag,
+                extra_uncharged_interaction=extra_uncharged_interaction,
+            ),
+        )
+
+    quasi_omega_prime, _ = compute_quasi_omega_prime(params.p, params.mu)
+
+    (
+        restriction_fns,
+        prolongation_fns,
+        convolution_fns,
+    ) = create_all_grid_to_grid_ops(
+        grid_shapes=params.grid_shapes,
+        p=params.p,
+        pbc=params.pbc,
+        convolution_methods=params.convolution_methods,
+    )
+    grid_pass_fn = make_grid_pass_fn(
+        restriction_fns, prolongation_fns, convolution_fns
+    )
+    basis_evaluation_fn = make_basis_evaluation_fn(
+        grid_shape=params.grid_shapes[1], p=params.p, pbc=params.pbc
+    )
+
+    n_levels_intermed = params.max_splitting_level - 1
+    include_toplevel = params.max_grid_level == params.max_splitting_level
+    if params.grids_defined_on_unitcube:
+        scaled_spacings = params.grid_spacings[1]
+    else:
+        scaled_spacings = params.grid_spacings[1] / onp.linalg.norm(
+            params.cell, axis=1
+        )
+    if n_levels_intermed > 0:
+        k_lowest_intermed = kernel_fns[1]
+        extents_intermed = params.stencil_extents_from_center[1]
+    else:
+        (k_lowest_intermed, extents_intermed) = (None, None)
+    if include_toplevel:
+        k_toplevel = kernel_fns[-1]
+        grid_shape_toplevel = params.grid_shapes[-1]
+    else:
+        (k_toplevel, grid_shape_toplevel) = (None, None)
+    construct_stencils = make_construct_stencils(
+        omega_prime=quasi_omega_prime,
+        n_levels_intermed=n_levels_intermed,
+        include_toplevel=include_toplevel,
+        scaled_spacings=scaled_spacings,
+        cell_mode=params.cell_mode,
+        k_lowest_intermed=k_lowest_intermed,
+        extents_from_center_intermed=extents_intermed,
+        k_toplevel=k_toplevel,
+        grid_shape_toplevel=grid_shape_toplevel,
+    )
+
+    if params.dynamic_cell:
+        compute_u_oneplus = make_compute_u_oneplus(
+            basis_eval_fn=partial(
+                basis_evaluation_fn, spacings=params.grid_spacings[1]
+            ),
+            grid_pass_fn=grid_pass_fn,
+            grid_shape_lvl_one=params.grid_shapes[1],
+            transform_mode=params.cell_mode,
+            kernel_stencil_construction_fn=construct_stencils,
+            use_custom_derivatives=use_custom_derivatives_for_longrange,
+        )
+    else:
+        compute_u_oneplus = make_compute_u_oneplus(
+            basis_eval_fn=partial(
+                basis_evaluation_fn, spacings=params.grid_spacings[1]
+            ),
+            grid_pass_fn=grid_pass_fn,
+            grid_shape_lvl_one=params.grid_shapes[1],
+            transform_mode=(
+                params.cell_mode if params.grids_defined_on_unitcube else None
+            ),
+            kernel_stencils=jax.jit(construct_stencils)(params.cell),
+            use_custom_derivatives=use_custom_derivatives_for_longrange,
+        )
+
+    def calc_energy(positions, charges, cell=None, neighborlist=None):
+        if params.dynamic_cell and cell is None:
+            raise ValueError(
+                "MSM was set up with `dynamic_cell=True`, "
+                "but no cell argument given to the evaluation function"
+            )
+        if params.use_neighborlist:
+            if neighborlist is None:
+                raise ValueError(
+                    "MSM was set up with `dynamic_cell=True`, "
+                    "but no neighborlist argument given to the evaluation "
+                    "function"
+                )
+            u_zero = compute_u_zero(
+                positions,
+                charges,
+                cell=cell if params.dynamic_cell else params.cell,
+                weights=params.neighborlist_prefactor,
+                neighborlist=neighborlist,
+            )
+        else:
+            u_zero = compute_u_zero(
+                positions,
+                charges,
+                cell=cell if params.dynamic_cell else params.cell,
+            )
+        u_oneplus = compute_u_oneplus(
+            positions, charges, cell if params.dynamic_cell else params.cell
+        )
+        if part == "total":
+            return u_zero + u_oneplus
+        elif part == "shortrange":
+            return u_zero
+        elif part == "longrange":
+            return u_oneplus
+        else:
+            raise ValueError("Illegal value for argument `part`.")
+
+    def calc_forces(positions, charges, cell=None, neighborlist=None):
+        return -jax.grad(calc_energy, argnums=0)(
+            positions, charges, cell, neighborlist
+        )
+
+    def calc_energy_and_forces(
+        positions, charges, cell=None, neighborlist=None
+    ):
+        value, grad = jax.value_and_grad(calc_energy, argnums=0)(
+            positions, charges, cell, neighborlist
+        )
+        return value, -grad
+
+    def calc_charge_gradient(positions, charges, cell=None, neighborlist=None):
+        return jax.grad(calc_energy, argnums=1)(
+            positions, charges, cell, neighborlist
+        )
+
+    evaluation_functions = {
+        "energy": calc_energy,
+        "forces": calc_forces,
+        "energy_and_forces": calc_energy_and_forces,
+        "charge_gradient": calc_charge_gradient,
+    }
+
+    if not params.dynamic_cell:
+        return evaluation_functions
+
+    def calc_energy_from_scaled(
+        scaled_positions, charges, cell, neighborlist=None
+    ):
+        positions = scaled_positions @ cell
+        return calc_energy(positions, charges, cell, neighborlist)
+
+    def calc_stress(positions, charges, cell, neighborlist=None):
+        n_dim = positions.shape[1]
+        scaled_positions = jnp.linalg.solve(cell.T, positions.T).T
+
+        def deformation_energy(epsilon):
+            return calc_energy_from_scaled(
+                scaled_positions,
+                charges,
+                cell @ (jnp.eye(n_dim) + 0.5 * (epsilon + epsilon.T)),
+                neighborlist,
+            )
+
+        stress_matrix = jax.grad(deformation_energy)(
+            jnp.zeros_like(cell)
+        ) / jnp.fabs(jnp.linalg.det(cell))
+        if params.cell_mode == "ortho":
+            return jnp.diag(stress_matrix)
+        elif params.cell_mode == "triclinic":
+            return stress_matrix[inds_matrix_to_six_component_stress]
+
+    evaluation_functions["stress"] = calc_stress
+    return evaluation_functions
+
+
+def check_cutoffs_and_get_actual_spacings(
+    cell: ArrayLike, params: MSMParams
+) -> onp.ndarray:
+    """For a given cell, check if MSM cutoff and kernel stencil size settings
+    are appropriate, and calculate the actual grid spacings.
+
+    If ok, the spacings are returned. Otherwise, an error is intentionally
+    raised to signal that an inappropriate settings-cell combination was
+    encountered.
+
+    Args:
+        cell: The cell for which to check the cutoff and kernel stencil sizes.
+        params: The parameter instance specifying the cutoff and the kernel
+            stencil sizes.
+
+    Returns:
+        Array of actual grid spacings for the given cell, one value per
+        direction.
+
+    Raises:
+        ValueError: If the cutoff is too small for the minimum-image convention
+            to work in the given cell. Only raised if there is periodicity.
+        ValueError: If any of the kernel stencils specified by ``params``
+            is too small.
+    """
+    if onp.any(params.pbc):
+        n_dim = cell.shape[0]
+        placeholder_positions = onp.zeros((10, n_dim))
+        placeholder_charges = onp.zeros((10,))
+        supercell_diag = (
+            (1,) * n_dim
+            if params.supercell_diag is None
+            else params.supercell_diag
+        )
+        _, _, supercell = _gen_supercell(
+            placeholder_positions, placeholder_charges, cell, supercell_diag
+        )
+        # A simple way of taking only directions with periodicity into account
+        # in the cutoff determination is to make the cell vectors very large
+        # (effectively infinite) along nonperiodic directions before
+        # calculating the maximum allowed cutoff as if fully periodic.
+        # We repeat this procedure for two different large elongation factors
+        # and check that the resulting cutoffs are the same, to ensure that a
+        # sufficient elongation of the cell was used.
+        trial_cells = [
+            supercell * onp.where(params.pbc, 1.0, elongation)[:, onp.newaxis]
+            for elongation in [1.0e3, 1.0e4]
+        ]
+        trial_cutoffs = [get_max_cutoff_for_mic(c) for c in trial_cells]
+        if not onp.allclose(*trial_cutoffs):
+            raise ValueError(
+                "Something went wrong while checking if the cutoff fits."
+            )
+        max_allowed_cutoff = trial_cutoffs[0]
+        if not (
+            (params.cutoffs[0] <= max_allowed_cutoff)
+            or onp.isclose(params.cutoffs[0], max_allowed_cutoff)
+        ):
+            raise ValueError(
+                f"Level-zero cutoff radius too large for the given cell:\n"
+                f"It is {params.cutoffs[0]}, but the cell can only "
+                f"accommodate {max_allowed_cutoff}.\n"
+                f"Consider reducing the cutoff or making a larger supercell "
+                f"(either via supercell_diag or manually)."
+            )
+
+    for lvl in range(1, params.max_grid_level + 1):
+        given_stencil_size = params.stencil_extents_from_center[lvl]
+
+        if (
+            lvl == params.max_grid_level == params.max_splitting_level
+            and not onp.any(params.pbc)
+        ):
+            if not onp.all(
+                onp.array(given_stencil_size)
+                >= onp.array(params.grid_shapes[lvl]) - 1
+            ):
+                raise ValueError(
+                    "Kernel stencil at highest level must cover the entire "
+                    "grid in cases without periodicity."
+                )
+            continue
+
+        spacings = params.grid_spacings[lvl].copy()
+        if params.grids_defined_on_unitcube:
+            spacings *= onp.linalg.norm(cell, axis=1)
+        min_required_stencil_size = find_covering_grid_extents(
+            grid_axes=cell, spacings=spacings, cutoff=params.cutoffs[lvl]
+        )
+        if not (
+            onp.array(given_stencil_size)
+            >= onp.array(min_required_stencil_size)
+        ).all():
+            raise ValueError(
+                f"The kernel stencil at level {lvl} is too small to cover the "
+                f"cutoff for the given cell:\n"
+                f"It is {given_stencil_size}, but needs to be (component-"
+                f"wise) at least {min_required_stencil_size}.\n"
+                f"Try increasing intermediate_kernel_stencil_extents "
+                f"during setup, and make sure the cell is not unreasonably "
+                f"compressed or distorted."
+            )
+
+    level_one_spacings = params.grid_spacings[1].copy()
+    if params.grids_defined_on_unitcube:
+        level_one_spacings *= onp.linalg.norm(cell, axis=1)
+
+    return level_one_spacings
