@@ -48,9 +48,9 @@ dynamic = ["version"]
 readme = "README.md"
 
 [project.optional-dependencies]
-test = ["pytest", "pytest-datadir", "matscipy", "ase"]
+test = ["pytest", "pytest-datadir", "matscipy", "ase", "tqdm"]
 doc = ["sphinx", "sphinx-autodoc-typehints", "sphinx-rtd-theme"]
-examples = ["tqdm", "matscipy", "matplotlib", "pandas", "ase"]
+examples = ["tqdm", "matscipy", "matplotlib", "pandas", "ase", "natsort"]
 benchmarking_utils = ["tqdm", "matscipy"]
 
 [tool.setuptools.packages.find]
@@ -59,4 +59,3 @@ where = ["src"]
 
 [tool.setuptools.dynamic]
 version = {attr = "msmjax.__version__"}
-
